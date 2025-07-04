@@ -5,13 +5,13 @@ from typing import Any, Dict
 from uuid import UUID, uuid4
 
 
-@dataclass
 class DomainEvent(ABC):
     """Base class for all domain events."""
     
-    event_id: UUID = field(default_factory=uuid4)
-    occurred_at: datetime = field(default_factory=datetime.utcnow)
-    aggregate_id: UUID = field(default_factory=uuid4)
+    def __init__(self):
+        self.event_id: UUID = uuid4()
+        self.occurred_at: datetime = datetime.utcnow()
+        self.aggregate_id: UUID = uuid4()
     
     @property
     @abstractmethod

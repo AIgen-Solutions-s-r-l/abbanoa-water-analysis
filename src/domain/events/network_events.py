@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Dict
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from src.domain.events.base import DomainEvent
 
@@ -14,6 +15,9 @@ class NodeAddedEvent(DomainEvent):
     node_name: str
     node_type: str
     location: str
+    
+    def __post_init__(self):
+        super().__init__()
     
     @property
     def event_type(self) -> str:
@@ -38,6 +42,9 @@ class NodeRemovedEvent(DomainEvent):
     node_name: str
     reason: str
     
+    def __post_init__(self):
+        super().__init__()
+    
     @property
     def event_type(self) -> str:
         return "node_removed"
@@ -60,6 +67,9 @@ class NodeStatusChangedEvent(DomainEvent):
     old_status: str
     new_status: str
     reason: str
+    
+    def __post_init__(self):
+        super().__init__()
     
     @property
     def event_type(self) -> str:
@@ -86,6 +96,9 @@ class NetworkEfficiencyCalculatedEvent(DomainEvent):
     total_input: float
     total_output: float
     loss_percentage: float
+    
+    def __post_init__(self):
+        super().__init__()
     
     @property
     def event_type(self) -> str:

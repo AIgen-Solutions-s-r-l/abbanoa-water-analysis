@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -181,9 +182,9 @@ class WaterInfrastructureDashboard:
         
         flow_data = pd.DataFrame({
             'timestamp': time_data,
-            'Sant\'Anna': 100 + 20 * pd.Series(range(48)).apply(lambda x: pd.np.sin(x/10)),
-            'Seneca': 80 + 15 * pd.Series(range(48)).apply(lambda x: pd.np.cos(x/8)),
-            'Tank Output': 180 + 25 * pd.Series(range(48)).apply(lambda x: pd.np.sin(x/12))
+            'Sant\'Anna': 100 + 20 * pd.Series(range(48)).apply(lambda x: np.sin(x/10)),
+            'Seneca': 80 + 15 * pd.Series(range(48)).apply(lambda x: np.cos(x/8)),
+            'Tank Output': 180 + 25 * pd.Series(range(48)).apply(lambda x: np.sin(x/12))
         })
         
         fig = px.line(
@@ -304,7 +305,7 @@ class WaterInfrastructureDashboard:
         # Generate sample consumption pattern data
         if pattern_type == "Hourly":
             labels = [f"{i:02d}:00" for i in range(24)]
-            values = [50 + 30 * abs(pd.np.sin(i/4)) for i in range(24)]
+            values = [50 + 30 * abs(np.sin(i/4)) for i in range(24)]
         elif pattern_type == "Daily":
             labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             values = [120, 115, 125, 130, 135, 90, 85]
@@ -401,7 +402,7 @@ class WaterInfrastructureDashboard:
         
         efficiency_data = pd.DataFrame({
             'Date': pd.date_range(end=datetime.now(), periods=30, freq='D'),
-            'Efficiency': 90 + 5 * pd.Series(range(30)).apply(lambda x: pd.np.sin(x/5)) + pd.Series(range(30)) * 0.1
+            'Efficiency': 90 + 5 * pd.Series(range(30)).apply(lambda x: np.sin(x/5)) + pd.Series(range(30)) * 0.1
         })
         
         fig = px.line(

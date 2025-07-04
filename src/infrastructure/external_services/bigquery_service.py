@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from google.cloud import bigquery
+from google.cloud.bigquery import QueryJobConfig, ScalarQueryParameter
 from google.cloud.exceptions import NotFound
 
 from src.domain.entities.sensor_reading import SensorReading
@@ -78,9 +79,9 @@ class BigQueryService:
         
         return job.result()  # Wait for job to complete
     
-    def query(self, query_string: str, parameters: Optional[List[bigquery.QueryParameter]] = None) -> pd.DataFrame:
+    def query(self, query_string: str, parameters: Optional[List[ScalarQueryParameter]] = None) -> pd.DataFrame:
         """Execute a query and return results as DataFrame."""
-        job_config = bigquery.QueryJobConfig()
+        job_config = QueryJobConfig()
         
         if parameters:
             job_config.query_parameters = parameters
