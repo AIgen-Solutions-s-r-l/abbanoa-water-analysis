@@ -41,29 +41,29 @@ class ConsumptionTab:
         with col1:
             st.metric(
                 label="Total Consumption",
-                value="12,456 m³",
-                delta="+8.2% vs last period"
+                value="0 m³",
+                delta=None
             )
         
         with col2:
             st.metric(
                 label="Peak Hour",
-                value="08:00",
-                delta="Same as usual"
+                value="--:--",
+                delta=None
             )
         
         with col3:
             st.metric(
                 label="Min Hour",
-                value="03:00",
-                delta="1 hour earlier"
+                value="--:--",
+                delta=None
             )
         
         with col4:
             st.metric(
                 label="Avg Daily",
-                value="1,780 m³",
-                delta="+5.3%"
+                value="0 m³",
+                delta=None
             )
         
         # Consumption trends
@@ -101,23 +101,13 @@ class ConsumptionTab:
         if consumption_data is not None and not consumption_data.empty:
             df = consumption_data
         else:
-            # Fallback to generated data
-            periods, freq = self._get_time_params(time_range)
-            time_data = pd.date_range(end=datetime.now(), periods=periods, freq=freq)
-            
-            # Generate consumption data
-            data = {'timestamp': time_data}
+            # Return empty dataframe - no synthetic data
+            data = {'timestamp': pd.DatetimeIndex([])}
             
             nodes = ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"] if "All Nodes" in selected_nodes else selected_nodes
             
             for node in nodes:
-                # Create realistic consumption pattern
-                base = np.random.uniform(80, 120)
-                daily_pattern = np.array([self._get_hourly_factor(t.hour) for t in time_data])
-                trend = np.linspace(0, 10, len(time_data))
-                noise = np.random.normal(0, 5, len(time_data))
-                
-                data[node] = base * daily_pattern + trend + noise
+                data[node] = []
             
             df = pd.DataFrame(data)
         
@@ -147,7 +137,7 @@ class ConsumptionTab:
     def _render_daily_pattern(self) -> None:
         """Render average daily consumption pattern."""
         hours = list(range(24))
-        consumption = [self._get_hourly_factor(h) * 100 for h in hours]
+        consumption = [0] * 24  # No synthetic data
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -182,7 +172,7 @@ class ConsumptionTab:
     def _render_weekly_pattern(self) -> None:
         """Render weekly consumption pattern."""
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        consumption = [100, 98, 102, 105, 103, 85, 75]  # Typical weekly pattern
+        consumption = [0, 0, 0, 0, 0, 0, 0]  # No synthetic data
         
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -206,18 +196,14 @@ class ConsumptionTab:
         """Render peak consumption analysis."""
         nodes = ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"] if "All Nodes" in selected_nodes else selected_nodes
         
-        # Create peak data
+        # Create peak data - no synthetic values
         peak_data = []
         for node in nodes[:4]:  # Limit to 4 nodes
-            morning_peak = np.random.uniform(110, 130)
-            evening_peak = np.random.uniform(100, 120)
-            night_min = np.random.uniform(40, 60)
-            
             peak_data.append({
                 'Node': node,
-                'Morning Peak (6-9)': morning_peak,
-                'Evening Peak (18-21)': evening_peak,
-                'Night Minimum (2-5)': night_min
+                'Morning Peak (6-9)': 0,
+                'Evening Peak (18-21)': 0,
+                'Night Minimum (2-5)': 0
             })
         
         df = pd.DataFrame(peak_data)
@@ -256,19 +242,8 @@ class ConsumptionTab:
         days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         hours = list(range(24))
         
-        # Create realistic consumption patterns
-        z_data = []
-        for day_idx, day in enumerate(days):
-            day_data = []
-            for hour in hours:
-                # Lower consumption on weekends
-                weekend_factor = 0.7 if day_idx >= 5 else 1.0
-                # Hourly pattern
-                hour_factor = self._get_hourly_factor(hour)
-                # Add some randomness
-                value = 100 * weekend_factor * hour_factor + np.random.uniform(-10, 10)
-                day_data.append(value)
-            z_data.append(day_data)
+        # No synthetic data - all zeros
+        z_data = [[0] * 24 for _ in days]
         
         fig = go.Figure(data=go.Heatmap(
             z=z_data,
@@ -294,13 +269,13 @@ class ConsumptionTab:
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            # Non-revenue water
+            # Non-revenue water - no data
             fig = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
-                value=8.5,
+                value=0,
                 domain={'x': [0, 1], 'y': [0, 1]},
                 title={'text': "Non-Revenue Water (%)"},
-                delta={'reference': 10, 'decreasing': {'color': "green"}},
+                delta={'reference': 0},
                 gauge={
                     'axis': {'range': [None, 20]},
                     'bar': {'color': "#1f77b4"},
@@ -320,25 +295,25 @@ class ConsumptionTab:
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            # Per capita consumption
+            # Per capita consumption - no data
             fig = go.Figure(go.Indicator(
                 mode="number+delta",
-                value=142,
+                value=0,
                 number={'suffix': " L/day"},
                 title={'text': "Per Capita Consumption"},
-                delta={'reference': 150, 'decreasing': {'color': "green"}}
+                delta={'reference': 0}
             ))
             fig.update_layout(height=250)
             st.plotly_chart(fig, use_container_width=True)
         
         with col3:
-            # System efficiency
+            # System efficiency - no data
             fig = go.Figure(go.Indicator(
                 mode="number+delta",
-                value=91.5,
+                value=0,
                 number={'suffix': "%"},
                 title={'text': "Distribution Efficiency"},
-                delta={'reference': 90, 'increasing': {'color': "green"}}
+                delta={'reference': 0}
             ))
             fig.update_layout(height=250)
             st.plotly_chart(fig, use_container_width=True)
@@ -377,8 +352,8 @@ class ConsumptionTab:
             }
             
             delta = time_deltas.get(time_range, timedelta(hours=24))
-            end_time = datetime.now()
-            start_time = end_time - delta
+            end_time = None
+            start_time = None
             
             # Get node IDs
             node_ids = None

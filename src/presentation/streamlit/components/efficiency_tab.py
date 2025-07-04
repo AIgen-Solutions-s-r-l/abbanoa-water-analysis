@@ -45,32 +45,31 @@ class EfficiencyTab:
         with col1:
             st.metric(
                 label="Overall Efficiency",
-                value=f"{efficiency_data.efficiency_percentage:.1f}%",
-                delta="+2.1% vs last month"
+                value=f"{efficiency_data.efficiency_percentage:.1f}%" if efficiency_data else "0.0%",
+                delta=None
             )
         
         with col2:
             st.metric(
                 label="Water Loss Rate",
-                value=f"{efficiency_data.loss_percentage:.1f}%",
-                delta="-2.1% improvement",
-                delta_color="inverse"
+                value=f"{efficiency_data.loss_percentage:.1f}%" if efficiency_data else "0.0%",
+                delta=None
             )
         
         with col3:
             # Use custom attribute if available, otherwise calculate
-            energy_eff = getattr(efficiency_data, 'energy_efficiency', 0.42)
+            energy_eff = getattr(efficiency_data, 'energy_efficiency', 0) if efficiency_data else 0
             st.metric(
                 label="Energy Efficiency",
-                value=f"{energy_eff:.2f} kWh/m³",
-                delta="-0.03 kWh/m³"
+                value=f"{energy_eff:.2f} kWh/m³" if energy_eff else "0.00 kWh/m³",
+                delta=None
             )
         
         with col4:
             st.metric(
                 label="Network Pressure",
-                value="4.2 bar",
-                delta="Optimal range"
+                value="0.0 bar",
+                delta=None
             )
         
         # Efficiency trends
@@ -102,15 +101,11 @@ class EfficiencyTab:
     
     def _render_efficiency_trends(self, time_range: str) -> None:
         """Render efficiency trends over time."""
-        # Generate time series
-        periods, freq = self._get_time_params(time_range)
-        time_data = pd.date_range(end=datetime.now(), periods=periods, freq=freq)
-        
-        # Create efficiency metrics
-        base_efficiency = 92.5
-        efficiency_trend = base_efficiency + np.cumsum(np.random.normal(0, 0.2, len(time_data))) / 100
-        water_loss = 100 - efficiency_trend + np.random.normal(0, 0.5, len(time_data))
-        energy_consumption = 0.42 + np.random.normal(0, 0.02, len(time_data))
+        # No synthetic data - use empty data
+        time_data = pd.DatetimeIndex([])
+        efficiency_trend = []
+        water_loss = []
+        energy_consumption = []
         
         # Create subplot figure
         fig = make_subplots(
@@ -175,7 +170,7 @@ class EfficiencyTab:
     def _render_component_efficiency(self) -> None:
         """Render component-wise efficiency breakdown."""
         components = ['Pumps', 'Valves', 'Pipes', 'Meters', 'Storage']
-        efficiency = [94, 91, 89, 96, 93]
+        efficiency = [0, 0, 0, 0, 0]  # No synthetic data
         
         fig = go.Figure(go.Bar(
             x=components,
@@ -199,8 +194,8 @@ class EfficiencyTab:
     
     def _render_loss_distribution(self) -> None:
         """Render water loss distribution pie chart."""
-        labels = ['Leaks', 'Meter Errors', 'Unauthorized Use', 'Other']
-        values = [45, 25, 20, 10]
+        labels = ['No Data']
+        values = [1]  # Need at least one value for pie chart
         
         fig = go.Figure(data=[go.Pie(
             labels=labels,
@@ -224,11 +219,11 @@ class EfficiencyTab:
     
     def _render_pressure_analysis(self) -> None:
         """Render network pressure analysis."""
-        # Create pressure zones data
+        # No synthetic data
         zones = ['Zone A', 'Zone B', 'Zone C', 'Zone D']
-        current_pressure = [4.2, 3.8, 4.5, 4.0]
-        optimal_min = [3.5, 3.5, 3.5, 3.5]
-        optimal_max = [4.5, 4.5, 4.5, 4.5]
+        current_pressure = [0, 0, 0, 0]
+        optimal_min = [0, 0, 0, 0]
+        optimal_max = [0, 0, 0, 0]
         
         fig = go.Figure()
         
@@ -265,11 +260,11 @@ class EfficiencyTab:
     
     def _render_energy_analysis(self) -> None:
         """Render energy consumption analysis."""
-        # Create hourly energy data
+        # No synthetic data - all zeros
         hours = list(range(24))
-        pumping_energy = [30 + 20 * self._get_energy_factor(h) + np.random.uniform(-5, 5) for h in hours]
-        treatment_energy = [15 + 5 * self._get_energy_factor(h) + np.random.uniform(-2, 2) for h in hours]
-        distribution_energy = [10 + 3 * self._get_energy_factor(h) + np.random.uniform(-1, 1) for h in hours]
+        pumping_energy = [0] * 24
+        treatment_energy = [0] * 24
+        distribution_energy = [0] * 24
         
         fig = go.Figure()
         
@@ -312,51 +307,25 @@ class EfficiencyTab:
     
     def _render_recommendations(self) -> None:
         """Render efficiency improvement recommendations."""
-        recommendations = [
-            {
-                'Priority': '🔴 High',
-                'Area': 'Zone C Pressure',
-                'Issue': 'Pressure exceeds optimal range',
-                'Action': 'Adjust pressure reducing valve settings',
-                'Impact': '2-3% efficiency gain'
-            },
-            {
-                'Priority': '🟡 Medium',
-                'Area': 'Pump Station 2',
-                'Issue': 'Below target efficiency (89%)',
-                'Action': 'Schedule pump maintenance',
-                'Impact': '1-2% efficiency gain'
-            },
-            {
-                'Priority': '🟡 Medium',
-                'Area': 'District Metering',
-                'Issue': 'High meter error rate in Zone B',
-                'Action': 'Replace aging meters',
-                'Impact': '0.5% loss reduction'
-            },
-            {
-                'Priority': '🟢 Low',
-                'Area': 'Energy Usage',
-                'Issue': 'Peak hour consumption',
-                'Action': 'Implement off-peak pumping schedule',
-                'Impact': '15% energy cost reduction'
-            }
-        ]
+        # No synthetic data
+        recommendations = []
         
-        df = pd.DataFrame(recommendations)
-        
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                'Priority': st.column_config.TextColumn('Priority', width='small'),
-                'Area': st.column_config.TextColumn('Area', width='medium'),
-                'Issue': st.column_config.TextColumn('Issue', width='large'),
-                'Action': st.column_config.TextColumn('Recommended Action', width='large'),
-                'Impact': st.column_config.TextColumn('Expected Impact', width='medium')
-            }
-        )
+        if recommendations:
+            df = pd.DataFrame(recommendations)
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    'Priority': st.column_config.TextColumn('Priority', width='small'),
+                    'Area': st.column_config.TextColumn('Area', width='medium'),
+                    'Issue': st.column_config.TextColumn('Issue', width='large'),
+                    'Action': st.column_config.TextColumn('Recommended Action', width='large'),
+                    'Impact': st.column_config.TextColumn('Expected Impact', width='medium')
+                }
+            )
+        else:
+            st.info("No recommendations available. Waiting for real data.")
     
     def _get_energy_factor(self, hour: int) -> float:
         """Get energy consumption factor for given hour."""
@@ -385,7 +354,7 @@ class EfficiencyTab:
         try:
             # Use cache if available and recent
             if self._efficiency_cache and self._cache_time:
-                if datetime.now() - self._cache_time < timedelta(minutes=5):
+                if self._cache_time and datetime.now() - self._cache_time < timedelta(minutes=5):
                     return self._efficiency_cache
             
             # Calculate time delta
@@ -397,8 +366,9 @@ class EfficiencyTab:
             }
             
             delta = time_deltas.get(time_range, timedelta(hours=24))
-            end_time = datetime.now()
-            start_time = end_time - delta
+            # Return None - no synthetic data
+            end_time = None
+            start_time = None
             
             # Run the use case
             loop = asyncio.new_event_loop()
@@ -413,30 +383,10 @@ class EfficiencyTab:
             
             # Cache the result
             self._efficiency_cache = result
-            self._cache_time = datetime.now()
+            self._cache_time = datetime.now() if result else None
             
             return result
             
         except Exception as e:
-            # Silently fall back to demo data
-            pass
-            
-            # Return default efficiency data
-            from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO
-            from uuid import uuid4
-            
-            # Create mock data with correct structure
-            mock_result = NetworkEfficiencyResultDTO(
-                network_id=uuid4(),
-                period_start=start_time,
-                period_end=end_time,
-                efficiency_percentage=92.5,
-                total_input_volume=1334.0,
-                total_output_volume=1234.0,
-                loss_volume=100.0,
-                loss_percentage=7.5,
-                node_contributions={}
-            )
-            # Add custom attribute for energy efficiency
-            mock_result.energy_efficiency = 0.42
-            return mock_result
+            # Return None - no synthetic data
+            return None

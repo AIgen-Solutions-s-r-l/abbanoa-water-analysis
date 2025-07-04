@@ -156,3 +156,11 @@ class SensorDataRepository(ISensorReadingRepository):
     async def update(self, sensor_reading: SensorReading) -> SensorReading:
         """Update is not implemented for read-only sensor_data table."""
         raise NotImplementedError("sensor_data table is read-only")
+    
+    async def add(self, reading: SensorReading) -> None:
+        """Add is not implemented for read-only sensor_data table."""
+        raise NotImplementedError("sensor_data table is read-only")
+    
+    async def delete_by_id(self, reading_id: UUID) -> None:
+        """Delete by ID is not implemented for read-only sensor_data table."""
+        raise NotImplementedError("sensor_data table is read-only")

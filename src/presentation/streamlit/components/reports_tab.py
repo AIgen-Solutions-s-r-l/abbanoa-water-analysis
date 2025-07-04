@@ -58,15 +58,15 @@ class ReportsTab:
         with col1:
             start_date = st.date_input(
                 "Start Date",
-                value=datetime.now() - timedelta(days=7),
-                max_value=datetime.now().date()
+                value=None,
+                help="Select report start date"
             )
         
         with col2:
             end_date = st.date_input(
                 "End Date",
-                value=datetime.now().date(),
-                max_value=datetime.now().date()
+                value=None,
+                help="Select report end date"
             )
         
         with col3:
@@ -99,7 +99,7 @@ class ReportsTab:
             st.download_button(
                 label="📥 Download Report (PDF)",
                 data=report_data,
-                file_name=f"{report_type.lower().replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf",
+                file_name=f"{report_type.lower().replace(' ', '_')}_{None.strftime('%Y%m%d')}.pdf",
                 mime="application/pdf"
             )
     
@@ -146,7 +146,7 @@ class ReportsTab:
     def _render_weekly_performance_preview(self) -> None:
         """Render weekly performance report preview."""
         # Performance trends
-        days = pd.date_range(end=datetime.now(), periods=7, freq='D')
+        days = pd.date_range(end=None, periods=7, freq='D')
         performance_data = pd.DataFrame({
             'Date': days,
             'Efficiency': 90 + np.random.uniform(-2, 3, 7),

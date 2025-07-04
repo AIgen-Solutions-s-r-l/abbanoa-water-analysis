@@ -40,33 +40,35 @@ class OverviewTab:
         
         # Get real efficiency data
         efficiency_data = self._get_efficiency_data(time_range)
+        if efficiency_data is None:
+            efficiency_data = {}
         
         with col1:
             st.metric(
                 label="Active Nodes",
-                value=f"{efficiency_data.get('active_nodes', 12)}",
-                delta="2 new this week"
+                value=f"{efficiency_data.get('active_nodes', 0)}",
+                delta=None
             )
         
         with col2:
             st.metric(
                 label="Total Flow (24h)",
-                value=f"{efficiency_data.get('total_flow', 1234):.0f} m³",
-                delta=f"{efficiency_data.get('flow_delta', 12):.1f}% vs yesterday"
+                value=f"{efficiency_data.get('total_flow', 0):.0f} m³",
+                delta=None
             )
         
         with col3:
             st.metric(
                 label="Avg Pressure",
-                value=f"{efficiency_data.get('avg_pressure', 4.2):.1f} bar",
-                delta=f"{efficiency_data.get('pressure_delta', -0.1):.1f} bar"
+                value=f"{efficiency_data.get('avg_pressure', 0):.1f} bar",
+                delta=None
             )
         
         with col4:
             st.metric(
                 label="System Efficiency",
-                value=f"{efficiency_data.get('efficiency', 92.5):.1f}%",
-                delta=f"{efficiency_data.get('efficiency_delta', 2.1):.1f}%"
+                value=f"{efficiency_data.get('efficiency', 0):.1f}%",
+                delta=None
             )
         
         # Real-time monitoring chart
@@ -75,13 +77,10 @@ class OverviewTab:
         # Create sample data based on time range
         periods, freq = self._get_time_params(time_range)
         
-        time_data = pd.date_range(
-            end=datetime.now(),
-            periods=periods,
-            freq=freq
-        )
+        # Return empty dataframe if no real data
+        time_data = pd.DatetimeIndex([])
         
-        # Generate flow data for nodes
+        # No synthetic data for nodes
         flow_data = self._generate_flow_data(time_data, selected_nodes)
         
         # Create the plot
@@ -107,26 +106,18 @@ class OverviewTab:
         return params.get(time_range, (48, '30min'))
     
     def _generate_flow_data(self, time_data: pd.DatetimeIndex, selected_nodes: List[str]) -> pd.DataFrame:
-        """Generate simulated flow data for selected nodes."""
+        """Generate flow data for selected nodes."""
+        # Return empty dataframe - no synthetic data
         data = {'timestamp': time_data}
         
-        # Node configurations with different patterns
-        node_patterns = {
-            "Sant'Anna": lambda x: 100 + 20 * np.sin(x/10) + np.random.normal(0, 2, len(x)),
-            "Seneca": lambda x: 80 + 15 * np.cos(x/8) + np.random.normal(0, 1.5, len(x)),
-            "Selargius Tank": lambda x: 180 + 25 * np.sin(x/12) + np.random.normal(0, 3, len(x)),
-            "External Supply": lambda x: 150 + 10 * np.sin(x/15) + np.random.normal(0, 2.5, len(x))
-        }
-        
-        x = np.arange(len(time_data))
-        
+        # Initialize all nodes with zeros
         if "All Nodes" in selected_nodes:
-            for node, pattern in node_patterns.items():
-                data[node] = pattern(x)
+            nodes = ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"]
         else:
-            for node in selected_nodes:
-                if node in node_patterns:
-                    data[node] = node_patterns[node](x)
+            nodes = selected_nodes
+            
+        for node in nodes:
+            data[node] = []
         
         return pd.DataFrame(data)
     
@@ -169,10 +160,10 @@ class OverviewTab:
         
         for idx, node in enumerate(nodes[:4]):
             with cols[idx]:
-                # Generate random status
-                status = np.random.choice(['🟢 Normal', '🟡 Warning', '🔴 Alert'], p=[0.7, 0.2, 0.1])
-                pressure = np.random.uniform(3.8, 4.5)
-                flow = np.random.uniform(70, 120)
+                # No data available
+                status = '⚫ No Data'
+                pressure = 0.0
+                flow = 0.0
                 
                 st.markdown(f"""
                 <div style="background-color: #f0f2f6; padding: 1rem; border-radius: 0.5rem;">
@@ -185,25 +176,8 @@ class OverviewTab:
     
     def _render_system_alerts(self) -> None:
         """Render system alerts section."""
-        alerts = [
-            {"time": "10:30", "type": "Warning", "node": "Seneca", "message": "Pressure drop detected"},
-            {"time": "09:15", "type": "Info", "node": "Sant'Anna", "message": "Scheduled maintenance completed"},
-            {"time": "08:45", "type": "Alert", "node": "External Supply", "message": "Flow rate anomaly detected"}
-        ]
-        
-        for alert in alerts[:3]:  # Show last 3 alerts
-            alert_color = {
-                "Warning": "#ffc107",
-                "Info": "#17a2b8",
-                "Alert": "#dc3545"
-            }.get(alert['type'], "#6c757d")
-            
-            st.markdown(f"""
-            <div style="border-left: 4px solid {alert_color}; padding-left: 1rem; margin-bottom: 0.5rem;">
-                <strong>{alert['time']} - {alert['node']}</strong><br>
-                <span style="color: {alert_color};">[{alert['type']}]</span> {alert['message']}
-            </div>
-            """, unsafe_allow_html=True)
+        # No alerts - no synthetic data
+        st.info("No alerts available. Waiting for real data.")
     
     def _get_efficiency_data(self, time_range: str) -> dict:
         """Get real efficiency data from use case."""
@@ -217,8 +191,8 @@ class OverviewTab:
             }
             
             delta = time_deltas.get(time_range, timedelta(hours=24))
-            end_time = datetime.now()
-            start_time = end_time - delta
+            # Don't use current time - no synthetic data
+            return None
             
             # Run the use case asynchronously
             loop = asyncio.new_event_loop()
@@ -246,13 +220,13 @@ class OverviewTab:
             # Don't show warning for each metric, just use demo data silently
             pass
         
-        # Return default values if error
+        # Return zeros - no synthetic data
         return {
-            'active_nodes': 12,
-            'total_flow': 1234,
-            'flow_delta': 12.0,
-            'avg_pressure': 4.2,
-            'pressure_delta': -0.1,
-            'efficiency': 92.5,
-            'efficiency_delta': 2.1
+            'active_nodes': 0,
+            'total_flow': 0,
+            'flow_delta': 0,
+            'avg_pressure': 0,
+            'pressure_delta': 0,
+            'efficiency': 0,
+            'efficiency_delta': 0
         }

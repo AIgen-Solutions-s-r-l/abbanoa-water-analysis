@@ -98,7 +98,7 @@ class AnomalyTab:
         """Render anomaly timeline visualization."""
         # Generate sample anomaly data
         periods, freq = self._get_time_params(time_range)
-        time_data = pd.date_range(end=datetime.now(), periods=periods, freq=freq)
+        time_data = pd.DatetimeIndex([])
         
         # Create anomaly events
         anomalies = []
@@ -140,8 +140,8 @@ class AnomalyTab:
     def _render_anomaly_types_chart(self) -> None:
         """Render pie chart of anomaly types."""
         data = pd.DataFrame({
-            'Type': ['Pressure Drop', 'Flow Spike', 'Sensor Error', 'Leak Detection', 'Other'],
-            'Count': [23, 18, 12, 8, 5]
+            'Type': ['No Data'],
+            'Count': [1]
         })
         
         fig = px.pie(
@@ -159,8 +159,8 @@ class AnomalyTab:
     def _render_affected_nodes_chart(self) -> None:
         """Render bar chart of affected nodes."""
         data = pd.DataFrame({
-            'Node': ['Sant\'Anna', 'Seneca', 'Selargius Tank', 'External Supply'],
-            'Anomalies': [8, 5, 3, 2]
+            'Node': ['No Data'],
+            'Anomalies': [0]
         })
         
         fig = px.bar(
@@ -202,35 +202,15 @@ class AnomalyTab:
             
             df = pd.DataFrame(anomalies)
         else:
-            # Fallback to demo data
-            anomalies = [
-                {
-                    'Time': '10:30:45',
-                    'Node': 'Seneca',
-                    'Type': 'Pressure Drop',
-                    'Severity': '🔴 High',
-                    'Status': '⚠️ Active',
-                    'Description': 'Pressure dropped below 3.5 bar threshold'
-                },
-                {
-                    'Time': '09:15:22',
-                    'Node': 'Sant\'Anna',
-                    'Type': 'Flow Spike',
-                    'Severity': '🟡 Medium',
-                    'Status': '✅ Resolved',
-                    'Description': 'Unusual flow increase detected (>20%)'
-                },
-                {
-                    'Time': '08:45:10',
-                    'Node': 'External Supply',
-                    'Type': 'Sensor Error',
-                    'Severity': '🟡 Medium',
-                    'Status': '🔄 Under Investigation',
-                    'Description': 'Inconsistent readings from pressure sensor'
-                }
-            ]
-            
-            df = pd.DataFrame(anomalies)
+            # No demo data - return empty dataframe
+            df = pd.DataFrame({
+                'Time': [],
+                'Node': [],
+                'Type': [],
+                'Severity': [],
+                'Status': [],
+                'Description': []
+            })
         
         # Display as a formatted table
         st.dataframe(
@@ -255,18 +235,18 @@ class AnomalyTab:
             subplot_titles=('Hourly Pattern', 'Daily Pattern')
         )
         
-        # Hourly pattern
+        # Hourly pattern - no synthetic data
         hours = list(range(24))
-        hourly_counts = [np.random.poisson(3) if 8 <= h <= 18 else np.random.poisson(1) for h in hours]
+        hourly_counts = [0] * 24  # All zeros
         
         fig.add_trace(
             go.Bar(x=hours, y=hourly_counts, name='Hourly', marker_color='#1f77b4'),
             row=1, col=1
         )
         
-        # Daily pattern
+        # Daily pattern - no synthetic data
         days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        daily_counts = [np.random.poisson(5) for _ in days]
+        daily_counts = [0] * 7  # All zeros
         
         fig.add_trace(
             go.Bar(x=days, y=daily_counts, name='Daily', marker_color='#ff7f0e'),
@@ -310,7 +290,7 @@ class AnomalyTab:
                 affected_nodes = len(set(a.node_id for a in anomaly_results))
                 
                 # Count today's anomalies
-                today = datetime.now().date()
+                today = None
                 new_today = sum(1 for a in anomaly_results if a.timestamp.date() == today)
                 
                 return {
@@ -325,15 +305,15 @@ class AnomalyTab:
         except Exception as e:
             st.warning(f"Using demo data: {str(e)}")
         
-        # Return default values
+        # Return zeros - no synthetic data
         return {
-            'total_anomalies': 7,
-            'new_today': 3,
-            'critical_count': 2,
-            'affected_nodes': 3,
-            'total_nodes': 12,
-            'affected_percentage': 25,
-            'avg_resolution': '45 min'
+            'total_anomalies': 0,
+            'new_today': 0,
+            'critical_count': 0,
+            'affected_nodes': 0,
+            'total_nodes': 0,
+            'affected_percentage': 0,
+            'avg_resolution': 'N/A'
         }
     
     def _fetch_anomalies(self) -> Optional[List[AnomalyDetectionResultDTO]]:
@@ -341,7 +321,7 @@ class AnomalyTab:
         try:
             # Use cache if available and recent (5 minutes)
             if self._anomaly_cache and self._cache_time:
-                if datetime.now() - self._cache_time < timedelta(minutes=5):
+                if self._cache_time and datetime.now() - self._cache_time < timedelta(minutes=5):
                     return self._anomaly_cache
             
             # Run the use case asynchronously
@@ -358,7 +338,7 @@ class AnomalyTab:
             
             # Cache the result
             self._anomaly_cache = result
-            self._cache_time = datetime.now()
+            self._cache_time = datetime.now() if result else None
             
             return result
         except Exception as e:
