@@ -48,6 +48,7 @@ if 'initialized' not in st.session_state:
     st.session_state.metric = "flow_rate"
     st.session_state.horizon = 7
     st.session_state.last_update = datetime.now()
+    st.session_state.bigquery_connected = True  # We have real data in BigQuery!
 
 
 class DashboardApp:

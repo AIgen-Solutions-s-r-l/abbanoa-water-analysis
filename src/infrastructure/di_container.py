@@ -27,8 +27,14 @@ from src.infrastructure.persistence.bigquery_config import BigQueryConfig
 from src.infrastructure.repositories.monitoring_node_repository import (
     BigQueryMonitoringNodeRepository,
 )
+from src.infrastructure.repositories.static_monitoring_node_repository import (
+    StaticMonitoringNodeRepository,
+)
 from src.infrastructure.repositories.sensor_reading_repository import (
     BigQuerySensorReadingRepository,
+)
+from src.infrastructure.repositories.sensor_data_repository import (
+    SensorDataRepository,
 )
 from src.infrastructure.repositories.water_network_repository import (
     BigQueryWaterNetworkRepository,
@@ -72,13 +78,14 @@ class Container(containers.DeclarativeContainer):
     )
     
     # Repositories
+    # Use SensorDataRepository for real data from sensor_data table
     sensor_reading_repository = providers.Singleton(
-        BigQuerySensorReadingRepository,
+        SensorDataRepository,
         connection=bigquery_connection,
     )
     
     monitoring_node_repository = providers.Singleton(
-        BigQueryMonitoringNodeRepository,
+        StaticMonitoringNodeRepository,
         connection=bigquery_connection,
     )
     
