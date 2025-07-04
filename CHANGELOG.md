@@ -5,7 +5,51 @@ All notable changes to the Abbanoa Water Infrastructure Monitoring System will b
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-07-04
+## [1.0.2] - 2025-07-04
+
+### Added
+
+#### Functional Scope and KPI Definitions
+- **Functional Scope Document**: Complete project scope definition with in/out scope boundaries
+- **KPI Specifications**: Detailed definitions for Flow Rate, Reservoir Level, and Pressure monitoring
+- **Pilot Districts Configuration**: Two selected districts for initial implementation
+  - Central Business District (DIST_001): 50,000 population, complex commercial network
+  - Residential North (DIST_002): 35,000 population, predictable residential patterns
+- **Sprint 0 Confirmation Document**: Stakeholder approval framework for scope lock
+
+#### Domain Value Objects
+- **KPI Value Objects**: Complete type-safe KPI system with thresholds and validation
+- **Alert Level Enumeration**: Four-tier alerting system (Normal, Warning, Critical, Emergency)
+- **KPI Registry**: Centralized registry for all KPI specifications
+- **Measurement Units**: Standardized units for all measurements (L/s, meters, bar, %)
+
+#### Configuration Management
+- **Project Settings**: Comprehensive YAML configuration for all system parameters
+- **Metrics Constants**: System-wide constants for thresholds, performance targets, and business KPIs
+- **Data Quality Requirements**: Formal specifications for data completeness and accuracy
+
+#### Predictive Analytics Framework
+- **7-Day Prediction Horizon**: Hourly resolution forecasting for all KPIs
+- **Prediction Accuracy Targets**: Flow ≥95%, Pressure ≥98%, Level ≥99%
+- **Model Performance Benchmarks**: Statistical thresholds for model validation
+
+#### Business Requirements
+- **Success Metrics**: 15% operational efficiency improvement, 50% issue detection improvement
+- **Performance Targets**: 99% system availability, ≤2 second response time
+- **Risk Assessment**: Comprehensive risk matrix with mitigation strategies
+
+### Changed
+- **Dashboard Fixes**: Resolved dataclass inheritance and numpy import issues
+- **BigQuery Integration**: Fixed QueryParameter import errors
+- **README Updates**: Added project status, success criteria, and documentation links
+
+### Technical Specifications
+- **KPI Update Frequencies**: Flow (15min), Reservoir (5min), Pressure (10min)
+- **Data Retention**: Raw data (1 year), Hourly (3 years), Daily (10 years)
+- **Validation Ranges**: Statistical bounds for all measurement types
+- **Alert Escalation**: Multi-level escalation with configurable timeouts
+
+## [1.0.1] - 2025-07-04
 
 ### Added
 
