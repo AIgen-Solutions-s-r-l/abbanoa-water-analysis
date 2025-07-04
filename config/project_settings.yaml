@@ -1,0 +1,134 @@
+# Abbanoa Water Network Optimization - Project Settings
+# Version: 1.0
+# Date: 2025-07-04
+
+project:
+  name: "Abbanoa Water Network Optimization"
+  version: "1.0.1"
+  description: "Predictive analytics and monitoring system for water distribution network"
+  
+prediction:
+  horizon:
+    duration: 7
+    unit: "days"
+    resolution: "hourly"
+    total_points: 168  # 7 days * 24 hours
+  
+  rationale:
+    - "Aligns with weekly operational planning cycles"
+    - "Sufficient for capturing demand pattern variations"
+    - "Manageable computational requirements"
+    - "Actionable timeframe for operations team"
+    - "Balances accuracy with practical utility"
+
+data_collection:
+  update_frequencies:
+    flow_rate: "15min"      # Every 15 minutes
+    reservoir_level: "5min"  # Every 5 minutes  
+    pressure: "10min"       # Every 10 minutes
+  
+  retention_policy:
+    raw_data: "1year"
+    hourly_aggregates: "3years"
+    daily_aggregates: "10years"
+  
+  quality_requirements:
+    completeness_threshold: 0.95  # 95% minimum data availability
+    max_interpolation_gap: "30min"
+    outlier_detection_sigma: 3.0
+
+kpi_thresholds:
+  flow_rate:
+    accuracy_target: 0.05      # ±5%
+    low_flow_alert: 0.10       # <10% of normal capacity
+    high_flow_alert: 0.90      # >90% of maximum capacity
+    emergency_threshold: 0.95   # >95% of maximum capacity
+  
+  reservoir_level:
+    accuracy_target: 0.02      # ±2%
+    emergency_low: 0.20        # 20% of capacity
+    low_warning: 0.30          # 30% of capacity
+    optimal_min: 0.40          # 40% of capacity
+    optimal_max: 0.85          # 85% of capacity
+    high_warning: 0.90         # 90% of capacity
+    emergency_high: 0.95       # 95% of capacity
+  
+  pressure:
+    accuracy_target: 0.02      # ±2%
+    minimum_service: 2.0       # bar
+    optimal_service: 4.5       # bar
+    maximum_service: 8.0       # bar
+    low_alert: 2.5            # bar
+    high_alert: 7.0           # bar
+    emergency_low: 1.5        # bar
+    emergency_high: 9.0       # bar
+
+system_requirements:
+  performance:
+    availability_target: 0.99   # 99% uptime
+    response_time_max: 2.0      # seconds
+    data_freshness_max: 300     # 5 minutes maximum delay
+  
+  scalability:
+    max_concurrent_users: 100
+    max_data_points_per_query: 10000
+    database_storage_limit: "1TB"
+
+monitoring:
+  alerting:
+    notification_methods:
+      - "email"
+      - "sms" 
+      - "dashboard"
+    
+    escalation_rules:
+      level_1_timeout: "15min"
+      level_2_timeout: "30min"
+      level_3_timeout: "60min"
+    
+    alert_categories:
+      - "threshold_breach"
+      - "data_quality"
+      - "system_health"
+      - "prediction_accuracy"
+
+business_requirements:
+  success_metrics:
+    operational_efficiency_improvement: 0.15  # 15%
+    maintenance_reduction: 0.10               # 10%
+    issue_detection_improvement: 0.50         # 50%
+    staff_productivity_improvement: 0.20      # 20%
+  
+  stakeholder_sla:
+    critical_issue_response: "15min"
+    standard_query_response: "2sec"
+    report_generation: "5min"
+    data_export: "30sec"
+
+deployment:
+  pilot_phase:
+    duration: "3months"
+    districts: 2
+    success_criteria:
+      - "All KPIs functioning within accuracy targets"
+      - "System availability >99%"
+      - "Stakeholder acceptance >80%"
+      - "Zero critical incidents"
+  
+  rollout_plan:
+    phase_1: "Pilot districts (Months 1-3)"
+    phase_2: "Additional 2 districts (Months 4-6)"
+    phase_3: "Full network coverage (Months 7-12)"
+
+compliance:
+  data_protection:
+    - "GDPR compliance for customer data"
+    - "Data encryption in transit and at rest"
+    - "Access logging and audit trails"
+    - "Regular security assessments"
+  
+  operational_standards:
+    - "ISO 27001 security management"
+    - "ISO 9001 quality management"
+    - "Local water utility regulations"
+    - "EU drinking water directive compliance"

@@ -24,11 +24,46 @@ src/
 
 ## 🚀 Features
 
-- **Real-time Monitoring**: Track water flow, pressure, and temperature across the network
-- **Anomaly Detection**: Statistical analysis to identify unusual patterns
+### Core Capabilities
+- **Real-time Monitoring**: Track water flow, pressure, and reservoir levels across the network
+- **Predictive Analytics**: 7-day forecasting for all critical KPIs with hourly resolution
+- **Anomaly Detection**: Statistical analysis to identify unusual patterns and potential issues
 - **Consumption Analysis**: Hourly, daily, weekly, and monthly consumption patterns
 - **Network Efficiency**: Calculate water loss and identify potential leakage zones
-- **Multiple Interfaces**: Web dashboard, CLI tools, and REST API
+- **Automated Alerting**: Multi-channel notifications for threshold breaches with escalation
+
+### KPI Monitoring
+- **Flow Rate**: Real-time monitoring with ±5% accuracy (L/s)
+- **Reservoir Levels**: Continuous level tracking with ±2% accuracy (meters)
+- **Network Pressure**: Pressure monitoring with ±2% accuracy (bar)
+- **System Efficiency**: Overall network efficiency calculations (percentage)
+
+### Interfaces
+- **Web Dashboard**: Real-time monitoring interface accessible on port 8502
+- **CLI Tools**: Command-line utilities for data analysis and system management
+- **REST API**: Programmatic access for integration with external systems
+
+### Pilot Implementation
+- **Central Business District (DIST_001)**: 50,000 population, complex commercial network
+- **Residential North (DIST_002)**: 35,000 population, predictable residential patterns
+
+## 📊 Project Status
+
+### Current Phase: Sprint 0 - Functional Scope Lock ✅
+- **Status**: Scope locked and KPIs confirmed
+- **Completion**: Pending stakeholder approval
+- **Next Phase**: Technical implementation
+
+### Success Criteria
+- **System Availability**: ≥99% uptime
+- **Prediction Accuracy**: Flow ≥95%, Pressure ≥98%, Level ≥99%
+- **Response Time**: ≤2 seconds for dashboard queries
+- **Business Impact**: 15% operational efficiency improvement
+
+### Documentation
+- [Functional Scope](docs/functional-scope.md) - Complete project scope definition
+- [KPI Definitions](docs/kpi-definitions.md) - Detailed KPI specifications
+- [Sprint 0 Confirmation](docs/sprint/sprint-0-confirmation.md) - Stakeholder approval document
 
 ## 📋 Prerequisites
 
