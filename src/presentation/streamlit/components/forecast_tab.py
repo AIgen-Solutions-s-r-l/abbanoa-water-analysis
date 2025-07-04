@@ -321,8 +321,10 @@ class ForecastTab:
         
         # Add vertical line for current time
         if historical_df is not None and not historical_df.empty:
+            # Get the last timestamp from historical data as the "now" line
+            now_timestamp = historical_df['timestamp'].max()
             fig.add_vline(
-                x=datetime.now(),
+                x=now_timestamp,
                 line_dash="dot",
                 line_color="gray",
                 annotation_text="Now",
