@@ -1,0 +1,211 @@
+# BigQuery Dataset Configuration
+# Purpose: Environment-specific configuration for BigQuery datasets and views
+# Owner: Data Engineering Team
+# Created: 2025-07-04
+
+project_settings:
+  default_location: "EU"  # Data location for compliance
+  default_partition_expiration_days: 1095  # 3 years
+  default_table_expiration_days: 3650  # 10 years
+  
+environments:
+  dev:
+    project_id: "abbanoa-dev-464816"
+    dataset_id: "water_infrastructure_dev"
+    description: "Development environment for water infrastructure data"
+    location: "EU"
+    access_control:
+      - role: "roles/bigquery.dataViewer"
+        members: ["group:data-team-dev@abbanoa.com"]
+      - role: "roles/bigquery.dataEditor" 
+        members: ["group:data-engineers@abbanoa.com"]
+    
+  staging:
+    project_id: "abbanoa-staging-464816"
+    dataset_id: "water_infrastructure_staging"
+    description: "Staging environment for water infrastructure data"
+    location: "EU"
+    access_control:
+      - role: "roles/bigquery.dataViewer"
+        members: ["group:data-team@abbanoa.com", "group:qa-team@abbanoa.com"]
+      - role: "roles/bigquery.dataEditor"
+        members: ["group:data-engineers@abbanoa.com"]
+    
+  prod:
+    project_id: "abbanoa-464816"
+    dataset_id: "water_infrastructure"
+    description: "Production water infrastructure monitoring and analytics"
+    location: "EU"
+    access_control:
+      - role: "roles/bigquery.dataViewer"
+        members: ["group:operations-team@abbanoa.com", "group:data-analysts@abbanoa.com"]
+      - role: "roles/bigquery.dataEditor"
+        members: ["serviceAccount:data-pipeline@abbanoa-464816.iam.gserviceaccount.com"]
+      - role: "roles/bigquery.admin"
+        members: ["group:data-engineers@abbanoa.com"]
+
+# View configurations
+views:
+  vw_daily_timeseries:
+    description: "Daily aggregated sensor readings with gap-filling"
+    schema_version: "1.0"
+    refresh_frequency: "daily"  # How often view is expected to be used
+    materialization:
+      enabled: false  # Set to true for better performance if needed
+      refresh_interval_hours: 24
+      partition_field: "date_utc"
+      clustering_fields: ["district_id", "metric_type"]
+    
+    performance_targets:
+      query_5_years_max_ms: 1000
+      query_month_max_ms: 100
+      query_filtered_max_ms: 500
+    
+    dependencies:
+      source_tables:
+        - "raw_data.sensor_readings"
+        - "reference.district_metadata"
+        - "reference.metric_definitions"
+      
+    monitoring:
+      enabled: true
+      alert_thresholds:
+        query_time_exceeded_ms: 2000
+        error_rate_threshold: 0.05
+        data_freshness_hours: 25
+      
+      stakeholder_notifications:
+        - "data-engineers@abbanoa.com"
+        - "operations-team@abbanoa.com"
+
+# Source table configurations
+source_tables:
+  sensor_readings:
+    project_id: "abbanoa-464816"
+    dataset_id: "raw_data"
+    table_id: "sensor_readings"
+    partition_field: "timestamp"
+    partition_type: "DATE"
+    clustering_fields: ["district_id", "metric_type"]
+    retention_days: 1095  # 3 years for raw data
+    
+  district_metadata:
+    project_id: "abbanoa-464816"
+    dataset_id: "reference"
+    table_id: "district_metadata"
+    partition_field: null
+    clustering_fields: ["district_id"]
+    retention_days: null  # Reference data kept indefinitely
+    
+  metric_definitions:
+    project_id: "abbanoa-464816"
+    dataset_id: "reference"
+    table_id: "metric_definitions"
+    partition_field: null
+    clustering_fields: ["metric_type"]
+    retention_days: null  # Reference data kept indefinitely
+
+# Data quality rules
+data_quality:
+  rules:
+    completeness:
+      min_daily_completeness: 0.95  # 95% minimum
+      max_gap_days: 3  # Alert if gap longer than 3 days
+      
+    accuracy:
+      max_anomaly_rate: 0.05  # 5% anomalies per day
+      quality_score_threshold: 0.8  # Minimum average quality score
+      
+    timeliness:
+      max_delay_hours: 2  # Data should arrive within 2 hours
+      freshness_sla_hours: 24  # Data should be fresh within 24 hours
+
+# Cost management
+cost_management:
+  daily_budget_usd: 50  # Daily query cost budget
+  monthly_budget_usd: 1500  # Monthly query cost budget
+  
+  optimization:
+    enable_query_cache: true
+    enable_partition_pruning: true
+    enable_clustering: true
+    require_partition_filter: true  # Require date filters for large queries
+    
+  alerts:
+    daily_cost_threshold_usd: 40
+    query_cost_threshold_usd: 10  # Alert for expensive individual queries
+    
+# Testing configuration  
+testing:
+  sandbox_project: "abbanoa-test-sandbox"
+  test_dataset: "water_infrastructure_test"
+  
+  test_data:
+    retention_days: 30  # Keep test data for 30 days
+    size_limit_gb: 100  # Limit test data size
+    
+  performance_benchmarks:
+    frequency: "weekly"  # Run benchmarks weekly
+    retention_days: 90  # Keep benchmark results for 90 days
+
+# Backup and disaster recovery
+backup:
+  enabled: true
+  frequency: "daily"
+  retention_days: 30
+  cross_region_backup: true
+  backup_location: "US"  # Different region for DR
+  
+disaster_recovery:
+  rpo_hours: 24  # Recovery Point Objective
+  rto_hours: 4   # Recovery Time Objective
+  failover_region: "US"
+
+# Audit and compliance
+audit:
+  log_retention_days: 2555  # 7 years for compliance
+  
+  required_labels:
+    - "environment"
+    - "team"
+    - "cost_center"
+    - "data_classification"
+    
+  data_classification:
+    - "public"
+    - "internal"
+    - "confidential"
+    - "restricted"
+
+# Integration settings
+integrations:
+  dataflow:
+    enabled: true
+    service_account: "dataflow-runner@abbanoa-464816.iam.gserviceaccount.com"
+    
+  cloud_composer:
+    enabled: true
+    dag_bucket: "abbanoa-composer-dags"
+    
+  looker:
+    enabled: true
+    connection_name: "abbanoa_bigquery"
+    
+  grafana:
+    enabled: true
+    datasource_name: "BigQuery - Abbanoa"
+
+# Notification channels
+notifications:
+  email:
+    data_engineers: "data-engineers@abbanoa.com"
+    operations_team: "operations-team@abbanoa.com"
+    management: "water-ops-management@abbanoa.com"
+    
+  slack:
+    alerts_channel: "#water-data-alerts"
+    general_channel: "#water-operations"
+    
+  pagerduty:
+    service_key: "PAGERDUTY_SERVICE_KEY"  # Set via environment variable
+    escalation_policy: "Water Operations Escalation"
