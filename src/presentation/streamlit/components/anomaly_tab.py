@@ -180,10 +180,10 @@ class AnomalyTab:
         # Get real anomaly data
         anomaly_results = self._fetch_anomalies()
         
-        if anomaly_results and anomaly_results.anomalies:
+        if anomaly_results:
             # Convert to display format
             anomalies = []
-            for anomaly in anomaly_results.anomalies[:10]:  # Show latest 10
+            for anomaly in anomaly_results[:10]:  # Show latest 10
                 severity_emoji = {
                     'critical': '🔴 High',
                     'high': '🔴 High', 
@@ -196,8 +196,8 @@ class AnomalyTab:
                     'Node': anomaly.node_id,
                     'Type': anomaly.anomaly_type,
                     'Severity': severity_emoji,
-                    'Status': '⚠️ Active' if anomaly.is_active else '✅ Resolved',
-                    'Description': anomaly.description or f'{anomaly.metric}: {anomaly.actual_value:.2f} (expected: {anomaly.expected_value:.2f})'
+                    'Status': '⚠️ Active',  # All recent anomalies are considered active
+                    'Description': anomaly.description or f'{anomaly.measurement_type}: {anomaly.actual_value:.2f} (expected range: {anomaly.expected_range[0]:.2f} - {anomaly.expected_range[1]:.2f})'
                 })
             
             df = pd.DataFrame(anomalies)
@@ -301,17 +301,17 @@ class AnomalyTab:
         try:
             anomaly_results = self._fetch_anomalies()
             
-            if anomaly_results and anomaly_results.anomalies:
+            if anomaly_results:
                 # Count anomalies by severity
-                critical_count = sum(1 for a in anomaly_results.anomalies if a.severity.lower() in ['critical', 'high'])
-                total_anomalies = len(anomaly_results.anomalies)
+                critical_count = sum(1 for a in anomaly_results if a.severity.lower() in ['critical', 'high'])
+                total_anomalies = len(anomaly_results)
                 
                 # Count affected nodes
-                affected_nodes = len(set(a.node_id for a in anomaly_results.anomalies))
+                affected_nodes = len(set(a.node_id for a in anomaly_results))
                 
                 # Count today's anomalies
                 today = datetime.now().date()
-                new_today = sum(1 for a in anomaly_results.anomalies if a.timestamp.date() == today)
+                new_today = sum(1 for a in anomaly_results if a.timestamp.date() == today)
                 
                 return {
                     'total_anomalies': total_anomalies,
@@ -336,7 +336,7 @@ class AnomalyTab:
             'avg_resolution': '45 min'
         }
     
-    def _fetch_anomalies(self) -> Optional[AnomalyDetectionResultDTO]:
+    def _fetch_anomalies(self) -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
         try:
             # Use cache if available and recent (5 minutes)
@@ -344,19 +344,15 @@ class AnomalyTab:
                 if datetime.now() - self._cache_time < timedelta(minutes=5):
                     return self._anomaly_cache
             
-            # Calculate time range
-            end_time = datetime.now()
-            start_time = end_time - timedelta(hours=24)
-            
             # Run the use case asynchronously
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
             result = loop.run_until_complete(
                 self.detect_anomalies_use_case.execute(
-                    start_time=start_time,
-                    end_time=end_time,
-                    node_ids=None  # Check all nodes
+                    node_ids=None,  # Check all nodes
+                    time_window_hours=24,
+                    notify_on_critical=False  # Don't send notifications from dashboard
                 )
             )
             

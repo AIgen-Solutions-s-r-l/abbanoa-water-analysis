@@ -232,14 +232,14 @@ class OverviewTab:
             )
             
             # Extract metrics from result
-            if result and result.overall_efficiency:
+            if result and result.efficiency_percentage:
                 return {
-                    'active_nodes': len(result.node_efficiencies) if result.node_efficiencies else 12,
-                    'total_flow': result.total_flow_processed or 1234,
+                    'active_nodes': len(result.node_contributions) if result.node_contributions else 12,
+                    'total_flow': result.total_output_volume or 1234,
                     'flow_delta': 12.0,  # Would calculate from historical data
                     'avg_pressure': 4.2,  # Would come from sensor readings
                     'pressure_delta': -0.1,
-                    'efficiency': result.overall_efficiency * 100,
+                    'efficiency': result.efficiency_percentage,
                     'efficiency_delta': 2.1  # Would calculate from historical data
                 }
         except Exception as e:
