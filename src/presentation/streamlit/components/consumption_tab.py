@@ -11,15 +11,19 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from typing import List
+from typing import List, Optional
+import asyncio
+
+from src.application.use_cases.analyze_consumption_patterns import AnalyzeConsumptionPatternsUseCase
+from src.application.dto.analysis_results_dto import ConsumptionPatternDTO
 
 
 class ConsumptionTab:
     """Consumption patterns analysis tab."""
     
-    def __init__(self):
-        """Initialize the consumption tab."""
-        pass
+    def __init__(self, analyze_consumption_use_case: AnalyzeConsumptionPatternsUseCase):
+        """Initialize the consumption tab with use case."""
+        self.analyze_consumption_use_case = analyze_consumption_use_case
     
     def render(self, time_range: str, selected_nodes: List[str]) -> None:
         """
@@ -91,25 +95,31 @@ class ConsumptionTab:
     
     def _render_consumption_trends(self, time_range: str, selected_nodes: List[str]) -> None:
         """Render consumption trends chart."""
-        # Generate time series data
-        periods, freq = self._get_time_params(time_range)
-        time_data = pd.date_range(end=datetime.now(), periods=periods, freq=freq)
+        # Get real consumption data
+        consumption_data = self._get_consumption_data(time_range, selected_nodes)
         
-        # Generate consumption data
-        data = {'timestamp': time_data}
-        
-        nodes = ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"] if "All Nodes" in selected_nodes else selected_nodes
-        
-        for node in nodes:
-            # Create realistic consumption pattern
-            base = np.random.uniform(80, 120)
-            daily_pattern = np.array([self._get_hourly_factor(t.hour) for t in time_data])
-            trend = np.linspace(0, 10, len(time_data))
-            noise = np.random.normal(0, 5, len(time_data))
+        if consumption_data is not None and not consumption_data.empty:
+            df = consumption_data
+        else:
+            # Fallback to generated data
+            periods, freq = self._get_time_params(time_range)
+            time_data = pd.date_range(end=datetime.now(), periods=periods, freq=freq)
             
-            data[node] = base * daily_pattern + trend + noise
-        
-        df = pd.DataFrame(data)
+            # Generate consumption data
+            data = {'timestamp': time_data}
+            
+            nodes = ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"] if "All Nodes" in selected_nodes else selected_nodes
+            
+            for node in nodes:
+                # Create realistic consumption pattern
+                base = np.random.uniform(80, 120)
+                daily_pattern = np.array([self._get_hourly_factor(t.hour) for t in time_data])
+                trend = np.linspace(0, 10, len(time_data))
+                noise = np.random.normal(0, 5, len(time_data))
+                
+                data[node] = base * daily_pattern + trend + noise
+            
+            df = pd.DataFrame(data)
         
         # Create line chart
         fig = px.line(
@@ -354,3 +364,55 @@ class ConsumptionTab:
             "Last Week": (168, 'H')
         }
         return params.get(time_range, (48, '30min'))
+    
+    def _get_consumption_data(self, time_range: str, selected_nodes: List[str]) -> Optional[pd.DataFrame]:
+        """Get real consumption data from use case."""
+        try:
+            # Calculate time delta
+            time_deltas = {
+                "Last 6 Hours": timedelta(hours=6),
+                "Last 24 Hours": timedelta(hours=24),
+                "Last 3 Days": timedelta(days=3),
+                "Last Week": timedelta(days=7)
+            }
+            
+            delta = time_deltas.get(time_range, timedelta(hours=24))
+            end_time = datetime.now()
+            start_time = end_time - delta
+            
+            # Get node IDs
+            node_ids = None
+            if "All Nodes" not in selected_nodes:
+                node_ids = selected_nodes
+            
+            # Run the use case
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(
+                self.analyze_consumption_use_case.execute(
+                    start_time=start_time,
+                    end_time=end_time,
+                    node_ids=node_ids,
+                    pattern_type='daily'
+                )
+            )
+            
+            if result and result.patterns:
+                # Convert patterns to DataFrame
+                data = {'timestamp': []}
+                for pattern in result.patterns:
+                    if pattern.node_id not in data:
+                        data[pattern.node_id] = []
+                    # Add consumption values
+                    for i, val in enumerate(pattern.consumption_values):
+                        if i >= len(data['timestamp']):
+                            data['timestamp'].append(start_time + timedelta(hours=i))
+                        data[pattern.node_id].append(val)
+                
+                return pd.DataFrame(data)
+                
+        except Exception as e:
+            st.warning(f"Using demo data: {str(e)}")
+        
+        return None

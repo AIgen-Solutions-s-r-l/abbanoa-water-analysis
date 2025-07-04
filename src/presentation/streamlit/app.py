@@ -9,12 +9,21 @@ import streamlit as st
 from datetime import datetime
 import asyncio
 from typing import Optional
+from dependency_injector.wiring import Provide, inject
+
+# Import DI container
+from src.infrastructure.di_container import Container
 
 # Import components
 from src.presentation.streamlit.components.forecast_tab import ForecastTab
 from src.presentation.streamlit.components.sidebar_filters import SidebarFilters
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
 from src.presentation.streamlit.config.theme import apply_custom_theme
+
+# Import use cases
+from src.application.use_cases.analyze_consumption_patterns import AnalyzeConsumptionPatternsUseCase
+from src.application.use_cases.detect_network_anomalies import DetectNetworkAnomaliesUseCase
+from src.application.use_cases.calculate_network_efficiency import CalculateNetworkEfficiencyUseCase
 
 # Page configuration
 st.set_page_config(
@@ -44,8 +53,18 @@ if 'initialized' not in st.session_state:
 class DashboardApp:
     """Main dashboard application class."""
     
-    def __init__(self):
-        """Initialize the dashboard application."""
+    @inject
+    def __init__(
+        self,
+        analyze_consumption_use_case: AnalyzeConsumptionPatternsUseCase = Provide[Container.analyze_consumption_patterns_use_case],
+        detect_anomalies_use_case: DetectNetworkAnomaliesUseCase = Provide[Container.detect_network_anomalies_use_case],
+        calculate_efficiency_use_case: CalculateNetworkEfficiencyUseCase = Provide[Container.calculate_network_efficiency_use_case],
+    ):
+        """Initialize the dashboard application with injected dependencies."""
+        self.analyze_consumption_use_case = analyze_consumption_use_case
+        self.detect_anomalies_use_case = detect_anomalies_use_case
+        self.calculate_efficiency_use_case = calculate_efficiency_use_case
+        
         self.data_fetcher = DataFetcher()
         self.sidebar_filters = SidebarFilters()
         self.forecast_tab = ForecastTab(self.data_fetcher)
@@ -87,11 +106,11 @@ class DashboardApp:
         from src.presentation.streamlit.components.efficiency_tab import EfficiencyTab
         from src.presentation.streamlit.components.reports_tab import ReportsTab
         
-        # Initialize old dashboard components
-        overview_tab = OverviewTab()
-        anomaly_tab = AnomalyTab()
-        consumption_tab = ConsumptionTab()
-        efficiency_tab = EfficiencyTab()
+        # Initialize old dashboard components with use cases
+        overview_tab = OverviewTab(self.calculate_efficiency_use_case)
+        anomaly_tab = AnomalyTab(self.detect_anomalies_use_case)
+        consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
+        efficiency_tab = EfficiencyTab(self.calculate_efficiency_use_case)
         reports_tab = ReportsTab()
         
         # Create tabs - combining new and old functionality
@@ -164,6 +183,23 @@ class DashboardApp:
 
 def main():
     """Main entry point for the Streamlit application."""
+    # Initialize DI container
+    container = Container()
+    
+    # Configure container
+    container.config.bigquery.project_id.from_env("BIGQUERY_PROJECT_ID", default="abbanoa-464816")
+    container.config.bigquery.dataset_id.from_env("BIGQUERY_DATASET_ID", default="water_infrastructure")
+    container.config.bigquery.location.from_env("BIGQUERY_LOCATION", default="EU")
+    container.config.bigquery.credentials_path.from_env("GOOGLE_APPLICATION_CREDENTIALS", default=None)
+    
+    container.config.anomaly_detection.z_score_threshold.from_env("ANOMALY_Z_SCORE", default=3.0)
+    container.config.anomaly_detection.min_data_points.from_env("ANOMALY_MIN_POINTS", default=10)
+    container.config.anomaly_detection.rolling_window_hours.from_env("ANOMALY_WINDOW_HOURS", default=24)
+    
+    # Wire the container
+    container.wire(modules=[__name__])
+    
+    # Create and run app
     app = DashboardApp()
     app.run()
 

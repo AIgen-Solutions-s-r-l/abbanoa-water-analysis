@@ -11,14 +11,21 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import asyncio
+from typing import Optional
+
+from src.application.use_cases.calculate_network_efficiency import CalculateNetworkEfficiencyUseCase
+from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO
 
 
 class EfficiencyTab:
     """Network efficiency analysis tab."""
     
-    def __init__(self):
-        """Initialize the efficiency tab."""
-        pass
+    def __init__(self, calculate_efficiency_use_case: CalculateNetworkEfficiencyUseCase):
+        """Initialize the efficiency tab with use case."""
+        self.calculate_efficiency_use_case = calculate_efficiency_use_case
+        self._efficiency_cache = None
+        self._cache_time = None
     
     def render(self, time_range: str) -> None:
         """
@@ -29,20 +36,24 @@ class EfficiencyTab:
         """
         st.header("🔗 Network Efficiency Analysis")
         
+        # Get real efficiency data
+        efficiency_data = self._get_efficiency_data(time_range)
+        
         # Key efficiency metrics
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             st.metric(
                 label="Overall Efficiency",
-                value="92.5%",
+                value=f"{efficiency_data.overall_efficiency:.1f}%",
                 delta="+2.1% vs last month"
             )
         
         with col2:
+            water_loss = 100 - efficiency_data.overall_efficiency
             st.metric(
                 label="Water Loss Rate",
-                value="7.5%",
+                value=f"{water_loss:.1f}%",
                 delta="-2.1% improvement",
                 delta_color="inverse"
             )
@@ -50,7 +61,7 @@ class EfficiencyTab:
         with col3:
             st.metric(
                 label="Energy Efficiency",
-                value="0.42 kWh/m³",
+                value=f"{efficiency_data.energy_efficiency:.2f} kWh/m³",
                 delta="-0.03 kWh/m³"
             )
         
@@ -367,3 +378,54 @@ class EfficiencyTab:
             "Last Week": (168, 'H')
         }
         return params.get(time_range, (48, '30min'))
+    
+    def _get_efficiency_data(self, time_range: str) -> NetworkEfficiencyResultDTO:
+        """Get real efficiency data from use case."""
+        try:
+            # Use cache if available and recent
+            if self._efficiency_cache and self._cache_time:
+                if datetime.now() - self._cache_time < timedelta(minutes=5):
+                    return self._efficiency_cache
+            
+            # Calculate time delta
+            time_deltas = {
+                "Last 6 Hours": timedelta(hours=6),
+                "Last 24 Hours": timedelta(hours=24),
+                "Last 3 Days": timedelta(days=3),
+                "Last Week": timedelta(days=7)
+            }
+            
+            delta = time_deltas.get(time_range, timedelta(hours=24))
+            end_time = datetime.now()
+            start_time = end_time - delta
+            
+            # Run the use case
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(
+                self.calculate_efficiency_use_case.execute(
+                    start_time=start_time,
+                    end_time=end_time
+                )
+            )
+            
+            # Cache the result
+            self._efficiency_cache = result
+            self._cache_time = datetime.now()
+            
+            return result
+            
+        except Exception as e:
+            st.warning(f"Using demo data: {str(e)}")
+            
+            # Return default efficiency data
+            from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO
+            return NetworkEfficiencyResultDTO(
+                overall_efficiency=92.5,
+                water_loss_percentage=7.5,
+                energy_efficiency=0.42,
+                total_flow_processed=1234.0,
+                node_efficiencies={},
+                recommendations=[]
+            )

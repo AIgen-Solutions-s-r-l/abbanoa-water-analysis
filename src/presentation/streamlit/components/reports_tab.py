@@ -19,6 +19,8 @@ class ReportsTab:
     
     def __init__(self):
         """Initialize the reports tab."""
+        # TODO: In future, inject repositories for direct data export
+        # For now, reports use data from other tabs' use cases
         pass
     
     def render(self) -> None:
