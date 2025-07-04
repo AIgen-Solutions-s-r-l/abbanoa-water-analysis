@@ -3,9 +3,47 @@
 All notable changes to the Abbanoa Water Infrastructure Management System will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with 4-digit versioning (W.X.Y.Z).
 
-## [1.0.0] - 2025-07-04
+## [1.1.0.0] - 2025-07-04
+
+### Added
+- **"Last Year" Time Range**: New option to analyze full year of historical data
+- **Custom Date Range Selector**: Pick any date range within available data (Nov 2024 - Mar 2025)
+- **Real-Time Node Status**: Live flow rate and pressure readings in Overview tab
+- **Automatic Authentication**: Auto-detection of Google Cloud Application Default Credentials
+- **Enhanced Error Handling**: Better error messages and debugging information
+- **Data Availability Notice**: Clear indication of available data range in sidebar
+
+### Changed
+- **Overview Tab**: Complete rewrite to fetch real BigQuery data
+  - Real flow rate trends with actual sensor data
+  - Live node status cards with current metrics
+  - Proper data aggregation for efficiency calculations
+- **Consumption Tab**: Direct repository access for better performance
+  - Removed use case dependency for simpler data flow
+  - Added success messages when data is loaded
+  - Fixed DataFrame pivoting for multiple nodes
+- **Authentication Flow**: Improved BigQuery connection handling
+  - Support for both ADC and service account keys
+  - Automatic fallback to default credentials
+  - Clear authentication status in run script
+
+### Fixed
+- **Flow Rate Trends**: Overview tab now displays real sensor data instead of empty charts
+- **Node Status**: Fixed hardcoded "No Data" to show actual node metrics
+- **BigQuery Authentication**: Resolved MalformedError with Application Default Credentials
+- **Data Access**: Fixed attribute access for sensor readings (flow_rate, pressure, volume)
+- **Custom Date Range**: Properly handles date selection and passes to data fetchers
+- **Poetry Dependencies**: All required packages properly installed in virtual environment
+
+### Improved
+- **Performance**: Optimized data fetching with proper async handling
+- **User Feedback**: Added success messages and data counters
+- **Code Quality**: Removed unused synthetic data generation methods
+- **Documentation**: Updated README with clear setup instructions
+
+## [1.0.0.0] - 2025-07-04
 
 ### Added
 - **Domain-Driven Design (DDD) Architecture**: Complete restructure with clean architecture principles

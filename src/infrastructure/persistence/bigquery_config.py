@@ -33,14 +33,23 @@ class BigQueryConnection:
     def client(self) -> bigquery.Client:
         """Get or create BigQuery client."""
         if self._client is None:
-            if self.config.credentials_path:
-                credentials = service_account.Credentials.from_service_account_file(
-                    self.config.credentials_path
-                )
-                self._client = bigquery.Client(
-                    credentials=credentials,
-                    project=self.config.project_id
-                )
+            # Check if credentials_path points to Application Default Credentials
+            if self.config.credentials_path and "application_default_credentials.json" in self.config.credentials_path:
+                # Use default credentials for ADC
+                self._client = bigquery.Client(project=self.config.project_id)
+            elif self.config.credentials_path:
+                # Use service account credentials
+                try:
+                    credentials = service_account.Credentials.from_service_account_file(
+                        self.config.credentials_path
+                    )
+                    self._client = bigquery.Client(
+                        credentials=credentials,
+                        project=self.config.project_id
+                    )
+                except Exception:
+                    # Fall back to default credentials if service account fails
+                    self._client = bigquery.Client(project=self.config.project_id)
             else:
                 # Use default credentials
                 self._client = bigquery.Client(project=self.config.project_id)

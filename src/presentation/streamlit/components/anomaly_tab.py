@@ -97,8 +97,16 @@ class AnomalyTab:
     def _render_anomaly_timeline(self, time_range: str) -> None:
         """Render anomaly timeline visualization."""
         # Generate sample anomaly data
-        periods, freq = self._get_time_params(time_range)
-        time_data = pd.DatetimeIndex([])
+        if time_range == "Custom Range":
+            # Custom range - no synthetic data
+            time_data = pd.DatetimeIndex([])
+        else:
+            params = self._get_time_params(time_range)
+            if params:
+                periods, freq = params
+            else:
+                periods, freq = 48, '30min'  # Default
+            time_data = pd.DatetimeIndex([])
         
         # Create anomaly events
         anomalies = []
@@ -272,7 +280,9 @@ class AnomalyTab:
             "Last 6 Hours": (12, '30min'),
             "Last 24 Hours": (48, '30min'),
             "Last 3 Days": (72, 'H'),
-            "Last Week": (168, 'H')
+            "Last Week": (168, 'H'),
+            "Last Month": (720, 'H'),  # 30 days
+            "Custom Range": None  # Will be handled separately
         }
         return params.get(time_range, (48, '30min'))
     

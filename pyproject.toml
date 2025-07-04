@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "abbanoa-water-infrastructure"
-version = "1.0.0"
+version = "1.1.0.0"
 description = "Water infrastructure monitoring and analysis system using Domain-Driven Design"
 authors = ["Alessio Rocchi <rocchi.b.a@gmail.com>"]
 readme = "README.md"

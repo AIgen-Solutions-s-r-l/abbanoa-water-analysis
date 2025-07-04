@@ -336,59 +336,137 @@ class ConsumptionTab:
             "Last 6 Hours": (12, '30min'),
             "Last 24 Hours": (48, '30min'),
             "Last 3 Days": (72, 'H'),
-            "Last Week": (168, 'H')
+            "Last Week": (168, 'H'),
+            "Last Month": (720, 'H'),  # 30 days
+            "Last Year": (8760, 'H'),  # 365 days
+            "Custom Range": None  # Will be handled separately
         }
         return params.get(time_range, (48, '30min'))
     
     def _get_consumption_data(self, time_range: str, selected_nodes: List[str]) -> Optional[pd.DataFrame]:
-        """Get real consumption data from use case."""
+        """Get real consumption data directly from repository."""
         try:
             # Calculate time delta
             time_deltas = {
                 "Last 6 Hours": timedelta(hours=6),
                 "Last 24 Hours": timedelta(hours=24),
                 "Last 3 Days": timedelta(days=3),
-                "Last Week": timedelta(days=7)
+                "Last Week": timedelta(days=7),
+                "Last Month": timedelta(days=30),
+                "Last Year": timedelta(days=365)
             }
             
-            delta = time_deltas.get(time_range, timedelta(hours=24))
-            end_time = None
-            start_time = None
+            # Handle custom date range
+            if time_range == "Custom Range" and hasattr(st.session_state, 'custom_date_range'):
+                start_date, end_date = st.session_state.custom_date_range
+                # Convert dates to datetime
+                start_time = datetime.combine(start_date, datetime.min.time())
+                end_time = datetime.combine(end_date, datetime.max.time())
+            else:
+                delta = time_deltas.get(time_range, timedelta(hours=24))
+                # For now, use a fixed date range within our data
+                end_time = datetime(2025, 3, 15, 0, 0, 0)  # A date within our data range
+                start_time = end_time - delta
             
-            # Get node IDs
-            node_ids = None
-            if "All Nodes" not in selected_nodes:
-                node_ids = selected_nodes
+            # Get data directly from repository
+            from src.infrastructure.di_container import Container
+            from uuid import UUID
             
-            # Run the use case
+            container = Container()
+            container.config.from_dict({
+                'bigquery': {
+                    'project_id': 'abbanoa-464816',
+                    'dataset_id': 'water_infrastructure',
+                    'credentials_path': None,
+                    'location': 'US'
+                }
+            })
+            
+            sensor_repo = container.sensor_reading_repository()
+            
+            # Define node mappings
+            node_mapping = {
+                "Sant'Anna": UUID('00000000-0000-0000-0000-000000000001'),
+                "Seneca": UUID('00000000-0000-0000-0000-000000000002'), 
+                "Selargius Tank": UUID('00000000-0000-0000-0000-000000000003')
+            }
+            
+            # Determine which nodes to fetch
+            if "All Nodes" in selected_nodes:
+                nodes_to_fetch = list(node_mapping.keys())
+            else:
+                nodes_to_fetch = [node for node in selected_nodes if node in node_mapping]
+            
+            if not nodes_to_fetch:
+                st.warning("No valid nodes selected")
+                return None
+            
+            # Fetch data for each node
+            all_data = []
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-            result = loop.run_until_complete(
-                self.analyze_consumption_use_case.execute(
-                    start_time=start_time,
-                    end_time=end_time,
-                    node_ids=node_ids,
-                    pattern_type='daily'
-                )
-            )
+            for node_name in nodes_to_fetch:
+                node_id = node_mapping[node_name]
+                try:
+                    readings = loop.run_until_complete(
+                        sensor_repo.get_by_node_id(
+                            node_id=node_id,
+                            start_time=start_time,
+                            end_time=end_time
+                        )
+                    )
+                    
+                    for reading in readings:
+                        # Handle both value objects and raw values
+                        flow_val = reading.flow_rate
+                        if hasattr(flow_val, 'value'):
+                            flow_val = flow_val.value
+                        elif flow_val is None:
+                            flow_val = 0
+                            
+                        vol_val = reading.volume  
+                        if hasattr(vol_val, 'value'):
+                            vol_val = vol_val.value
+                        elif vol_val is None:
+                            vol_val = 0
+                            
+                        all_data.append({
+                            'timestamp': reading.timestamp,
+                            'node_name': node_name,
+                            'flow_rate': float(flow_val),
+                            'volume': float(vol_val)
+                        })
+                        
+                except Exception as e:
+                    st.warning(f"Error fetching data for {node_name}: {str(e)}")
+                    continue
             
-            if result and result.patterns:
-                # Convert patterns to DataFrame
-                data = {'timestamp': []}
-                for pattern in result.patterns:
-                    if pattern.node_id not in data:
-                        data[pattern.node_id] = []
-                    # Add consumption values
-                    for i, val in enumerate(pattern.consumption_values):
-                        if i >= len(data['timestamp']):
-                            data['timestamp'].append(start_time + timedelta(hours=i))
-                        data[pattern.node_id].append(val)
-                
-                return pd.DataFrame(data)
+            if not all_data:
+                st.info(f"No data found for the selected time range ({start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')})")
+                return None
+            
+            # Convert to DataFrame and pivot
+            df = pd.DataFrame(all_data)
+            df = df.pivot_table(
+                index='timestamp', 
+                columns='node_name', 
+                values='flow_rate',
+                aggfunc='mean'
+            ).reset_index()
+            
+            # Fill NaN values with 0
+            df = df.fillna(0)
+            
+            st.success(f"✅ Found {len(all_data)} readings across {len(nodes_to_fetch)} nodes")
+            
+            return df
                 
         except Exception as e:
-            # Silently fall back to demo data
-            pass
+            # Show specific error for debugging
+            st.error(f"Error fetching consumption data: {str(e)}")
+            st.info("Possible causes: BigQuery not connected, no data in selected range, or missing credentials.")
+            import traceback
+            st.code(traceback.format_exc())
         
         return None

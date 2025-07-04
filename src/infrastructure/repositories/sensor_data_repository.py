@@ -50,9 +50,16 @@ class SensorDataRepository(ISensorReadingRepository):
         
         params = []
         
-        if str(node_id) in ['node-santanna', 'node-seneca', 'node-serbatoio']:
+        # Map UUID to node_id string used in BigQuery
+        node_mapping = {
+            '00000000-0000-0000-0000-000000000001': 'node-santanna',
+            '00000000-0000-0000-0000-000000000002': 'node-seneca', 
+            '00000000-0000-0000-0000-000000000003': 'node-serbatoio'
+        }
+        
+        if str(node_id) in node_mapping:
             query += " AND node_id = @node_id"
-            params.append(bigquery.ScalarQueryParameter("node_id", "STRING", str(node_id)))
+            params.append(bigquery.ScalarQueryParameter("node_id", "STRING", node_mapping[str(node_id)]))
         
         if start_time:
             query += " AND timestamp >= @start_time"
@@ -76,10 +83,21 @@ class SensorDataRepository(ISensorReadingRepository):
         
         # Convert to SensorReading entities
         readings = []
+        
+        # Reverse mapping from node_id string to UUID
+        uuid_mapping = {
+            'node-santanna': UUID('00000000-0000-0000-0000-000000000001'),
+            'node-seneca': UUID('00000000-0000-0000-0000-000000000002'),
+            'node-serbatoio': UUID('00000000-0000-0000-0000-000000000003')
+        }
+        
         for row in results:
+            # Map node_id back to UUID
+            actual_node_id = uuid_mapping.get(row.node_id, UUID('00000000-0000-0000-0000-000000000001'))
+            
             # Create a minimal SensorReading
             reading = SensorReading(
-                node_id=UUID('00000000-0000-0000-0000-000000000001'),  # Dummy UUID
+                node_id=actual_node_id,
                 sensor_type='multi',
                 timestamp=row.timestamp,
                 temperature=row.temperature,
@@ -135,9 +153,20 @@ class SensorDataRepository(ISensorReadingRepository):
         
         # Convert to SensorReading entities
         readings = []
+        
+        # Reverse mapping from node_id string to UUID
+        uuid_mapping = {
+            'node-santanna': UUID('00000000-0000-0000-0000-000000000001'),
+            'node-seneca': UUID('00000000-0000-0000-0000-000000000002'),
+            'node-serbatoio': UUID('00000000-0000-0000-0000-000000000003')
+        }
+        
         for row in results:
+            # Map node_id back to UUID
+            actual_node_id = uuid_mapping.get(row.node_id, UUID('00000000-0000-0000-0000-000000000001'))
+            
             reading = SensorReading(
-                node_id=UUID('00000000-0000-0000-0000-000000000001'),
+                node_id=actual_node_id,
                 sensor_type='multi',
                 timestamp=row.timestamp,
                 temperature=row.temperature,

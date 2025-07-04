@@ -3,12 +3,17 @@
 ## Overview
 Enterprise-grade water infrastructure monitoring and analytics platform for Abbanoa, featuring real-time sensor data processing, ML-powered forecasting, and integrated dashboards. Built with **Domain-Driven Design (DDD)** architecture for scalability and maintainability.
 
-### 🚀 Latest Release: v1.0.0
-- **DDD Architecture**: Complete restructure with clean architecture principles
-- **Integrated Dashboard**: Unified Streamlit dashboard with real-time monitoring
-- **BigQuery Integration**: Direct connection to production data warehouse
-- **No Synthetic Data**: Pure real-data visualization (November 2024 - March 2025)
-- **Multi-layer Architecture**: Presentation, Application, Domain, and Infrastructure layers
+### 🚀 Latest Release: v1.1.0.0
+- **Real-Time Data Integration**: Complete BigQuery integration with live sensor data
+- **Enhanced Dashboard**: 
+  - Fixed flow rate trends visualization in Overview tab
+  - Real node status with live metrics (flow, pressure)
+  - Consumption patterns with actual historical data
+  - Custom date range selector for historical analysis
+  - Added "Last Year" time range option
+- **Authentication**: Automatic Google Cloud credentials detection
+- **Performance**: Optimized data fetching with proper caching
+- **Data Coverage**: Full access to 19,866+ sensor readings (Nov 2024 - Mar 2025)
 
 ## System Architecture
 
@@ -222,11 +227,17 @@ flowchart TD
 # Required software
 - Python 3.12+
 - Poetry (dependency management)
-- Google Cloud SDK
+- Google Cloud SDK (for authentication)
 - Git
 
-# Environment variables
-export GOOGLE_APPLICATION_CREDENTIALS="path/to/credentials.json"
+# BigQuery Authentication (choose one method):
+# Method 1: Application Default Credentials (recommended for development)
+gcloud auth application-default login
+
+# Method 2: Service Account Key (recommended for production)
+export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
+
+# BigQuery configuration (automatically set by run_dashboard.sh)
 export BIGQUERY_PROJECT_ID="abbanoa-464816"
 export BIGQUERY_DATASET_ID="water_infrastructure"
 ```
@@ -247,14 +258,45 @@ gcloud config set project abbanoa-464816
 
 ### Running the Dashboard
 ```bash
-# Using the convenience script
+# Using the convenience script (recommended)
 ./run_dashboard.sh
 
-# Or directly with streamlit
-poetry run streamlit run src/presentation/streamlit/app.py
+# The script automatically:
+# - Detects and uses Google Cloud credentials
+# - Sets BigQuery environment variables
+# - Runs with poetry environment
+
+# Or manually with streamlit
+poetry run streamlit run src/presentation/streamlit/app.py --server.port 8502
 
 # Access at http://localhost:8502
 ```
+
+## Dashboard Usage
+
+### Viewing Real Data
+1. **Select Time Range**: Choose from preset options or use "Custom Range"
+   - Last 6 Hours, 24 Hours, 3 Days, Week, Month, **Year** (NEW!)
+   - Custom Range: Select any dates between Nov 13, 2024 - Mar 31, 2025
+
+2. **Monitor Nodes**: 
+   - Sant'Anna: Main distribution node (80-110 L/s flow rate)
+   - Seneca: Secondary node with pressure monitoring (4.5 bar avg)
+   - Selargius Tank: Storage facility (12-35 L/s flow rate)
+
+3. **Dashboard Tabs**:
+   - **Overview**: Real-time metrics, flow trends, node status
+   - **Forecast**: ML predictions for next 7 days
+   - **Anomaly Detection**: Real-time anomaly monitoring
+   - **Consumption Patterns**: Historical analysis with actual data
+   - **Network Efficiency**: Performance metrics and KPIs
+   - **Reports**: Generate and export reports
+
+### Key Features
+- ✅ **Real BigQuery Data**: No synthetic data - only actual sensor readings
+- ✅ **Live Node Status**: See current flow rates and pressure
+- ✅ **Custom Date Ranges**: Analyze any historical period
+- ✅ **Auto-refresh**: Optional 5-minute refresh for monitoring
 
 ### Running Tests
 ```bash

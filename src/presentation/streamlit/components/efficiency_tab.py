@@ -345,7 +345,9 @@ class EfficiencyTab:
             "Last 6 Hours": (12, '30min'),
             "Last 24 Hours": (48, '30min'),
             "Last 3 Days": (72, 'H'),
-            "Last Week": (168, 'H')
+            "Last Week": (168, 'H'),
+            "Last Month": (720, 'H'),  # 30 days
+            "Custom Range": None  # Will be handled separately
         }
         return params.get(time_range, (48, '30min'))
     
@@ -362,7 +364,9 @@ class EfficiencyTab:
                 "Last 6 Hours": timedelta(hours=6),
                 "Last 24 Hours": timedelta(hours=24),
                 "Last 3 Days": timedelta(days=3),
-                "Last Week": timedelta(days=7)
+                "Last Week": timedelta(days=7),
+                "Last Month": timedelta(days=30),
+                "Last Year": timedelta(days=365)
             }
             
             delta = time_deltas.get(time_range, timedelta(hours=24))

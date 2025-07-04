@@ -7,6 +7,7 @@ and horizon selectors that update without page reloads.
 
 import streamlit as st
 from typing import Dict, List, Tuple, Any
+from datetime import datetime, date
 
 
 class SidebarFilters:
@@ -43,11 +44,54 @@ class SidebarFilters:
             # Time range selection
             time_range = st.selectbox(
                 "Time Range",
-                ["Last 6 Hours", "Last 24 Hours", "Last 3 Days", "Last Week"],
+                ["Last 6 Hours", "Last 24 Hours", "Last 3 Days", "Last Week", "Last Month", "Last Year", "Custom Range"],
                 index=1,
                 key="time_range",
                 help="Select time range for overview and analysis tabs"
             )
+            
+            # Custom date range selector
+            if time_range == "Custom Range":
+                col1, col2 = st.columns(2)
+                with col1:
+                    start_date = st.date_input(
+                        "Start Date",
+                        value=None,
+                        min_value=None,
+                        max_value=None,
+                        key="custom_start_date",
+                        help="Select start date for custom range"
+                    )
+                with col2:
+                    end_date = st.date_input(
+                        "End Date",
+                        value=None,
+                        min_value=None,
+                        max_value=None,
+                        key="custom_end_date",
+                        help="Select end date for custom range"
+                    )
+                
+                # Store custom dates in session state
+                if start_date and end_date:
+                    st.session_state.custom_date_range = (start_date, end_date)
+                    if start_date > end_date:
+                        st.error("Start date must be before end date")
+                else:
+                    st.info("Please select both start and end dates")
+            
+            # Data availability notice
+            with st.expander("📅 Data Availability"):
+                st.info(
+                    """
+                    **Available Data Range:**
+                    - Start: November 13, 2024
+                    - End: March 31, 2025
+                    
+                    Data is available in 30-minute intervals
+                    from Selargius monitoring nodes.
+                    """
+                )
             
             # Node selection
             selected_nodes = st.multiselect(
