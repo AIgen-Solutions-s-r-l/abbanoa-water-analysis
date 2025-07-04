@@ -3,6 +3,12 @@
 ## Overview
 Multi-site water infrastructure monitoring system for Abbanoa, processing sensor data from **Selargius** and **Teatinos** facilities into BigQuery for analysis and reporting. Features **ML-powered 7-day forecasting** with ARIMA_PLUS models achieving <15% MAPE accuracy for operational planning.
 
+### 🚀 Latest Release: v0.4.0
+- **Async Forecast Consumption**: Clean architecture implementation with 99th percentile latency ≤ 300ms
+- **ARIMA_PLUS Models**: Deployed for flow_rate, pressure, and reservoir_level metrics
+- **BigQuery Integration**: Complete data pipeline from raw sensor data to ML predictions
+- **Full Documentation**: API reference, integration guides, and operational procedures
+
 ## System Architecture
 
 ### C4 System Context Diagram
