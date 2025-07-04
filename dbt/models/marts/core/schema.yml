@@ -1,0 +1,442 @@
+version: 2
+
+models:
+  - name: vw_daily_timeseries
+    description: >
+      Daily aggregated sensor readings with gap-filling for complete time series analysis.
+      Provides comprehensive statistical aggregations, data quality metrics, and derived
+      analytical features for water infrastructure monitoring and predictive analytics.
+    
+    config:
+      materialized: view
+      tags: ["daily", "timeseries", "analytics", "core"]
+      
+    meta:
+      owner: "data-engineering@abbanoa.com"
+      business_stakeholders: ["operations-team@abbanoa.com", "water-ops-management@abbanoa.com"]
+      created_date: "2025-07-04"
+      last_updated: "2025-07-04"
+      refresh_frequency: "real-time"
+      retention_period: "5 years"
+      data_classification: "internal"
+      
+    columns:
+      # Time Dimensions
+      - name: date_utc
+        description: "Date in UTC timezone for the aggregated readings"
+        data_type: DATE
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - unique:
+              config:
+                where: "district_id = 'DIST_001' AND metric_type = 'flow_rate'"
+      
+      - name: day_of_week
+        description: "Day of week (1=Sunday, 7=Saturday)"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "day_of_week BETWEEN 1 AND 7"
+      
+      - name: month_number
+        description: "Month number (1-12)"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "month_number BETWEEN 1 AND 12"
+      
+      - name: year_number
+        description: "Year"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "year_number >= 2020"
+      
+      - name: season
+        description: "Seasonal indicator (WINTER, SPRING, SUMMER, FALL)"
+        data_type: STRING
+        constraints:
+          - type: accepted_values
+            values: ['WINTER', 'SPRING', 'SUMMER', 'FALL']
+      
+      - name: day_type
+        description: "Day type indicator (WEEKDAY, WEEKEND)"
+        data_type: STRING
+        constraints:
+          - type: accepted_values
+            values: ['WEEKDAY', 'WEEKEND']
+      
+      # Location and Metric Dimensions
+      - name: district_id
+        description: "Unique district identifier"
+        data_type: STRING
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['DIST_001', 'DIST_002']
+              config:
+                severity: warn
+      
+      - name: district_name
+        description: "Human-readable district name"
+        data_type: STRING
+        constraints:
+          - type: not_null
+      
+      - name: population_served
+        description: "Population served by the district"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "population_served > 0"
+      
+      - name: metric_type
+        description: "Type of measurement (flow_rate, pressure, reservoir_level)"
+        data_type: STRING
+        constraints:
+          - type: not_null
+          - type: accepted_values
+            values: ['flow_rate', 'pressure', 'reservoir_level']
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['flow_rate', 'pressure', 'reservoir_level']
+      
+      - name: metric_name
+        description: "Human-readable metric name"
+        data_type: STRING
+      
+      - name: unit_of_measurement
+        description: "Measurement unit (L/s, bar, m)"
+        data_type: STRING
+        constraints:
+          - type: accepted_values
+            values: ['L/s', 'bar', 'm']
+      
+      # Core Aggregated Values
+      - name: avg_value
+        description: "Daily average of sensor readings"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "avg_value IS NULL OR avg_value >= 0"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000
+              config:
+                where: "metric_type = 'flow_rate' AND avg_value IS NOT NULL"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10
+              config:
+                where: "metric_type = 'pressure' AND avg_value IS NOT NULL"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 50
+              config:
+                where: "metric_type = 'reservoir_level' AND avg_value IS NOT NULL"
+      
+      - name: min_value
+        description: "Minimum daily reading"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "min_value IS NULL OR min_value >= 0"
+      
+      - name: max_value
+        description: "Maximum daily reading"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "max_value IS NULL OR max_value >= min_value"
+        tests:
+          - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_or_equal_to_B:
+              column_A: max_value
+              column_B: min_value
+              config:
+                where: "max_value IS NOT NULL AND min_value IS NOT NULL"
+      
+      - name: sum_value
+        description: "Sum of all readings (for volumetric metrics)"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "sum_value IS NULL OR sum_value >= 0"
+      
+      - name: count_readings
+        description: "Number of readings for the day"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "count_readings >= 0"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 500  # Reasonable upper bound for daily readings
+      
+      - name: stddev_value
+        description: "Standard deviation of readings"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "stddev_value IS NULL OR stddev_value >= 0"
+      
+      # Percentile Analysis
+      - name: percentile_10
+        description: "10th percentile value"
+        data_type: FLOAT64
+      
+      - name: percentile_25
+        description: "25th percentile (Q1)"
+        data_type: FLOAT64
+      
+      - name: median_value
+        description: "50th percentile (median)"
+        data_type: FLOAT64
+      
+      - name: percentile_75
+        description: "75th percentile (Q3)"
+        data_type: FLOAT64
+      
+      - name: percentile_90
+        description: "90th percentile"
+        data_type: FLOAT64
+      
+      - name: percentile_95
+        description: "95th percentile"
+        data_type: FLOAT64
+      
+      # Data Quality Metrics
+      - name: high_quality_readings
+        description: "Count of readings with quality_score >= 0.9"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "high_quality_readings >= 0"
+      
+      - name: low_quality_readings
+        description: "Count of readings with quality_score < 0.5"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "low_quality_readings >= 0"
+      
+      - name: avg_quality_score
+        description: "Average quality score for the day"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "avg_quality_score IS NULL OR (avg_quality_score >= 0.0 AND avg_quality_score <= 1.0)"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.0
+              max_value: 1.0
+              config:
+                where: "avg_quality_score IS NOT NULL"
+      
+      - name: hours_with_data
+        description: "Number of hours with at least one reading"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "hours_with_data >= 0 AND hours_with_data <= 24"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 24
+      
+      - name: first_reading_time
+        description: "Timestamp of first reading of the day"
+        data_type: TIMESTAMP
+      
+      - name: last_reading_time
+        description: "Timestamp of last reading of the day"
+        data_type: TIMESTAMP
+      
+      - name: potential_anomalies
+        description: "Count of potential anomalous readings"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "potential_anomalies >= 0"
+      
+      # Data Completeness and Quality Flags
+      - name: expected_daily_readings
+        description: "Expected number of readings per day based on metric frequency"
+        data_type: INTEGER
+        constraints:
+          - type: check
+            expression: "expected_daily_readings IS NULL OR expected_daily_readings > 0"
+      
+      - name: data_completeness_pct
+        description: "Percentage of expected readings received"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "data_completeness_pct IS NULL OR (data_completeness_pct >= 0.0 AND data_completeness_pct <= 100.0)"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.0
+              max_value: 100.0
+              config:
+                where: "data_completeness_pct IS NOT NULL"
+      
+      - name: gap_filled_flag
+        description: "Indicates if this is a gap-filled record with no actual data"
+        data_type: BOOLEAN
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+      
+      - name: forward_filled_flag
+        description: "Indicates if values were forward-filled from previous readings"
+        data_type: BOOLEAN
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+      
+      - name: data_quality_flag
+        description: "Overall data quality assessment"
+        data_type: STRING
+        constraints:
+          - type: not_null
+          - type: accepted_values
+            values: ['GOOD', 'NO_DATA', 'NO_READINGS', 'POOR_QUALITY', 'INCOMPLETE_DAY', 'HIGH_ANOMALIES']
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['GOOD', 'NO_DATA', 'NO_READINGS', 'POOR_QUALITY', 'INCOMPLETE_DAY', 'HIGH_ANOMALIES']
+      
+      # Operational Values
+      - name: avg_value_operational
+        description: "Forward-filled average for operational continuity"
+        data_type: FLOAT64
+      
+      # Derived Analytics
+      - name: daily_variation_pct
+        description: "Daily variation as percentage of average"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "daily_variation_pct IS NULL OR daily_variation_pct >= 0"
+      
+      - name: interquartile_range
+        description: "Spread between 75th and 25th percentiles"
+        data_type: FLOAT64
+        constraints:
+          - type: check
+            expression: "interquartile_range IS NULL OR interquartile_range >= 0"
+
+    # Model-level tests
+    tests:
+      # Primary key uniqueness
+      - unique:
+          column_name: "(date_utc, district_id, metric_type)"
+          config:
+            severity: error
+      
+      # Data freshness - should have data within last 2 days
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1000  # At least some data
+          config:
+            where: "date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)"
+      
+      # Data quality distribution - at least 80% should be GOOD quality
+      - dbt_expectations.expect_column_proportion_of_unique_values_to_be_between:
+          column_name: data_quality_flag
+          min_value: 0.8
+          config:
+            where: "data_quality_flag = 'GOOD'"
+      
+      # Gap filling should be reasonable - less than 10% gap-filled
+      - dbt_expectations.expect_column_proportion_of_unique_values_to_be_between:
+          column_name: gap_filled_flag
+          max_value: 0.1
+          config:
+            where: "gap_filled_flag = TRUE"
+
+sources:
+  - name: raw_data
+    description: "Raw sensor data from water infrastructure monitoring system"
+    tables:
+      - name: sensor_readings
+        description: "Raw 15-minute sensor readings from monitoring points"
+        columns:
+          - name: timestamp
+            description: "Reading timestamp in UTC"
+            tests:
+              - not_null
+          - name: district_id
+            description: "District identifier"
+            tests:
+              - not_null
+          - name: metric_type
+            description: "Type of measurement"
+            tests:
+              - not_null
+          - name: reading_value
+            description: "Sensor reading value"
+            tests:
+              - not_null
+          - name: quality_score
+            description: "Data quality score (0.0 to 1.0)"
+            tests:
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: 0.0
+                  max_value: 1.0
+
+  - name: reference
+    description: "Reference data for districts and metrics"
+    tables:
+      - name: district_metadata
+        description: "District configuration and metadata"
+        columns:
+          - name: district_id
+            description: "Unique district identifier"
+            tests:
+              - not_null
+              - unique
+          - name: district_name
+            description: "District name"
+            tests:
+              - not_null
+          - name: population_served
+            description: "Population served by district"
+            tests:
+              - not_null
+          - name: is_active
+            description: "Whether district is active"
+            tests:
+              - not_null
+      
+      - name: metric_definitions
+        description: "Metric type definitions and specifications"
+        columns:
+          - name: metric_type
+            description: "Metric type identifier"
+            tests:
+              - not_null
+              - unique
+          - name: metric_name
+            description: "Human-readable metric name"
+            tests:
+              - not_null
+          - name: unit_of_measurement
+            description: "Unit of measurement"
+            tests:
+              - not_null
+          - name: expected_frequency_minutes
+            description: "Expected frequency in minutes"
+            tests:
+              - not_null
+          - name: is_active
+            description: "Whether metric is active"
+            tests:
+              - not_null
