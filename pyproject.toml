@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "abbanoa-analysis"
+version = "0.1.0"
+description = ""
+authors = ["Alessio Rocchi <rocchi.b.a@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

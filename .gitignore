@@ -1,0 +1,128 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+.ENV
+.env
+
+# Poetry
+poetry.lock
+dist/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data files
+*.csv
+*.json
+*.xlsx
+*.xls
+RAWDATA/
+cleaned_data.csv
+normalized_*.csv
+teatinos_*.csv
+
+# Analysis outputs
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Credentials and secrets
+.env
+.env.local
+.env.*.local
+*_credentials.json
+*_key.json
+*.pem
+*.key
+
+# BigQuery specific
+bigquery_configs*.json
+gcp_credentials.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Documentation builds
+docs/_build/
+site/
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Streamlit
+.streamlit/
+
+# Docker volumes
+docker-volumes/
+
+# Local configuration
+local_config/
+*.local.*
+
+# Analysis results (optional - uncomment if you want to exclude)
+# eda_results.json
+# operational_insights.json
+# ml_recommendations.json
