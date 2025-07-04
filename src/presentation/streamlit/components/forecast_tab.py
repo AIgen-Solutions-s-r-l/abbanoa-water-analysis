@@ -111,7 +111,12 @@ class ForecastTab:
                     }
                 )
             else:
-                st.warning("No forecast data available for the selected parameters.")
+                # Provide more helpful message and debug info
+                st.warning("No forecast data available. Click below to load data.")
+                if st.button("Load Forecast Data"):
+                    with st.spinner("Loading forecast data..."):
+                        self._fetch_and_cache_data()
+                    st.rerun()
     
     def _should_fetch_data(self) -> bool:
         """Check if new data should be fetched."""
@@ -122,7 +127,6 @@ class ForecastTab:
         # Check if parameters changed (handled by sidebar callbacks)
         return False
     
-    @st.cache_data(ttl=300)  # Cache for 5 minutes
     def _fetch_forecast_data(
         self,
         district_id: str,
@@ -130,7 +134,7 @@ class ForecastTab:
         horizon: int
     ) -> pd.DataFrame:
         """
-        Fetch and cache forecast data.
+        Fetch forecast data with caching.
         
         Args:
             district_id: District identifier
@@ -140,9 +144,16 @@ class ForecastTab:
         Returns:
             DataFrame with forecast data
         """
-        return self.data_fetcher.get_forecast(district_id, metric, horizon)
+        # Use a separate cached function to avoid hashing self
+        @st.cache_data(ttl=300)  # Cache for 5 minutes
+        def _cached_fetch(district_id: str, metric: str, horizon: int) -> pd.DataFrame:
+            # Create a new data fetcher instance inside the cached function
+            from src.presentation.streamlit.utils.data_fetcher import DataFetcher
+            fetcher = DataFetcher()
+            return fetcher.get_forecast(district_id, metric, horizon)
+        
+        return _cached_fetch(district_id, metric, horizon)
     
-    @st.cache_data(ttl=3600)  # Cache for 1 hour
     def _fetch_historical_data(
         self,
         district_id: str,
@@ -150,7 +161,7 @@ class ForecastTab:
         days_back: int = 30
     ) -> pd.DataFrame:
         """
-        Fetch and cache historical data.
+        Fetch historical data with caching.
         
         Args:
             district_id: District identifier
@@ -160,7 +171,15 @@ class ForecastTab:
         Returns:
             DataFrame with historical data
         """
-        return self.data_fetcher.get_historical_data(district_id, metric, days_back)
+        # Use a separate cached function to avoid hashing self
+        @st.cache_data(ttl=3600)  # Cache for 1 hour
+        def _cached_fetch_historical(district_id: str, metric: str, days_back: int) -> pd.DataFrame:
+            # Create a new data fetcher instance inside the cached function
+            from src.presentation.streamlit.utils.data_fetcher import DataFetcher
+            fetcher = DataFetcher()
+            return fetcher.get_historical_data(district_id, metric, days_back)
+        
+        return _cached_fetch_historical(district_id, metric, days_back)
     
     def _fetch_and_cache_data(self) -> None:
         """Fetch both forecast and historical data and update session state."""
