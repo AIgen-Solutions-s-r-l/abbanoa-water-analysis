@@ -80,15 +80,15 @@ class AnomalyTab:
         
         with col1:
             st.subheader("Anomaly Types Distribution")
-            self._render_anomaly_types_chart()
+            self._render_anomaly_types_chart(time_range)
         
         with col2:
             st.subheader("Affected Nodes")
-            self._render_affected_nodes_chart()
+            self._render_affected_nodes_chart(time_range)
         
         # Detailed anomaly list
         st.subheader("Recent Anomalies")
-        self._render_anomaly_list()
+        self._render_anomaly_list(time_range)
         
         # Anomaly patterns
         st.subheader("Anomaly Patterns Analysis")
@@ -96,32 +96,27 @@ class AnomalyTab:
     
     def _render_anomaly_timeline(self, time_range: str) -> None:
         """Render anomaly timeline visualization."""
-        # Generate sample anomaly data
-        if time_range == "Custom Range":
-            # Custom range - no synthetic data
-            time_data = pd.DatetimeIndex([])
-        else:
-            params = self._get_time_params(time_range)
-            if params:
-                periods, freq = params
-            else:
-                periods, freq = 48, '30min'  # Default
-            time_data = pd.DatetimeIndex([])
+        # Get real anomaly data
+        anomaly_results = self._fetch_anomalies(time_range)
         
-        # Create anomaly events
-        anomalies = []
-        for i in range(len(time_data)):
-            if np.random.random() < 0.1:  # 10% chance of anomaly
-                anomaly_type = np.random.choice(['Pressure Drop', 'Flow Spike', 'Sensor Error', 'Leak Detection'])
-                severity = np.random.choice(['Low', 'Medium', 'High'], p=[0.5, 0.35, 0.15])
+        if anomaly_results:
+            # Convert to display format
+            anomalies = []
+            for anomaly in anomaly_results:
+                severity_mapping = {
+                    'critical': 'High',
+                    'high': 'High', 
+                    'medium': 'Medium',
+                    'low': 'Low'
+                }
+                
                 anomalies.append({
-                    'timestamp': time_data[i],
-                    'type': anomaly_type,
-                    'severity': severity,
-                    'value': np.random.uniform(1, 10)
+                    'timestamp': anomaly.timestamp,
+                    'type': anomaly.anomaly_type,
+                    'severity': severity_mapping.get(anomaly.severity.lower(), 'Medium'),
+                    'value': abs(float(anomaly.confidence_score)) if hasattr(anomaly, 'confidence_score') and anomaly.confidence_score else 5.0
                 })
-        
-        if anomalies:
+            
             df = pd.DataFrame(anomalies)
             
             # Create scatter plot
@@ -132,7 +127,8 @@ class AnomalyTab:
                 size='value',
                 color='severity',
                 color_discrete_map={'Low': '#ffc107', 'Medium': '#ff7f0e', 'High': '#dc3545'},
-                title='Anomaly Events Timeline'
+                title='Anomaly Events Timeline',
+                hover_data=['severity']
             )
             
             fig.update_layout(
@@ -142,15 +138,37 @@ class AnomalyTab:
             )
             
             st.plotly_chart(fig, use_container_width=True)
+            st.success(f"✅ Found {len(anomalies)} anomalies in the selected time range")
         else:
             st.info("No anomalies detected in the selected time range")
     
-    def _render_anomaly_types_chart(self) -> None:
+    def _render_anomaly_types_chart(self, time_range: str) -> None:
         """Render pie chart of anomaly types."""
-        data = pd.DataFrame({
-            'Type': ['No Data'],
-            'Count': [1]
-        })
+        # Get real anomaly data
+        anomaly_results = self._fetch_anomalies(time_range)
+        
+        if anomaly_results:
+            # Count anomalies by type
+            type_counts = {}
+            for anomaly in anomaly_results:
+                anomaly_type = anomaly.anomaly_type
+                type_counts[anomaly_type] = type_counts.get(anomaly_type, 0) + 1
+            
+            if type_counts:
+                data = pd.DataFrame({
+                    'Type': list(type_counts.keys()),
+                    'Count': list(type_counts.values())
+                })
+            else:
+                data = pd.DataFrame({
+                    'Type': ['No Anomalies'],
+                    'Count': [1]
+                })
+        else:
+            data = pd.DataFrame({
+                'Type': ['No Data'],
+                'Count': [1]
+            })
         
         fig = px.pie(
             data,
@@ -164,12 +182,40 @@ class AnomalyTab:
         
         st.plotly_chart(fig, use_container_width=True)
     
-    def _render_affected_nodes_chart(self) -> None:
+    def _render_affected_nodes_chart(self, time_range: str) -> None:
         """Render bar chart of affected nodes."""
-        data = pd.DataFrame({
-            'Node': ['No Data'],
-            'Anomalies': [0]
-        })
+        # Get real anomaly data
+        anomaly_results = self._fetch_anomalies(time_range)
+        
+        if anomaly_results:
+            # Count anomalies by node
+            node_counts = {}
+            for anomaly in anomaly_results:
+                node_id = str(anomaly.node_id)
+                # Map UUID to readable names
+                node_mapping = {
+                    '00000000-0000-0000-0000-000000000001': "Sant'Anna",
+                    '00000000-0000-0000-0000-000000000002': "Seneca",
+                    '00000000-0000-0000-0000-000000000003': "Selargius Tank"
+                }
+                node_name = node_mapping.get(node_id, f"Node {node_id[:8]}")
+                node_counts[node_name] = node_counts.get(node_name, 0) + 1
+            
+            if node_counts:
+                data = pd.DataFrame({
+                    'Node': list(node_counts.keys()),
+                    'Anomalies': list(node_counts.values())
+                })
+            else:
+                data = pd.DataFrame({
+                    'Node': ['No Anomalies'],
+                    'Anomalies': [0]
+                })
+        else:
+            data = pd.DataFrame({
+                'Node': ['No Data'],
+                'Anomalies': [0]
+            })
         
         fig = px.bar(
             data,
@@ -183,10 +229,10 @@ class AnomalyTab:
         fig.update_layout(height=350)
         st.plotly_chart(fig, use_container_width=True)
     
-    def _render_anomaly_list(self) -> None:
+    def _render_anomaly_list(self, time_range: str) -> None:
         """Render detailed list of recent anomalies."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies()
+        anomaly_results = self._fetch_anomalies(time_range)
         
         if anomaly_results:
             # Convert to display format
@@ -282,6 +328,7 @@ class AnomalyTab:
             "Last 3 Days": (72, 'H'),
             "Last Week": (168, 'H'),
             "Last Month": (720, 'H'),  # 30 days
+            "Last Year": (8760, 'H'),  # 365 days
             "Custom Range": None  # Will be handled separately
         }
         return params.get(time_range, (48, '30min'))
@@ -289,7 +336,7 @@ class AnomalyTab:
     def _get_anomaly_data(self, time_range: str) -> dict:
         """Get real anomaly data from use case."""
         try:
-            anomaly_results = self._fetch_anomalies()
+            anomaly_results = self._fetch_anomalies(time_range)
             
             if anomaly_results:
                 # Count anomalies by severity
@@ -299,8 +346,12 @@ class AnomalyTab:
                 # Count affected nodes
                 affected_nodes = len(set(a.node_id for a in anomaly_results))
                 
-                # Count today's anomalies
-                today = None
+                # Count today's anomalies - use current date or data end date
+                today = datetime.now().date()
+                data_end = datetime(2025, 3, 31).date()
+                if today > data_end:
+                    today = data_end
+                
                 new_today = sum(1 for a in anomaly_results if a.timestamp.date() == today)
                 
                 return {
@@ -308,12 +359,12 @@ class AnomalyTab:
                     'new_today': new_today,
                     'critical_count': critical_count,
                     'affected_nodes': affected_nodes,
-                    'total_nodes': 12,
-                    'affected_percentage': (affected_nodes / 12) * 100,
+                    'total_nodes': 3,  # Sant'Anna, Seneca, Selargius Tank
+                    'affected_percentage': (affected_nodes / 3) * 100,
                     'avg_resolution': '45 min'
                 }
         except Exception as e:
-            st.warning(f"Using demo data: {str(e)}")
+            st.warning(f"Error getting anomaly data: {str(e)}")
         
         # Return zeros - no synthetic data
         return {
@@ -321,17 +372,41 @@ class AnomalyTab:
             'new_today': 0,
             'critical_count': 0,
             'affected_nodes': 0,
-            'total_nodes': 0,
+            'total_nodes': 3,
             'affected_percentage': 0,
             'avg_resolution': 'N/A'
         }
     
-    def _fetch_anomalies(self) -> Optional[List[AnomalyDetectionResultDTO]]:
+    def _fetch_anomalies(self, time_range: str = "Last 24 Hours") -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
         try:
-            # Use cache if available and recent (5 minutes)
-            if self._anomaly_cache and self._cache_time:
-                if self._cache_time and datetime.now() - self._cache_time < timedelta(minutes=5):
+            # Calculate time window based on selected range
+            time_deltas = {
+                "Last 6 Hours": 6,
+                "Last 24 Hours": 24,
+                "Last 3 Days": 72,
+                "Last Week": 168,
+                "Last Month": 720,  # 30 days
+                "Last Year": 8760,  # 365 days
+            }
+            
+            # Get time window in hours
+            time_window_hours = time_deltas.get(time_range, 24)
+            
+            # Handle custom date range
+            if time_range == "Custom Range" and hasattr(st.session_state, 'custom_date_range'):
+                start_date, end_date = st.session_state.custom_date_range
+                if start_date and end_date:
+                    # Convert to datetime and calculate hours
+                    start_time = datetime.combine(start_date, datetime.min.time())
+                    end_time = datetime.combine(end_date, datetime.max.time())
+                    time_window_hours = int((end_time - start_time).total_seconds() / 3600)
+            
+            # Use cache if available and recent (5 minutes) for same time range
+            cache_key = f"anomalies_{time_range}_{time_window_hours}"
+            if (self._anomaly_cache and self._cache_time and 
+                hasattr(self, '_cache_key') and self._cache_key == cache_key):
+                if datetime.now() - self._cache_time < timedelta(minutes=5):
                     return self._anomaly_cache
             
             # Run the use case asynchronously
@@ -341,7 +416,7 @@ class AnomalyTab:
             result = loop.run_until_complete(
                 self.detect_anomalies_use_case.execute(
                     node_ids=None,  # Check all nodes
-                    time_window_hours=24,
+                    time_window_hours=time_window_hours,
                     notify_on_critical=False  # Don't send notifications from dashboard
                 )
             )
@@ -349,11 +424,12 @@ class AnomalyTab:
             # Cache the result
             self._anomaly_cache = result
             self._cache_time = datetime.now() if result else None
+            self._cache_key = cache_key
             
             return result
         except Exception as e:
             if "No monitoring nodes found" in str(e):
-                st.info("No monitoring nodes found in the database. Using demo data.")
+                st.info("No monitoring nodes found in the database.")
             else:
-                st.warning(f"Could not fetch real anomaly data: {str(e)}. Using demo data.")
+                st.warning(f"Could not fetch real anomaly data: {str(e)}")
             return None

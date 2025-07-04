@@ -167,8 +167,251 @@ class OverviewTab:
     
     def _render_system_alerts(self) -> None:
         """Render system alerts section."""
-        # No alerts - no synthetic data
-        st.info("No alerts available. Waiting for real data.")
+        # Get real-time alerts from sensor data
+        alerts = self._get_system_alerts()
+        
+        if alerts:
+            # Display alerts by severity
+            critical_alerts = [a for a in alerts if a['severity'] == 'critical']
+            warning_alerts = [a for a in alerts if a['severity'] == 'warning']
+            info_alerts = [a for a in alerts if a['severity'] == 'info']
+            
+            # Show critical alerts first
+            if critical_alerts:
+                st.error("🚨 Critical Alerts")
+                for alert in critical_alerts:
+                    st.markdown(f"""
+                    <div style="background-color: #ffebee; border-left: 4px solid #f44336; padding: 12px; margin: 8px 0; border-radius: 4px;">
+                        <strong>{alert['title']}</strong><br>
+                        <small>{alert['node']} • {alert['timestamp']}</small><br>
+                        {alert['description']}
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Show warning alerts
+            if warning_alerts:
+                st.warning("⚠️ Warning Alerts")
+                for alert in warning_alerts:
+                    st.markdown(f"""
+                    <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 4px;">
+                        <strong>{alert['title']}</strong><br>
+                        <small>{alert['node']} • {alert['timestamp']}</small><br>
+                        {alert['description']}
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Show info alerts
+            if info_alerts:
+                st.info("ℹ️ Information Alerts")
+                for alert in info_alerts:
+                    st.markdown(f"""
+                    <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin: 8px 0; border-radius: 4px;">
+                        <strong>{alert['title']}</strong><br>
+                        <small>{alert['node']} • {alert['timestamp']}</small><br>
+                        {alert['description']}
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Alert summary
+            total_alerts = len(alerts)
+            st.caption(f"Total: {total_alerts} alerts • Critical: {len(critical_alerts)} • Warning: {len(warning_alerts)} • Info: {len(info_alerts)}")
+        else:
+            st.success("✅ No active alerts. All systems operating normally.")
+    
+    def _get_system_alerts(self) -> List[dict]:
+        """Analyze real sensor data to detect system alerts."""
+        alerts = []
+        
+        try:
+            # Get recent data for analysis (last 2 hours)
+            from src.infrastructure.di_container import Container
+            from uuid import UUID
+            
+            container = Container()
+            container.config.from_dict({
+                'bigquery': {
+                    'project_id': 'abbanoa-464816',
+                    'dataset_id': 'water_infrastructure',
+                    'credentials_path': None,
+                    'location': 'US'
+                }
+            })
+            
+            sensor_repo = container.sensor_reading_repository()
+            
+            # Define monitoring nodes
+            node_mapping = {
+                "Sant'Anna": UUID('00000000-0000-0000-0000-000000000001'),
+                "Seneca": UUID('00000000-0000-0000-0000-000000000002'), 
+                "Selargius Tank": UUID('00000000-0000-0000-0000-000000000003')
+            }
+            
+            # Time range for alert analysis (last 2 hours)
+            end_time = datetime.now()
+            start_time = end_time - timedelta(hours=2)
+            
+            # Use data range if current time is beyond available data
+            data_end = datetime(2025, 3, 31, 23, 59, 59)
+            if end_time > data_end:
+                end_time = data_end
+                start_time = end_time - timedelta(hours=2)
+            
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            for node_name, node_id in node_mapping.items():
+                try:
+                    # Get recent readings for this node
+                    readings = loop.run_until_complete(
+                        sensor_repo.get_by_node_id(
+                            node_id=node_id,
+                            start_time=start_time,
+                            end_time=end_time,
+                            limit=50
+                        )
+                    )
+                    
+                    if not readings:
+                        # No data alert
+                        alerts.append({
+                            'severity': 'warning',
+                            'title': 'No Recent Data',
+                            'node': node_name,
+                            'timestamp': end_time.strftime('%H:%M'),
+                            'description': f'No sensor readings received in the last 2 hours. Check sensor connectivity.'
+                        })
+                        continue
+                    
+                    # Analyze readings for anomalies
+                    flows = []
+                    pressures = []
+                    timestamps = []
+                    
+                    for reading in readings:
+                        # Extract flow rate
+                        flow_val = reading.flow_rate
+                        if hasattr(flow_val, 'value'):
+                            flow_val = flow_val.value
+                        if flow_val is not None:
+                            flows.append(float(flow_val))
+                        
+                        # Extract pressure
+                        pressure_val = reading.pressure
+                        if hasattr(pressure_val, 'value'):
+                            pressure_val = pressure_val.value
+                        if pressure_val is not None:
+                            pressures.append(float(pressure_val))
+                        
+                        timestamps.append(reading.timestamp)
+                    
+                    # Alert conditions
+                    if flows:
+                        avg_flow = sum(flows) / len(flows)
+                        max_flow = max(flows)
+                        min_flow = min(flows)
+                        
+                        # Flow spike detection
+                        if max_flow > avg_flow * 2.5 and max_flow > 10:
+                            alerts.append({
+                                'severity': 'warning',
+                                'title': 'Flow Spike Detected',
+                                'node': node_name,
+                                'timestamp': timestamps[-1].strftime('%H:%M'),
+                                'description': f'Unusually high flow rate detected: {max_flow:.1f} L/s (avg: {avg_flow:.1f} L/s)'
+                            })
+                        
+                        # Very low flow detection
+                        if avg_flow < 0.5 and len(flows) > 5:
+                            alerts.append({
+                                'severity': 'info',
+                                'title': 'Low Flow Period',
+                                'node': node_name,
+                                'timestamp': timestamps[-1].strftime('%H:%M'),
+                                'description': f'Extended period of low flow: {avg_flow:.1f} L/s. This might be normal for off-peak hours.'
+                            })
+                    
+                    if pressures:
+                        avg_pressure = sum(pressures) / len(pressures)
+                        min_pressure = min(pressures)
+                        max_pressure = max(pressures)
+                        
+                        # Low pressure alert
+                        if min_pressure < 2.0:
+                            alerts.append({
+                                'severity': 'critical',
+                                'title': 'Low Pressure Alert',
+                                'node': node_name,
+                                'timestamp': timestamps[-1].strftime('%H:%M'),
+                                'description': f'Pressure dropped below safe level: {min_pressure:.1f} bar (minimum: 2.0 bar)'
+                            })
+                        elif avg_pressure < 3.0:
+                            alerts.append({
+                                'severity': 'warning',
+                                'title': 'Pressure Below Optimal',
+                                'node': node_name,
+                                'timestamp': timestamps[-1].strftime('%H:%M'),
+                                'description': f'Average pressure is low: {avg_pressure:.1f} bar (optimal: 3.0-5.0 bar)'
+                            })
+                        
+                        # High pressure alert
+                        if max_pressure > 6.0:
+                            alerts.append({
+                                'severity': 'warning',
+                                'title': 'High Pressure Alert',
+                                'node': node_name,
+                                'timestamp': timestamps[-1].strftime('%H:%M'),
+                                'description': f'Pressure exceeded safe level: {max_pressure:.1f} bar (maximum: 6.0 bar)'
+                            })
+                    
+                    # Data quality checks
+                    if len(readings) < 5:
+                        alerts.append({
+                            'severity': 'info',
+                            'title': 'Limited Data Points',
+                            'node': node_name,
+                            'timestamp': timestamps[-1].strftime('%H:%M'),
+                            'description': f'Only {len(readings)} readings in the last 2 hours. Data collection may be intermittent.'
+                        })
+                    
+                    # Latest reading age check
+                    if timestamps:
+                        latest_reading_age = end_time - timestamps[-1]
+                        if latest_reading_age > timedelta(minutes=45):
+                            alerts.append({
+                                'severity': 'warning',
+                                'title': 'Stale Data',
+                                'node': node_name,
+                                'timestamp': timestamps[-1].strftime('%H:%M'),
+                                'description': f'Last reading is {latest_reading_age.total_seconds()/60:.0f} minutes old. Check sensor status.'
+                            })
+                    
+                except Exception as e:
+                    # Node connection error
+                    alerts.append({
+                        'severity': 'warning',
+                        'title': 'Node Connection Error',
+                        'node': node_name,
+                        'timestamp': end_time.strftime('%H:%M'),
+                        'description': f'Unable to retrieve data from {node_name}: {str(e)[:100]}...'
+                    })
+                    continue
+            
+            # Sort alerts by severity (critical first)
+            severity_order = {'critical': 0, 'warning': 1, 'info': 2}
+            alerts.sort(key=lambda x: severity_order.get(x['severity'], 3))
+            
+            # Limit to most recent 10 alerts
+            return alerts[:10]
+            
+        except Exception as e:
+            # System error alert
+            return [{
+                'severity': 'warning',
+                'title': 'Alert System Error',
+                'node': 'System',
+                'timestamp': datetime.now().strftime('%H:%M'),
+                'description': f'Unable to analyze sensor data for alerts: {str(e)[:100]}...'
+            }]
     
     def _get_efficiency_data(self, time_range: str) -> dict:
         """Get real efficiency data from use case."""
@@ -191,9 +434,16 @@ class OverviewTab:
                 end_time = datetime.combine(end_date, datetime.max.time())
             else:
                 delta = time_deltas.get(time_range, timedelta(hours=24))
-                # Use a fixed date within our data range
-                end_time = datetime(2025, 3, 15, 0, 0, 0)
-                start_time = end_time - delta
+                # Use the actual available data range: November 13, 2024 to March 31, 2025
+                data_end = datetime(2025, 3, 31, 23, 59, 59)
+                data_start = datetime(2024, 11, 13, 0, 0, 0)
+                
+                # Calculate desired end time (use current time or data end, whichever is earlier)
+                end_time = min(data_end, datetime.now())
+                
+                # Calculate start time, but don't go before data start
+                proposed_start = end_time - delta
+                start_time = max(proposed_start, data_start)
             
             # Get data directly from repository like in consumption tab
             from src.infrastructure.di_container import Container
@@ -291,7 +541,8 @@ class OverviewTab:
                 "Last 24 Hours": timedelta(hours=24),
                 "Last 3 Days": timedelta(days=3),
                 "Last Week": timedelta(days=7),
-                "Last Month": timedelta(days=30)
+                "Last Month": timedelta(days=30),
+                "Last Year": timedelta(days=365)
             }
             
             # Handle custom date range
@@ -302,9 +553,16 @@ class OverviewTab:
                 end_time = datetime.combine(end_date, datetime.max.time())
             else:
                 delta = time_deltas.get(time_range, timedelta(hours=24))
-                # Use a fixed date within our data range
-                end_time = datetime(2025, 3, 15, 0, 0, 0)
-                start_time = end_time - delta
+                # Use the actual available data range: November 13, 2024 to March 31, 2025
+                data_end = datetime(2025, 3, 31, 23, 59, 59)
+                data_start = datetime(2024, 11, 13, 0, 0, 0)
+                
+                # Calculate desired end time (use current time or data end, whichever is earlier)
+                end_time = min(data_end, datetime.now())
+                
+                # Calculate start time, but don't go before data start
+                proposed_start = end_time - delta
+                start_time = max(proposed_start, data_start)
             
             # Get data directly from repository
             from src.infrastructure.di_container import Container

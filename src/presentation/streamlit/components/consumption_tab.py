@@ -364,9 +364,16 @@ class ConsumptionTab:
                 end_time = datetime.combine(end_date, datetime.max.time())
             else:
                 delta = time_deltas.get(time_range, timedelta(hours=24))
-                # For now, use a fixed date range within our data
-                end_time = datetime(2025, 3, 15, 0, 0, 0)  # A date within our data range
-                start_time = end_time - delta
+                # Use the actual available data range: November 13, 2024 to March 31, 2025
+                data_end = datetime(2025, 3, 31, 23, 59, 59)
+                data_start = datetime(2024, 11, 13, 0, 0, 0)
+                
+                # Calculate desired end time (use current time or data end, whichever is earlier)
+                end_time = min(data_end, datetime.now())
+                
+                # Calculate start time, but don't go before data start
+                proposed_start = end_time - delta
+                start_time = max(proposed_start, data_start)
             
             # Get data directly from repository
             from src.infrastructure.di_container import Container
