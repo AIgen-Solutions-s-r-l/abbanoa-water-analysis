@@ -362,5 +362,8 @@ class AnomalyTab:
             
             return result
         except Exception as e:
-            st.error(f"Error fetching anomalies: {str(e)}")
+            if "No monitoring nodes found" in str(e):
+                st.info("No monitoring nodes found in the database. Using demo data.")
+            else:
+                st.warning(f"Could not fetch real anomaly data: {str(e)}. Using demo data.")
             return None

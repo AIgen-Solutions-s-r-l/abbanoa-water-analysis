@@ -243,7 +243,8 @@ class OverviewTab:
                     'efficiency_delta': 2.1  # Would calculate from historical data
                 }
         except Exception as e:
-            st.warning(f"Using demo data: {str(e)}")
+            # Don't show warning for each metric, just use demo data silently
+            pass
         
         # Return default values if error
         return {

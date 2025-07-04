@@ -77,6 +77,9 @@ class SidebarFilters:
             # Additional options
             self._render_additional_options()
             
+            # Connection status
+            self._render_connection_status()
+            
             # Info section
             self._render_info_section()
     
@@ -162,6 +165,36 @@ class SidebarFilters:
         if auto_refresh:
             # Set up auto-refresh using st.empty() and time.sleep()
             st.info("Auto-refresh enabled")
+    
+    def _render_connection_status(self) -> None:
+        """Render the database connection status."""
+        st.markdown("---")
+        st.markdown("### 🔌 Data Source")
+        
+        if st.session_state.get('bigquery_connected', False):
+            st.success("✅ Connected to BigQuery")
+        else:
+            st.warning("⚠️ Using Demo Data")
+            with st.expander("Setup BigQuery Connection"):
+                st.markdown(
+                    """
+                    To connect to real data:
+                    
+                    1. Set environment variables:
+                       - `BIGQUERY_PROJECT_ID`
+                       - `GOOGLE_APPLICATION_CREDENTIALS`
+                    
+                    2. Ensure BigQuery tables exist:
+                       - `monitoring_nodes`
+                       - `sensor_readings`
+                       - `water_networks`
+                    
+                    3. Populate tables with data
+                    
+                    The dashboard will automatically use
+                    real data when available.
+                    """
+                )
     
     def _render_info_section(self) -> None:
         """Render the information section."""

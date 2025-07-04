@@ -413,6 +413,7 @@ class ConsumptionTab:
                 return pd.DataFrame(data)
                 
         except Exception as e:
-            st.warning(f"Using demo data: {str(e)}")
+            # Silently fall back to demo data
+            pass
         
         return None

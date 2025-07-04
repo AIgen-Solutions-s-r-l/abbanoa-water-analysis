@@ -167,12 +167,16 @@ class DashboardApp:
         st.divider()
         self.render_tabs()
         
-        # Footer
+        # Footer with data source indicator
         st.markdown("---")
+        
+        # Check if we're using real data
+        data_source = "🟢 Connected to BigQuery" if st.session_state.get('bigquery_connected', False) else "🟡 Using Demo Data"
+        
         st.markdown(
-            """
+            f"""
             <div style="text-align: center; color: #999; font-size: 0.8rem;">
-                Powered by BigQuery ML | ARIMA_PLUS Models | 
+                {data_source} | Powered by BigQuery ML | ARIMA_PLUS Models | 
                 <a href="https://github.com/AIgen-Solutions-s-r-l/abbanoa-water-analysis" 
                    style="color: #1f77b4;">View on GitHub</a>
             </div>
