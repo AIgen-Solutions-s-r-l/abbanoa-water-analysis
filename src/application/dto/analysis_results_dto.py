@@ -9,6 +9,7 @@ from uuid import UUID
 @dataclass
 class TimeSeriesAnalysisResultDTO:
     """DTO for time series analysis results."""
+
     node_id: UUID
     analysis_period_start: datetime
     analysis_period_end: datetime
@@ -23,6 +24,7 @@ class TimeSeriesAnalysisResultDTO:
 @dataclass
 class NetworkEfficiencyResultDTO:
     """DTO for network efficiency calculation results."""
+
     network_id: UUID
     period_start: datetime
     period_end: datetime
@@ -37,6 +39,7 @@ class NetworkEfficiencyResultDTO:
 @dataclass
 class AnomalyDetectionResultDTO:
     """DTO for anomaly detection results."""
+
     node_id: UUID
     timestamp: datetime
     anomaly_type: str
@@ -51,6 +54,7 @@ class AnomalyDetectionResultDTO:
 @dataclass
 class DataQualityReportDTO:
     """DTO for data quality report."""
+
     node_id: UUID
     report_date: datetime
     period_start: datetime
@@ -68,6 +72,7 @@ class DataQualityReportDTO:
 @dataclass
 class ConsumptionPatternDTO:
     """DTO for water consumption patterns."""
+
     node_id: UUID
     pattern_type: str  # "hourly", "daily", "weekly", "monthly"
     average_consumption: Dict[str, float]  # e.g., {"00:00": 150.5, "01:00": 120.3}

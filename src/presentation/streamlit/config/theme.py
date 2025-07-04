@@ -9,7 +9,7 @@ import streamlit as st
 
 def apply_custom_theme():
     """Apply custom CSS theme to the Streamlit application."""
-    
+
     # Define custom CSS
     custom_css = """
     <style>
@@ -209,10 +209,10 @@ def apply_custom_theme():
     }
     </style>
     """
-    
+
     # Apply the custom CSS
     st.markdown(custom_css, unsafe_allow_html=True)
-    
+
     # Additional JavaScript for enhanced interactivity
     custom_js = """
     <script>
@@ -245,7 +245,7 @@ def apply_custom_theme():
     });
     </script>
     """
-    
+
     # Apply JavaScript (optional, may not work in all Streamlit deployments)
     # st.markdown(custom_js, unsafe_allow_html=True)
 
@@ -253,44 +253,44 @@ def apply_custom_theme():
 def get_color_palette():
     """
     Get the color palette for the dashboard.
-    
+
     Returns:
         Dictionary of color values
     """
     return {
-        'primary': '#1f77b4',
-        'secondary': '#ff7f0e',
-        'success': '#2ca02c',
-        'warning': '#ff7f0e',
-        'danger': '#d62728',
-        'info': '#17a2b8',
-        'light': '#f8f9fa',
-        'dark': '#343a40',
-        'background': '#ffffff',
-        'surface': '#f0f2f6',
-        'text': '#212529',
-        'text_secondary': '#6c757d'
+        "primary": "#1f77b4",
+        "secondary": "#ff7f0e",
+        "success": "#2ca02c",
+        "warning": "#ff7f0e",
+        "danger": "#d62728",
+        "info": "#17a2b8",
+        "light": "#f8f9fa",
+        "dark": "#343a40",
+        "background": "#ffffff",
+        "surface": "#f0f2f6",
+        "text": "#212529",
+        "text_secondary": "#6c757d",
     }
 
 
 def format_metric_value(value: float, metric_type: str) -> str:
     """
     Format metric value based on type.
-    
+
     Args:
         value: Numeric value to format
         metric_type: Type of metric
-        
+
     Returns:
         Formatted string
     """
     formatters = {
-        'flow_rate': lambda x: f"{x:.1f} L/s",
-        'pressure': lambda x: f"{x:.2f} bar",
-        'reservoir_level': lambda x: f"{x:.1f} m",
-        'percentage': lambda x: f"{x:.1f}%",
-        'currency': lambda x: f"€{x:,.2f}"
+        "flow_rate": lambda x: f"{x:.1f} L/s",
+        "pressure": lambda x: f"{x:.2f} bar",
+        "reservoir_level": lambda x: f"{x:.1f} m",
+        "percentage": lambda x: f"{x:.1f}%",
+        "currency": lambda x: f"€{x:,.2f}",
     }
-    
+
     formatter = formatters.get(metric_type, lambda x: f"{x:.2f}")
     return formatter(value)

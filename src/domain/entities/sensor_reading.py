@@ -3,7 +3,12 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from src.domain.entities.base import Entity
-from src.domain.value_objects.measurements import FlowRate, Pressure, Temperature, Volume
+from src.domain.value_objects.measurements import (
+    FlowRate,
+    Pressure,
+    Temperature,
+    Volume,
+)
 from src.domain.value_objects.sensor_type import SensorType
 
 
@@ -35,12 +40,17 @@ class SensorReading(Entity):
         """Validate sensor reading business rules."""
         if not self._node_id:
             raise ValueError("Node ID is required")
-        
+
         if not self._timestamp:
             raise ValueError("Timestamp is required")
-        
+
         # At least one measurement must be present
-        measurements = [self._temperature, self._flow_rate, self._pressure, self._volume]
+        measurements = [
+            self._temperature,
+            self._flow_rate,
+            self._pressure,
+            self._volume,
+        ]
         if not any(measurements):
             raise ValueError("At least one measurement must be provided")
 
@@ -88,7 +98,7 @@ class SensorReading(Entity):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
-        
+
         if self._temperature:
             data["temperature"] = self._temperature.to_dict()
         if self._flow_rate:
@@ -97,5 +107,5 @@ class SensorReading(Entity):
             data["pressure"] = self._pressure.to_dict()
         if self._volume:
             data["volume"] = self._volume.to_dict()
-            
+
         return data

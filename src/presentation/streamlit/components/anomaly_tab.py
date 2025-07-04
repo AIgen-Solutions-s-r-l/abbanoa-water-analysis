@@ -4,189 +4,198 @@ Anomaly detection tab component for the integrated dashboard.
 This component displays network anomalies and alerts from the monitoring system.
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import asyncio
+from datetime import datetime, timedelta
 from typing import List, Optional
 
-from src.application.use_cases.detect_network_anomalies import DetectNetworkAnomaliesUseCase
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+from plotly.subplots import make_subplots
+
 from src.application.dto.analysis_results_dto import AnomalyDetectionResultDTO
+from src.application.use_cases.detect_network_anomalies import (
+    DetectNetworkAnomaliesUseCase,
+)
 
 
 class AnomalyTab:
     """Anomaly detection tab component."""
-    
+
     def __init__(self, detect_anomalies_use_case: DetectNetworkAnomaliesUseCase):
         """Initialize the anomaly tab with use case."""
         self.detect_anomalies_use_case = detect_anomalies_use_case
         self._anomaly_cache = None
         self._cache_time = None
-    
+
     def render(self, time_range: str) -> None:
         """
         Render the anomaly detection tab.
-        
+
         Args:
             time_range: Selected time range
         """
         st.header("🔍 Anomaly Detection")
-        
+
         # Get anomaly data
         anomaly_data = self._get_anomaly_data(time_range)
-        
+
         # Summary metrics
         col1, col2, col3, col4 = st.columns(4)
-        
+
         with col1:
             st.metric(
                 label="Anomalies Detected",
-                value=str(anomaly_data['total_anomalies']),
+                value=str(anomaly_data["total_anomalies"]),
                 delta=f"{anomaly_data['new_today']} new today",
-                delta_color="inverse"
+                delta_color="inverse",
             )
-        
+
         with col2:
             st.metric(
                 label="Critical Alerts",
-                value=str(anomaly_data['critical_count']),
-                delta="1 resolved"
+                value=str(anomaly_data["critical_count"]),
+                delta="1 resolved",
             )
-        
+
         with col3:
             st.metric(
                 label="Nodes Affected",
                 value=f"{anomaly_data['affected_nodes']}/{anomaly_data['total_nodes']}",
-                delta=f"{anomaly_data['affected_percentage']:.0f}%"
+                delta=f"{anomaly_data['affected_percentage']:.0f}%",
             )
-        
+
         with col4:
             st.metric(
                 label="Avg Resolution Time",
-                value=anomaly_data['avg_resolution'],
-                delta="-15 min"
+                value=anomaly_data["avg_resolution"],
+                delta="-15 min",
             )
-        
+
         # Anomaly timeline
         st.subheader("Anomaly Timeline")
         self._render_anomaly_timeline(time_range)
-        
+
         # Anomaly distribution
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.subheader("Anomaly Types Distribution")
             self._render_anomaly_types_chart(time_range)
-        
+
         with col2:
             st.subheader("Affected Nodes")
             self._render_affected_nodes_chart(time_range)
-        
+
         # Detailed anomaly list
         st.subheader("Recent Anomalies")
         self._render_anomaly_list(time_range)
-        
+
         # Anomaly patterns
         st.subheader("Anomaly Patterns Analysis")
         self._render_anomaly_patterns()
-    
+
     def _render_anomaly_timeline(self, time_range: str) -> None:
         """Render anomaly timeline visualization."""
         # Get real anomaly data
         anomaly_results = self._fetch_anomalies(time_range)
-        
+
         if anomaly_results:
             # Convert to display format
             anomalies = []
             for anomaly in anomaly_results:
                 severity_mapping = {
-                    'critical': 'High',
-                    'high': 'High', 
-                    'medium': 'Medium',
-                    'low': 'Low'
+                    "critical": "High",
+                    "high": "High",
+                    "medium": "Medium",
+                    "low": "Low",
                 }
-                
-                anomalies.append({
-                    'timestamp': anomaly.timestamp,
-                    'type': anomaly.anomaly_type,
-                    'severity': severity_mapping.get(anomaly.severity.lower(), 'Medium'),
-                    'value': abs(float(anomaly.confidence_score)) if hasattr(anomaly, 'confidence_score') and anomaly.confidence_score else 5.0
-                })
-            
+
+                anomalies.append(
+                    {
+                        "timestamp": anomaly.timestamp,
+                        "type": anomaly.anomaly_type,
+                        "severity": severity_mapping.get(
+                            anomaly.severity.lower(), "Medium"
+                        ),
+                        "value": (
+                            abs(float(anomaly.deviation_percentage))
+                            if anomaly.deviation_percentage
+                            else 5.0
+                        ),
+                    }
+                )
+
             df = pd.DataFrame(anomalies)
-            
+
             # Create scatter plot
             fig = px.scatter(
                 df,
-                x='timestamp',
-                y='type',
-                size='value',
-                color='severity',
-                color_discrete_map={'Low': '#ffc107', 'Medium': '#ff7f0e', 'High': '#dc3545'},
-                title='Anomaly Events Timeline',
-                hover_data=['severity']
+                x="timestamp",
+                y="type",
+                size="value",
+                color="severity",
+                color_discrete_map={
+                    "Low": "#ffc107",
+                    "Medium": "#ff7f0e",
+                    "High": "#dc3545",
+                },
+                title="Anomaly Events Timeline",
+                hover_data=["severity"],
             )
-            
-            fig.update_layout(
-                height=300,
-                showlegend=True,
-                hovermode='closest'
-            )
-            
+
+            fig.update_layout(height=300, showlegend=True, hovermode="closest")
+
             st.plotly_chart(fig, use_container_width=True)
-            st.success(f"✅ Found {len(anomalies)} anomalies in the selected time range")
+            st.success(
+                f"✅ Found {len(anomalies)} anomalies in the selected time range"
+            )
         else:
             st.info("No anomalies detected in the selected time range")
-    
+
     def _render_anomaly_types_chart(self, time_range: str) -> None:
         """Render pie chart of anomaly types."""
         # Get real anomaly data
         anomaly_results = self._fetch_anomalies(time_range)
-        
+
         if anomaly_results:
             # Count anomalies by type
             type_counts = {}
             for anomaly in anomaly_results:
                 anomaly_type = anomaly.anomaly_type
                 type_counts[anomaly_type] = type_counts.get(anomaly_type, 0) + 1
-            
+
             if type_counts:
-                data = pd.DataFrame({
-                    'Type': list(type_counts.keys()),
-                    'Count': list(type_counts.values())
-                })
+                data = pd.DataFrame(
+                    {
+                        "Type": list(type_counts.keys()),
+                        "Count": list(type_counts.values()),
+                    }
+                )
             else:
-                data = pd.DataFrame({
-                    'Type': ['No Anomalies'],
-                    'Count': [1]
-                })
+                data = pd.DataFrame({"Type": ["No Anomalies"], "Count": [1]})
         else:
-            data = pd.DataFrame({
-                'Type': ['No Data'],
-                'Count': [1]
-            })
-        
+            data = pd.DataFrame({"Type": ["No Data"], "Count": [1]})
+
         fig = px.pie(
             data,
-            values='Count',
-            names='Type',
-            color_discrete_sequence=px.colors.qualitative.Set3
+            values="Count",
+            names="Type",
+            color_discrete_sequence=px.colors.qualitative.Set3,
         )
-        
-        fig.update_traces(textposition='inside', textinfo='percent+label')
+
+        fig.update_traces(textposition="inside", textinfo="percent+label")
         fig.update_layout(height=350)
-        
+
         st.plotly_chart(fig, use_container_width=True)
-    
+
     def _render_affected_nodes_chart(self, time_range: str) -> None:
         """Render bar chart of affected nodes."""
         # Get real anomaly data
         anomaly_results = self._fetch_anomalies(time_range)
-        
+
         if anomaly_results:
             # Count anomalies by node
             node_counts = {}
@@ -194,190 +203,226 @@ class AnomalyTab:
                 node_id = str(anomaly.node_id)
                 # Map UUID to readable names
                 node_mapping = {
-                    '00000000-0000-0000-0000-000000000001': "Sant'Anna",
-                    '00000000-0000-0000-0000-000000000002': "Seneca",
-                    '00000000-0000-0000-0000-000000000003': "Selargius Tank"
+                    "00000000-0000-0000-0000-000000000001": "Sant'Anna",
+                    "00000000-0000-0000-0000-000000000002": "Seneca",
+                    "00000000-0000-0000-0000-000000000003": "Selargius Tank",
                 }
                 node_name = node_mapping.get(node_id, f"Node {node_id[:8]}")
                 node_counts[node_name] = node_counts.get(node_name, 0) + 1
-            
+
             if node_counts:
-                data = pd.DataFrame({
-                    'Node': list(node_counts.keys()),
-                    'Anomalies': list(node_counts.values())
-                })
+                data = pd.DataFrame(
+                    {
+                        "Node": list(node_counts.keys()),
+                        "Anomalies": list(node_counts.values()),
+                    }
+                )
             else:
-                data = pd.DataFrame({
-                    'Node': ['No Anomalies'],
-                    'Anomalies': [0]
-                })
+                data = pd.DataFrame({"Node": ["No Anomalies"], "Anomalies": [0]})
         else:
-            data = pd.DataFrame({
-                'Node': ['No Data'],
-                'Anomalies': [0]
-            })
-        
+            data = pd.DataFrame({"Node": ["No Data"], "Anomalies": [0]})
+
         fig = px.bar(
             data,
-            x='Anomalies',
-            y='Node',
-            orientation='h',
-            color='Anomalies',
-            color_continuous_scale='Reds'
+            x="Anomalies",
+            y="Node",
+            orientation="h",
+            color="Anomalies",
+            color_continuous_scale="Reds",
         )
-        
+
         fig.update_layout(height=350)
         st.plotly_chart(fig, use_container_width=True)
-    
+
     def _render_anomaly_list(self, time_range: str) -> None:
         """Render detailed list of recent anomalies."""
         # Get real anomaly data
         anomaly_results = self._fetch_anomalies(time_range)
-        
+
         if anomaly_results:
             # Convert to display format
             anomalies = []
             for anomaly in anomaly_results[:10]:  # Show latest 10
                 severity_emoji = {
-                    'critical': '🔴 High',
-                    'high': '🔴 High', 
-                    'medium': '🟡 Medium',
-                    'low': '🟢 Low'
-                }.get(anomaly.severity.lower(), '🟡 Medium')
-                
-                anomalies.append({
-                    'Time': anomaly.timestamp.strftime('%H:%M:%S'),
-                    'Node': anomaly.node_id,
-                    'Type': anomaly.anomaly_type,
-                    'Severity': severity_emoji,
-                    'Status': '⚠️ Active',  # All recent anomalies are considered active
-                    'Description': anomaly.description or f'{anomaly.measurement_type}: {anomaly.actual_value:.2f} (expected range: {anomaly.expected_range[0]:.2f} - {anomaly.expected_range[1]:.2f})'
-                })
-            
+                    "critical": "🔴 High",
+                    "high": "🔴 High",
+                    "medium": "🟡 Medium",
+                    "low": "🟢 Low",
+                }.get(anomaly.severity.lower(), "🟡 Medium")
+
+                # Map UUID to readable names
+                node_id = str(anomaly.node_id)
+                node_mapping = {
+                    "00000000-0000-0000-0000-000000000001": "Sant'Anna",
+                    "00000000-0000-0000-0000-000000000002": "Seneca",
+                    "00000000-0000-0000-0000-000000000003": "Selargius Tank",
+                }
+                node_name = node_mapping.get(node_id, f"Node {node_id[:8]}")
+
+                # Create description with proper null checking
+                if anomaly.description:
+                    description = anomaly.description
+                else:
+                    # Build description from available data
+                    desc_parts = [
+                        f"{anomaly.measurement_type}: {anomaly.actual_value:.2f}"
+                    ]
+                    if anomaly.expected_range and len(anomaly.expected_range) == 2:
+                        desc_parts.append(
+                            f"(expected: {anomaly.expected_range[0]:.2f} - {anomaly.expected_range[1]:.2f})"
+                        )
+                    if anomaly.deviation_percentage:
+                        desc_parts.append(
+                            f"Deviation: {anomaly.deviation_percentage:.1f}%"
+                        )
+                    description = " ".join(desc_parts)
+
+                anomalies.append(
+                    {
+                        "Time": anomaly.timestamp.strftime("%H:%M:%S"),
+                        "Node": node_name,
+                        "Type": anomaly.anomaly_type,
+                        "Severity": severity_emoji,
+                        "Status": "⚠️ Active",  # All recent anomalies are considered active
+                        "Description": description,
+                    }
+                )
+
             df = pd.DataFrame(anomalies)
         else:
             # No demo data - return empty dataframe
-            df = pd.DataFrame({
-                'Time': [],
-                'Node': [],
-                'Type': [],
-                'Severity': [],
-                'Status': [],
-                'Description': []
-            })
-        
+            df = pd.DataFrame(
+                {
+                    "Time": [],
+                    "Node": [],
+                    "Type": [],
+                    "Severity": [],
+                    "Status": [],
+                    "Description": [],
+                }
+            )
+
         # Display as a formatted table
         st.dataframe(
             df,
             use_container_width=True,
             hide_index=True,
             column_config={
-                'Time': st.column_config.TextColumn('Time', width='small'),
-                'Node': st.column_config.TextColumn('Node', width='medium'),
-                'Type': st.column_config.TextColumn('Type', width='medium'),
-                'Severity': st.column_config.TextColumn('Severity', width='small'),
-                'Status': st.column_config.TextColumn('Status', width='medium'),
-                'Description': st.column_config.TextColumn('Description', width='large')
-            }
+                "Time": st.column_config.TextColumn("Time", width="small"),
+                "Node": st.column_config.TextColumn("Node", width="medium"),
+                "Type": st.column_config.TextColumn("Type", width="medium"),
+                "Severity": st.column_config.TextColumn("Severity", width="small"),
+                "Status": st.column_config.TextColumn("Status", width="medium"),
+                "Description": st.column_config.TextColumn(
+                    "Description", width="large"
+                ),
+            },
         )
-    
+
     def _render_anomaly_patterns(self) -> None:
         """Render anomaly patterns analysis."""
         # Create subplot figure
         fig = make_subplots(
-            rows=1, cols=2,
-            subplot_titles=('Hourly Pattern', 'Daily Pattern')
+            rows=1, cols=2, subplot_titles=("Hourly Pattern", "Daily Pattern")
         )
-        
+
         # Hourly pattern - no synthetic data
         hours = list(range(24))
         hourly_counts = [0] * 24  # All zeros
-        
+
         fig.add_trace(
-            go.Bar(x=hours, y=hourly_counts, name='Hourly', marker_color='#1f77b4'),
-            row=1, col=1
+            go.Bar(x=hours, y=hourly_counts, name="Hourly", marker_color="#1f77b4"),
+            row=1,
+            col=1,
         )
-        
+
         # Daily pattern - no synthetic data
-        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         daily_counts = [0] * 7  # All zeros
-        
+
         fig.add_trace(
-            go.Bar(x=days, y=daily_counts, name='Daily', marker_color='#ff7f0e'),
-            row=1, col=2
+            go.Bar(x=days, y=daily_counts, name="Daily", marker_color="#ff7f0e"),
+            row=1,
+            col=2,
         )
-        
+
         fig.update_layout(
-            height=300,
-            showlegend=False,
-            title_text="Anomaly Occurrence Patterns"
+            height=300, showlegend=False, title_text="Anomaly Occurrence Patterns"
         )
-        
+
         fig.update_xaxes(title_text="Hour of Day", row=1, col=1)
         fig.update_xaxes(title_text="Day of Week", row=1, col=2)
         fig.update_yaxes(title_text="Count", row=1, col=1)
         fig.update_yaxes(title_text="Count", row=1, col=2)
-        
+
         st.plotly_chart(fig, use_container_width=True)
-    
+
     def _get_time_params(self, time_range: str) -> tuple:
         """Get time parameters based on selected range."""
         params = {
-            "Last 6 Hours": (12, '30min'),
-            "Last 24 Hours": (48, '30min'),
-            "Last 3 Days": (72, 'H'),
-            "Last Week": (168, 'H'),
-            "Last Month": (720, 'H'),  # 30 days
-            "Last Year": (8760, 'H'),  # 365 days
-            "Custom Range": None  # Will be handled separately
+            "Last 6 Hours": (12, "30min"),
+            "Last 24 Hours": (48, "30min"),
+            "Last 3 Days": (72, "H"),
+            "Last Week": (168, "H"),
+            "Last Month": (720, "H"),  # 30 days
+            "Last Year": (8760, "H"),  # 365 days
+            "Custom Range": None,  # Will be handled separately
         }
-        return params.get(time_range, (48, '30min'))
-    
+        return params.get(time_range, (48, "30min"))
+
     def _get_anomaly_data(self, time_range: str) -> dict:
         """Get real anomaly data from use case."""
         try:
             anomaly_results = self._fetch_anomalies(time_range)
-            
+
             if anomaly_results:
                 # Count anomalies by severity
-                critical_count = sum(1 for a in anomaly_results if a.severity.lower() in ['critical', 'high'])
+                critical_count = sum(
+                    1
+                    for a in anomaly_results
+                    if a.severity.lower() in ["critical", "high"]
+                )
                 total_anomalies = len(anomaly_results)
-                
+
                 # Count affected nodes
                 affected_nodes = len(set(a.node_id for a in anomaly_results))
-                
+
                 # Count today's anomalies - use current date or data end date
                 today = datetime.now().date()
                 data_end = datetime(2025, 3, 31).date()
                 if today > data_end:
                     today = data_end
-                
-                new_today = sum(1 for a in anomaly_results if a.timestamp.date() == today)
-                
+
+                new_today = sum(
+                    1 for a in anomaly_results if a.timestamp.date() == today
+                )
+
                 return {
-                    'total_anomalies': total_anomalies,
-                    'new_today': new_today,
-                    'critical_count': critical_count,
-                    'affected_nodes': affected_nodes,
-                    'total_nodes': 3,  # Sant'Anna, Seneca, Selargius Tank
-                    'affected_percentage': (affected_nodes / 3) * 100,
-                    'avg_resolution': '45 min'
+                    "total_anomalies": total_anomalies,
+                    "new_today": new_today,
+                    "critical_count": critical_count,
+                    "affected_nodes": affected_nodes,
+                    "total_nodes": 3,  # Sant'Anna, Seneca, Selargius Tank
+                    "affected_percentage": (affected_nodes / 3) * 100,
+                    "avg_resolution": "45 min",
                 }
         except Exception as e:
             st.warning(f"Error getting anomaly data: {str(e)}")
-        
+
         # Return zeros - no synthetic data
         return {
-            'total_anomalies': 0,
-            'new_today': 0,
-            'critical_count': 0,
-            'affected_nodes': 0,
-            'total_nodes': 3,
-            'affected_percentage': 0,
-            'avg_resolution': 'N/A'
+            "total_anomalies": 0,
+            "new_today": 0,
+            "critical_count": 0,
+            "affected_nodes": 0,
+            "total_nodes": 3,
+            "affected_percentage": 0,
+            "avg_resolution": "N/A",
         }
-    
-    def _fetch_anomalies(self, time_range: str = "Last 24 Hours") -> Optional[List[AnomalyDetectionResultDTO]]:
+
+    def _fetch_anomalies(
+        self, time_range: str = "Last 24 Hours"
+    ) -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
         try:
             # Calculate time window based on selected range
@@ -389,43 +434,51 @@ class AnomalyTab:
                 "Last Month": 720,  # 30 days
                 "Last Year": 8760,  # 365 days
             }
-            
+
             # Get time window in hours
             time_window_hours = time_deltas.get(time_range, 24)
-            
+
             # Handle custom date range
-            if time_range == "Custom Range" and hasattr(st.session_state, 'custom_date_range'):
+            if time_range == "Custom Range" and hasattr(
+                st.session_state, "custom_date_range"
+            ):
                 start_date, end_date = st.session_state.custom_date_range
                 if start_date and end_date:
                     # Convert to datetime and calculate hours
                     start_time = datetime.combine(start_date, datetime.min.time())
                     end_time = datetime.combine(end_date, datetime.max.time())
-                    time_window_hours = int((end_time - start_time).total_seconds() / 3600)
-            
+                    time_window_hours = int(
+                        (end_time - start_time).total_seconds() / 3600
+                    )
+
             # Use cache if available and recent (5 minutes) for same time range
             cache_key = f"anomalies_{time_range}_{time_window_hours}"
-            if (self._anomaly_cache and self._cache_time and 
-                hasattr(self, '_cache_key') and self._cache_key == cache_key):
+            if (
+                self._anomaly_cache
+                and self._cache_time
+                and hasattr(self, "_cache_key")
+                and self._cache_key == cache_key
+            ):
                 if datetime.now() - self._cache_time < timedelta(minutes=5):
                     return self._anomaly_cache
-            
+
             # Run the use case asynchronously
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             result = loop.run_until_complete(
                 self.detect_anomalies_use_case.execute(
                     node_ids=None,  # Check all nodes
                     time_window_hours=time_window_hours,
-                    notify_on_critical=False  # Don't send notifications from dashboard
+                    notify_on_critical=False,  # Don't send notifications from dashboard
                 )
             )
-            
+
             # Cache the result
             self._anomaly_cache = result
             self._cache_time = datetime.now() if result else None
             self._cache_key = cache_key
-            
+
             return result
         except Exception as e:
             if "No monitoring nodes found" in str(e):

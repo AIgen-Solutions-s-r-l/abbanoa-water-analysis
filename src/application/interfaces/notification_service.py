@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 class NotificationPriority(Enum):
     """Notification priority levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -15,6 +16,7 @@ class NotificationPriority(Enum):
 
 class NotificationChannel(Enum):
     """Available notification channels."""
+
     EMAIL = "email"
     SMS = "sms"
     WEBHOOK = "webhook"
@@ -23,7 +25,7 @@ class NotificationChannel(Enum):
 
 class INotificationService(ABC):
     """Interface for sending notifications and alerts."""
-    
+
     @abstractmethod
     async def send_notification(
         self,
@@ -32,11 +34,11 @@ class INotificationService(ABC):
         message: str,
         priority: NotificationPriority = NotificationPriority.MEDIUM,
         channels: Optional[List[NotificationChannel]] = None,
-        metadata: Optional[Dict[str, any]] = None
+        metadata: Optional[Dict[str, any]] = None,
     ) -> None:
         """Send a notification to a recipient."""
         pass
-    
+
     @abstractmethod
     async def send_batch_notifications(
         self,
@@ -45,11 +47,11 @@ class INotificationService(ABC):
         message: str,
         priority: NotificationPriority = NotificationPriority.MEDIUM,
         channels: Optional[List[NotificationChannel]] = None,
-        metadata: Optional[Dict[str, any]] = None
+        metadata: Optional[Dict[str, any]] = None,
     ) -> None:
         """Send notifications to multiple recipients."""
         pass
-    
+
     @abstractmethod
     async def send_anomaly_alert(
         self,
@@ -57,11 +59,11 @@ class INotificationService(ABC):
         anomaly_type: str,
         severity: str,
         description: str,
-        measurement_data: Dict[str, float]
+        measurement_data: Dict[str, float],
     ) -> None:
         """Send an anomaly detection alert."""
         pass
-    
+
     @abstractmethod
     async def send_threshold_alert(
         self,
@@ -69,7 +71,7 @@ class INotificationService(ABC):
         measurement_type: str,
         current_value: float,
         threshold_value: float,
-        threshold_type: str
+        threshold_type: str,
     ) -> None:
         """Send a threshold exceeded alert."""
         pass

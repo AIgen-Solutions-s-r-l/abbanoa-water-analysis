@@ -25,16 +25,16 @@ from src.shared.exceptions.forecast_exceptions import (
 
 class MetricsCollector:
     """Simple metrics collector for performance tracking."""
-    
+
     def __init__(self):
         self.metrics = {}
-    
+
     def record_latency(self, operation: str, latency_ms: float) -> None:
         """Record operation latency."""
         if operation not in self.metrics:
             self.metrics[operation] = []
         self.metrics[operation].append(latency_ms)
-    
+
     def record_count(self, metric_name: str, tags: dict) -> None:
         """Record count metric with tags."""
         key = f"{metric_name}:{tags}"
@@ -44,20 +44,20 @@ class MetricsCollector:
 class ForecastConsumption:
     """
     Use case for consuming forecast data.
-    
+
     Implements the business logic for retrieving forecast data from ML models,
     with proper validation, error handling, and performance tracking.
     """
-    
+
     def __init__(
         self,
         forecast_repository: ForecastRepositoryInterface,
         logger: Optional[logging.Logger] = None,
-        metrics: Optional[MetricsCollector] = None
+        metrics: Optional[MetricsCollector] = None,
     ):
         """
         Initialize forecast consumption use case.
-        
+
         Args:
             forecast_repository: Repository for forecast data access
             logger: Logger instance
@@ -66,21 +66,18 @@ class ForecastConsumption:
         self._repository = forecast_repository
         self._logger = logger or logging.getLogger(__name__)
         self._metrics = metrics or MetricsCollector()
-    
+
     async def get_forecast(
-        self,
-        district_id: str,
-        metric: str,
-        horizon: int
+        self, district_id: str, metric: str, horizon: int
     ) -> pd.DataFrame:
         """
         Retrieve forecast data for a specific district and metric.
-        
+
         Args:
             district_id: District identifier (e.g., 'DIST_001')
             metric: Metric type ('flow_rate', 'reservoir_level', 'pressure')
             horizon: Forecast horizon in days (1-7)
-        
+
         Returns:
             pd.DataFrame: Forecast data with columns:
                 - timestamp: Forecast timestamp (UTC)
@@ -90,7 +87,7 @@ class ForecastConsumption:
                 - lower_bound: Prediction interval lower bound
                 - upper_bound: Prediction interval upper bound
                 - confidence_level: Confidence level (default 0.95)
-        
+
         Raises:
             InvalidForecastRequestException: Invalid input parameters
             ForecastNotFoundException: No forecast available
@@ -99,25 +96,23 @@ class ForecastConsumption:
         """
         start_time = time.time()
         request_id = f"{district_id}_{metric}_{horizon}_{int(start_time)}"
-        
+
         self._logger.info(
             f"Processing forecast request: {request_id} - "
             f"district={district_id}, metric={metric}, horizon={horizon}"
         )
-        
+
         try:
             # Validate and create request object
             try:
                 forecast_request = ForecastRequest(
-                    district_id=district_id,
-                    metric=metric,
-                    horizon=horizon
+                    district_id=district_id, metric=metric, horizon=horizon
                 )
             except ValidationError as e:
                 self._logger.warning(f"Invalid forecast request: {str(e)}")
-                
+
                 # Extract field from the ValidationError
-                field = e.rule if hasattr(e, 'rule') else "unknown"
+                field = e.rule if hasattr(e, "rule") else "unknown"
                 value = None
                 if field == "district_id":
                     value = district_id
@@ -125,57 +120,56 @@ class ForecastConsumption:
                     value = metric
                 elif field == "horizon":
                     value = horizon
-                
+
                 raise InvalidForecastRequestException(
-                    message=str(e),
-                    field=field,
-                    value=value
+                    message=str(e), field=field, value=value
                 )
-            
+
             # Record request metrics
             self._metrics.record_count(
-                "forecast_requests",
-                {"district": district_id, "metric": metric}
+                "forecast_requests", {"district": district_id, "metric": metric}
             )
-            
+
             # Retrieve forecast from repository
             model_forecast_df = await self._repository.get_model_forecast(
                 model_name=forecast_request.model_name,
                 district_metric_id=forecast_request.district_metric_id,
-                horizon=forecast_request.horizon
+                horizon=forecast_request.horizon,
             )
-            
+
             # Process and format the response
             result_df = self._format_forecast_dataframe(
-                df=model_forecast_df,
-                district_id=district_id,
-                metric=metric
+                df=model_forecast_df, district_id=district_id, metric=metric
             )
-            
+
             # Create response object for validation
             forecast_response = ForecastResponse.from_dataframe(
                 df=result_df,
                 district_id=district_id,
                 metric=metric,
-                generated_at=datetime.now(timezone.utc)
+                generated_at=datetime.now(timezone.utc),
             )
-            
+
             # Record success metrics
             elapsed_ms = (time.time() - start_time) * 1000
             self._metrics.record_latency("forecast_retrieval", elapsed_ms)
-            
+
             self._logger.info(
                 f"Forecast request {request_id} completed successfully "
                 f"in {elapsed_ms:.2f}ms"
             )
-            
+
             # Return the formatted DataFrame
             return result_df
-            
-        except (InvalidForecastRequestException, ForecastNotFoundException, ForecastServiceException):
+
+        except (
+            InvalidForecastRequestException,
+            ForecastNotFoundException,
+            ForecastServiceException,
+        ):
             # Re-raise domain exceptions
             raise
-            
+
         except Exception as e:
             # Wrap unexpected errors
             self._logger.error(
@@ -184,68 +178,70 @@ class ForecastConsumption:
             raise ForecastServiceException(
                 message=f"Failed to process forecast request: {str(e)}",
                 service="forecast_consumption",
-                original_error=e
+                original_error=e,
             )
-    
+
     def _format_forecast_dataframe(
-        self,
-        df: pd.DataFrame,
-        district_id: str,
-        metric: str
+        self, df: pd.DataFrame, district_id: str, metric: str
     ) -> pd.DataFrame:
         """
         Format forecast DataFrame to match expected output format.
-        
+
         Args:
             df: Raw forecast DataFrame from repository
             district_id: District identifier
             metric: Metric type
-        
+
         Returns:
             Formatted DataFrame with all required columns
         """
         # Create a copy to avoid modifying original
         result_df = df.copy()
-        
+
         # Add district and metric columns
-        result_df['district_id'] = district_id
-        result_df['metric'] = metric
-        
+        result_df["district_id"] = district_id
+        result_df["metric"] = metric
+
         # Ensure all required columns are present
         required_columns = [
-            'timestamp', 'district_id', 'metric', 'forecast_value',
-            'lower_bound', 'upper_bound', 'confidence_level'
+            "timestamp",
+            "district_id",
+            "metric",
+            "forecast_value",
+            "lower_bound",
+            "upper_bound",
+            "confidence_level",
         ]
-        
+
         for col in required_columns:
             if col not in result_df.columns:
-                if col == 'confidence_level':
+                if col == "confidence_level":
                     result_df[col] = 0.95
                 else:
                     raise ForecastServiceException(
                         f"Missing required column '{col}' in forecast data",
-                        service="forecast_formatting"
+                        service="forecast_formatting",
                     )
-        
+
         # Select and order columns
         result_df = result_df[required_columns]
-        
+
         # Ensure timestamp is UTC timezone aware
-        if result_df['timestamp'].dt.tz is None:
-            result_df['timestamp'] = result_df['timestamp'].dt.tz_localize('UTC')
-        
+        if result_df["timestamp"].dt.tz is None:
+            result_df["timestamp"] = result_df["timestamp"].dt.tz_localize("UTC")
+
         # Sort by timestamp
-        result_df = result_df.sort_values('timestamp')
-        
+        result_df = result_df.sort_values("timestamp")
+
         # Reset index
         result_df = result_df.reset_index(drop=True)
-        
+
         # Validate no missing values
         if result_df.isnull().any().any():
             null_columns = result_df.columns[result_df.isnull().any()].tolist()
             raise ForecastServiceException(
                 f"Forecast data contains null values in columns: {null_columns}",
-                service="forecast_formatting"
+                service="forecast_formatting",
             )
-        
+
         return result_df
