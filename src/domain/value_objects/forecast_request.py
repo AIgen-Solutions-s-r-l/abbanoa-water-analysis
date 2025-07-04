@@ -48,6 +48,7 @@ class ForecastRequest:
         """Validate district ID format."""
         if not self.DISTRICT_PATTERN.match(self.district_id):
             raise ValidationError(
+                "district_id",
                 f"Invalid district_id '{self.district_id}'. "
                 f"Must match pattern DIST_XXX where XXX is a 3-digit number."
             )
@@ -56,6 +57,7 @@ class ForecastRequest:
         """Validate metric is in allowed set."""
         if self.metric not in self.VALID_METRICS:
             raise ValidationError(
+                "metric",
                 f"Invalid metric '{self.metric}'. "
                 f"Must be one of: {', '.join(sorted(self.VALID_METRICS))}"
             )
@@ -64,6 +66,7 @@ class ForecastRequest:
         """Validate horizon is within allowed range."""
         if not (self.MIN_HORIZON <= self.horizon <= self.MAX_HORIZON):
             raise ValidationError(
+                "horizon",
                 f"Invalid horizon {self.horizon}. "
                 f"Must be between {self.MIN_HORIZON} and {self.MAX_HORIZON} days."
             )

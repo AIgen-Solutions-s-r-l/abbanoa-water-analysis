@@ -13,9 +13,11 @@ from typing import Optional
 import pandas as pd
 
 from src.application.interfaces.forecast_repository import ForecastRepositoryInterface
+from src.domain.exceptions import ValidationError
 from src.domain.value_objects.forecast_request import ForecastRequest
 from src.domain.value_objects.forecast_response import ForecastResponse
 from src.shared.exceptions.forecast_exceptions import (
+    ForecastNotFoundException,
     ForecastServiceException,
     InvalidForecastRequestException,
 )
@@ -111,20 +113,17 @@ class ForecastConsumption:
                     metric=metric,
                     horizon=horizon
                 )
-            except ValueError as e:
+            except ValidationError as e:
                 self._logger.warning(f"Invalid forecast request: {str(e)}")
                 
-                # Determine which field is invalid
-                field = "unknown"
+                # Extract field from the ValidationError
+                field = e.rule if hasattr(e, 'rule') else "unknown"
                 value = None
-                if "district_id" in str(e):
-                    field = "district_id"
+                if field == "district_id":
                     value = district_id
-                elif "metric" in str(e):
-                    field = "metric"
+                elif field == "metric":
                     value = metric
-                elif "horizon" in str(e):
-                    field = "horizon"
+                elif field == "horizon":
                     value = horizon
                 
                 raise InvalidForecastRequestException(
@@ -173,7 +172,7 @@ class ForecastConsumption:
             # Return the formatted DataFrame
             return result_df
             
-        except (InvalidForecastRequestException, ForecastServiceException):
+        except (InvalidForecastRequestException, ForecastNotFoundException, ForecastServiceException):
             # Re-raise domain exceptions
             raise
             
