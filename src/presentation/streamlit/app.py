@@ -80,29 +80,63 @@ class DashboardApp:
     
     def render_tabs(self) -> None:
         """Render the main tab navigation."""
-        # Create tabs
-        tab1, tab2, tab3, tab4 = st.tabs([
+        # Import the old dashboard components
+        from src.presentation.streamlit.components.overview_tab import OverviewTab
+        from src.presentation.streamlit.components.anomaly_tab import AnomalyTab
+        from src.presentation.streamlit.components.consumption_tab import ConsumptionTab
+        from src.presentation.streamlit.components.efficiency_tab import EfficiencyTab
+        from src.presentation.streamlit.components.reports_tab import ReportsTab
+        
+        # Initialize old dashboard components
+        overview_tab = OverviewTab()
+        anomaly_tab = AnomalyTab()
+        consumption_tab = ConsumptionTab()
+        efficiency_tab = EfficiencyTab()
+        reports_tab = ReportsTab()
+        
+        # Create tabs - combining new and old functionality
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
             "📈 Forecast",
-            "📊 Analytics",
+            "📊 Overview", 
             "🔍 Anomaly Detection",
-            "⚙️ System Health"
+            "📈 Consumption Patterns",
+            "🔗 Network Efficiency",
+            "📋 Reports"
         ])
         
         with tab1:
-            # Render forecast tab
+            # New forecast tab
             self.forecast_tab.render()
         
         with tab2:
-            # Placeholder for analytics tab
-            st.info("Analytics tab coming soon...")
+            # Old dashboard overview
+            overview_tab.render(
+                time_range=st.session_state.get('time_range', 'Last 24 Hours'),
+                selected_nodes=st.session_state.get('selected_nodes', ['All Nodes'])
+            )
         
         with tab3:
-            # Placeholder for anomaly detection tab
-            st.info("Anomaly detection tab coming soon...")
+            # Anomaly detection from old dashboard
+            anomaly_tab.render(
+                time_range=st.session_state.get('time_range', 'Last 24 Hours')
+            )
         
         with tab4:
-            # Placeholder for system health tab
-            st.info("System health monitoring coming soon...")
+            # Consumption patterns from old dashboard
+            consumption_tab.render(
+                time_range=st.session_state.get('time_range', 'Last 24 Hours'),
+                selected_nodes=st.session_state.get('selected_nodes', ['All Nodes'])
+            )
+        
+        with tab5:
+            # Network efficiency from old dashboard
+            efficiency_tab.render(
+                time_range=st.session_state.get('time_range', 'Last 24 Hours')
+            )
+        
+        with tab6:
+            # Reports from old dashboard
+            reports_tab.render()
     
     def run(self) -> None:
         """Run the main dashboard application."""

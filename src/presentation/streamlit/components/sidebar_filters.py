@@ -37,7 +37,30 @@ class SidebarFilters:
             
             st.markdown("---")
             
-            # Filter Section
+            # General Dashboard Filters (from old dashboard)
+            st.markdown("### 📊 General Filters")
+            
+            # Time range selection
+            time_range = st.selectbox(
+                "Time Range",
+                ["Last 6 Hours", "Last 24 Hours", "Last 3 Days", "Last Week"],
+                index=1,
+                key="time_range",
+                help="Select time range for overview and analysis tabs"
+            )
+            
+            # Node selection
+            selected_nodes = st.multiselect(
+                "Select Nodes",
+                ["All Nodes", "Sant'Anna", "Seneca", "Selargius Tank", "External Supply"],
+                default=["All Nodes"],
+                key="selected_nodes",
+                help="Select nodes to monitor"
+            )
+            
+            st.markdown("---")
+            
+            # Filter Section for Forecast
             st.markdown("### 🎛️ Forecast Parameters")
             
             # District selector
