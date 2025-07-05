@@ -78,7 +78,9 @@ class AnalyzeConsumptionPatternsUseCase:
                 hour = reading.timestamp.strftime("%H:00")
                 if hour not in hourly_data:
                     hourly_data[hour] = []
-                hourly_data[hour].append(reading.flow_rate.value)
+                # Handle both value objects and direct float values
+                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                hourly_data[hour].append(float(flow_val))
 
         average_consumption = {}
         all_values = []
@@ -99,7 +101,9 @@ class AnalyzeConsumptionPatternsUseCase:
                 day = reading.timestamp.strftime("%A")
                 if day not in daily_data:
                     daily_data[day] = []
-                daily_data[day].append(reading.flow_rate.value)
+                # Handle both value objects and direct float values
+                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                daily_data[day].append(float(flow_val))
 
         average_consumption = {}
         all_values = []
@@ -130,7 +134,9 @@ class AnalyzeConsumptionPatternsUseCase:
                 week = reading.timestamp.strftime("Week %U")
                 if week not in weekly_data:
                     weekly_data[week] = []
-                weekly_data[week].append(reading.flow_rate.value)
+                # Handle both value objects and direct float values
+                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                weekly_data[week].append(float(flow_val))
 
         average_consumption = {}
         all_values = []
@@ -151,7 +157,9 @@ class AnalyzeConsumptionPatternsUseCase:
                 month = reading.timestamp.strftime("%B")
                 if month not in monthly_data:
                     monthly_data[month] = []
-                monthly_data[month].append(reading.flow_rate.value)
+                # Handle both value objects and direct float values
+                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                monthly_data[month].append(float(flow_val))
 
         average_consumption = {}
         all_values = []

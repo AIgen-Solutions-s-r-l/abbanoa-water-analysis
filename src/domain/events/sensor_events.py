@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -17,6 +18,10 @@ class AnomalyDetectedEvent(DomainEvent):
     measurement_value: float
     threshold: float
     description: str
+    timestamp: Optional[datetime] = None
+
+    def __post_init__(self):
+        super().__init__(occurred_at=self.timestamp)
 
     @property
     def event_type(self) -> str:
@@ -44,6 +49,9 @@ class ThresholdExceededEvent(DomainEvent):
     threshold_value: float
     threshold_type: str  # "upper" or "lower"
 
+    def __post_init__(self):
+        super().__init__()
+
     @property
     def event_type(self) -> str:
         return "threshold_exceeded"
@@ -66,6 +74,9 @@ class SensorReadingAddedEvent(DomainEvent):
     reading_id: UUID
     timestamp: str
     measurements: Dict[str, float]
+
+    def __post_init__(self):
+        super().__init__()
 
     @property
     def event_type(self) -> str:
@@ -90,6 +101,9 @@ class DataQualityIssueEvent(DomainEvent):
     affected_period_end: str
     quality_score: float
     details: str
+
+    def __post_init__(self):
+        super().__init__()
 
     @property
     def event_type(self) -> str:

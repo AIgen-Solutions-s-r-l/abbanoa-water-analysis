@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 
 class DomainEvent(ABC):
     """Base class for all domain events."""
 
-    def __init__(self):
+    def __init__(self, occurred_at: Optional[datetime] = None):
         self.event_id: UUID = uuid4()
-        self.occurred_at: datetime = datetime.utcnow()
+        self.occurred_at: datetime = occurred_at or datetime.utcnow()
         self.aggregate_id: UUID = uuid4()
 
     @property

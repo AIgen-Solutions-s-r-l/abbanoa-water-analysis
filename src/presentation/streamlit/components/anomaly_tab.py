@@ -95,7 +95,7 @@ class AnomalyTab:
 
         # Anomaly patterns
         st.subheader("Anomaly Patterns Analysis")
-        self._render_anomaly_patterns()
+        self._render_anomaly_patterns(time_range)
 
     def _render_anomaly_timeline(self, time_range: str) -> None:
         """Render anomaly timeline visualization."""
@@ -201,13 +201,14 @@ class AnomalyTab:
             node_counts = {}
             for anomaly in anomaly_results:
                 node_id = str(anomaly.node_id)
-                # Map UUID to readable names
+                # Map UUID to readable names (use full UUIDs)
                 node_mapping = {
                     "00000000-0000-0000-0000-000000000001": "Sant'Anna",
-                    "00000000-0000-0000-0000-000000000002": "Seneca",
+                    "00000000-0000-0000-0000-000000000002": "Seneca", 
                     "00000000-0000-0000-0000-000000000003": "Selargius Tank",
+                    "00000000-0000-0000-0000-000000000004": "Quartucciu Tank"
                 }
-                node_name = node_mapping.get(node_id, f"Node {node_id[:8]}")
+                node_name = node_mapping.get(node_id, f"Unknown Node ({node_id[:8]})")
                 node_counts[node_name] = node_counts.get(node_name, 0) + 1
 
             if node_counts:
@@ -250,14 +251,15 @@ class AnomalyTab:
                     "low": "🟢 Low",
                 }.get(anomaly.severity.lower(), "🟡 Medium")
 
-                # Map UUID to readable names
+                # Map UUID to readable names (use full UUIDs)
                 node_id = str(anomaly.node_id)
                 node_mapping = {
                     "00000000-0000-0000-0000-000000000001": "Sant'Anna",
                     "00000000-0000-0000-0000-000000000002": "Seneca",
                     "00000000-0000-0000-0000-000000000003": "Selargius Tank",
+                    "00000000-0000-0000-0000-000000000004": "Quartucciu Tank"
                 }
-                node_name = node_mapping.get(node_id, f"Node {node_id[:8]}")
+                node_name = node_mapping.get(node_id, f"Unknown Node ({node_id[:8]})")
 
                 # Create description with proper null checking
                 if anomaly.description:
@@ -319,27 +321,41 @@ class AnomalyTab:
             },
         )
 
-    def _render_anomaly_patterns(self) -> None:
-        """Render anomaly patterns analysis."""
+    def _render_anomaly_patterns(self, time_range: str) -> None:
+        """Render anomaly patterns analysis using real anomaly data."""
+        # Get real anomaly data
+        anomaly_results = self._fetch_anomalies(time_range)
+        
         # Create subplot figure
         fig = make_subplots(
             rows=1, cols=2, subplot_titles=("Hourly Pattern", "Daily Pattern")
         )
 
-        # Hourly pattern - no synthetic data
-        hours = list(range(24))
-        hourly_counts = [0] * 24  # All zeros
+        # Initialize counts
+        hourly_counts = [0] * 24
+        daily_counts = [0] * 7
+        
+        if anomaly_results:
+            # Count anomalies by hour and day
+            for anomaly in anomaly_results:
+                # Hourly pattern (0-23)
+                hour = anomaly.timestamp.hour
+                hourly_counts[hour] += 1
+                
+                # Daily pattern (0=Monday, 6=Sunday)
+                day = anomaly.timestamp.weekday()
+                daily_counts[day] += 1
 
+        # Hourly pattern
+        hours = list(range(24))
         fig.add_trace(
             go.Bar(x=hours, y=hourly_counts, name="Hourly", marker_color="#1f77b4"),
             row=1,
             col=1,
         )
 
-        # Daily pattern - no synthetic data
+        # Daily pattern
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        daily_counts = [0] * 7  # All zeros
-
         fig.add_trace(
             go.Bar(x=days, y=daily_counts, name="Daily", marker_color="#ff7f0e"),
             row=1,
@@ -356,6 +372,20 @@ class AnomalyTab:
         fig.update_yaxes(title_text="Count", row=1, col=2)
 
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Show summary statistics if we have data
+        if anomaly_results:
+            total_anomalies = len(anomaly_results)
+            peak_hour = hourly_counts.index(max(hourly_counts)) if max(hourly_counts) > 0 else "N/A"
+            peak_day = days[daily_counts.index(max(daily_counts))] if max(daily_counts) > 0 else "N/A"
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Anomalies", total_anomalies)
+            with col2:
+                st.metric("Peak Hour", f"{peak_hour}:00" if peak_hour != "N/A" else peak_hour)
+            with col3:
+                st.metric("Peak Day", peak_day)
 
     def _get_time_params(self, time_range: str) -> tuple:
         """Get time parameters based on selected range."""
