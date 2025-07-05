@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.2.0.0] - 2025-07-05
+
+### Features
+- Enhanced Streamlit dashboard with comprehensive time range filtering capabilities
+- Implemented real-time alert system with severity levels (Critical, Warning, Info)
+- Added intelligent alert detection based on pressure thresholds, flow anomalies, and data quality
+
+### Improvements
+- Enhanced date range handling to respect actual data boundaries (Nov 13, 2024 - Mar 31, 2025)
+- Improved anomaly visualization methods with time range parameters
+- Applied code formatting with black and isort for better code consistency
+
+### Bug Fixes
+- Fixed edge cases where requested time ranges could exceed available data
+- Improved data validation to ensure queries stay within valid date ranges
+
+### Documentation
+- Added comprehensive release notes documentation
+- Updated code style with consistent formatting
+
+### Contributors
+- @alessio
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
 All notable changes to the Abbanoa Water Infrastructure Management System will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
