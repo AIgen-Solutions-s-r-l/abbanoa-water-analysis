@@ -1,474 +1,473 @@
-# Abbanoa Infrastructure Data Pipeline
+# Abbanoa Water Infrastructure Management System
 
 ## Overview
-Multi-site water infrastructure monitoring system for Abbanoa, processing sensor data from **Selargius** and **Teatinos** facilities into BigQuery for analysis and reporting. Features **ML-powered 7-day forecasting** with ARIMA_PLUS models achieving <15% MAPE accuracy for operational planning.
+Enterprise-grade water infrastructure monitoring and analytics platform for Abbanoa, featuring real-time sensor data processing, ML-powered forecasting, and integrated dashboards. Built with **Domain-Driven Design (DDD)** architecture for scalability and maintainability.
 
-### 🚀 Latest Release: v0.4.0
-- **Async Forecast Consumption**: Clean architecture implementation with 99th percentile latency ≤ 300ms
-- **ARIMA_PLUS Models**: Deployed for flow_rate, pressure, and reservoir_level metrics
-- **BigQuery Integration**: Complete data pipeline from raw sensor data to ML predictions
-- **Full Documentation**: API reference, integration guides, and operational procedures
+### 🚀 Latest Release: v1.1.0.0
+- **Real-Time Data Integration**: Complete BigQuery integration with live sensor data
+- **Enhanced Dashboard**: 
+  - Fixed flow rate trends visualization in Overview tab
+  - Real node status with live metrics (flow, pressure)
+  - Consumption patterns with actual historical data
+  - Custom date range selector for historical analysis
+  - Added "Last Year" time range option
+- **Authentication**: Automatic Google Cloud credentials detection
+- **Performance**: Optimized data fetching with proper caching
+- **Data Coverage**: Full access to 19,866+ sensor readings (Nov 2024 - Mar 2025)
 
 ## System Architecture
+
+### Domain-Driven Design Structure
+```
+src/
+├── domain/                    # Core business logic
+│   ├── entities/             # Business entities
+│   ├── value_objects/        # Immutable value objects
+│   ├── events/              # Domain events
+│   └── services/            # Domain services
+├── application/              # Use cases and DTOs
+│   ├── use_cases/           # Application services
+│   ├── dto/                 # Data transfer objects
+│   └── interfaces/          # Repository interfaces
+├── infrastructure/           # External services
+│   ├── repositories/        # Data access implementations
+│   ├── external_services/   # Third-party integrations
+│   └── persistence/         # Database configurations
+└── presentation/            # User interfaces
+    ├── streamlit/          # Web dashboard
+    ├── api/                # REST API
+    └── cli/                # Command-line interface
+```
 
 ### C4 System Context Diagram
 ```mermaid
 C4Context
-    title System Context - Abbanoa Infrastructure Monitoring
+    title System Context - Abbanoa Water Infrastructure Platform
 
-    Person(operators, "Water Facility<br/>Operators", "Monitor infrastructure<br/>performance and consumption")
-    Person(analysts, "Data Analysts", "Analyze consumption patterns<br/>and infrastructure health")
-    Person(managers, "Operations<br/>Managers", "Strategic planning<br/>and reporting")
+    Person(operators, "Water Facility<br/>Operators", "Monitor real-time<br/>infrastructure status")
+    Person(analysts, "Data Analysts", "Analyze patterns and<br/>generate forecasts")
+    Person(managers, "Operations<br/>Managers", "Strategic planning<br/>and KPI monitoring")
 
-    System_Boundary(abbanoa, "Abbanoa Data Pipeline") {
-        System(pipeline, "Infrastructure<br/>Data Pipeline", "Processes sensor data from<br/>multiple water facilities")
+    System_Boundary(abbanoa, "Abbanoa Platform") {
+        System(platform, "Water Infrastructure<br/>Management System", "DDD-based monitoring<br/>and analytics platform")
     }
 
-    System_Ext(selargius, "Selargius Facility", "Traditional CSV reports<br/>30-minute aggregations")
-    System_Ext(teatinos, "Teatinos Facility", "Hidroconta sensor network<br/>10-minute flow data")
-    System_Ext(bigquery, "Google BigQuery", "Cloud data warehouse<br/>for analytics")
-    System_Ext(looker, "Looker Studio", "Business intelligence<br/>and dashboards")
+    System_Ext(sensors, "Sensor Networks", "Selargius & Teatinos<br/>monitoring nodes")
+    System_Ext(bigquery, "Google BigQuery", "Time-series data<br/>warehouse")
+    System_Ext(ml_platform, "Vertex AI", "ML model training<br/>and serving")
 
-    Rel(selargius, pipeline, "CSV reports", "HTTPS")
-    Rel(teatinos, pipeline, "Hidroconta exports", "HTTPS")
-    Rel(pipeline, bigquery, "Normalized data", "BigQuery API")
-    Rel(bigquery, looker, "Query results", "BigQuery connector")
+    Rel(sensors, platform, "Sensor data", "CSV/API")
+    Rel(platform, bigquery, "Normalized data", "BigQuery API")
+    Rel(platform, ml_platform, "Training data", "Vertex AI API")
+    Rel(ml_platform, platform, "Predictions", "REST API")
     
-    Rel(operators, pipeline, "Monitor processing")
-    Rel(analysts, bigquery, "Run analytics queries")
-    Rel(managers, looker, "View dashboards")
+    Rel(operators, platform, "Monitor & control")
+    Rel(analysts, platform, "Analyze & forecast")
+    Rel(managers, platform, "View dashboards")
 ```
 
-### C4 Container Diagram
+### Container Diagram - DDD Architecture
 ```mermaid
 C4Container
-    title Container Diagram - Abbanoa Data Pipeline Architecture
+    title Container Diagram - DDD Architecture
 
     Person(users, "Users", "Operators, Analysts,<br/>Managers")
 
-    System_Boundary(pipeline, "Abbanoa Data Pipeline") {
-        Container(raw_data, "Raw Data Storage", "File System", "Stores incoming<br/>CSV files and exports")
+    System_Boundary(platform, "Abbanoa Platform") {
+        Container(web_ui, "Streamlit Dashboard", "Python/Streamlit", "Interactive web<br/>dashboard")
+        Container(api, "REST API", "FastAPI", "External system<br/>integration")
+        Container(cli, "CLI Tool", "Python/Click", "Command-line<br/>operations")
         
-        Container(selargius_proc, "Selargius Processor", "Python", "Normalizes traditional<br/>CSV reports")
-        Container(teatinos_proc, "Teatinos Processor", "Python", "Processes Hidroconta<br/>sensor data")
+        Container(use_cases, "Application Layer", "Python", "Business use cases<br/>and orchestration")
+        Container(domain, "Domain Layer", "Python", "Core business logic<br/>and entities")
         
-        Container(data_quality, "Data Quality Engine", "Python", "Validates data integrity<br/>and detects anomalies")
-        Container(metadata_store, "Metadata Store", "JSON Files", "Tracks processing<br/>history and schemas")
+        Container(repos, "Repositories", "Python", "Data access<br/>abstraction")
+        Container(services, "External Services", "Python", "Third-party<br/>integrations")
         
-        Container(bq_loader, "BigQuery Loader", "Python", "Uploads normalized data<br/>to BigQuery datasets")
+        ContainerDb(cache, "Redis Cache", "Redis", "Performance<br/>optimization")
     }
 
-    System_Ext(selargius_sys, "Selargius Systems", "Water facility<br/>monitoring systems")
-    System_Ext(teatinos_sys, "Teatinos Systems", "Hidroconta sensor<br/>network")
-    
-    ContainerDb(bigquery_db, "BigQuery", "Cloud Data Warehouse", "Stores time-series<br/>infrastructure data")
-    Container(analytics, "Analytics Layer", "SQL Queries", "Pre-built queries for<br/>common analyses")
-    Container(dashboard, "Dashboards", "Looker Studio", "Interactive monitoring<br/>and reporting")
+    ContainerDb(bigquery_db, "BigQuery", "Data Warehouse", "Time-series<br/>sensor data")
+    System_Ext(ml_models, "ML Models", "ARIMA_PLUS<br/>forecasting")
 
-    Rel(selargius_sys, raw_data, "Export CSV", "SFTP/Manual")
-    Rel(teatinos_sys, raw_data, "Export CSV", "SFTP/Manual")
+    Rel(users, web_ui, "Uses", "HTTPS")
+    Rel(users, api, "Integrates", "REST/JSON")
+    Rel(users, cli, "Operates", "Terminal")
     
-    Rel(raw_data, selargius_proc, "Read CSV files")
-    Rel(raw_data, teatinos_proc, "Read Hidroconta files")
+    Rel(web_ui, use_cases, "Invokes")
+    Rel(api, use_cases, "Invokes")
+    Rel(cli, use_cases, "Invokes")
     
-    Rel(selargius_proc, data_quality, "Validate data")
-    Rel(teatinos_proc, data_quality, "Validate data")
+    Rel(use_cases, domain, "Uses")
+    Rel(use_cases, repos, "Queries")
     
-    Rel(data_quality, metadata_store, "Store metadata")
-    Rel(data_quality, bq_loader, "Normalized data")
+    Rel(repos, bigquery_db, "Reads/Writes", "BigQuery API")
+    Rel(repos, cache, "Caches", "Redis Protocol")
     
-    Rel(bq_loader, bigquery_db, "Load data", "BigQuery API")
-    Rel(bigquery_db, analytics, "Query data")
-    Rel(analytics, dashboard, "Results")
-    
-    Rel(users, dashboard, "View reports")
-    Rel(users, bigquery_db, "Ad-hoc queries")
+    Rel(services, ml_models, "Gets predictions")
+    Rel(use_cases, services, "Uses")
 ```
 
 ### Data Flow Architecture
 ```mermaid
 flowchart TD
     subgraph "Data Sources"
-        A1[Selargius CSV Reports<br/>30-min aggregates]
-        A2[Teatinos Hidroconta<br/>10-min sensor data]
+        A1[Selargius Sensors<br/>30-min aggregates]
+        A2[Teatinos Sensors<br/>10-min readings]
     end
     
-    subgraph "Raw Data Layer"
-        B1[RAWDATA/<br/>Selargius Files]
-        B2[RAWDATA/Studio Dati<br/>Hidroconta Files]
+    subgraph "Infrastructure Layer"
+        B1[CSV Data Ingestion]
+        B2[BigQuery Repository<br/>sensor_data table]
+        B3[Static Node Repository<br/>monitoring_nodes]
     end
     
-    subgraph "Processing Layer"
-        C1[selargius_normalizer.py<br/>📊 Parse CSV format<br/>🔄 Standardize schema<br/>✅ Quality checks]
-        C2[hidroconta_normalizer.py<br/>📊 Parse Italian format<br/>🔄 Handle semicolon delimiters<br/>✅ Metadata extraction]
-        
-        C3[Data Quality Engine<br/>🔍 Anomaly detection<br/>📈 Statistical validation<br/>🔗 Deduplication]
+    subgraph "Domain Layer"
+        C1[MonitoringNode Entity]
+        C2[SensorReading Entity]
+        C3[Anomaly Detection Service]
+        C4[Network Efficiency Service]
     end
     
-    subgraph "BigQuery Data Warehouse"
-        D1[(selargius_infrastructure<br/>📅 Time partitioned<br/>🏷️ Clustered by node)]
-        D2[(teatinos_infrastructure<br/>📅 Time partitioned<br/>🏷️ Clustered by PCR unit)]
+    subgraph "Application Layer"
+        D1[Analyze Consumption<br/>Use Case]
+        D2[Detect Anomalies<br/>Use Case]
+        D3[Calculate Efficiency<br/>Use Case]
+        D4[Forecast Consumption<br/>Use Case]
     end
     
-    subgraph "Analytics Layer"
-        E1[Pre-built SQL Queries<br/>📊 Consumption trends<br/>⚡ Anomaly detection<br/>📈 Performance metrics]
-        E2[Looker Studio Dashboards<br/>📱 Real-time monitoring<br/>📋 Executive reports<br/>🎯 Operational insights]
+    subgraph "Presentation Layer"
+        E1[Streamlit Dashboard<br/>📊 6 Integrated Tabs]
+        E2[REST API<br/>🔌 External Integration]
+        E3[CLI Interface<br/>⚡ Admin Operations]
     end
     
     A1 --> B1
-    A2 --> B2
-    B1 --> C1
+    A2 --> B1
+    B1 --> B2
     B2 --> C2
+    B3 --> C1
     C1 --> C3
     C2 --> C3
-    C3 --> D1
+    C1 --> C4
+    C2 --> C4
     C3 --> D2
+    C4 --> D3
+    C2 --> D1
+    C2 --> D4
     D1 --> E1
     D2 --> E1
-    E1 --> E2
-    
-    style A1 fill:#e1f5fe
-    style A2 fill:#e1f5fe
-    style C1 fill:#fff3e0
-    style C2 fill:#fff3e0
-    style C3 fill:#f3e5f5
-    style D1 fill:#e8f5e8
-    style D2 fill:#e8f5e8
-    style E1 fill:#fce4ec
-    style E2 fill:#fce4ec
+    D3 --> E1
+    D4 --> E1
+    D1 --> E2
+    D2 --> E3
 ```
-
-### Component-Level Data Processing Pipeline
-```mermaid
-flowchart LR
-    subgraph "Selargius Pipeline"
-        S1[CSV File Reader<br/>📄 Encoding: UTF-8<br/>🔄 Delimiter: Comma]
-        S2[Schema Validator<br/>✅ Column validation<br/>📅 Date parsing<br/>🔢 Numeric conversion]
-        S3[Node Data Processor<br/>🏷️ Extract node IDs<br/>📍 Geographic mapping<br/>⚡ Aggregation logic]
-        S4[Selargius BigQuery Writer<br/>📤 Batch upload<br/>🔄 Upsert logic<br/>📊 Schema enforcement]
-    end
-    
-    subgraph "Teatinos Pipeline"
-        T1[Hidroconta CSV Reader<br/>📄 Encoding: UTF-8<br/>🔄 Delimiter: Semicolon<br/>🌍 Italian formatting]
-        T2[Metadata Extractor<br/>🏷️ PCR unit identification<br/>📊 Sensor type parsing<br/>📅 Date range extraction]
-        T3[Data Type Classifier<br/>🔄 Consumption vs Flow<br/>⏰ Hourly vs Daily<br/>📈 Analog vs Digital]
-        T4[Teatinos BigQuery Writer<br/>📤 Streaming insert<br/>🔄 Partition management<br/>📊 Clustering optimization]
-    end
-    
-    subgraph "Shared Components"
-        Q1[Quality Assurance<br/>🔍 Null value detection<br/>📊 Statistical outliers<br/>🔄 Duplicate removal]
-        Q2[Metadata Manager<br/>📋 Processing logs<br/>📊 Data lineage<br/>🔄 Schema evolution]
-        Q3[Error Handler<br/>⚠️ Exception logging<br/>🔄 Retry mechanisms<br/>📧 Alert notifications]
-    end
-    
-    S1 --> S2 --> S3 --> Q1
-    T1 --> T2 --> T3 --> Q1
-    Q1 --> Q2 --> S4
-    Q1 --> Q2 --> T4
-    Q2 --> Q3
-    
-    style S1 fill:#e3f2fd
-    style S2 fill:#e3f2fd
-    style S3 fill:#e3f2fd
-    style S4 fill:#e3f2fd
-    style T1 fill:#fff3e0
-    style T2 fill:#fff3e0
-    style T3 fill:#fff3e0
-    style T4 fill:#fff3e0
-    style Q1 fill:#f3e5f5
-    style Q2 fill:#f3e5f5
-    style Q3 fill:#f3e5f5
-```
-
-### BigQuery Data Model
-```mermaid
-erDiagram
-    SELARGIUS_SENSOR_DATA {
-        TIMESTAMP datetime PK
-        FLOAT64 value
-        STRING unit
-        STRING node_id
-        STRING measurement_type
-        STRING _source_file
-        TIMESTAMP _ingestion_timestamp
-        STRING _row_hash
-        INT64 _row_id
-    }
-    
-    TEATINOS_SENSOR_DATA {
-        TIMESTAMP datetime PK
-        FLOAT64 value
-        STRING unit
-        STRING _pcr_unit
-        STRING _sensor_type
-        STRING _sensor_location
-        STRING _data_type
-        STRING _description
-        STRING _source_file
-        TIMESTAMP _ingestion_timestamp
-        STRING _row_hash
-        INT64 _row_id
-    }
-    
-    PROCESSING_METADATA {
-        STRING job_id PK
-        TIMESTAMP start_time
-        TIMESTAMP end_time
-        STRING status
-        INT64 records_processed
-        STRING error_message
-        STRING dataset_name
-        STRING table_name
-    }
-    
-    DATA_QUALITY_METRICS {
-        DATE analysis_date PK
-        STRING dataset_name PK
-        INT64 total_records
-        INT64 null_values
-        INT64 duplicate_records
-        FLOAT64 avg_value
-        FLOAT64 min_value
-        FLOAT64 max_value
-        ARRAY_STRING anomalies
-    }
-    
-    SELARGIUS_SENSOR_DATA ||--o{ PROCESSING_METADATA : "processed_by"
-    TEATINOS_SENSOR_DATA ||--o{ PROCESSING_METADATA : "processed_by"
-    SELARGIUS_SENSOR_DATA ||--o{ DATA_QUALITY_METRICS : "analyzed_in"
-    TEATINOS_SENSOR_DATA ||--o{ DATA_QUALITY_METRICS : "analyzed_in"
-```
-
-## Project Structure
-
-```
-Abbanoa/
-├── README.md                           # This file
-├── TEATINOS_DATA_SUMMARY.md           # Teatinos processing summary
-├── RAWDATA/                           # Raw data storage
-│   ├── REPORT_NODI_SELARGIUS*.csv    # Selargius reports
-│   └── Studio Dati (Hidroconta)/     # Teatinos sensor data
-├── normalized_data/                   # Processed data files
-│   ├── selargius_normalized.csv
-│   └── teatinos_hidroconta_normalized.csv
-├── schemas/                          # BigQuery schemas
-│   ├── selargius_schema.json
-│   └── teatinos_hidroconta_schema.json
-├── queries/                          # Analysis queries
-│   ├── daily_consumption_trends.sql
-│   ├── flow_rate_monitoring.sql
-│   ├── consumption_comparison.sql
-│   └── anomaly_detection.sql
-└── metadata/                         # Processing metadata
-    ├── selargius_metadata.json
-    └── teatinos_hidroconta_metadata.json
-```
-
-## Data Processing Workflows
-
-### Selargius Data Processing
-1. **File Ingestion**: CSV files with 30-minute aggregated data
-2. **Normalization**: Standardize column names, handle Italian formatting
-3. **Quality Checks**: Validate node IDs, check for missing timestamps
-4. **BigQuery Upload**: Batch insert to `selargius_infrastructure` dataset
-5. **Verification**: Run quality checks and generate reports
-
-### Teatinos Data Processing  
-1. **File Ingestion**: Hidroconta exports with semicolon delimiters
-2. **Metadata Extraction**: Parse PCR units, sensor types, date ranges
-3. **Data Classification**: Categorize consumption vs flow vs analog data
-4. **Schema Standardization**: Normalize Italian descriptions and units
-5. **BigQuery Upload**: Stream to `teatinos_infrastructure` dataset
-6. **Quality Assurance**: Statistical validation and anomaly detection
 
 ## Key Features
 
-### 🏗️ **Multi-Site Architecture**
-- **Selargius**: Traditional CSV reports, 30-minute aggregations
-- **Teatinos**: Hidroconta sensor network, 10-minute granularity
-- **Separate datasets** for site-specific analysis and cross-site comparison
+### 🏗️ **Domain-Driven Design**
+- Clean architecture with clear separation of concerns
+- Domain entities: MonitoringNode, SensorReading, WaterNetwork
+- Value objects: Location, Measurements, NodeStatus
+- Rich domain services for business logic
 
-### 📊 **Data Quality Assurance**
-- Automated validation and cleansing
-- Statistical outlier detection
-- Duplicate removal with hash-based deduplication
-- Comprehensive metadata tracking
+### 📊 **Integrated Dashboard**
+- **6 Main Tabs**: Overview, Forecast, Anomaly Detection, Consumption, Efficiency, Reports
+- **Real-time Monitoring**: Live sensor data visualization
+- **No Synthetic Data**: Shows only actual BigQuery data
+- **Responsive Design**: Mobile-friendly interface
 
-### 🔄 **Scalable Processing**
-- Modular Python processors for each data source
-- Configurable batch vs streaming ingestion
-- Error handling and retry mechanisms
-- Audit logging and lineage tracking
+### 🤖 **Machine Learning Integration**
+- ARIMA_PLUS models for 7-day forecasting
+- Multiple metrics: flow rate, pressure, consumption
+- <15% MAPE accuracy across districts
+- Automated daily predictions
 
-### 🎯 **Analytics Ready**
-- Time-partitioned tables for efficient querying
-- Optimized clustering for common access patterns
-- Pre-built analytical queries
-- Dashboard integration with Looker Studio
+### 🔄 **Data Processing**
+- Direct BigQuery integration
+- Normalized view for sensor readings
+- Support for multiple monitoring nodes
+- Real-time data streaming capabilities
 
-### 🤖 **Machine Learning Forecasting**
-- **ARIMA_PLUS Models**: 6 district-specific models for flow rate, pressure, and reservoir levels
-- **7-Day Predictions**: Daily forecasts with confidence intervals
-- **High Accuracy**: <15% MAPE across all pilot districts
-- **Automated Pipeline**: Daily forecast generation and model monitoring
-- **Operational Integration**: Real-time predictions for resource planning
+### 🎯 **Use Cases**
+1. **Analyze Consumption Patterns**: Historical analysis and trends
+2. **Detect Network Anomalies**: Real-time anomaly detection
+3. **Calculate Network Efficiency**: Performance metrics and KPIs
+4. **Forecast Consumption**: ML-powered predictions
+5. **Generate Reports**: Automated reporting
 
 ## Technical Specifications
 
+### Technology Stack
+- **Backend**: Python 3.12, Poetry
+- **Framework**: Domain-Driven Design, Clean Architecture
+- **Database**: Google BigQuery (Data Warehouse)
+- **ML Platform**: Vertex AI, ARIMA_PLUS
+- **Dashboard**: Streamlit 1.40+
+- **API**: FastAPI
+- **Cache**: Redis (optional)
+- **Container**: Dependency Injector
+
 ### Data Sources
-| Site | System | Format | Frequency | Records/Month |
-|------|---------|--------|-----------|---------------|
-| Selargius | CSV Reports | UTF-8, Comma | 30-min | ~45,000 |
-| Teatinos | Hidroconta | UTF-8, Semicolon | 10-min | ~130,000 |
+| Source | Format | Frequency | Time Range |
+|--------|--------|-----------|------------|
+| Selargius CSV | UTF-8, Comma | 30-min | Nov 2024 - Mar 2025 |
+| BigQuery Views | Normalized | Real-time | Historical + Live |
 
-### BigQuery Configuration
-- **Project**: `abbanoa-464816`
-- **Location**: `europe-west1` (GDPR compliant)
-- **Partitioning**: Daily by `datetime` field
-- **Clustering**: Optimized for common query patterns
-- **Retention**: Indefinite for historical analysis
-
-### Processing Performance
-- **Selargius**: ~45,000 records/batch, 2-5 minutes processing time
-- **Teatinos**: ~215,000 records/batch, 5-10 minutes processing time
-- **Data Quality**: 100% unique records, zero null values
-- **Error Rate**: <1% (typically format-related)
-
-### ML Model Performance
-- **Model Training**: 6 ARIMA_PLUS models, ~20-25 minutes total
-- **Forecast Generation**: <30 seconds for 7-day predictions
-- **Accuracy**: 11.4% average MAPE (target: <15%)
-- **Best Model**: DIST_002 Pressure (8.5% MAPE)
-- **Coverage**: 90% prediction interval accuracy
+### Performance Metrics
+- **Dashboard Load**: <2 seconds
+- **Query Response**: <500ms (cached)
+- **ML Predictions**: <30 seconds for 7-day forecast
+- **Data Freshness**: 30-minute lag maximum
 
 ## Getting Started
 
 ### Prerequisites
+```bash
+# Required software
 - Python 3.12+
-- Poetry (for dependency management)
-- Google Cloud SDK
-- BigQuery access credentials
-- Required Python packages managed by Poetry
+- Poetry (dependency management)
+- Google Cloud SDK (for authentication)
+- Git
 
-### Quick Start
+# BigQuery Authentication (choose one method):
+# Method 1: Application Default Credentials (recommended for development)
+gcloud auth application-default login
+
+# Method 2: Service Account Key (recommended for production)
+export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
+
+# BigQuery configuration (automatically set by run_dashboard.sh)
+export BIGQUERY_PROJECT_ID="abbanoa-464816"
+export BIGQUERY_DATASET_ID="water_infrastructure"
+```
+
+### Installation
 ```bash
 # Clone repository
 git clone https://github.com/abbanoa/water-infrastructure.git
 cd water-infrastructure
 
-# Install Poetry (if not installed)
-curl -sSL https://install.python-poetry.org | python3 -
-
 # Install dependencies
 poetry install
 
-# Configure GCP credentials
+# Configure GCP
 gcloud auth login
 gcloud config set project abbanoa-464816
-
-# Run data processing
-poetry run python selargius_normalizer.py      # For Selargius data
-poetry run python hidroconta_normalizer.py     # For Teatinos data
-
-# Generate ML forecasts
-poetry run python notebooks/execute_forecast_baseline.py
-
-# Deploy ML models to production
-./scripts/deploy/deploy_ml_models.sh prod execute
 ```
 
-### Sample Analysis Queries
-```sql
--- Cross-site consumption comparison
-SELECT 
-    'Selargius' as site,
-    DATE(datetime) as date,
-    SUM(value) as total_consumption
-FROM `abbanoa-464816.selargius_infrastructure.sensor_data`
-WHERE datetime >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-GROUP BY date
+### Running the Dashboard
+```bash
+# Using the convenience script (recommended)
+./run_dashboard.sh
 
-UNION ALL
+# The script automatically:
+# - Detects and uses Google Cloud credentials
+# - Sets BigQuery environment variables
+# - Runs with poetry environment
 
-SELECT 
-    'Teatinos' as site,
-    DATE(datetime) as date,
-    SUM(value) as total_consumption  
-FROM `abbanoa-464816.teatinos_infrastructure.sensor_data`
-WHERE datetime >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-  AND _data_type = 'consumption'
-GROUP BY date
-ORDER BY date DESC, site
+# Or manually with streamlit
+poetry run streamlit run src/presentation/streamlit/app.py --server.port 8502
+
+# Access at http://localhost:8502
 ```
 
-### ML Forecast Queries
-```sql
--- Get current 7-day forecasts
-SELECT 
-  district_id,
-  metric_type,
-  forecast_date,
-  ROUND(forecast_value, 2) as forecast,
-  ROUND(lower_bound, 2) as lower_95,
-  ROUND(upper_bound, 2) as upper_95
-FROM `abbanoa-464816.ml_models.current_forecasts`
-WHERE forecast_date >= CURRENT_DATE()
-  AND district_id = 'DIST_001'
-ORDER BY metric_type, forecast_date;
+## Dashboard Usage
 
--- Check model performance
-SELECT 
-  model_name,
-  ROUND(mean_absolute_percentage_error * 100, 1) as mape_percent,
-  mape_assessment as status
-FROM `abbanoa-464816.ml_models.model_evaluation`
-ORDER BY mape_percent;
+### Viewing Real Data
+1. **Select Time Range**: Choose from preset options or use "Custom Range"
+   - Last 6 Hours, 24 Hours, 3 Days, Week, Month, **Year** (NEW!)
+   - Custom Range: Select any dates between Nov 13, 2024 - Mar 31, 2025
+
+2. **Monitor Nodes**: 
+   - Sant'Anna: Main distribution node (80-110 L/s flow rate)
+   - Seneca: Secondary node with pressure monitoring (4.5 bar avg)
+   - Selargius Tank: Storage facility (12-35 L/s flow rate)
+
+3. **Dashboard Tabs**:
+   - **Overview**: Real-time metrics, flow trends, node status
+   - **Forecast**: ML predictions for next 7 days
+   - **Anomaly Detection**: Real-time anomaly monitoring
+   - **Consumption Patterns**: Historical analysis with actual data
+   - **Network Efficiency**: Performance metrics and KPIs
+   - **Reports**: Generate and export reports
+
+### Key Features
+- ✅ **Real BigQuery Data**: No synthetic data - only actual sensor readings
+- ✅ **Live Node Status**: See current flow rates and pressure
+- ✅ **Custom Date Ranges**: Analyze any historical period
+- ✅ **Auto-refresh**: Optional 5-minute refresh for monitoring
+
+### Running Tests
+```bash
+# Unit tests
+poetry run pytest tests/unit/
+
+# Integration tests
+poetry run pytest tests/integration/
+
+# All tests with coverage
+poetry run pytest --cov=src --cov-report=html
 ```
+
+## Dashboard Features
+
+### Overview Tab
+- Real-time metrics: Active nodes, flow rates, pressure, efficiency
+- System status monitoring
+- Alert notifications
+
+### Forecast Tab
+- 7-day predictions with confidence intervals
+- Interactive charts for different metrics
+- Model performance statistics
+- District selection
+
+### Anomaly Detection Tab
+- Real-time anomaly alerts
+- Pattern analysis
+- Historical anomaly trends
+- Severity classification
+
+### Consumption Patterns Tab
+- Daily/weekly/monthly trends
+- Peak usage analysis
+- Comparative analytics
+- Heatmap visualizations
+
+### Network Efficiency Tab
+- Efficiency metrics and KPIs
+- Component performance
+- Loss distribution analysis
+- Energy consumption tracking
+
+### Reports Tab
+- Automated report generation
+- Custom date ranges
+- Multiple export formats
+- Scheduled reports
+
+## API Documentation
+
+### REST API Endpoints
+```python
+# Health check
+GET /api/v1/health
+
+# Sensor readings
+GET /api/v1/readings/{node_id}
+GET /api/v1/readings/{node_id}/latest
+
+# Monitoring nodes
+GET /api/v1/nodes
+GET /api/v1/nodes/{node_id}
+
+# Analytics
+POST /api/v1/analytics/consumption
+POST /api/v1/analytics/anomalies
+POST /api/v1/analytics/efficiency
+
+# Forecasts
+GET /api/v1/forecasts/{district_id}/{metric}
+```
+
+### CLI Commands
+```bash
+# Data operations
+poetry run abbanoa data ingest --source selargius
+poetry run abbanoa data validate --date 2024-11-13
+
+# Analysis
+poetry run abbanoa analyze consumption --district DIST_001
+poetry run abbanoa analyze anomalies --hours 24
+
+# Reports
+poetry run abbanoa report generate --type daily
+poetry run abbanoa report export --format pdf
+```
+
+## Development
+
+### Project Structure
+```
+├── src/                      # Source code (DDD layers)
+├── tests/                    # Test suites
+├── docs/                     # Documentation
+├── scripts/                  # Utility scripts
+├── RAWDATA/                  # Raw data files
+├── pyproject.toml           # Poetry configuration
+├── .env.example             # Environment template
+├── CLAUDE.md                # AI assistant context
+└── run_dashboard.sh         # Dashboard launcher
+```
+
+### Contributing
+1. Follow DDD principles and clean architecture
+2. Write tests for new features
+3. Update documentation
+4. Use conventional commits
+5. Run linters before committing
+
+### Code Style
+- Black for formatting
+- Ruff for linting
+- MyPy for type checking
+- 100% type hints required
+
+## Deployment
+
+### Production Deployment
+```bash
+# Build Docker image
+docker build -t abbanoa-platform:latest .
+
+# Deploy to Cloud Run
+gcloud run deploy abbanoa-platform \
+  --image gcr.io/abbanoa-464816/abbanoa-platform:latest \
+  --platform managed \
+  --region europe-west1 \
+  --allow-unauthenticated
+```
+
+### Environment Configuration
+- Development: `.env.development`
+- Staging: `.env.staging`
+- Production: `.env.production`
 
 ## Monitoring & Maintenance
 
 ### Health Checks
-- Daily processing status verification
-- Data quality metrics monitoring
-- BigQuery table health and performance
-- Storage utilization tracking
-- ML model performance monitoring (MAPE tracking)
-- Forecast accuracy validation
+- Dashboard availability
+- BigQuery connectivity
+- ML model performance
+- Data freshness validation
 
 ### Alerting
-- Failed processing jobs
-- Data quality degradation
-- Unusual consumption patterns
-- System performance issues
-- Model performance degradation (MAPE > 20%)
-- Forecast generation failures
+- System errors and exceptions
+- Data quality issues
+- Performance degradation
+- Anomaly detection alerts
 
-### Maintenance Schedule
-- **Daily**: ML forecast generation and validation
-- **Weekly**: Data quality reports, model performance review
-- **Monthly**: Performance optimization, ML model retraining
-- **Quarterly**: Schema evolution review
-- **Annually**: Historical data archival
+### Maintenance
+- **Daily**: Automated health checks
+- **Weekly**: Performance review
+- **Monthly**: ML model retraining
+- **Quarterly**: Architecture review
 
-## Support & Documentation
+## Support
 
-### Key Resources
-- **BigQuery Console**: https://console.cloud.google.com/bigquery?project=abbanoa-464816
-- **Processing Logs**: Check metadata JSON files
-- **Sample Queries**: See `queries/` directory
-- **Architecture Details**: This README
-- **ML Documentation**: `docs/ml-models/`
-- **Operational Guide**: `docs/ml-models/OPERATIONAL_GUIDE.md`
-- **ARIMA_PLUS Details**: `docs/ml-models/arima-plus-forecast-prototype.md`
+### Documentation
+- Architecture: This README
+- API Reference: `/docs/api/`
+- User Guide: `/docs/user-guide/`
+- ML Models: `/docs/ml-models/`
 
-### Common Issues
-1. **CSV Format Changes**: Update parser configurations
-2. **Schema Evolution**: Modify BigQuery table schemas
-3. **Performance Issues**: Review partitioning and clustering
-4. **Data Quality**: Check source data integrity
+### Contact
+- Technical Support: tech@abbanoa.it
+- GitHub Issues: [Report Issue](https://github.com/abbanoa/water-infrastructure/issues)
 
 ---
 
-*Last Updated: July 2025*  
-*Architecture Version: 2.0*  
+*Version: 1.0.0*  
+*Release Date: July 2025*  
 *Status: Production Ready* 🚀

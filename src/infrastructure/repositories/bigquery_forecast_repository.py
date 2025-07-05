@@ -23,20 +23,20 @@ from src.shared.exceptions.forecast_exceptions import (
 class BigQueryForecastRepository(ForecastRepositoryInterface):
     """
     BigQuery implementation of forecast repository.
-    
+
     Retrieves forecast data from BigQuery ML models using the async client
     for optimal performance.
     """
-    
+
     def __init__(
         self,
         client: AsyncBigQueryClient,
         ml_dataset_id: str = "ml_models",
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize BigQuery forecast repository.
-        
+
         Args:
             client: Async BigQuery client instance
             ml_dataset_id: Dataset containing ML models
@@ -45,24 +45,21 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         self.client = client
         self.ml_dataset_id = ml_dataset_id
         self.logger = logger or logging.getLogger(__name__)
-    
+
     async def get_model_forecast(
-        self,
-        model_name: str,
-        district_metric_id: str,
-        horizon: int
+        self, model_name: str, district_metric_id: str, horizon: int
     ) -> pd.DataFrame:
         """
         Retrieve forecast data from a BigQuery ML model.
-        
+
         Args:
             model_name: Name of the ML model
             district_metric_id: Combined district and metric ID
             horizon: Forecast horizon in days
-        
+
         Returns:
             DataFrame with forecast data
-        
+
         Raises:
             ForecastNotFoundException: Model or forecast not found
             ForecastServiceException: Service-level error
@@ -72,16 +69,16 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             f"Retrieving forecast from model '{model_name}' "
             f"for '{district_metric_id}' with horizon {horizon}"
         )
-        
+
         # Check if model exists first
         if not await self.check_model_exists(model_name):
             raise ForecastNotFoundException(
-                district_id=district_metric_id.split('_')[0],
-                metric='_'.join(district_metric_id.split('_')[1:]),
+                district_id=district_metric_id.split("_")[0],
+                metric="_".join(district_metric_id.split("_")[1:]),
                 horizon=horizon,
-                details={'model_name': model_name}
+                details={"model_name": model_name},
             )
-        
+
         # Build forecast query
         query = f"""
         SELECT
@@ -101,41 +98,39 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         ORDER BY
             forecast_timestamp
         """
-        
+
         # Query parameters
-        parameters = [
-            ScalarQueryParameter("horizon", "INT64", horizon)
-        ]
-        
+        parameters = [ScalarQueryParameter("horizon", "INT64", horizon)]
+
         try:
             # Execute forecast query
             df = await self.client.execute_query(
                 query=query,
                 parameters=parameters,
-                timeout_ms=200  # Tight timeout for 300ms SLA
+                timeout_ms=200,  # Tight timeout for 300ms SLA
             )
-            
+
             if df.empty:
                 raise ForecastNotFoundException(
-                    district_id=district_metric_id.split('_')[0],
-                    metric='_'.join(district_metric_id.split('_')[1:]),
+                    district_id=district_metric_id.split("_")[0],
+                    metric="_".join(district_metric_id.split("_")[1:]),
                     horizon=horizon,
                     details={
-                        'model_name': model_name,
-                        'reason': 'No forecast data returned'
-                    }
+                        "model_name": model_name,
+                        "reason": "No forecast data returned",
+                    },
                 )
-            
+
             # Ensure timestamp is timezone-aware UTC
-            if 'timestamp' in df.columns and df['timestamp'].dt.tz is None:
-                df['timestamp'] = df['timestamp'].dt.tz_localize('UTC')
-            
+            if "timestamp" in df.columns and df["timestamp"].dt.tz is None:
+                df["timestamp"] = df["timestamp"].dt.tz_localize("UTC")
+
             # Add default confidence level if missing
-            if 'confidence_level' not in df.columns:
-                df['confidence_level'] = 0.95
-            
+            if "confidence_level" not in df.columns:
+                df["confidence_level"] = 0.95
+
             return df
-            
+
         except ForecastNotFoundException:
             raise
         except Exception as e:
@@ -145,16 +140,16 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             raise ForecastServiceException(
                 f"Failed to retrieve forecast from model '{model_name}'",
                 service="bigquery_ml",
-                original_error=e
+                original_error=e,
             )
-    
+
     async def check_model_exists(self, model_name: str) -> bool:
         """
         Check if a BigQuery ML model exists.
-        
+
         Args:
             model_name: Name of the ML model
-        
+
         Returns:
             True if model exists, False otherwise
         """
@@ -164,32 +159,30 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         WHERE model_name = @model_name
         LIMIT 1
         """
-        
-        parameters = [
-            ScalarQueryParameter("model_name", "STRING", model_name)
-        ]
-        
+
+        parameters = [ScalarQueryParameter("model_name", "STRING", model_name)]
+
         try:
             df = await self.client.execute_query(
                 query=query,
                 parameters=parameters,
                 timeout_ms=100,  # Fast check
-                use_cache=True  # Cache model existence checks
+                use_cache=True,  # Cache model existence checks
             )
             return not df.empty
-            
+
         except Exception as e:
             self.logger.error(f"Error checking model existence: {str(e)}")
             # On error, assume model doesn't exist rather than failing
             return False
-    
+
     async def get_model_metadata(self, model_name: str) -> dict:
         """
         Retrieve metadata about a BigQuery ML model.
-        
+
         Args:
             model_name: Name of the ML model
-        
+
         Returns:
             Dictionary containing model metadata
         """
@@ -203,30 +196,25 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         FROM `{self.client.project_id}.{self.ml_dataset_id}.INFORMATION_SCHEMA.MODELS`
         WHERE model_name = @model_name
         """
-        
-        parameters = [
-            ScalarQueryParameter("model_name", "STRING", model_name)
-        ]
-        
+
+        parameters = [ScalarQueryParameter("model_name", "STRING", model_name)]
+
         try:
             df = await self.client.execute_query(
-                query=query,
-                parameters=parameters,
-                timeout_ms=100,
-                use_cache=True
+                query=query, parameters=parameters, timeout_ms=100, use_cache=True
             )
-            
+
             if df.empty:
                 raise ForecastNotFoundException(
                     district_id="unknown",
                     metric="unknown",
                     horizon=0,
-                    details={'model_name': model_name}
+                    details={"model_name": model_name},
                 )
-            
+
             # Convert first row to dict
             metadata = df.iloc[0].to_dict()
-            
+
             # Get latest performance metrics if available
             perf_query = f"""
             SELECT
@@ -236,23 +224,21 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             FROM
                 ML.EVALUATE(MODEL `{self.client.project_id}.{self.ml_dataset_id}.{model_name}`)
             """
-            
+
             try:
                 perf_df = await self.client.execute_query(
-                    query=perf_query,
-                    timeout_ms=150,
-                    use_cache=True
+                    query=perf_query, timeout_ms=150, use_cache=True
                 )
-                
+
                 if not perf_df.empty:
-                    metadata['performance_metrics'] = perf_df.iloc[0].to_dict()
-                    
+                    metadata["performance_metrics"] = perf_df.iloc[0].to_dict()
+
             except Exception:
                 # Performance metrics are optional
                 pass
-            
+
             return metadata
-            
+
         except ForecastNotFoundException:
             raise
         except Exception as e:
@@ -260,5 +246,5 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             raise ForecastServiceException(
                 f"Failed to retrieve metadata for model '{model_name}'",
                 service="bigquery_ml",
-                original_error=e
+                original_error=e,
             )

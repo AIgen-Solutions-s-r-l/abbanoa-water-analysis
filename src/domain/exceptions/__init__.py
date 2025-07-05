@@ -1,11 +1,11 @@
 """Domain exceptions module."""
 
 from .domain_exceptions import (
+    BusinessRuleViolationException,
+    DataQualityException,
     DomainException,
     EntityNotFoundException,
     InvalidMeasurementException,
-    BusinessRuleViolationException,
-    DataQualityException,
     NetworkIntegrityException,
 )
 

@@ -1,0 +1,74 @@
+# Streamlit Configuration for Abbanoa Dashboard
+
+[theme]
+# Primary color for interactive elements
+primaryColor = "#1f77b4"
+
+# Background color for the main content area
+backgroundColor = "#ffffff"
+
+# Background color for sidebar and most interactive widgets
+secondaryBackgroundColor = "#f0f2f6"
+
+# Color used for almost all text
+textColor = "#262730"
+
+# Font family for all text in the app
+font = "sans serif"
+
+[server]
+# Port to run the application
+port = 8502
+
+# Address to bind the server
+address = "0.0.0.0"
+
+# Automatically rerun script when the file is modified
+runOnSave = true
+
+# File size limit for uploads (in MB)
+maxUploadSize = 200
+
+# Enable CORS protection
+enableCORS = true
+
+# Enable XSRF protection
+enableXsrfProtection = true
+
+[browser]
+# Internet address where users should point their browsers
+serverAddress = "localhost"
+
+# Port where users should point their browsers
+serverPort = 8502
+
+# Automatically open browser on first run
+gatherUsageStats = false
+
+[runner]
+# Allows users to upload files
+magicEnabled = true
+
+# Automatically rerun on file change
+fastReruns = true
+
+[client]
+# Whether to enable st.cache
+caching = true
+
+# Show error details in the browser
+showErrorDetails = true
+
+# Show Streamlit menu
+showSidebarNavigation = true
+
+[logger]
+# Level of logging
+level = "info"
+
+# String format for logging messages
+messageFormat = "%(asctime)s %(message)s"
+
+[deprecation]
+# Set to false to disable the deprecation warning
+showPyplotGlobalUse = false

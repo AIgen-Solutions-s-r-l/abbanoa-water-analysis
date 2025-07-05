@@ -9,6 +9,7 @@ from uuid import UUID
 @dataclass
 class CreateSensorReadingDTO:
     """DTO for creating a new sensor reading."""
+
     node_id: UUID
     sensor_type: str
     timestamp: datetime
@@ -18,6 +19,7 @@ class CreateSensorReadingDTO:
 @dataclass
 class SensorReadingDTO:
     """DTO for sensor reading data."""
+
     id: UUID
     node_id: UUID
     node_name: str
@@ -35,6 +37,7 @@ class SensorReadingDTO:
 @dataclass
 class SensorReadingFilterDTO:
     """DTO for filtering sensor readings."""
+
     node_id: Optional[UUID] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None

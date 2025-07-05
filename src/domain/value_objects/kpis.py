@@ -9,6 +9,7 @@ from uuid import UUID
 
 class KPIType(Enum):
     """Enumeration of supported KPI types."""
+
     FLOW_RATE = "flow_rate"
     RESERVOIR_LEVEL = "reservoir_level"
     PRESSURE = "pressure"
@@ -19,6 +20,7 @@ class KPIType(Enum):
 
 class AlertLevel(Enum):
     """Alert severity levels for KPI threshold breaches."""
+
     NORMAL = "normal"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -27,6 +29,7 @@ class AlertLevel(Enum):
 
 class MeasurementUnit(Enum):
     """Standard measurement units for KPIs."""
+
     LITERS_PER_SECOND = "L/s"
     METERS = "m"
     BAR = "bar"
@@ -37,7 +40,7 @@ class MeasurementUnit(Enum):
 @dataclass(frozen=True)
 class KPIThresholds:
     """Defines threshold values for KPI monitoring and alerting."""
-    
+
     normal_min: float
     normal_max: float
     warning_min: Optional[float] = None
@@ -46,7 +49,7 @@ class KPIThresholds:
     critical_max: Optional[float] = None
     emergency_min: Optional[float] = None
     emergency_max: Optional[float] = None
-    
+
     def get_alert_level(self, value: float) -> AlertLevel:
         """Determine alert level based on KPI value and thresholds."""
         if self.emergency_min is not None and value <= self.emergency_min:
@@ -69,7 +72,7 @@ class KPIThresholds:
 @dataclass(frozen=True)
 class KPISpecification:
     """Complete specification for a KPI including metadata and thresholds."""
-    
+
     kpi_type: KPIType
     name: str
     description: str
@@ -80,17 +83,19 @@ class KPISpecification:
     calculation_method: str
     measurement_points: list[str] = field(default_factory=list)
     data_retention_days: int = 365
-    
+
     def validate_value(self, value: float) -> bool:
         """Validate if a KPI value is within acceptable bounds."""
         # Basic validation - can be extended with more sophisticated rules
-        return isinstance(value, (int, float)) and not (value < 0 and self.kpi_type != KPIType.NETWORK_EFFICIENCY)
+        return isinstance(value, (int, float)) and not (
+            value < 0 and self.kpi_type != KPIType.NETWORK_EFFICIENCY
+        )
 
 
 @dataclass
 class KPIValue:
     """Represents a measured or calculated KPI value at a specific point in time."""
-    
+
     specification: KPISpecification
     value: float
     timestamp: datetime
@@ -100,28 +105,34 @@ class KPIValue:
     is_predicted: bool = False
     prediction_confidence: Optional[float] = None
     metadata: Dict[str, Union[str, float, int]] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Validate the KPI value after initialization."""
         if not self.specification.validate_value(self.value):
-            raise ValueError(f"Invalid KPI value: {self.value} for {self.specification.kpi_type}")
-        
+            raise ValueError(
+                f"Invalid KPI value: {self.value} for {self.specification.kpi_type}"
+            )
+
         if not 0.0 <= self.quality_score <= 1.0:
-            raise ValueError(f"Quality score must be between 0.0 and 1.0, got {self.quality_score}")
-        
+            raise ValueError(
+                f"Quality score must be between 0.0 and 1.0, got {self.quality_score}"
+            )
+
         if self.is_predicted and self.prediction_confidence is None:
-            raise ValueError("Prediction confidence must be provided for predicted values")
-    
+            raise ValueError(
+                "Prediction confidence must be provided for predicted values"
+            )
+
     @property
     def alert_level(self) -> AlertLevel:
         """Get the alert level for this KPI value."""
         return self.specification.thresholds.get_alert_level(self.value)
-    
+
     @property
     def is_within_normal_range(self) -> bool:
         """Check if the value is within normal operating range."""
         return self.alert_level == AlertLevel.NORMAL
-    
+
     @property
     def requires_attention(self) -> bool:
         """Check if the value requires operational attention."""
@@ -145,15 +156,15 @@ FLOW_RATE_SPEC = KPISpecification(
         critical_min=10.0,
         critical_max=9000.0,
         emergency_min=5.0,
-        emergency_max=9500.0
+        emergency_max=9500.0,
     ),
     calculation_method="Time-averaged measurements over measurement interval",
     measurement_points=[
-        "Main distribution nodes", 
-        "District entry points", 
-        "Critical junctions"
+        "Main distribution nodes",
+        "District entry points",
+        "Critical junctions",
     ],
-    data_retention_days=365
+    data_retention_days=365,
 )
 
 RESERVOIR_LEVEL_SPEC = KPISpecification(
@@ -165,21 +176,21 @@ RESERVOIR_LEVEL_SPEC = KPISpecification(
     accuracy_target=0.02,
     thresholds=KPIThresholds(
         normal_min=2.0,  # 40% of 5m capacity
-        normal_max=4.25, # 85% of 5m capacity
+        normal_max=4.25,  # 85% of 5m capacity
         warning_min=1.5,  # 30% of capacity
         warning_max=4.5,  # 90% of capacity
         critical_min=1.0,  # 20% of capacity
-        critical_max=4.75, # 95% of capacity
+        critical_max=4.75,  # 95% of capacity
         emergency_min=0.5,  # 10% of capacity
-        emergency_max=5.0   # 100% of capacity
+        emergency_max=5.0,  # 100% of capacity
     ),
     calculation_method="Direct sensor readings with temperature compensation",
     measurement_points=[
         "District reservoirs",
-        "Main storage facilities", 
-        "Emergency reserves"
+        "Main storage facilities",
+        "Emergency reserves",
     ],
-    data_retention_days=1095  # 3 years
+    data_retention_days=1095,  # 3 years
 )
 
 PRESSURE_SPEC = KPISpecification(
@@ -197,15 +208,15 @@ PRESSURE_SPEC = KPISpecification(
         critical_min=1.5,
         critical_max=9.0,
         emergency_min=1.0,
-        emergency_max=10.0
+        emergency_max=10.0,
     ),
     calculation_method="Direct pressure sensor readings with temperature compensation",
     measurement_points=[
         "Customer connection points",
         "Network nodes",
-        "Elevation change points"
+        "Elevation change points",
     ],
-    data_retention_days=365
+    data_retention_days=365,
 )
 
 NETWORK_EFFICIENCY_SPEC = KPISpecification(
@@ -223,11 +234,11 @@ NETWORK_EFFICIENCY_SPEC = KPISpecification(
         critical_min=75.0,
         critical_max=100.0,
         emergency_min=70.0,
-        emergency_max=100.0
+        emergency_max=100.0,
     ),
     calculation_method="(Total Output / Total Input) × 100",
     measurement_points=["Network-wide calculation"],
-    data_retention_days=1095
+    data_retention_days=1095,
 )
 
 # KPI Registry - Central registry of all available KPI specifications
@@ -252,7 +263,7 @@ def create_kpi_value(
     timestamp: datetime,
     location_id: str,
     measurement_id: UUID,
-    **kwargs
+    **kwargs,
 ) -> KPIValue:
     """Factory function to create KPI values with proper specification."""
     spec = get_kpi_specification(kpi_type)
@@ -262,5 +273,5 @@ def create_kpi_value(
         timestamp=timestamp,
         location_id=location_id,
         measurement_id=measurement_id,
-        **kwargs
+        **kwargs,
     )
