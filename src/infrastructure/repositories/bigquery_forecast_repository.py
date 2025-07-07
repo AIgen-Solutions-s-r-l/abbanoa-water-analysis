@@ -79,28 +79,41 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
                 details={"model_name": model_name},
             )
 
-        # Build forecast query
+        # Build forecast query with proper input data
         query = f"""
+        WITH forecast_input AS (
+            SELECT
+                '{district_metric_id}' as district_metric_id,
+                date_utc,
+                avg_value
+            FROM `{self.client.project_id}.{self.client.dataset_id}.vw_daily_timeseries`
+            WHERE CONCAT(district_id, '_', metric_type) = @district_metric_id
+                AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 365 DAY)
+                AND date_utc <= CURRENT_DATE()
+        )
         SELECT
             forecast_timestamp AS timestamp,
+            district_metric_id,
             forecast_value,
-            prediction_interval_lower_bound AS lower_bound,
-            prediction_interval_upper_bound AS upper_bound,
-            confidence_level
-        FROM
-            ML.FORECAST(
-                MODEL `{self.client.project_id}.{self.ml_dataset_id}.{model_name}`,
-                STRUCT(@horizon AS horizon)
-            )
-        WHERE
-            DATE(forecast_timestamp) >= CURRENT_DATE()
-            AND DATE(forecast_timestamp) < DATE_ADD(CURRENT_DATE(), INTERVAL @horizon DAY)
-        ORDER BY
-            forecast_timestamp
+            standard_error,
+            confidence_level,
+            forecast_value - (1.28 * standard_error) as lower_bound,
+            forecast_value + (1.28 * standard_error) as upper_bound
+        FROM ML.FORECAST(
+            MODEL `{self.client.project_id}.{self.ml_dataset_id}.{model_name}`,
+            (SELECT * FROM forecast_input),
+            STRUCT(@horizon AS horizon, 0.8 AS confidence_level)
+        )
+        WHERE forecast_timestamp > CURRENT_DATE()
+            AND forecast_timestamp <= DATE_ADD(CURRENT_DATE(), INTERVAL @horizon DAY)
+        ORDER BY forecast_timestamp
         """
 
         # Query parameters
-        parameters = [ScalarQueryParameter("horizon", "INT64", horizon)]
+        parameters = [
+            ScalarQueryParameter("horizon", "INT64", horizon),
+            ScalarQueryParameter("district_metric_id", "STRING", district_metric_id)
+        ]
 
         try:
             # Execute forecast query

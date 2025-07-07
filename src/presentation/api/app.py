@@ -14,6 +14,8 @@ from src.application.dto.analysis_results_dto import (
     NetworkEfficiencyResultDTO,
 )
 from src.infrastructure.di_container import Container
+from src.presentation.api.endpoints.forecast_endpoint import router as forecast_router
+from src.presentation.api.middleware.error_handler import ErrorHandlerMiddleware, register_error_handlers
 
 
 # API models
@@ -67,6 +69,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add error handler middleware
+app.add_middleware(ErrorHandlerMiddleware)
+
+# Register error handlers
+register_error_handlers(app)
+
 # Initialize DI container
 container = Container()
 container.config.bigquery.project_id.from_env(
@@ -86,10 +94,22 @@ container.config.anomaly_detection.rolling_window_hours.from_env(
     "ANOMALY_WINDOW_HOURS", default=24
 )
 
+# Include routers
+app.include_router(forecast_router)
+
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize application on startup."""
+    import logging
+    from src.infrastructure.logging.forecast_logger import configure_application_logging
+    
+    # Configure logging
+    configure_application_logging(log_level="INFO")
+    logger = logging.getLogger(__name__)
+    
+    logger.info("Starting Abbanoa Water Infrastructure API...")
+    
     # Wire the container
     container.wire(
         modules=[
@@ -97,8 +117,12 @@ async def startup_event():
             "src.application.use_cases.analyze_consumption_patterns",
             "src.application.use_cases.detect_network_anomalies",
             "src.application.use_cases.calculate_network_efficiency",
+            "src.application.use_cases.forecast_consumption",
         ]
     )
+    
+    logger.info("Dependency injection container wired successfully")
+    logger.info(f"API ready with forecast endpoint at /api/v1/forecasts")
 
 
 @app.get("/", response_model=HealthResponse)

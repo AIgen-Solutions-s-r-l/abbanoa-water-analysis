@@ -23,4 +23,4 @@ fi
 
 # Use poetry environment with dependencies installed
 echo "Using poetry environment..."
-poetry run streamlit run src/presentation/streamlit/app.py --server.port 8502 --server.address 0.0.0.0
+poetry run streamlit run src/presentation/streamlit/app.py --server.port 8502 --server.address 127.0.0.1 --theme.base="light"

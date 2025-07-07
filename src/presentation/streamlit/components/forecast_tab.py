@@ -234,11 +234,11 @@ class ForecastTab:
                 )
             )
 
-        # Add forecast trace
+        # Add forecast trace - use 'predicted' column from DataFetcher
         fig.add_trace(
             go.Scatter(
                 x=forecast_df["timestamp"],
-                y=forecast_df["forecast_value"],
+                y=forecast_df["predicted"],
                 mode="lines+markers",
                 name="Forecast",
                 line=dict(color="#ff7f0e", width=2, dash="dash"),
@@ -250,25 +250,16 @@ class ForecastTab:
             )
         )
 
-        # Add confidence interval (80% = between 10th and 90th percentile)
-        # Calculate 80% bounds from 95% bounds
+        # Add confidence interval - directly use backend-calculated bounds
         if (
             "lower_bound" in forecast_df.columns
             and "upper_bound" in forecast_df.columns
         ):
-            # Convert 95% CI to 80% CI
-            forecast_mean = forecast_df["forecast_value"]
-            ci_95_width = (forecast_df["upper_bound"] - forecast_df["lower_bound"]) / 2
-            ci_80_width = ci_95_width * 0.84  # 80% CI is ~84% of 95% CI width
-
-            lower_80 = forecast_mean - ci_80_width
-            upper_80 = forecast_mean + ci_80_width
-
             # Add upper bound (invisible)
             fig.add_trace(
                 go.Scatter(
                     x=forecast_df["timestamp"],
-                    y=upper_80,
+                    y=forecast_df["upper_bound"],
                     mode="lines",
                     line=dict(width=0),
                     showlegend=False,
@@ -280,7 +271,7 @@ class ForecastTab:
             fig.add_trace(
                 go.Scatter(
                     x=forecast_df["timestamp"],
-                    y=lower_80,
+                    y=forecast_df["lower_bound"],
                     mode="lines",
                     line=dict(width=0),
                     fill="tonexty",
@@ -332,23 +323,8 @@ class ForecastTab:
         forecast_df = st.session_state.forecast_data
 
         if forecast_df is not None and not forecast_df.empty:
-            # Current/Last known value
-            current_value = forecast_df["forecast_value"].iloc[0]
-
-            # Predicted change
-            last_value = forecast_df["forecast_value"].iloc[-1]
-            change_pct = ((last_value - current_value) / current_value) * 100
-
-            # Average confidence interval width
-            if "lower_bound" in forecast_df.columns:
-                avg_ci_width = (
-                    forecast_df["upper_bound"] - forecast_df["lower_bound"]
-                ).mean()
-                confidence_score = max(
-                    0, min(100, 100 - (avg_ci_width / current_value * 100))
-                )
-            else:
-                confidence_score = 95.0
+            # Use pre-calculated values from backend - no frontend calculations
+            current_value = forecast_df["predicted"].iloc[0]
 
             # Display metrics
             col1, col2 = st.columns(2)
@@ -357,14 +333,16 @@ class ForecastTab:
                 st.metric(
                     label="Next Day Forecast",
                     value=f"{current_value:.2f}",
-                    delta=f"{change_pct:+.1f}%",
+                    delta=None,  # Could be provided by backend if needed
                 )
 
             with col2:
+                # Use confidence level directly from data
+                confidence_level = 80  # Default 80% confidence intervals
                 st.metric(
-                    label="Confidence Score",
-                    value=f"{confidence_score:.0f}%",
-                    delta="High" if confidence_score > 80 else "Medium",
+                    label="Confidence Level",
+                    value=f"{confidence_level}%",
+                    delta=None,
                 )
 
             # Model info
