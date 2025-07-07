@@ -6,25 +6,33 @@ with the ForecastConsumption use case and BigQuery for historical data.
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
+import requests
+from requests.exceptions import RequestException
 
-# For demo purposes, we'll simulate the data fetching
-# In production, this would integrate with the actual use cases
+logger = logging.getLogger(__name__)
 
 
 class DataFetcher:
     """Utility class for fetching forecast and historical data."""
 
-    def __init__(self):
-        """Initialize the data fetcher."""
-        # In production, initialize the actual clients here
-        # self.forecast_use_case = ForecastConsumption(...)
-        # self.bigquery_client = AsyncBigQueryClient(...)
-        pass
+    def __init__(self, api_base_url: str = "http://localhost:8000"):
+        """Initialize the data fetcher.
+        
+        Args:
+            api_base_url: Base URL for the API
+        """
+        self.api_base_url = api_base_url
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        })
 
     def get_forecast(
         self, district_id: str, metric: str, horizon: int = 7
@@ -39,7 +47,52 @@ class DataFetcher:
         Returns:
             DataFrame with forecast data
         """
-        # Return empty dataframe - no synthetic data
+        try:
+            # Call the forecast API endpoint
+            url = f"{self.api_base_url}/api/v1/forecasts/{district_id}/{metric}"
+            params = {
+                "horizon": horizon,
+                "include_historical": False,  # We'll fetch historical separately
+                "historical_days": 0
+            }
+            
+            logger.info(f"Fetching forecast from API: {url}")
+            response = self.session.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Convert forecast data to DataFrame
+                if data.get("forecast_data"):
+                    df = pd.DataFrame(data["forecast_data"])
+                    
+                    # Rename columns to match expected format
+                    df = df.rename(columns={
+                        "value": "predicted",
+                        "timestamp": "timestamp"
+                    })
+                    
+                    # Ensure timestamp is datetime
+                    df["timestamp"] = pd.to_datetime(df["timestamp"])
+                    
+                    # Add district and metric columns
+                    df["district_id"] = district_id
+                    df["metric"] = metric
+                    
+                    logger.info(f"Successfully fetched {len(df)} forecast records")
+                    return df
+                else:
+                    logger.warning("No forecast data in response")
+                    
+            else:
+                logger.error(f"API error: {response.status_code} - {response.text}")
+                
+        except RequestException as e:
+            logger.error(f"Network error fetching forecast: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error processing forecast data: {str(e)}")
+        
+        # Return empty dataframe on error
         return pd.DataFrame(
             {
                 "timestamp": [],
@@ -64,7 +117,48 @@ class DataFetcher:
         Returns:
             DataFrame with historical data
         """
-        # Return empty dataframe - no synthetic data
+        try:
+            # Call the forecast API with historical data included
+            url = f"{self.api_base_url}/api/v1/forecasts/{district_id}/{metric}"
+            params = {
+                "horizon": 1,  # Minimal forecast
+                "include_historical": True,
+                "historical_days": days_back
+            }
+            
+            logger.info(f"Fetching historical data from API: {url}")
+            response = self.session.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Extract historical data
+                if data.get("historical_data"):
+                    df = pd.DataFrame(data["historical_data"])
+                    
+                    # Ensure timestamp is datetime
+                    df["timestamp"] = pd.to_datetime(df["timestamp"])
+                    
+                    # Add district and metric columns if not present
+                    if "district_id" not in df.columns:
+                        df["district_id"] = district_id
+                    if "metric" not in df.columns:
+                        df["metric"] = metric
+                    
+                    logger.info(f"Successfully fetched {len(df)} historical records")
+                    return df
+                else:
+                    logger.warning("No historical data in response")
+                    
+            else:
+                logger.error(f"API error: {response.status_code} - {response.text}")
+                
+        except RequestException as e:
+            logger.error(f"Network error fetching historical data: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error processing historical data: {str(e)}")
+        
+        # Return empty dataframe on error
         return pd.DataFrame(
             {"timestamp": [], "value": [], "metric": [], "district_id": []}
         )

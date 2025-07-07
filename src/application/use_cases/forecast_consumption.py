@@ -21,6 +21,7 @@ from src.shared.exceptions.forecast_exceptions import (
     ForecastServiceException,
     InvalidForecastRequestException,
 )
+from src.infrastructure.services.forecast_calculation_service import ForecastCalculationService
 
 
 class MetricsCollector:
@@ -52,6 +53,7 @@ class ForecastConsumption:
     def __init__(
         self,
         forecast_repository: ForecastRepositoryInterface,
+        forecast_calculation_service: Optional[ForecastCalculationService] = None,
         logger: Optional[logging.Logger] = None,
         metrics: Optional[MetricsCollector] = None,
     ):
@@ -60,10 +62,12 @@ class ForecastConsumption:
 
         Args:
             forecast_repository: Repository for forecast data access
+            forecast_calculation_service: Service for backend calculations
             logger: Logger instance
             metrics: Metrics collector for monitoring
         """
         self._repository = forecast_repository
+        self._calculation_service = forecast_calculation_service
         self._logger = logger or logging.getLogger(__name__)
         self._metrics = metrics or MetricsCollector()
 
@@ -245,3 +249,108 @@ class ForecastConsumption:
             )
 
         return result_df
+    
+    async def get_forecast_with_calculations(
+        self, 
+        district_id: str, 
+        metric: str, 
+        horizon: int,
+        include_historical: bool = True,
+        historical_days: int = 30
+    ) -> dict:
+        """
+        Retrieve forecast with full backend calculations and historical context.
+        
+        Args:
+            district_id: District identifier (e.g., 'DIST_001')
+            metric: Metric type ('flow_rate', 'reservoir_level', 'pressure')
+            horizon: Forecast horizon in days (1-7)
+            include_historical: Whether to include historical data
+            historical_days: Number of historical days to include
+            
+        Returns:
+            Dictionary containing:
+                - forecast: DataFrame with predictions
+                - historical: DataFrame with historical data (if requested)
+                - metrics: Dictionary with calculated metrics
+                - metadata: Dictionary with generation metadata
+                
+        Raises:
+            InvalidForecastRequestException: Invalid input parameters
+            ForecastServiceException: Service error
+        """
+        if not self._calculation_service:
+            # Fallback to basic forecast if calculation service not available
+            forecast_df = await self.get_forecast(district_id, metric, horizon)
+            return {
+                'forecast': forecast_df,
+                'historical': pd.DataFrame(),
+                'metrics': {},
+                'metadata': {'method': 'basic', 'generated_at': datetime.now(timezone.utc).isoformat()}
+            }
+            
+        start_time = time.time()
+        request_id = f"calc_{district_id}_{metric}_{horizon}_{int(start_time)}"
+        
+        self._logger.info(
+            f"Processing enhanced forecast request: {request_id} - "
+            f"district={district_id}, metric={metric}, horizon={horizon}"
+        )
+        
+        try:
+            # Use calculation service for full backend processing
+            results = await self._calculation_service.calculate_forecast(
+                district_id=district_id,
+                metric=metric,
+                horizon=horizon,
+                include_history_days=historical_days if include_historical else 0,
+                confidence_level=0.8
+            )
+            
+            # Format forecast data to match expected structure
+            if 'forecast' in results and isinstance(results['forecast'], pd.DataFrame):
+                forecast_df = results['forecast'].copy()
+                
+                # Ensure required columns
+                if 'value' in forecast_df.columns and 'forecast_value' not in forecast_df.columns:
+                    forecast_df['forecast_value'] = forecast_df['value']
+                
+                # Add district and metric if not present
+                if 'district_id' not in forecast_df.columns:
+                    forecast_df['district_id'] = district_id
+                if 'metric' not in forecast_df.columns:
+                    forecast_df['metric'] = metric
+                    
+                # Ensure confidence level
+                if 'confidence_level' not in forecast_df.columns:
+                    forecast_df['confidence_level'] = 0.8
+                    
+                results['forecast'] = forecast_df
+            
+            # Record metrics
+            elapsed_ms = (time.time() - start_time) * 1000
+            self._metrics.record_latency("enhanced_forecast_retrieval", elapsed_ms)
+            
+            self._logger.info(
+                f"Enhanced forecast request {request_id} completed successfully "
+                f"in {elapsed_ms:.2f}ms"
+            )
+            
+            return results
+            
+        except Exception as e:
+            self._logger.error(
+                f"Error in enhanced forecast request {request_id}: {str(e)}"
+            )
+            # Fallback to basic forecast on error
+            forecast_df = await self.get_forecast(district_id, metric, horizon)
+            return {
+                'forecast': forecast_df,
+                'historical': pd.DataFrame(),
+                'metrics': {},
+                'metadata': {
+                    'method': 'fallback', 
+                    'error': str(e),
+                    'generated_at': datetime.now(timezone.utc).isoformat()
+                }
+            }
