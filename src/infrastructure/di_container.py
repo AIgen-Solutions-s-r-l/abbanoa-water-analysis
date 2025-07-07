@@ -64,9 +64,6 @@ class Container(containers.DeclarativeContainer):
         credentials_path=config.bigquery.credentials_path,
         location=config.bigquery.location,
     )
-    
-    # Set default ML dataset ID
-    config.bigquery.ml_dataset_id = providers.Object("ml_models")
 
     # BigQuery connection
     bigquery_connection = providers.Singleton(
@@ -93,7 +90,6 @@ class Container(containers.DeclarativeContainer):
         AsyncBigQueryClient,
         project_id=config.bigquery.project_id,
         dataset_id=config.bigquery.dataset_id,
-        ml_dataset_id=config.bigquery.ml_dataset_id,
     )
 
     # Repositories
@@ -117,7 +113,7 @@ class Container(containers.DeclarativeContainer):
     forecast_repository = providers.Singleton(
         BigQueryForecastRepository,
         client=async_bigquery_client,
-        ml_dataset_id=config.bigquery.ml_dataset_id,
+        ml_dataset_id="ml_models",  # Default ML dataset
     )
     
     forecast_calculation_service = providers.Singleton(
