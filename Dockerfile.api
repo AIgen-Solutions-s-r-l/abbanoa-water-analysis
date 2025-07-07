@@ -14,8 +14,9 @@ RUN apt-get update && apt-get install -y \
 # Install Poetry
 RUN pip install poetry==1.7.1
 
-# Copy poetry files
-COPY pyproject.toml poetry.lock ./
+# Copy poetry files (lock file is optional)
+COPY pyproject.toml ./
+COPY poetry.loc[k] ./ 2>/dev/null || true
 
 # Configure poetry to not create virtual env (we're in container)
 RUN poetry config virtualenvs.create false

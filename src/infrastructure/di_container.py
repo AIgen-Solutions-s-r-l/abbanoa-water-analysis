@@ -113,7 +113,6 @@ class Container(containers.DeclarativeContainer):
     forecast_repository = providers.Singleton(
         BigQueryForecastRepository,
         client=async_bigquery_client,
-        ml_dataset_id="ml_models",  # Default ML dataset
     )
     
     forecast_calculation_service = providers.Singleton(

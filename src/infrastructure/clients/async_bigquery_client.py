@@ -41,8 +41,8 @@ class AsyncBigQueryClient:
         location: str = "EU",
         max_pool_size: int = 10,
         min_pool_size: int = 2,
-        query_timeout_ms: int = 250,
-        connection_timeout_ms: int = 10000,
+        query_timeout_ms: int = 30000,  # 30 seconds for BigQuery
+        connection_timeout_ms: int = 60000,  # 60 seconds for connection
         max_retry_attempts: int = 3,
         enable_cache: bool = True,
     ):

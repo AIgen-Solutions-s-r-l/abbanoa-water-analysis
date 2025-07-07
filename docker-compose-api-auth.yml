@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  api:
+    image: abbanoa-api:latest
+    container_name: abbanoa-api
+    ports:
+      - "8000:8000"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+      - GOOGLE_CLOUD_PROJECT=abbanoa-464816
+      - BIGQUERY_PROJECT_ID=abbanoa-464816
+      - BIGQUERY_DATASET_ID=water_infrastructure
+      - LOG_LEVEL=INFO
+      # Increase timeouts for BigQuery
+      - BIGQUERY_QUERY_TIMEOUT_MS=30000  # 30 seconds
+      - BIGQUERY_CONNECTION_TIMEOUT_MS=60000  # 60 seconds
+    volumes:
+      # Mount service account key (read-only)
+      - ./bigquery-service-account-key.json:/app/credentials.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

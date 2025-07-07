@@ -44,11 +44,16 @@ class ForecastDataPoint(BaseModel):
 # Dependency injection
 async def get_forecast_use_case() -> ForecastConsumption:
     """Get forecast use case with dependencies."""
-    # Initialize BigQuery client
+    # Initialize BigQuery client with configurable timeouts
+    import os
+    query_timeout = int(os.getenv("BIGQUERY_QUERY_TIMEOUT_MS", "30000"))  # 30s default
+    conn_timeout = int(os.getenv("BIGQUERY_CONNECTION_TIMEOUT_MS", "60000"))  # 60s default
+    
     async_client = AsyncBigQueryClient(
         project_id="abbanoa-464816",
         dataset_id="water_infrastructure",
-        ml_dataset_id="ml_models"
+        query_timeout_ms=query_timeout,
+        connection_timeout_ms=conn_timeout
     )
     
     # Create repository and calculation service
@@ -69,7 +74,7 @@ async def get_forecast(
     metric: str,
     horizon: int = Query(7, ge=1, le=30, description="Forecast horizon in days"),
     include_historical: bool = Query(True, description="Include historical data"),
-    historical_days: int = Query(30, ge=7, le=90, description="Days of historical data"),
+    historical_days: int = Query(30, ge=0, le=90, description="Days of historical data"),
     use_case: ForecastConsumption = Depends(get_forecast_use_case)
 ) -> ForecastResponse:
     """

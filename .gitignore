@@ -81,6 +81,10 @@ logs/
 *_key.json
 *.pem
 *.key
+bigquery-service-account-key.json
+*-service-account-key.json
+*-service-account.json
+credentials.json
 
 # BigQuery specific
 bigquery_configs*.json

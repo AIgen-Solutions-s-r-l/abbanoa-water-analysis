@@ -168,16 +168,16 @@ class ForecastCalculationService:
         ORDER BY date_utc
         """
         
-        job_config = self.client.create_job_config(
-            query_parameters=[
-                self.client.create_query_parameter("district_id", "STRING", district_id),
-                self.client.create_query_parameter("metric", "STRING", metric),
-                self.client.create_query_parameter("days", "INT64", days),
-            ]
-        )
+        from google.cloud.bigquery import ScalarQueryParameter
+        
+        parameters = [
+            ScalarQueryParameter("district_id", "STRING", district_id),
+            ScalarQueryParameter("metric", "STRING", metric),
+            ScalarQueryParameter("days", "INT64", days),
+        ]
         
         query_start = time.time()
-        df = await self.client.query_to_dataframe(query, job_config=job_config)
+        df = await self.client.execute_query(query, parameters=parameters)
         query_duration = (time.time() - query_start) * 1000
         
         forecast_logger.log_bigquery_query(
@@ -258,17 +258,17 @@ class ForecastCalculationService:
         ORDER BY forecast_timestamp
         """
         
-        job_config = self.client.create_job_config(
-            query_parameters=[
-                self.client.create_query_parameter("district_id", "STRING", district_id),
-                self.client.create_query_parameter("metric", "STRING", metric),
-                self.client.create_query_parameter("horizon", "INT64", horizon),
-                self.client.create_query_parameter("confidence_level", "FLOAT64", confidence_level),
-            ]
-        )
+        from google.cloud.bigquery import ScalarQueryParameter
+        
+        parameters = [
+            ScalarQueryParameter("district_id", "STRING", district_id),
+            ScalarQueryParameter("metric", "STRING", metric),
+            ScalarQueryParameter("horizon", "INT64", horizon),
+            ScalarQueryParameter("confidence_level", "FLOAT64", confidence_level),
+        ]
         
         try:
-            df = await self.client.query_to_dataframe(query, job_config=job_config)
+            df = await self.client.execute_query(query, parameters=parameters)
             
             # Ensure timestamp is datetime
             df['timestamp'] = pd.to_datetime(df['timestamp'])
