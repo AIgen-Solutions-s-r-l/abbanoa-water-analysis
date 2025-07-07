@@ -126,9 +126,26 @@ async def startup_event():
 
 
 @app.get("/", response_model=HealthResponse)
+async def root():
+    """Root endpoint."""
+    return HealthResponse(status="healthy", timestamp=datetime.now(), version="1.2.0.1")
+
+
+@app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint."""
-    return HealthResponse(status="healthy", timestamp=datetime.now(), version="1.0.0")
+    """Health check endpoint for container orchestration."""
+    # Check BigQuery connectivity
+    try:
+        # Quick query to verify connection
+        from google.cloud import bigquery
+        client = bigquery.Client()
+        query = "SELECT 1"
+        client.query(query).result()
+        status = "healthy"
+    except Exception:
+        status = "degraded"
+    
+    return HealthResponse(status=status, timestamp=datetime.now(), version="1.2.0.1")
 
 
 @app.post("/api/v1/anomalies/detect")

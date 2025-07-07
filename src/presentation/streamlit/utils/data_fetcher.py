@@ -7,6 +7,7 @@ with the ForecastConsumption use case and BigQuery for historical data.
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
@@ -21,13 +22,14 @@ logger = logging.getLogger(__name__)
 class DataFetcher:
     """Utility class for fetching forecast and historical data."""
 
-    def __init__(self, api_base_url: str = "http://localhost:8000"):
+    def __init__(self, api_base_url: str = None):
         """Initialize the data fetcher.
         
         Args:
-            api_base_url: Base URL for the API
+            api_base_url: Base URL for the API (defaults to env var or localhost)
         """
-        self.api_base_url = api_base_url
+        # Use environment variable, parameter, or default
+        self.api_base_url = api_base_url or os.getenv("API_BASE_URL", "http://localhost:8000")
         self.session = requests.Session()
         self.session.headers.update({
             "Content-Type": "application/json",

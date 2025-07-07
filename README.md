@@ -3,7 +3,7 @@
 ## Overview
 Enterprise-grade water infrastructure monitoring and analytics platform for Abbanoa, featuring real-time sensor data processing, ML-powered forecasting, and integrated dashboards. Built with **Domain-Driven Design (DDD)** architecture for scalability and maintainability.
 
-### 🚀 Latest Release: v1.1.0.0
+### 🚀 Latest Release: v1.2.0.1
 - **Real-Time Data Integration**: Complete BigQuery integration with live sensor data
 - **Enhanced Dashboard**: 
   - Fixed flow rate trends visualization in Overview tab
@@ -222,10 +222,29 @@ flowchart TD
 
 ## Getting Started
 
+### Quick Start with Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/AIgen-Solutions-s-r-l/abbanoa-water-analysis.git
+cd abbanoa-water-analysis
+
+# Start API with Docker Compose
+docker-compose -f docker-compose-api-only.yml up -d
+
+# Start the dashboard (in another terminal)
+./run_dashboard.sh
+
+# Access the application
+# Dashboard: http://localhost:8502
+# API: http://localhost:8000
+```
+
 ### Prerequisites
 ```bash
 # Required software
-- Python 3.12+
+- Docker & Docker Compose (for containerized deployment)
+- Python 3.12+ (for local development)
 - Poetry (dependency management)
 - Google Cloud SDK (for authentication)
 - Git

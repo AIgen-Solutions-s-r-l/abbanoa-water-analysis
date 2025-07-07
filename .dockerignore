@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+*.cover
+*.log
+.git
+.gitignore
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+credentials.json
+service-account-key.json
+*.pem
+*.key
+
+# Documentation
+docs/_build/
+site/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Test data
+tests/
+test_*.py
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Notebooks
+*.ipynb_checkpoints
+notebooks/
+
+# Large data files
+*.csv
+*.parquet
+*.json
+!package.json
+!package-lock.json
+
+# Except RAWDATA for dashboard
+!RAWDATA/
+!RAWDATA/**/*.csv

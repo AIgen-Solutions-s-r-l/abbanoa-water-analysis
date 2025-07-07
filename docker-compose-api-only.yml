@@ -1,0 +1,32 @@
+# Simplified docker-compose for API only
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: abbanoa-api:latest
+    container_name: abbanoa-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Google Cloud settings
+      - GOOGLE_CLOUD_PROJECT=abbanoa-464816
+      - BIGQUERY_PROJECT_ID=abbanoa-464816
+      - BIGQUERY_DATASET_ID=water_infrastructure
+      - BIGQUERY_LOCATION=EU
+      - LOG_LEVEL=INFO
+      
+    volumes:
+      # Mount gcloud config for application default credentials
+      - ~/.config/gcloud:/home/apiuser/.config/gcloud:ro
+      
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
