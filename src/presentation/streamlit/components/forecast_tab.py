@@ -113,8 +113,18 @@ class ForecastTab:
                 )
             else:
                 # Provide more helpful message and debug info
-                st.warning("No forecast data available. Click below to load data.")
-                if st.button("Load Forecast Data"):
+                st.warning("📊 No forecast data loaded yet.")
+                st.info("""
+                **To view forecasts:**
+                1. Ensure the API server is running (`./run_api.sh`)
+                2. Click the button below to load forecast data
+                
+                The forecast will show:
+                - 7-day predictions with 80% confidence intervals
+                - Historical context from the last 30 days
+                - ARIMA model predictions or fallback calculations
+                """)
+                if st.button("🔄 Load Forecast Data", type="primary"):
                     with st.spinner("Loading forecast data..."):
                         self._fetch_and_cache_data()
                     st.rerun()

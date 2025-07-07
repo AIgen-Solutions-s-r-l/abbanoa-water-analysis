@@ -89,6 +89,9 @@ class DataFetcher:
                 
         except RequestException as e:
             logger.error(f"Network error fetching forecast: {str(e)}")
+            # Provide helpful error message for common issues
+            if "Connection refused" in str(e) or "Failed to establish a new connection" in str(e):
+                logger.error("API server is not running. Please start it with: ./run_api.sh")
         except Exception as e:
             logger.error(f"Error processing forecast data: {str(e)}")
         
