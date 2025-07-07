@@ -84,12 +84,18 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         WITH forecast_input AS (
             SELECT
                 '{district_metric_id}' as district_metric_id,
-                date_utc,
-                avg_value
-            FROM `{self.client.project_id}.{self.client.dataset_id}.vw_daily_timeseries`
-            WHERE CONCAT(district_id, '_', metric_type) = @district_metric_id
-                AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 365 DAY)
-                AND date_utc <= CURRENT_DATE()
+                DATE(timestamp) as date_utc,
+                AVG(CASE 
+                    WHEN RIGHT(@district_metric_id, 9) = 'flow_rate' THEN flow_rate
+                    WHEN RIGHT(@district_metric_id, 8) = 'pressure' THEN pressure
+                    WHEN RIGHT(@district_metric_id, 11) = 'temperature' THEN temperature
+                    ELSE flow_rate
+                END) as avg_value
+            FROM `{self.client.project_id}.{self.client.dataset_id}.v_sensor_readings_normalized`
+            WHERE node_id LIKE CONCAT(LEFT(@district_metric_id, 8), '%')
+                AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)
+                AND timestamp <= CURRENT_TIMESTAMP()
+            GROUP BY DATE(timestamp)
         )
         SELECT
             forecast_timestamp AS timestamp,

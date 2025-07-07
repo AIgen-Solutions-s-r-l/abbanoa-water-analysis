@@ -156,16 +156,21 @@ class ForecastCalculationService:
         """
         query = f"""
         SELECT
-            date_utc as timestamp,
-            avg_value as value,
-            district_id,
-            metric_type as metric
-        FROM `{self.project_id}.{self.dataset_id}.vw_daily_timeseries`
-        WHERE district_id = @district_id
-            AND metric_type = @metric
-            AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL @days DAY)
-            AND date_utc <= CURRENT_DATE()
-        ORDER BY date_utc
+            DATE(timestamp) as timestamp,
+            AVG(CASE 
+                WHEN @metric = 'flow_rate' THEN flow_rate
+                WHEN @metric = 'pressure' THEN pressure
+                WHEN @metric = 'temperature' THEN temperature
+                ELSE flow_rate
+            END) as value,
+            @district_id as district_id,
+            @metric as metric
+        FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
+        WHERE node_id LIKE CONCAT(@district_id, '%')
+            AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @days DAY)
+            AND timestamp <= CURRENT_TIMESTAMP()
+        GROUP BY DATE(timestamp)
+        ORDER BY timestamp
         """
         
         from google.cloud.bigquery import ScalarQueryParameter
@@ -231,13 +236,18 @@ class ForecastCalculationService:
         WITH forecast_input AS (
             SELECT
                 CONCAT(@district_id, '_', @metric) as district_metric_id,
-                date_utc,
-                avg_value
-            FROM `{self.project_id}.{self.dataset_id}.vw_daily_timeseries`
-            WHERE district_id = @district_id
-                AND metric_type = @metric
-                AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 365 DAY)
-                AND date_utc <= CURRENT_DATE()
+                DATE(timestamp) as date_utc,
+                AVG(CASE 
+                    WHEN @metric = 'flow_rate' THEN flow_rate
+                    WHEN @metric = 'pressure' THEN pressure
+                    WHEN @metric = 'temperature' THEN temperature
+                    ELSE flow_rate
+                END) as avg_value
+            FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
+            WHERE node_id LIKE CONCAT(@district_id, '%')
+                AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)
+                AND timestamp <= CURRENT_TIMESTAMP()
+            GROUP BY DATE(timestamp)
         )
         SELECT
             forecast_timestamp as timestamp,
