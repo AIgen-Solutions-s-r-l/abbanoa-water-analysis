@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.2.0.1] - 2025-07-07
+
+### Bug Fixes
+- Fixed forecast functionality issues with ARIMA model integration
+- Resolved BigQuery ML.FORECAST query structure problems
+- Fixed column name mismatches between frontend and backend
+- Corrected DataFetcher to call actual API endpoints
+
+### Improvements
+- Moved all forecast calculations from frontend to backend
+- Created ForecastCalculationService for centralized computation
+- Added comprehensive error handling with fallback mechanisms
+- Enhanced logging throughout the forecast pipeline
+- Improved performance with backend-side calculations
+
+### Features
+- Added forecast API endpoint at `/api/v1/forecasts/{district_id}/{metric}`
+- Implemented fallback forecast using simple moving average
+- Added model status endpoint for monitoring
+- Created validation script for testing forecast functionality
+
+### Technical Changes
+- Updated DI container to wire forecast services
+- Added structured logging with performance metrics
+- Created integration tests for end-to-end forecast flow
+- Added error handling middleware for consistent API responses
+
+### Documentation
+- Created comprehensive hotfix summary document
+- Added API documentation for forecast endpoints
+- Updated validation and testing procedures
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [1.2.0.0] - 2025-07-05
 
 ### Features
