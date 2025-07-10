@@ -475,7 +475,7 @@ class OverviewTab:
             
             # Initialize adapter
             try:
-                client = bigquery.Client(project="abbanoa-464816")
+                client = bigquery.Client(project="abbanoa-464816", location="EU")
                 adapter = UnifiedDataAdapter(client)
                 
                 # Count active nodes with recent data
@@ -485,7 +485,13 @@ class OverviewTab:
                 if active_nodes == 0:
                     active_nodes = len(ALL_NODE_MAPPINGS)
                 
-            except Exception:
+            except Exception as e:
+                # Check if it's because the ML table doesn't exist
+                if "sensor_readings_ml was not found" in str(e):
+                    st.warning(
+                        "⚠️ New sensor data table not found. Run the backup data processing script first:\n"
+                        "`python scripts/process_backup_data.py`"
+                    )
                 # Fallback to configured node count
                 active_nodes = len(ALL_NODE_MAPPINGS)
             
