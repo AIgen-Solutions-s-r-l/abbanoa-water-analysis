@@ -30,7 +30,7 @@ class EfficiencyTab:
         """Initialize the efficiency tab with use case."""
         self.calculate_efficiency_use_case = calculate_efficiency_use_case
 
-    def render(self, time_range: str) -> None:
+    def render(_self, time_range: str) -> None:
         """
         Render the network efficiency tab.
 
@@ -40,7 +40,7 @@ class EfficiencyTab:
         st.header("🔗 Network Efficiency Analysis")
 
         # Get real efficiency data
-        efficiency_data = self._get_efficiency_data(time_range)
+        efficiency_data = _self._get_efficiency_data(time_range)
 
         # Key efficiency metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -77,26 +77,26 @@ class EfficiencyTab:
 
         # Efficiency trends
         st.subheader("Efficiency Trends")
-        self._render_efficiency_trends(time_range)
+        _self._render_efficiency_trends(time_range)
 
         # Component analysis
         col1, col2 = st.columns(2)
 
         with col1:
             st.subheader("Component Efficiency")
-            self._render_component_efficiency()
+            _self._render_component_efficiency()
 
         with col2:
             st.subheader("Loss Distribution")
-            self._render_loss_distribution()
+            _self._render_loss_distribution()
 
         # Pressure analysis
         st.subheader("Network Pressure Analysis")
-        self._render_pressure_analysis()
+        _self._render_pressure_analysis()
 
-    def _render_efficiency_trends(self, time_range: str) -> None:
+    def _render_efficiency_trends(_self, time_range: str) -> None:
         """Render efficiency trends over time."""
-        trend_data = self._get_efficiency_trends(time_range)
+        trend_data = _self._get_efficiency_trends(time_range)
         
         if not trend_data['timestamps']:
             st.info("No trend data available for the selected time range")
@@ -148,7 +148,7 @@ class EfficiencyTab:
         st.plotly_chart(fig, use_container_width=True)
 
     @st.cache_data
-    def _get_efficiency_trends(self, time_range: str) -> dict:
+    def _get_efficiency_trends(_self, time_range: str) -> dict:
         """Calculate efficiency trends over time periods."""
         try:
             from uuid import UUID
@@ -293,10 +293,10 @@ class EfficiencyTab:
                 'energy_consumption': []
             }
 
-    def _render_component_efficiency(self) -> None:
+    def _render_component_efficiency(_self) -> None:
         """Render component-wise efficiency breakdown."""
         # Get node-based efficiency data
-        node_efficiency_data = self._get_node_efficiency_data()
+        node_efficiency_data = _self._get_node_efficiency_data()
         
         nodes = list(node_efficiency_data.keys())
         efficiency = list(node_efficiency_data.values())
@@ -329,7 +329,7 @@ class EfficiencyTab:
         st.plotly_chart(fig, use_container_width=True)
 
     @st.cache_data
-    def _get_node_efficiency_data(self) -> dict:
+    def _get_node_efficiency_data(_self) -> dict:
         """Get efficiency data for each node."""
         try:
             from uuid import UUID
@@ -435,9 +435,9 @@ class EfficiencyTab:
                 "Remote Point": 0.0,
             }
 
-    def _render_loss_distribution(self) -> None:
+    def _render_loss_distribution(_self) -> None:
         """Render water loss distribution pie chart."""
-        loss_data = self._get_loss_distribution_data()
+        loss_data = _self._get_loss_distribution_data()
         
         labels = list(loss_data.keys())
         values = list(loss_data.values())
@@ -465,11 +465,11 @@ class EfficiencyTab:
         st.plotly_chart(fig, use_container_width=True)
 
     @st.cache_data
-    def _get_loss_distribution_data(self) -> dict:
+    def _get_loss_distribution_data(_self) -> dict:
         """Get water loss distribution data."""
         try:
             # Get efficiency data for loss calculation
-            efficiency_data = self._get_efficiency_data("Last 24 Hours")
+            efficiency_data = _self._get_efficiency_data("Last 24 Hours")
             
             if efficiency_data.get('total_readings', 0) > 0:
                 # Calculate different types of losses based on efficiency metrics
@@ -503,10 +503,10 @@ class EfficiencyTab:
             st.warning(f"Error calculating loss distribution: {str(e)}")
             return {"No Data Available": 100.0}
 
-    def _render_pressure_analysis(self) -> None:
+    def _render_pressure_analysis(_self) -> None:
         """Render network pressure analysis."""
         # Get real pressure data
-        pressure_data = self._get_pressure_analysis_data()
+        pressure_data = _self._get_pressure_analysis_data()
         
         zones = list(pressure_data['current_pressure'].keys())
         current_pressure = list(pressure_data['current_pressure'].values())
@@ -559,7 +559,7 @@ class EfficiencyTab:
         st.plotly_chart(fig, use_container_width=True)
 
     @st.cache_data
-    def _get_pressure_analysis_data(self) -> dict:
+    def _get_pressure_analysis_data(_self) -> dict:
         """Get pressure analysis data for nodes."""
         try:
             from uuid import UUID
@@ -672,7 +672,7 @@ class EfficiencyTab:
             }
 
     @st.cache_data
-    def _get_efficiency_data(self, time_range: str) -> dict:
+    def _get_efficiency_data(_self, time_range: str) -> dict:
         """Get real efficiency data from sensor readings."""
         try:
             # Calculate time delta

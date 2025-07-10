@@ -386,10 +386,10 @@ class AnomalyTab:
             with col3:
                 st.metric("Peak Day", peak_day)
 
-    def _get_anomaly_data(self, time_range: str) -> dict:
+    def _get_anomaly_data(_self, time_range: str) -> dict:
         """Get real anomaly data from use case."""
         try:
-            anomaly_results = self._fetch_anomalies(time_range)
+            anomaly_results = _self._fetch_anomalies(time_range)
 
             if anomaly_results:
                 # Count anomalies by severity
@@ -452,7 +452,7 @@ class AnomalyTab:
 
     @st.cache_data
     def _fetch_anomalies(
-        self, time_range: str = "Last 24 Hours"
+        _self, time_range: str = "Last 24 Hours"
     ) -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
         try:
@@ -504,7 +504,7 @@ class AnomalyTab:
                 node_ids = None
             
             result = loop.run_until_complete(
-                self.detect_anomalies_use_case.execute(
+                _self.detect_anomalies_use_case.execute(
                     node_ids=node_ids,  # Use available UUID nodes
                     time_window_hours=time_window_hours,
                     notify_on_critical=False,  # Don't send notifications from dashboard

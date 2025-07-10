@@ -24,11 +24,11 @@ from src.application.use_cases.analyze_consumption_patterns import (
 class ConsumptionTab:
     """Consumption patterns analysis tab."""
 
-    def __init__(self, analyze_consumption_use_case: AnalyzeConsumptionPatternsUseCase):
+    def __init__(_self, analyze_consumption_use_case: AnalyzeConsumptionPatternsUseCase):
         """Initialize the consumption tab with use case."""
-        self.analyze_consumption_use_case = analyze_consumption_use_case
+        _self.analyze_consumption_use_case = analyze_consumption_use_case
 
-    def render(self, time_range: str, selected_nodes: List[str]) -> None:
+    def render(_self, time_range: str, selected_nodes: List[str]) -> None:
         """
         Render the consumption patterns tab.
 
@@ -39,8 +39,8 @@ class ConsumptionTab:
         st.header("📈 Consumption Patterns Analysis")
 
         # Get consumption data for metrics calculation
-        consumption_data = self._get_consumption_data(time_range, selected_nodes)
-        consumption_metrics = self._calculate_consumption_metrics(consumption_data)
+        consumption_data = _self._get_consumption_data(time_range, selected_nodes)
+        consumption_metrics = _self._calculate_consumption_metrics(consumption_data)
 
         # Summary statistics
         col1, col2, col3, col4 = st.columns(4)
@@ -75,33 +75,33 @@ class ConsumptionTab:
 
         # Consumption trends
         st.subheader("Consumption Trends")
-        self._render_consumption_trends(consumption_data)
+        _self._render_consumption_trends(consumption_data)
 
         # Pattern analysis
         col1, col2 = st.columns(2)
 
         with col1:
             st.subheader("Daily Pattern")
-            self._render_daily_pattern(consumption_data)
+            _self._render_daily_pattern(consumption_data)
 
         with col2:
             st.subheader("Weekly Pattern")
-            self._render_weekly_pattern(consumption_data)
+            _self._render_weekly_pattern(consumption_data)
 
         # Peak analysis
         st.subheader("Peak Consumption Analysis")
-        self._render_peak_analysis(consumption_data, selected_nodes)
+        _self._render_peak_analysis(consumption_data, selected_nodes)
 
         # Consumption heatmap
         st.subheader("Consumption Heatmap")
-        self._render_consumption_heatmap(consumption_data)
+        _self._render_consumption_heatmap(consumption_data)
 
         # Efficiency metrics
         st.subheader("Consumption Efficiency")
-        self._render_efficiency_metrics(consumption_data)
+        _self._render_efficiency_metrics(consumption_data)
 
     def _render_consumption_trends(
-        self, consumption_data: Optional[pd.DataFrame]
+        _self, consumption_data: Optional[pd.DataFrame]
     ) -> None:
         """Render consumption trends chart."""
         if consumption_data is not None and not consumption_data.empty:
@@ -147,7 +147,7 @@ class ConsumptionTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def _render_daily_pattern(self, consumption_data: Optional[pd.DataFrame]) -> None:
+    def _render_daily_pattern(_self, consumption_data: Optional[pd.DataFrame]) -> None:
         """Render average daily consumption pattern."""
         hours = list(range(24))
         consumption = [0] * 24
@@ -200,7 +200,7 @@ class ConsumptionTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def _render_weekly_pattern(self, consumption_data: Optional[pd.DataFrame]) -> None:
+    def _render_weekly_pattern(_self, consumption_data: Optional[pd.DataFrame]) -> None:
         """Render weekly consumption pattern."""
         days = [
             "Monday",
@@ -254,7 +254,7 @@ class ConsumptionTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def _render_peak_analysis(self, consumption_data: Optional[pd.DataFrame], selected_nodes: List[str]) -> None:
+    def _render_peak_analysis(_self, consumption_data: Optional[pd.DataFrame], selected_nodes: List[str]) -> None:
         """Render peak consumption analysis."""
         nodes = (
             ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"]
@@ -344,7 +344,7 @@ class ConsumptionTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def _render_consumption_heatmap(self, consumption_data: Optional[pd.DataFrame]) -> None:
+    def _render_consumption_heatmap(_self, consumption_data: Optional[pd.DataFrame]) -> None:
         """Render consumption heatmap by hour and day."""
         # Generate heatmap data
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -403,10 +403,10 @@ class ConsumptionTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def _render_efficiency_metrics(self, consumption_data: Optional[pd.DataFrame]) -> None:
+    def _render_efficiency_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> None:
         """Render consumption efficiency metrics."""
         # Calculate real efficiency metrics from data
-        efficiency_metrics = self._calculate_efficiency_metrics(consumption_data)
+        efficiency_metrics = _self._calculate_efficiency_metrics(consumption_data)
         
         col1, col2, col3 = st.columns(3)
 
@@ -469,7 +469,7 @@ class ConsumptionTab:
             fig.update_layout(height=250)
             st.plotly_chart(fig, use_container_width=True)
 
-    def _get_hourly_factor(self, hour: int) -> float:
+    def _get_hourly_factor(_self, hour: int) -> float:
         """Get consumption factor for given hour."""
         # Typical residential consumption pattern
         if 6 <= hour <= 9:  # Morning peak
@@ -483,7 +483,7 @@ class ConsumptionTab:
 
     @st.cache_data
     def _get_consumption_data(
-        self, time_range: str, selected_nodes: List[str]
+        _self, time_range: str, selected_nodes: List[str]
     ) -> Optional[pd.DataFrame]:
         """Get real consumption data directly from repository."""
         try:
@@ -641,7 +641,7 @@ class ConsumptionTab:
 
         return None
 
-    def _calculate_consumption_metrics(self, consumption_data: Optional[pd.DataFrame]) -> dict:
+    def _calculate_consumption_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> dict:
         """Calculate consumption metrics from real data."""
         if consumption_data is None or consumption_data.empty:
             return {
@@ -699,7 +699,7 @@ class ConsumptionTab:
                 "avg_daily": 0.0,
             }
 
-    def _calculate_efficiency_metrics(self, consumption_data: Optional[pd.DataFrame]) -> dict:
+    def _calculate_efficiency_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> dict:
         """Calculate efficiency metrics from real consumption data."""
         if consumption_data is None or consumption_data.empty:
             return {

@@ -39,7 +39,7 @@ class DataFetcher:
 
     @st.cache_data
     def get_forecast(
-        self, district_id: str, metric: str, horizon: int = 7
+        _self, district_id: str, metric: str, horizon: int = 7
     ) -> pd.DataFrame:
         """Fetch forecast data for a specific district and metric.
 
@@ -53,7 +53,7 @@ class DataFetcher:
         """
         try:
             # Call the forecast API endpoint
-            url = f"{self.api_base_url}/api/v1/forecasts/{district_id}/{metric}"
+            url = f"{_self.api_base_url}/api/v1/forecasts/{district_id}/{metric}"
             params = {
                 "horizon": horizon,
                 "include_historical": False,  # We'll fetch historical separately
@@ -61,7 +61,7 @@ class DataFetcher:
             }
             
             logger.info(f"Fetching forecast from API: {url}")
-            response = self.session.get(url, params=params, timeout=10)
+            response = _self.session.get(url, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -113,7 +113,7 @@ class DataFetcher:
 
     @st.cache_data
     def get_historical_data(
-        self, district_id: str, metric: str, days_back: int = 30
+        _self, district_id: str, metric: str, days_back: int = 30
     ) -> pd.DataFrame:
         """Fetch historical data for a specific district and metric.
 
@@ -127,7 +127,7 @@ class DataFetcher:
         """
         try:
             # Call the forecast API with historical data included
-            url = f"{self.api_base_url}/api/v1/forecasts/{district_id}/{metric}"
+            url = f"{_self.api_base_url}/api/v1/forecasts/{district_id}/{metric}"
             params = {
                 "horizon": 1,  # Minimal forecast
                 "include_historical": True,
@@ -135,7 +135,7 @@ class DataFetcher:
             }
             
             logger.info(f"Fetching historical data from API: {url}")
-            response = self.session.get(url, params=params, timeout=10)
+            response = _self.session.get(url, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -171,7 +171,7 @@ class DataFetcher:
             {"timestamp": [], "value": [], "metric": [], "district_id": []}
         )
 
-    def get_district_summary(self, district_id: str) -> Dict[str, Any]:
+    def get_district_summary(_self, district_id: str) -> Dict[str, Any]:
         """Fetch summary statistics for a district.
 
         Args:
@@ -192,7 +192,7 @@ class DataFetcher:
             "data_completeness": 0,
         }
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(_self) -> Dict[str, Any]:
         """Fetch system performance metrics.
 
         Returns:

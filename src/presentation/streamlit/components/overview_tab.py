@@ -187,10 +187,10 @@ class OverviewTab:
                 )
     
     @st.cache_data
-    def _render_system_alerts(self) -> None:
+    def _render_system_alerts(_self) -> None:
         """Render system alerts section."""
         # Get real-time alerts from sensor data
-        alerts = self._get_system_alerts()
+        alerts = _self._get_system_alerts()
 
         if alerts:
             # Display alerts by severity
@@ -252,7 +252,7 @@ class OverviewTab:
             st.success("✅ No active alerts. All systems operating normally.")
 
     @st.cache_data
-    def _get_system_alerts(self) -> List[dict]:
+    def _get_system_alerts(_self) -> List[dict]:
         """Analyze real sensor data to detect system alerts."""
         alerts = []
 
@@ -442,7 +442,7 @@ class OverviewTab:
             ]
     
     @st.cache_data
-    def _get_efficiency_data(self, time_range: str) -> dict:
+    def _get_efficiency_data(_self, time_range: str) -> dict:
         """Get real efficiency data including all nodes."""
         try:
             from src.presentation.streamlit.utils import ALL_NODE_MAPPINGS
@@ -485,7 +485,7 @@ class OverviewTab:
 
     @st.cache_data
     def _get_real_flow_data(
-        self, time_range: str, selected_nodes: List[str]
+        _self, time_range: str, selected_nodes: List[str]
     ) -> pd.DataFrame:
         """Get real flow data for the flow monitoring chart."""
         try:
@@ -578,7 +578,7 @@ class OverviewTab:
         return pd.DataFrame({"timestamp": []})
     
     @st.cache_data
-    def _get_latest_node_data(self, nodes: List[str]) -> dict:
+    def _get_latest_node_data(_self, nodes: List[str]) -> dict:
         """Get latest sensor data for specified nodes."""
         try:
             # Use the enhanced data fetcher for latest readings
