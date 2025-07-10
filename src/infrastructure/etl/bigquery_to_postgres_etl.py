@@ -204,12 +204,11 @@ class BigQueryToPostgresETL:
         SELECT DISTINCT
             node_id,
             FIRST_VALUE(node_name) OVER (PARTITION BY node_id ORDER BY timestamp DESC) as node_name,
-            'sensor' as node_type,
+            FIRST_VALUE(node_type) OVER (PARTITION BY node_id ORDER BY timestamp DESC) as node_type,
             'Selargius' as location_name,
             true as is_active
-        FROM `{self.bigquery_client.project_id}.{self.bigquery_client.dataset_id}.sensor_readings`
+        FROM `{self.bigquery_client.project_id}.{self.bigquery_client.dataset_id}.sensor_readings_ml`
         WHERE node_id IS NOT NULL
-        GROUP BY node_id
         """
         
         df = self.bigquery_client.client.query(query).to_dataframe()
@@ -217,8 +216,8 @@ class BigQueryToPostgresETL:
         for _, row in df.iterrows():
             node_data = {
                 'node_id': row['node_id'],
-                'node_name': row.get('node_name', f"Node {row['node_id']}"),
-                'node_type': row['node_type'],
+                'node_name': row.get('node_name') or f"Node {row['node_id']}",
+                'node_type': row.get('node_type') or 'sensor',
                 'location_name': row['location_name'],
                 'is_active': row['is_active']
             }
@@ -242,9 +241,9 @@ class BigQueryToPostgresETL:
                 temperature,
                 flow_rate,
                 pressure,
-                total_flow,
-                quality_score
-            FROM `{self.bigquery_client.project_id}.{self.bigquery_client.dataset_id}.sensor_readings`
+                volume as total_flow,
+                data_quality_score as quality_score
+            FROM `{self.bigquery_client.project_id}.{self.bigquery_client.dataset_id}.sensor_readings_ml`
             WHERE node_id = @node_id
             AND timestamp BETWEEN @start_time AND @end_time
             ORDER BY timestamp

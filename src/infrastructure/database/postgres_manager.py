@@ -7,6 +7,7 @@ warm storage layer in our hybrid architecture.
 
 import os
 import logging
+import json
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
@@ -124,7 +125,7 @@ class PostgresManager:
             node_data['node_type'],
             node_data.get('location_name'),
             node_data.get('is_active', True),
-            node_data.get('metadata', {})
+            json.dumps(node_data.get('metadata', {}))
             )
             
     async def get_all_nodes(self) -> List[Dict[str, Any]]:
@@ -162,7 +163,7 @@ class PostgresManager:
                     reading.get('total_flow'),
                     reading.get('quality_score', 1.0),
                     reading.get('is_interpolated', False),
-                    reading.get('raw_data', {})
+                    json.dumps(reading.get('raw_data', {}))
                 ))
                 
             # Use COPY for efficient batch insert
@@ -378,7 +379,7 @@ class PostgresManager:
             job_data.get('records_processed', 0),
             job_data.get('records_failed', 0),
             job_data.get('error_message'),
-            job_data.get('metadata', {})
+            json.dumps(job_data.get('metadata', {}))
             )
             return job_id
             
@@ -390,7 +391,11 @@ class PostgresManager:
             
             for i, (key, value) in enumerate(updates.items(), 1):
                 set_clauses.append(f"{key} = ${i}")
-                values.append(value)
+                # Convert dict to JSON for metadata field
+                if key == 'metadata' and isinstance(value, dict):
+                    values.append(json.dumps(value))
+                else:
+                    values.append(value)
                 
             values.append(job_id)
             
