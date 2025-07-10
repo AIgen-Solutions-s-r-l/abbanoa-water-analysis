@@ -138,7 +138,7 @@ SELECT
     MAX(pressure) as max_pressure,
     MIN(pressure) as min_pressure,
     SUM(CASE WHEN flow_rate > 0 THEN flow_rate * 5 * 60 / 1000 ELSE 0 END) as total_volume_m3
-FROM sensor_readings
+FROM water_infrastructure.sensor_readings
 GROUP BY bucket, node_id
 WITH NO DATA;
 
@@ -160,7 +160,7 @@ SELECT
     STDDEV(pressure) as stddev_pressure,
     SUM(CASE WHEN flow_rate > 0 THEN flow_rate * 3600 / 1000 ELSE 0 END) as total_volume_m3,
     AVG(quality_score) as avg_quality_score
-FROM sensor_readings
+FROM water_infrastructure.sensor_readings
 GROUP BY bucket, node_id
 WITH NO DATA;
 
@@ -184,7 +184,7 @@ SELECT
     SUM(CASE WHEN flow_rate > 0 THEN flow_rate * 86400 / 1000 ELSE 0 END) as total_volume_m3,
     AVG(quality_score) as avg_quality_score,
     COUNT(CASE WHEN quality_score < 0.8 THEN 1 END) as low_quality_readings
-FROM sensor_readings
+FROM water_infrastructure.sensor_readings
 GROUP BY bucket, node_id
 WITH NO DATA;
 
@@ -300,14 +300,14 @@ BEGIN
     RETURN QUERY
     SELECT 
         COUNT(DISTINCT sr.node_id) as active_nodes,
-        (SELECT COUNT(*) FROM nodes WHERE is_active = true) as total_nodes,
+        (SELECT COUNT(*) FROM water_infrastructure.nodes WHERE is_active = true) as total_nodes,
         COALESCE(AVG(sr.flow_rate), 0) as total_flow,
         COALESCE(AVG(sr.pressure), 0) as avg_pressure,
         COALESCE(SUM(sr.flow_rate * EXTRACT(EPOCH FROM time_range) / 1000), 0) as total_volume_m3,
-        (SELECT COUNT(*) FROM anomalies 
+        (SELECT COUNT(*) FROM water_infrastructure.anomalies 
          WHERE timestamp > CURRENT_TIMESTAMP - time_range 
          AND resolved_at IS NULL) as anomaly_count
-    FROM sensor_readings sr
+    FROM water_infrastructure.sensor_readings sr
     WHERE sr.timestamp > CURRENT_TIMESTAMP - time_range;
 END;
 $$ LANGUAGE plpgsql;
@@ -334,25 +334,25 @@ BEGIN
         (MAX(sr.timestamp) > CURRENT_TIMESTAMP - INTERVAL '30 minutes') as is_online,
         COALESCE((
             SELECT flow_rate 
-            FROM sensor_readings 
+            FROM water_infrastructure.sensor_readings 
             WHERE node_id = n.node_id 
             ORDER BY timestamp DESC 
             LIMIT 1
         ), 0) as current_flow,
         COALESCE((
             SELECT pressure 
-            FROM sensor_readings 
+            FROM water_infrastructure.sensor_readings 
             WHERE node_id = n.node_id 
             ORDER BY timestamp DESC 
             LIMIT 1
         ), 0) as current_pressure,
         (SELECT COUNT(*) 
-         FROM anomalies 
+         FROM water_infrastructure.anomalies 
          WHERE node_id = n.node_id 
          AND timestamp > CURRENT_TIMESTAMP - INTERVAL '24 hours'
          AND resolved_at IS NULL) as anomaly_count
-    FROM nodes n
-    LEFT JOIN sensor_readings sr ON n.node_id = sr.node_id
+    FROM water_infrastructure.nodes n
+    LEFT JOIN water_infrastructure.sensor_readings sr ON n.node_id = sr.node_id
     WHERE n.node_id = p_node_id
     GROUP BY n.node_id, n.node_name;
 END;

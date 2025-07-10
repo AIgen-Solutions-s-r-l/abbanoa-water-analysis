@@ -72,15 +72,19 @@ if "initialized" not in st.session_state:
         
         # Initialize cache (non-blocking)
         try:
-            # This will check if cache needs initialization
-            # but won't block the dashboard from loading
-            asyncio.create_task(asyncio.to_thread(
-                initialize_cache_on_startup, 
-                force_refresh=False
-            ))
+            # Run cache initialization in a thread to avoid blocking
+            import threading
+            def init_cache():
+                try:
+                    initialize_cache_on_startup(force_refresh=False)
+                except Exception as e:
+                    print(f"Cache initialization error: {e}")
+            
+            cache_thread = threading.Thread(target=init_cache, daemon=True)
+            cache_thread.start()
             st.session_state.cache_initialized = True
         except Exception as e:
-            st.warning(f"Cache initialization in progress: {e}")
+            st.warning(f"Cache initialization error: {e}")
             st.session_state.cache_initialized = False
 
 
@@ -156,11 +160,12 @@ class DashboardApp:
         # Use Redis-based overview tab if cache is initialized
         if st.session_state.get("cache_initialized", False):
             from src.presentation.streamlit.components.overview_tab_redis import OverviewTab
+            # Redis version doesn't need use case
+            overview_tab = OverviewTab()
         else:
             from src.presentation.streamlit.components.overview_tab import OverviewTab
-
-        # Initialize old dashboard components with use cases
-        overview_tab = OverviewTab(self.calculate_efficiency_use_case)
+            # Regular version needs use case
+            overview_tab = OverviewTab(self.calculate_efficiency_use_case)
         anomaly_tab = AnomalyTab(self.detect_anomalies_use_case)
         consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
         efficiency_tab = EfficiencyTab(self.calculate_efficiency_use_case)

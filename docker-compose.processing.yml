@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: abbanoa-postgres-processing
+    environment:
+      POSTGRES_DB: abbanoa_processing
+      POSTGRES_USER: abbanoa_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abbanoa_secure_pass}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    volumes:
+      - postgres_processing_data:/var/lib/postgresql/data
+      - ./src/infrastructure/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./src/infrastructure/database/postgres_schema.sql:/docker-entrypoint-initdb.d/02-schema.sql:ro
+      - ./src/infrastructure/database/computed_schema.sql:/docker-entrypoint-initdb.d/03-computed.sql:ro
+    ports:
+      - "5433:5432"  # Different port to avoid conflict with host PostgreSQL
+    networks:
+      - abbanoa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abbanoa_user -d abbanoa_processing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: abbanoa-redis-processing
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_processing_data:/data
+    ports:
+      - "6380:6379"  # Different port to avoid conflict
+    networks:
+      - abbanoa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+  # Processing Service
+  processing:
+    build:
+      context: .
+      dockerfile: docker/processing/Dockerfile
+    container_name: abbanoa-processing
+    environment:
+      # PostgreSQL connection
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: abbanoa_processing
+      POSTGRES_USER: abbanoa_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abbanoa_secure_pass}
+      
+      # Redis connection
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # BigQuery credentials
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/bigquery-key.json
+      BIGQUERY_PROJECT_ID: abbanoa-464816
+      BIGQUERY_DATASET_ID: water_infrastructure
+      BIGQUERY_LOCATION: EU
+      
+      # Processing configuration
+      CHECK_INTERVAL_MINUTES: 30
+      MODEL_STORAGE_PATH: /app/models
+      
+    volumes:
+      - ./logs/processing:/app/logs
+      - ./models:/app/models
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials/bigquery-key.json:ro
+    networks:
+      - abbanoa-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: abbanoa-api
+    environment:
+      # PostgreSQL connection
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: abbanoa_processing
+      POSTGRES_USER: abbanoa_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abbanoa_secure_pass}
+      
+      # Redis connection
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+    ports:
+      - "8000:8000"
+    networks:
+      - abbanoa-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+  # Nginx (optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: abbanoa-nginx-processing
+    ports:
+      - "8080:80"  # Different port to avoid conflict
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - abbanoa-network
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  abbanoa-network:
+    driver: bridge
+    name: abbanoa-network
+
+volumes:
+  postgres_processing_data:
+    name: abbanoa-postgres-processing-data
+  redis_processing_data:
+    name: abbanoa-redis-processing-data

@@ -12,7 +12,7 @@ from datetime import datetime
 import schedule
 import threading
 import os
-from redis_cache_manager import RedisCacheManager
+from .redis_cache_manager import RedisCacheManager
 
 # Configure logging
 logging.basicConfig(

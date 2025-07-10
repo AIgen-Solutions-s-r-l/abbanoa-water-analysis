@@ -8,6 +8,7 @@ from the original dashboard.
 import asyncio
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -126,6 +127,22 @@ class OverviewTab:
     ) -> go.Figure:
         """Create the flow monitoring chart."""
         fig = go.Figure()
+
+        # Handle case when no data is available
+        if flow_data is None or flow_data.empty:
+            fig.add_annotation(
+                text="No flow data available for the selected time range",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False,
+                font=dict(size=14, color="gray")
+            )
+            fig.update_layout(
+                title="Real-time Flow Monitoring",
+                height=400,
+                showlegend=False
+            )
+            return fig
 
         # Add traces for each node
         for node in selected_nodes:
