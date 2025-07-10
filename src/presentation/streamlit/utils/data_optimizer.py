@@ -15,7 +15,7 @@ import numpy as np
 from dataclasses import dataclass
 
 from src.domain.entities.sensor_reading import SensorReading
-from src.infrastructure.repositories.sensor_reading_repository import SensorReadingRepository
+from src.application.interfaces.repositories import ISensorReadingRepository
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class OptimizationStrategy:
 class DataOptimizer:
     """Data optimization utility for efficient data loading."""
     
-    def __init__(self, sensor_repo: SensorReadingRepository):
+    def __init__(self, sensor_repo: ISensorReadingRepository):
         """Initialize the data optimizer."""
         self.sensor_repo = sensor_repo
         self.strategy = OptimizationStrategy()
@@ -261,7 +261,7 @@ class DataOptimizer:
 
 
 # Utility functions for Streamlit integration
-def get_optimized_data_for_streamlit(sensor_repo: SensorReadingRepository, 
+def get_optimized_data_for_streamlit(sensor_repo: ISensorReadingRepository, 
                                    node_id: UUID, start_time: datetime, 
                                    end_time: datetime) -> Tuple[List[SensorReading], Dict[str, Any]]:
     """Synchronous wrapper for Streamlit integration."""
