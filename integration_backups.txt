@@ -1,4 +1,4 @@
-Integration performed: 2025-07-10 07:58:18.571782
+Integration performed: 2025-07-10 08:03:07.151238
 
 /home/alessio/Customers/Abbanoa/src/infrastructure/repositories/static_monitoring_node_repository.py -> /home/alessio/Customers/Abbanoa/src/infrastructure/repositories/static_monitoring_node_repository.py.backup
 /home/alessio/Customers/Abbanoa/src/infrastructure/repositories/sensor_data_repository.py -> /home/alessio/Customers/Abbanoa/src/infrastructure/repositories/sensor_data_repository.py.backup
