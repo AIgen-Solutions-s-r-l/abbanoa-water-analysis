@@ -1,5 +1,15 @@
 # Changelog
 
+
+## [v1.2.1.0] - 2025-07-10
+
+- ✨ feat: add ML/AI-ready data pipeline for backup sensor data
+- 🐛 fix: replace vw_daily_timeseries with v_sensor_readings_normalized
+- 🐛 fix: resolve parameter validation and timeout issues
+- ✨ feat: add Docker support for API deployment
+- 📚 docs: improve user guidance for forecast feature
+- 🐛 fix: remove invalid ml_dataset_id configuration
+
 ## [1.2.0.1] - 2025-07-07
 
 ### Bug Fixes

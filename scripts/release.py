@@ -97,9 +97,9 @@ class ReleaseManager:
         
         # Get commit messages since last tag
         if since_tag:
-            cmd = ["git", "log", f"{since_tag}..HEAD", "--pretty=format:%s", "--no-pager"]
+            cmd = ["git", "--no-pager", "log", f"{since_tag}..HEAD", "--pretty=format:%s"]
         else:
-            cmd = ["git", "log", "--pretty=format:%s", "--no-pager"]
+            cmd = ["git", "--no-pager", "log", "--pretty=format:%s"]
         
         result = self.run_command(cmd)
         commits = result.stdout.strip().split('\n') if result.stdout.strip() else []
