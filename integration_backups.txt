@@ -1,0 +1,7 @@
+Integration performed: 2025-07-10 07:58:18.571782
+
+/home/alessio/Customers/Abbanoa/src/infrastructure/repositories/static_monitoring_node_repository.py -> /home/alessio/Customers/Abbanoa/src/infrastructure/repositories/static_monitoring_node_repository.py.backup
+/home/alessio/Customers/Abbanoa/src/infrastructure/repositories/sensor_data_repository.py -> /home/alessio/Customers/Abbanoa/src/infrastructure/repositories/sensor_data_repository.py.backup
+/home/alessio/Customers/Abbanoa/src/presentation/streamlit/components/sidebar_filters.py -> /home/alessio/Customers/Abbanoa/src/presentation/streamlit/components/sidebar_filters.py.backup
+/home/alessio/Customers/Abbanoa/src/presentation/streamlit/components/overview_tab.py -> /home/alessio/Customers/Abbanoa/src/presentation/streamlit/components/overview_tab.py.backup
+/home/alessio/Customers/Abbanoa/src/presentation/api/endpoints/forecast_endpoint.py -> /home/alessio/Customers/Abbanoa/src/presentation/api/endpoints/forecast_endpoint.py.backup

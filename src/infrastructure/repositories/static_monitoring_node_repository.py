@@ -113,3 +113,14 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
     async def delete_by_id(self, node_id: UUID) -> None:
         """Delete not implemented for static repository."""
         raise NotImplementedError("Static repository is read-only")
+
+
+# Additional node mappings for new backup data nodes
+BACKUP_NODE_MAPPING = {
+    "215542": {"name": "Distribution 215542", "type": "distribution"},
+    "215600": {"name": "Distribution 215600", "type": "distribution"},
+    "273933": {"name": "Distribution 273933", "type": "distribution"},
+    "281492": {"name": "Monitoring 281492", "type": "monitoring"},
+    "288399": {"name": "Monitoring 288399", "type": "monitoring"},
+    "288400": {"name": "Monitoring 288400", "type": "monitoring"},
+}
