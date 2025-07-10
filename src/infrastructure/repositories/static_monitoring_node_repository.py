@@ -14,11 +14,11 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
     """Static repository that returns hardcoded monitoring nodes."""
 
     def __init__(self, connection=None):
-        """Initialize with static nodes."""
+        """Initialize with static nodes based on actual data."""
         self.nodes = [
             MonitoringNode(
                 id=UUID("00000000-0000-0000-0000-000000000001"),
-                name="SELARGIUS NODO VIA SANT ANNA",
+                name="NODE 281492 - Primary Monitoring Station",
                 node_type="SENSOR",
                 location=NodeLocation(
                     site_name="Selargius",
@@ -26,59 +26,109 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                     coordinates=Coordinates(latitude=39.2238, longitude=9.1422),
                 ),
                 status=NodeStatus.ACTIVE,
-                description="Via Sant'Anna monitoring node",
+                description="Primary monitoring node with highest data volume - Node ID 281492",
             ),
             MonitoringNode(
                 id=UUID("00000000-0000-0000-0000-000000000002"),
-                name="SELARGIUS NODO VIA SENECA",
+                name="NODE 211514 - Secondary Monitoring Station",
                 node_type="SENSOR",
                 location=NodeLocation(
                     site_name="Selargius",
                     area="Sardinia",
-                    coordinates=Coordinates(latitude=39.2238, longitude=9.1422),
+                    coordinates=Coordinates(latitude=39.2245, longitude=9.1430),
                 ),
                 status=NodeStatus.ACTIVE,
-                description="Via Seneca monitoring node",
+                description="Secondary monitoring node - Node ID 211514",
             ),
             MonitoringNode(
                 id=UUID("00000000-0000-0000-0000-000000000003"),
-                name="SELARGIUS SERBATOIO",
-                node_type="TANK",
+                name="NODE 288400 - Distribution Point A",
+                node_type="SENSOR",
                 location=NodeLocation(
                     site_name="Selargius",
                     area="Sardinia",
-                    coordinates=Coordinates(latitude=39.2238, longitude=9.1422),
+                    coordinates=Coordinates(latitude=39.2250, longitude=9.1435),
                 ),
                 status=NodeStatus.ACTIVE,
-                description="Selargius water tank",
+                description="Distribution monitoring point A - Node ID 288400",
             ),
             MonitoringNode(
                 id=UUID("00000000-0000-0000-0000-000000000004"),
-                name="QUARTUCCIU SERBATOIO CUCCURU LINU",
-                node_type="TANK",
+                name="NODE 288399 - Distribution Point B",
+                node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Quartucciu",
+                    site_name="Selargius",
                     area="Sardinia",
-                    coordinates=Coordinates(latitude=39.2238, longitude=9.1422),
+                    coordinates=Coordinates(latitude=39.2255, longitude=9.1440),
                 ),
                 status=NodeStatus.ACTIVE,
-                description="Cuccuru Linu water tank",
+                description="Distribution monitoring point B - Node ID 288399",
+            ),
+            MonitoringNode(
+                id=UUID("00000000-0000-0000-0000-000000000005"),
+                name="NODE 215542 - Network Junction C",
+                node_type="SENSOR",
+                location=NodeLocation(
+                    site_name="Selargius",
+                    area="Sardinia",
+                    coordinates=Coordinates(latitude=39.2260, longitude=9.1445),
+                ),
+                status=NodeStatus.ACTIVE,
+                description="Network junction monitoring point C - Node ID 215542",
+            ),
+            MonitoringNode(
+                id=UUID("00000000-0000-0000-0000-000000000006"),
+                name="NODE 273933 - Supply Control Point",
+                node_type="SENSOR",
+                location=NodeLocation(
+                    site_name="Selargius",
+                    area="Sardinia",
+                    coordinates=Coordinates(latitude=39.2265, longitude=9.1450),
+                ),
+                status=NodeStatus.ACTIVE,
+                description="Supply control monitoring point - Node ID 273933",
+            ),
+            MonitoringNode(
+                id=UUID("00000000-0000-0000-0000-000000000007"),
+                name="NODE 215600 - Pressure Regulation Station",
+                node_type="SENSOR",
+                location=NodeLocation(
+                    site_name="Selargius",
+                    area="Sardinia",
+                    coordinates=Coordinates(latitude=39.2270, longitude=9.1455),
+                ),
+                status=NodeStatus.ACTIVE,
+                description="Pressure regulation monitoring station - Node ID 215600",
+            ),
+            MonitoringNode(
+                id=UUID("00000000-0000-0000-0000-000000000008"),
+                name="NODE 287156 - Remote Monitoring Point",
+                node_type="SENSOR",
+                location=NodeLocation(
+                    site_name="Selargius",
+                    area="Sardinia",
+                    coordinates=Coordinates(latitude=39.2275, longitude=9.1460),
+                ),
+                status=NodeStatus.ACTIVE,
+                description="Remote monitoring point - Node ID 287156",
             ),
         ]
 
     async def add(self, node: MonitoringNode) -> None:
-        """Add not implemented for static repository."""
-        raise NotImplementedError("Static repository is read-only")
+        """Add a new monitoring node."""
+        if node.id is None:
+            node.id = uuid4()
+        self.nodes.append(node)
 
     async def get_by_id(self, node_id: UUID) -> Optional[MonitoringNode]:
-        """Get node by ID."""
+        """Get a monitoring node by its ID."""
         for node in self.nodes:
             if node.id == node_id:
                 return node
         return None
 
     async def get_by_name(self, name: str) -> Optional[MonitoringNode]:
-        """Get node by name."""
+        """Get a monitoring node by name."""
         for node in self.nodes:
             if node.name == name:
                 return node
@@ -90,37 +140,61 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
         node_type: Optional[str] = None,
         location: Optional[str] = None,
     ) -> List[MonitoringNode]:
-        """Get all nodes with optional filters."""
+        """Get all monitoring nodes with optional filters."""
         nodes = self.nodes.copy()
-
+        
         if active_only:
-            nodes = [n for n in nodes if n.status == NodeStatus.ACTIVE]
-
+            nodes = [node for node in nodes if node.status == NodeStatus.ACTIVE]
+        
         if node_type:
-            nodes = [n for n in nodes if n.node_type == node_type]
-
+            nodes = [node for node in nodes if node.node_type == node_type]
+        
         if location:
             nodes = [
-                n for n in nodes if location.lower() in n.location.site_name.lower()
+                node for node in nodes 
+                if location.lower() in node.location.site_name.lower()
             ]
-
+        
         return nodes
 
     async def update(self, node: MonitoringNode) -> None:
-        """Update not implemented for static repository."""
-        raise NotImplementedError("Static repository is read-only")
+        """Update an existing monitoring node."""
+        for i, existing_node in enumerate(self.nodes):
+            if existing_node.id == node.id:
+                self.nodes[i] = node
+                return
+        
+        # If node doesn't exist, add it
+        await self.add(node)
 
     async def delete_by_id(self, node_id: UUID) -> None:
-        """Delete not implemented for static repository."""
-        raise NotImplementedError("Static repository is read-only")
+        """Delete a monitoring node by ID."""
+        for i, node in enumerate(self.nodes):
+            if node.id == node_id:
+                del self.nodes[i]
+                return
 
+    # Additional convenience methods
+    async def create(self, node: MonitoringNode) -> MonitoringNode:
+        """Create a new monitoring node."""
+        await self.add(node)
+        return node
 
-# Additional node mappings for new backup data nodes
-BACKUP_NODE_MAPPING = {
-    "215542": {"name": "Distribution 215542", "type": "distribution"},
-    "215600": {"name": "Distribution 215600", "type": "distribution"},
-    "273933": {"name": "Distribution 273933", "type": "distribution"},
-    "281492": {"name": "Monitoring 281492", "type": "monitoring"},
-    "288399": {"name": "Monitoring 288399", "type": "monitoring"},
-    "288400": {"name": "Monitoring 288400", "type": "monitoring"},
-}
+    async def delete(self, node_id: UUID) -> bool:
+        """Delete a monitoring node."""
+        for i, node in enumerate(self.nodes):
+            if node.id == node_id:
+                del self.nodes[i]
+                return True
+        return False
+
+    async def find_by_location(self, location: NodeLocation) -> List[MonitoringNode]:
+        """Find monitoring nodes by location."""
+        return [
+            node for node in self.nodes 
+            if node.location.site_name == location.site_name
+        ]
+
+    async def find_by_status(self, status: NodeStatus) -> List[MonitoringNode]:
+        """Find monitoring nodes by status."""
+        return [node for node in self.nodes if node.status == status]

@@ -58,6 +58,12 @@ if "initialized" not in st.session_state:
     st.session_state.bigquery_connected = True  # We have real data in BigQuery!
 
 
+@st.cache_resource
+def get_data_fetcher() -> DataFetcher:
+    """Return a cached instance of the DataFetcher."""
+    return DataFetcher()
+
+
 class DashboardApp:
     """Main dashboard application class."""
 
@@ -79,7 +85,7 @@ class DashboardApp:
         self.detect_anomalies_use_case = detect_anomalies_use_case
         self.calculate_efficiency_use_case = calculate_efficiency_use_case
 
-        self.data_fetcher = DataFetcher()
+        self.data_fetcher = get_data_fetcher()
         self.sidebar_filters = SidebarFilters()
         self.forecast_tab = ForecastTab(self.data_fetcher)
 

@@ -168,6 +168,43 @@ class UnifiedDataAdapter:
                     
                 except Exception:
                     return 9  # Return total configured nodes
+            elif "db-dtypes" in str(e):
+                # If db-dtypes is missing, use direct query result
+                try:
+                    query = f"""
+                    WITH all_nodes AS (
+                        SELECT DISTINCT node_id
+                        FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
+                        WHERE timestamp >= @start_time
+                            AND timestamp <= @end_time
+                        
+                        UNION DISTINCT
+                        
+                        SELECT DISTINCT node_id
+                        FROM `{self.project_id}.{self.dataset_id}.sensor_readings_ml`
+                        WHERE timestamp >= @start_time
+                            AND timestamp <= @end_time
+                            AND data_quality_score > 0.5
+                    )
+                    SELECT COUNT(*) as active_nodes
+                    FROM all_nodes
+                    """
+                    
+                    job_config = bigquery.QueryJobConfig(
+                        query_parameters=[
+                            bigquery.ScalarQueryParameter("start_time", "TIMESTAMP", start_time),
+                            bigquery.ScalarQueryParameter("end_time", "TIMESTAMP", end_time),
+                        ]
+                    )
+                    
+                    # Get result without converting to dataframe
+                    query_job = self.client.query(query, job_config=job_config)
+                    results = list(query_job.result())
+                    if results:
+                        return results[0].active_nodes
+                    return 9  # Fallback to configured nodes
+                except Exception:
+                    return 9  # Return total configured nodes
             else:
                 st.error(f"Error counting active nodes: {e}")
                 return 0

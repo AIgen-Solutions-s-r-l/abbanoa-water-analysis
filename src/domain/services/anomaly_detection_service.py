@@ -33,12 +33,33 @@ class AnomalyDetectionService:
         reference_time = reference_time or datetime.utcnow()
         anomalies = []
 
-        # Group readings by measurement type
-        flow_rates = [(r.timestamp, r.flow_rate.value if hasattr(r.flow_rate, 'value') else r.flow_rate) for r in readings if r.flow_rate]
-        pressures = [(r.timestamp, r.pressure.value if hasattr(r.pressure, 'value') else r.pressure) for r in readings if r.pressure]
-        temperatures = [
-            (r.timestamp, r.temperature.value if hasattr(r.temperature, 'value') else r.temperature) for r in readings if r.temperature
-        ]
+        # Group readings by measurement type, safely extracting values
+        flow_rates = []
+        for r in readings:
+            if r.flow_rate is not None:
+                try:
+                    value = r.flow_rate.value if hasattr(r.flow_rate, 'value') else float(r.flow_rate)
+                    flow_rates.append((r.timestamp, value))
+                except (ValueError, TypeError):
+                    continue
+
+        pressures = []
+        for r in readings:
+            if r.pressure is not None:
+                try:
+                    value = r.pressure.value if hasattr(r.pressure, 'value') else float(r.pressure)
+                    pressures.append((r.timestamp, value))
+                except (ValueError, TypeError):
+                    continue
+
+        temperatures = []
+        for r in readings:
+            if r.temperature is not None:
+                try:
+                    value = r.temperature.value if hasattr(r.temperature, 'value') else float(r.temperature)
+                    temperatures.append((r.timestamp, value))
+                except (ValueError, TypeError):
+                    continue
 
         # Detect anomalies for each measurement type
         if flow_rates:
@@ -208,69 +229,78 @@ class AnomalyDetectionService:
 
         if reading.flow_rate and flow_rate_limits:
             min_flow, max_flow = flow_rate_limits
-            flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
-            if flow_val < min_flow:
-                event = ThresholdExceededEvent(
-                    node_id=reading.node_id,
-                    measurement_type="flow_rate",
-                    current_value=flow_val,
-                    threshold_value=min_flow,
-                    threshold_type="lower",
-                )
-                events.append(event)
-            elif flow_val > max_flow:
-                event = ThresholdExceededEvent(
-                    node_id=reading.node_id,
-                    measurement_type="flow_rate",
-                    current_value=flow_val,
-                    threshold_value=max_flow,
-                    threshold_type="upper",
-                )
-                events.append(event)
+            try:
+                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else float(reading.flow_rate)
+                if flow_val < min_flow:
+                    event = ThresholdExceededEvent(
+                        node_id=reading.node_id,
+                        measurement_type="flow_rate",
+                        current_value=flow_val,
+                        threshold_value=min_flow,
+                        threshold_type="lower",
+                    )
+                    events.append(event)
+                elif flow_val > max_flow:
+                    event = ThresholdExceededEvent(
+                        node_id=reading.node_id,
+                        measurement_type="flow_rate",
+                        current_value=flow_val,
+                        threshold_value=max_flow,
+                        threshold_type="upper",
+                    )
+                    events.append(event)
+            except (ValueError, TypeError):
+                pass
 
         if reading.pressure and pressure_limits:
             min_pressure, max_pressure = pressure_limits
-            pressure_val = reading.pressure.value if hasattr(reading.pressure, 'value') else reading.pressure
-            if pressure_val < min_pressure:
-                event = ThresholdExceededEvent(
-                    node_id=reading.node_id,
-                    measurement_type="pressure",
-                    current_value=pressure_val,
-                    threshold_value=min_pressure,
-                    threshold_type="lower",
-                )
-                events.append(event)
-            elif pressure_val > max_pressure:
-                event = ThresholdExceededEvent(
-                    node_id=reading.node_id,
-                    measurement_type="pressure",
-                    current_value=pressure_val,
-                    threshold_value=max_pressure,
-                    threshold_type="upper",
-                )
-                events.append(event)
+            try:
+                pressure_val = reading.pressure.value if hasattr(reading.pressure, 'value') else float(reading.pressure)
+                if pressure_val < min_pressure:
+                    event = ThresholdExceededEvent(
+                        node_id=reading.node_id,
+                        measurement_type="pressure",
+                        current_value=pressure_val,
+                        threshold_value=min_pressure,
+                        threshold_type="lower",
+                    )
+                    events.append(event)
+                elif pressure_val > max_pressure:
+                    event = ThresholdExceededEvent(
+                        node_id=reading.node_id,
+                        measurement_type="pressure",
+                        current_value=pressure_val,
+                        threshold_value=max_pressure,
+                        threshold_type="upper",
+                    )
+                    events.append(event)
+            except (ValueError, TypeError):
+                pass
 
         if reading.temperature and temperature_limits:
             min_temp, max_temp = temperature_limits
-            temp_val = reading.temperature.value if hasattr(reading.temperature, 'value') else reading.temperature
-            if temp_val < min_temp:
-                event = ThresholdExceededEvent(
-                    node_id=reading.node_id,
-                    measurement_type="temperature",
-                    current_value=temp_val,
-                    threshold_value=min_temp,
-                    threshold_type="lower",
-                )
-                events.append(event)
-            elif temp_val > max_temp:
-                event = ThresholdExceededEvent(
-                    node_id=reading.node_id,
-                    measurement_type="temperature",
-                    current_value=temp_val,
-                    threshold_value=max_temp,
-                    threshold_type="upper",
-                )
-                events.append(event)
+            try:
+                temp_val = reading.temperature.value if hasattr(reading.temperature, 'value') else float(reading.temperature)
+                if temp_val < min_temp:
+                    event = ThresholdExceededEvent(
+                        node_id=reading.node_id,
+                        measurement_type="temperature",
+                        current_value=temp_val,
+                        threshold_value=min_temp,
+                        threshold_type="lower",
+                    )
+                    events.append(event)
+                elif temp_val > max_temp:
+                    event = ThresholdExceededEvent(
+                        node_id=reading.node_id,
+                        measurement_type="temperature",
+                        current_value=temp_val,
+                        threshold_value=max_temp,
+                        threshold_type="upper",
+                    )
+                    events.append(event)
+            except (ValueError, TypeError):
+                pass
 
         return events
 
@@ -295,7 +325,7 @@ class AnomalyDetectionService:
             # Sort by severity (most severe first), then by deviation magnitude
             group_anomalies.sort(key=lambda a: (
                 severity_order.get(a.severity, 4),
-                -abs(a.measurement_value - a.threshold) if a.measurement_value and a.threshold else 0
+                -abs(a.measurement_value - a.threshold) if a.measurement_value is not None and a.threshold is not None else 0
             ))
             
             # Take the most severe anomaly

@@ -19,7 +19,8 @@ from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO
 from src.application.use_cases.calculate_network_efficiency import (
     CalculateNetworkEfficiencyUseCase,
 )
-from src.presentation.streamlit.utils import EnhancedDataFetcher, get_node_ids_from_selection
+from src.presentation.streamlit.utils import EnhancedDataFetcher
+from src.presentation.streamlit.utils.node_mappings import get_node_ids_from_selection
 
 
 class OverviewTab:
@@ -95,19 +96,6 @@ class OverviewTab:
         st.subheader("System Alerts")
         self._render_system_alerts()
     
-    def _get_time_params(self, time_range: str) -> tuple:
-        """Get time parameters based on selected range."""
-        params = {
-            "Last 6 Hours": (12, "30min"),
-            "Last 24 Hours": (48, "30min"),
-            "Last 3 Days": (72, "H"),
-            "Last Week": (168, "H"),
-            "Last Month": (720, "H"),  # 30 days
-            "Last Year": (8760, "H"),  # 365 days
-            "Custom Range": None,  # Will be handled separately
-        }
-        return params.get(time_range, (48, "30min"))
-
     def _create_flow_chart(
         self, flow_data: pd.DataFrame, selected_nodes: List[str]
     ) -> go.Figure:
@@ -158,11 +146,31 @@ class OverviewTab:
                 # Get data for this node
                 if node in node_data:
                     data = node_data[node]
-                    status = "🟢 Online" if data["flow"] > 0 else "🔴 Offline"
                     pressure = data["pressure"]
                     flow = data["flow"]
+                    
+                    # Check timestamp to determine status
+                    if "timestamp" in data and data["timestamp"]:
+                        # If we have recent data (within last day of available data)
+                        from datetime import timezone
+                        latest_ts = data["timestamp"]
+                        if hasattr(latest_ts, 'replace'):
+                            latest_ts = latest_ts.replace(tzinfo=timezone.utc)
+                        
+                        # For historical data, show as online if flow > 0
+                        if flow > 0:
+                            status = "🟢 Online"
+                        else:
+                            # Check if this is just a low-flow period
+                            status = "🟡 Low Flow"
+                    else:
+                        status = "🔴 Offline" if flow == 0 else "🟢 Online"
                 else:
-                    status = "⚫ No Data"
+                    # No data for original nodes is expected
+                    if node in ["Sant'Anna", "Seneca", "Selargius Tank"]:
+                        status = "⚫ No Data (Original Node)"
+                    else:
+                        status = "⚫ No Data"
                     pressure = 0.0
                     flow = 0.0
                 
@@ -178,6 +186,7 @@ class OverviewTab:
                     unsafe_allow_html=True,
                 )
     
+    @st.cache_data
     def _render_system_alerts(self) -> None:
         """Render system alerts section."""
         # Get real-time alerts from sensor data
@@ -242,42 +251,20 @@ class OverviewTab:
         else:
             st.success("✅ No active alerts. All systems operating normally.")
 
+    @st.cache_data
     def _get_system_alerts(self) -> List[dict]:
         """Analyze real sensor data to detect system alerts."""
         alerts = []
 
         try:
-            # Get recent data for analysis (last 2 hours)
-            from uuid import UUID
+            # Use UnifiedDataAdapter for both UUID and numeric nodes
+            from src.presentation.streamlit.utils.unified_data_adapter import UnifiedDataAdapter
+            from src.presentation.streamlit.utils.node_mappings import ALL_NODE_MAPPINGS
+            from google.cloud import bigquery
 
-            from src.infrastructure.di_container import Container
-
-            container = Container()
-            container.config.from_dict(
-                {
-                    "bigquery": {
-                        "project_id": "abbanoa-464816",
-                        "dataset_id": "water_infrastructure",
-                        "credentials_path": None,
-                        "location": "US",
-                    }
-                }
-            )
-
-            sensor_repo = container.sensor_reading_repository()
-
-            # Define monitoring nodes
-            node_mapping = {
-    "Sant'Anna": "00000000-0000-0000-0000-000000000001",
-    "Seneca": "00000000-0000-0000-0000-000000000002",
-    "Selargius Tank": "00000000-0000-0000-0000-000000000003",
-    "Distribution 215542": "00000000-0000-0000-0000-000000215542",
-    "Distribution 215600": "00000000-0000-0000-0000-000000215600",
-    "Distribution 273933": "00000000-0000-0000-0000-000000273933",
-    "Monitoring 281492": "00000000-0000-0000-0000-000000281492",
-    "Monitoring 288399": "00000000-0000-0000-0000-000000288399",
-    "Monitoring 288400": "00000000-0000-0000-0000-000000288400",
-}
+            # Initialize adapter
+            client = bigquery.Client(project="abbanoa-464816", location="EU")
+            adapter = UnifiedDataAdapter(client)
 
             # Time range for alert analysis (last 2 hours)
             end_time = datetime.now()
@@ -289,22 +276,24 @@ class OverviewTab:
                 end_time = data_end
                 start_time = end_time - timedelta(hours=2)
 
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            # Get all node IDs
+            node_ids = list(ALL_NODE_MAPPINGS.values())
+            
+            # Fetch data for all nodes
+            df = adapter.get_node_data(
+                node_ids=node_ids,
+                start_time=start_time,
+                end_time=end_time,
+                metrics=["flow_rate", "pressure", "temperature"]
+            )
 
-            for node_name, node_id in node_mapping.items():
+            # Analyze data by node
+            for node_name, node_id in ALL_NODE_MAPPINGS.items():
                 try:
-                    # Get recent readings for this node
-                    readings = loop.run_until_complete(
-                        sensor_repo.get_by_node_id(
-                            node_id=node_id,
-                            start_time=start_time,
-                            end_time=end_time,
-                            limit=50,
-                        )
-                    )
-
-                    if not readings:
+                    # Filter data for this node
+                    node_data = df[df["node_id"] == node_id].copy()
+                    
+                    if node_data.empty:
                         # No data alert
                         alerts.append(
                             {
@@ -317,27 +306,13 @@ class OverviewTab:
                         )
                         continue
 
-                    # Analyze readings for anomalies
-                    flows = []
-                    pressures = []
-                    timestamps = []
-
-                    for reading in readings:
-                        # Extract flow rate
-                        flow_val = reading.flow_rate
-                        if hasattr(flow_val, "value"):
-                            flow_val = flow_val.value
-                        if flow_val is not None:
-                            flows.append(float(flow_val))
-
-                        # Extract pressure
-                        pressure_val = reading.pressure
-                        if hasattr(pressure_val, "value"):
-                            pressure_val = pressure_val.value
-                        if pressure_val is not None:
-                            pressures.append(float(pressure_val))
-
-                        timestamps.append(reading.timestamp)
+                    # Sort by timestamp
+                    node_data = node_data.sort_values("timestamp")
+                    
+                    # Extract values
+                    flows = node_data["flow_rate"].dropna().values
+                    pressures = node_data["pressure"].dropna().values
+                    timestamps = pd.to_datetime(node_data["timestamp"].values)
 
                     # Alert conditions
                     if flows:
@@ -352,7 +327,7 @@ class OverviewTab:
                                     "severity": "warning",
                                     "title": "Flow Spike Detected",
                                     "node": node_name,
-                                    "timestamp": timestamps[-1].strftime("%H:%M"),
+                                    "timestamp": timestamps[-1].strftime("%H:%M") if len(timestamps) > 0 else end_time.strftime("%H:%M"),
                                     "description": f"Unusually high flow rate detected: {max_flow:.1f} L/s (avg: {avg_flow:.1f} L/s)",
                                 }
                             )
@@ -364,7 +339,7 @@ class OverviewTab:
                                     "severity": "info",
                                     "title": "Low Flow Period",
                                     "node": node_name,
-                                    "timestamp": timestamps[-1].strftime("%H:%M"),
+                                    "timestamp": timestamps[-1].strftime("%H:%M") if len(timestamps) > 0 else end_time.strftime("%H:%M"),
                                     "description": f"Extended period of low flow: {avg_flow:.1f} L/s. This might be normal for off-peak hours.",
                                 }
                             )
@@ -381,7 +356,7 @@ class OverviewTab:
                                     "severity": "critical",
                                     "title": "Low Pressure Alert",
                                     "node": node_name,
-                                    "timestamp": timestamps[-1].strftime("%H:%M"),
+                                    "timestamp": timestamps[-1].strftime("%H:%M") if len(timestamps) > 0 else end_time.strftime("%H:%M"),
                                     "description": f"Pressure dropped below safe level: {min_pressure:.1f} bar (minimum: 2.0 bar)",
                                 }
                             )
@@ -391,7 +366,7 @@ class OverviewTab:
                                     "severity": "warning",
                                     "title": "Pressure Below Optimal",
                                     "node": node_name,
-                                    "timestamp": timestamps[-1].strftime("%H:%M"),
+                                    "timestamp": timestamps[-1].strftime("%H:%M") if len(timestamps) > 0 else end_time.strftime("%H:%M"),
                                     "description": f"Average pressure is low: {avg_pressure:.1f} bar (optimal: 3.0-5.0 bar)",
                                 }
                             )
@@ -403,25 +378,25 @@ class OverviewTab:
                                     "severity": "warning",
                                     "title": "High Pressure Alert",
                                     "node": node_name,
-                                    "timestamp": timestamps[-1].strftime("%H:%M"),
+                                    "timestamp": timestamps[-1].strftime("%H:%M") if len(timestamps) > 0 else end_time.strftime("%H:%M"),
                                     "description": f"Pressure exceeded safe level: {max_pressure:.1f} bar (maximum: 6.0 bar)",
                                 }
                             )
 
                     # Data quality checks
-                    if len(readings) < 5:
+                    if len(node_data) < 5:
                         alerts.append(
                             {
                                 "severity": "info",
                                 "title": "Limited Data Points",
                                 "node": node_name,
-                                "timestamp": timestamps[-1].strftime("%H:%M"),
-                                "description": f"Only {len(readings)} readings in the last 2 hours. Data collection may be intermittent.",
+                                "timestamp": timestamps[-1].strftime("%H:%M") if len(timestamps) > 0 else end_time.strftime("%H:%M"),
+                                "description": f"Only {len(node_data)} readings in the last 2 hours. Data collection may be intermittent.",
                             }
                         )
 
                     # Latest reading age check
-                    if timestamps:
+                    if len(timestamps) > 0:
                         latest_reading_age = end_time - timestamps[-1]
                         if latest_reading_age > timedelta(minutes=45):
                             alerts.append(
@@ -466,6 +441,7 @@ class OverviewTab:
                 }
             ]
     
+    @st.cache_data
     def _get_efficiency_data(self, time_range: str) -> dict:
         """Get real efficiency data including all nodes."""
         try:
@@ -507,11 +483,21 @@ class OverviewTab:
             # Still show configured node count even on error
             return {"active_nodes": 9, "total_flow": 0, "avg_pressure": 0, "efficiency": 0}
 
+    @st.cache_data
     def _get_real_flow_data(
         self, time_range: str, selected_nodes: List[str]
     ) -> pd.DataFrame:
         """Get real flow data for the flow monitoring chart."""
         try:
+            # Use the UnifiedDataAdapter to handle both UUID and numeric nodes
+            from src.presentation.streamlit.utils.unified_data_adapter import UnifiedDataAdapter
+            from src.presentation.streamlit.utils.node_mappings import ALL_NODE_MAPPINGS, get_node_ids_from_selection
+            from google.cloud import bigquery
+            
+            # Initialize adapter
+            client = bigquery.Client(project="abbanoa-464816", location="EU")
+            adapter = UnifiedDataAdapter(client)
+            
             # Calculate time delta
             time_deltas = {
                 "Last 6 Hours": timedelta(hours=6),
@@ -543,104 +529,44 @@ class OverviewTab:
                 proposed_start = end_time - delta
                 start_time = max(proposed_start, data_start)
             
-            # Get data directly from repository
-            from uuid import UUID
-
-            from src.infrastructure.di_container import Container
+            # Get node IDs from selection
+            node_ids = get_node_ids_from_selection(selected_nodes)
             
-            container = Container()
-            container.config.from_dict(
-                {
-                    "bigquery": {
-                        "project_id": "abbanoa-464816",
-                        "dataset_id": "water_infrastructure",
-                        "credentials_path": None,
-                        "location": "US",
-                    }
-                }
-            )
-            
-            sensor_repo = container.sensor_reading_repository()
-            
-            # Use centralized node mappings
-            from src.presentation.streamlit.utils.node_mappings import ALL_NODE_MAPPINGS
-            
-            # Convert to proper format for repository
-            node_mapping = {}
-            for display_name, node_id in ALL_NODE_MAPPINGS.items():
-                if node_id.startswith("00000000"):
-                    node_mapping[display_name] = UUID(node_id)
-                else:
-                    # For new nodes, we need to handle differently
-                    # Skip for now as they need different query
-                    continue
-            
-            # Determine which nodes to fetch
-            if "All Nodes" in selected_nodes:
-                nodes_to_fetch = ["Sant'Anna", "Seneca", "Selargius Tank"]
-            else:
-                nodes_to_fetch = [
-                    node for node in selected_nodes if node in node_mapping
-                ]
-            
-            if not nodes_to_fetch:
+            if not node_ids:
                 return pd.DataFrame({"timestamp": []})
             
-            # Fetch data for each node
-            all_data = []
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            # Use UnifiedDataAdapter to get data for all nodes
+            df = adapter.get_node_data(
+                node_ids=node_ids,
+                start_time=start_time,
+                end_time=end_time,
+                metrics=["flow_rate"]
+            )
             
-            for node_name in nodes_to_fetch:
-                node_id = node_mapping[node_name]
-                try:
-                    readings = loop.run_until_complete(
-                        sensor_repo.get_by_node_id(
-                            node_id=node_id, start_time=start_time, end_time=end_time
-                        )
-                    )
-                    
-                    for reading in readings:
-                        # Handle flow rate
-                        flow_val = reading.flow_rate
-                        if hasattr(flow_val, "value"):
-                            flow_val = flow_val.value
-                        elif flow_val is None:
-                            flow_val = 0
-                            
-                        all_data.append(
-                            {
-                                "timestamp": reading.timestamp,
-                                "node_name": node_name,
-                                "flow_rate": float(flow_val),
-                            }
-                        )
-                        
-                except Exception as e:
-                    st.warning(f"Error fetching flow data for {node_name}: {str(e)}")
-                    continue
-            
-            if not all_data:
+            if df.empty:
                 st.info(
                     f"No flow data found for the selected time range ({start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')})"
                 )
                 return pd.DataFrame({"timestamp": []})
             
-            # Convert to DataFrame and pivot
-            df = pd.DataFrame(all_data)
-            df = df.pivot_table(
+            # Get display names for nodes
+            from src.presentation.streamlit.utils.node_mappings import get_node_display_name
+            df['display_name'] = df['node_id'].apply(get_node_display_name)
+            
+            # Pivot to get one column per node
+            pivot_df = df.pivot_table(
                 index="timestamp",
-                columns="node_name",
+                columns="display_name",
                 values="flow_rate",
                 aggfunc="mean",
             ).reset_index()
             
             # Fill NaN values with 0
-            df = df.fillna(0)
+            pivot_df = pivot_df.fillna(0)
             
-            st.success(f"✅ Flow chart: Found {len(all_data)} readings for overview")
+            st.success(f"✅ Flow chart: Found {len(df)} readings from {df['node_id'].nunique()} nodes")
             
-            return df
+            return pivot_df
                 
         except Exception as e:
             # Show specific error for debugging
@@ -651,79 +577,29 @@ class OverviewTab:
         
         return pd.DataFrame({"timestamp": []})
     
+    @st.cache_data
     def _get_latest_node_data(self, nodes: List[str]) -> dict:
         """Get latest sensor data for specified nodes."""
         try:
-            from uuid import UUID
-
-            from src.infrastructure.di_container import Container
+            # Use the enhanced data fetcher for latest readings
+            from src.presentation.streamlit.utils.enhanced_data_fetcher import EnhancedDataFetcher
+            from google.cloud import bigquery
             
-            container = Container()
-            container.config.from_dict(
-                {
-                    "bigquery": {
-                        "project_id": "abbanoa-464816",
-                        "dataset_id": "water_infrastructure",
-                        "credentials_path": None,
-                        "location": "US",
-                    }
-                }
-            )
+            # Initialize fetcher
+            client = bigquery.Client(project="abbanoa-464816", location="EU")
+            fetcher = EnhancedDataFetcher(client)
             
-            sensor_repo = container.sensor_reading_repository()
+            # Get latest readings
+            latest_readings = fetcher.get_latest_readings(nodes)
             
-            # Use centralized node mappings
-            from src.presentation.streamlit.utils.node_mappings import ALL_NODE_MAPPINGS
-            
-            # Convert to proper format for repository
-            node_mapping = {}
-            for display_name, node_id in ALL_NODE_MAPPINGS.items():
-                if node_id.startswith("00000000"):
-                    node_mapping[display_name] = UUID(node_id)
-                else:
-                    # For new nodes, we need to handle differently
-                    # Skip for now as they need different query
-                    continue
-            
+            # Convert to expected format
             node_data = {}
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            for node_name in nodes:
-                if node_name not in node_mapping:
-                    continue
-                    
-                node_id = node_mapping[node_name]
-                try:
-                    # Get latest reading for this node
-                    latest_reading = loop.run_until_complete(
-                        sensor_repo.get_latest_by_node(node_id)
-                    )
-                    
-                    if latest_reading:
-                        # Handle flow rate
-                        flow_val = latest_reading.flow_rate
-                        if hasattr(flow_val, "value"):
-                            flow_val = flow_val.value
-                        elif flow_val is None:
-                            flow_val = 0
-                            
-                        # Handle pressure
-                        pressure_val = latest_reading.pressure
-                        if hasattr(pressure_val, "value"):
-                            pressure_val = pressure_val.value
-                        elif pressure_val is None:
-                            pressure_val = 0
-                            
-                        node_data[node_name] = {
-                            "flow": float(flow_val),
-                            "pressure": float(pressure_val),
-                            "timestamp": latest_reading.timestamp,
-                        }
-                    
-                except Exception as e:
-                    # Silently continue if there's an error for this node
-                    continue
+            for node_name, data in latest_readings.items():
+                node_data[node_name] = {
+                    "flow": data.get("flow_rate", 0),
+                    "pressure": data.get("pressure", 0),
+                    "timestamp": data.get("timestamp"),
+                }
             
             return node_data
             

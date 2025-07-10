@@ -23,6 +23,8 @@ NEW_NODES = {
     "Monitoring 281492": "281492",
     "Monitoring 288399": "288399",
     "Monitoring 288400": "288400",
+    "Monitoring 211514": "211514",
+    "Monitoring 287156": "287156",
 }
 
 # Combined mapping for all nodes
@@ -35,7 +37,7 @@ ALL_NODE_MAPPINGS = {
 NODE_CATEGORIES = {
     "Original Nodes": ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"],
     "Distribution Nodes": ["Distribution 215542", "Distribution 215600", "Distribution 273933"],
-    "Monitoring Nodes": ["Monitoring 281492", "Monitoring 288399", "Monitoring 288400"],
+    "Monitoring Nodes": ["Monitoring 281492", "Monitoring 288399", "Monitoring 288400", "Monitoring 211514", "Monitoring 287156"],
 }
 
 def get_node_id(display_name: str) -> str:

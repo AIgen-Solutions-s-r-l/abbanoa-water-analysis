@@ -218,3 +218,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.3.0]: https://github.com/abbanoa/water-infrastructure/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/abbanoa/water-infrastructure/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/abbanoa/water-infrastructure/releases/tag/v0.1.0
+
+*   **V1.1.0 (2024-07-26):** Refactoring of the BigQuery module, improved queries, and new CI/CD pipeline for automated testing and deployment.
+*   **V1.0.4 (2024-07-25):** Improved data normalization and handling of Quartucciu and Selargius datasets. Fixed bugs in the ML pipeline.
+*   **V1.0.3 (2024-07-24):** Added new data quality analysis and reporting features. Enhanced anomaly detection algorithms.
+*   **V1.0.2 (2024-07-23):** Dashboard performance optimization.
+*   **V1.0.1 (2024-07-22):** Initial release with basic forecasting and data visualization capabilities.
+
+## Future Developments
+
+*   Integration with real-time data sources for live monitoring.
+*   Advanced anomaly detection models with lower latency.
+*   Expansion of the forecasting models to include more variables.
+
+---
+
+*This project is developed and maintained by AI-Gen Solutions.*

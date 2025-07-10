@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 import pandas as pd
 import requests
+import streamlit as st
 from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class DataFetcher:
             "Accept": "application/json"
         })
 
+    @st.cache_data
     def get_forecast(
         self, district_id: str, metric: str, horizon: int = 7
     ) -> pd.DataFrame:
@@ -109,6 +111,7 @@ class DataFetcher:
             }
         )
 
+    @st.cache_data
     def get_historical_data(
         self, district_id: str, metric: str, days_back: int = 30
     ) -> pd.DataFrame:

@@ -19,7 +19,7 @@ class EnhancedDataFetcher:
     
     def __init__(self, bigquery_client: Optional[bigquery.Client] = None):
         """Initialize the data fetcher."""
-        self.client = bigquery_client or bigquery.Client()
+        self.client = bigquery_client or bigquery.Client(location="EU")
         self.project_id = "abbanoa-464816"
         self.dataset_id = "water_infrastructure"
         
@@ -126,15 +126,112 @@ class EnhancedDataFetcher:
     
     def get_latest_readings(self, selected_nodes: List[str]) -> Dict[str, Dict]:
         """Get latest readings for selected nodes."""
+        # First try to get recent data
         df = self.fetch_sensor_data(selected_nodes, "Last 6 Hours")
+        
+        # If no recent data, get the most recent available data
+        if df.empty:
+            # Get node IDs
+            node_ids = get_node_ids_from_selection(selected_nodes)
+            if not node_ids:
+                return {}
+            
+            # Separate UUID and numeric nodes
+            uuid_nodes = [nid for nid in node_ids if nid.startswith("00000000")]
+            numeric_nodes = [nid for nid in node_ids if nid.isdigit()]
+            
+            queries = []
+            
+            # Query for UUID nodes from normalized view
+            if uuid_nodes:
+                uuid_placeholders = ', '.join([f'"{nid}"' for nid in uuid_nodes])
+                query1 = f"""
+                WITH latest_uuid AS (
+                    SELECT 
+                        node_id,
+                        timestamp,
+                        flow_rate,
+                        pressure,
+                        temperature,
+                        volume,
+                        1.0 as data_quality_score,
+                        ROW_NUMBER() OVER (PARTITION BY node_id ORDER BY timestamp DESC) as rn
+                    FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
+                    WHERE node_id IN ({uuid_placeholders})
+                )
+                SELECT * FROM latest_uuid WHERE rn = 1
+                """
+                queries.append(query1)
+            
+            # Query for numeric nodes from ML table
+            if numeric_nodes:
+                numeric_placeholders = ', '.join([f'"{nid}"' for nid in numeric_nodes])
+                query2 = f"""
+                WITH latest_numeric AS (
+                    SELECT 
+                        node_id,
+                        timestamp,
+                        flow_rate,
+                        pressure,
+                        temperature,
+                        volume,
+                        data_quality_score,
+                        ROW_NUMBER() OVER (PARTITION BY node_id ORDER BY timestamp DESC) as rn
+                    FROM `{self.project_id}.{self.dataset_id}.sensor_readings_ml`
+                    WHERE node_id IN ({numeric_placeholders})
+                )
+                SELECT * FROM latest_numeric WHERE rn = 1
+                """
+                queries.append(query2)
+            
+            # Execute all queries and combine results
+            latest_readings = {}
+            
+            for query in queries:
+                try:
+                    # Try with to_dataframe first
+                    try:
+                        df_result = self.client.query(query).to_dataframe()
+                        for _, row in df_result.iterrows():
+                            display_name = get_node_display_name(row['node_id'])
+                            latest_readings[display_name] = {
+                                'timestamp': row['timestamp'],
+                                'flow_rate': row.get('flow_rate', 0) or 0,
+                                'pressure': row.get('pressure', 0) or 0,
+                                'temperature': row.get('temperature', 0) or 0,
+                                'volume': row.get('volume', 0) or 0,
+                                'quality_score': row.get('data_quality_score', 1.0) or 1.0
+                            }
+                    except Exception:
+                        # Fallback to direct query result
+                        result = list(self.client.query(query).result())
+                        for row in result:
+                            display_name = get_node_display_name(row.node_id)
+                            latest_readings[display_name] = {
+                                'timestamp': row.timestamp,
+                                'flow_rate': row.flow_rate or 0,
+                                'pressure': row.pressure or 0,
+                                'temperature': row.temperature or 0,
+                                'volume': row.volume or 0,
+                                'quality_score': row.data_quality_score or 1.0
+                            }
+                except Exception:
+                    continue
+            
+            if latest_readings:
+                return latest_readings
         
         if df.empty:
             return {}
         
         # Get latest reading for each node
         latest_readings = {}
-        for node_id in df['node_id'].unique():
-            node_data = df[df['node_id'] == node_id].iloc[0]
+        
+        # Sort by timestamp descending and get the first row per node
+        df_sorted = df.sort_values('timestamp', ascending=False)
+        
+        for node_id in df_sorted['node_id'].unique():
+            node_data = df_sorted[df_sorted['node_id'] == node_id].iloc[0]
             display_name = get_node_display_name(node_id)
             
             latest_readings[display_name] = {

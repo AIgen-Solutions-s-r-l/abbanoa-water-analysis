@@ -29,8 +29,6 @@ class EfficiencyTab:
     ):
         """Initialize the efficiency tab with use case."""
         self.calculate_efficiency_use_case = calculate_efficiency_use_case
-        self._efficiency_cache = None
-        self._cache_time = None
 
     def render(self, time_range: str) -> None:
         """
@@ -51,7 +49,7 @@ class EfficiencyTab:
             st.metric(
                 label="Overall Efficiency",
                 value=f"{efficiency_data.get('efficiency_percentage', 0):.1f}%",
-                delta=f"Active nodes: {efficiency_data.get('active_nodes', 0)}/4",
+                delta=f"Active nodes: {efficiency_data.get('active_nodes', 0)}/8",
             )
 
         with col2:
@@ -96,138 +94,63 @@ class EfficiencyTab:
         st.subheader("Network Pressure Analysis")
         self._render_pressure_analysis()
 
-        # Energy consumption
-        st.subheader("Energy Consumption Analysis")
-        self._render_energy_analysis()
-
-        # Recommendations
-        st.subheader("Efficiency Recommendations")
-        self._render_recommendations()
-
     def _render_efficiency_trends(self, time_range: str) -> None:
         """Render efficiency trends over time."""
-        # Get historical efficiency data for trends
-        trends_data = self._get_efficiency_trends_data(time_range)
+        trend_data = self._get_efficiency_trends(time_range)
         
-        # Create subplot figure
+        if not trend_data['timestamps']:
+            st.info("No trend data available for the selected time range")
+            return
+
         fig = make_subplots(
-            rows=3,
-            cols=1,
-            subplot_titles=(
-                "Overall Efficiency (%)",
-                "Water Loss Rate (%)",
-                "Energy Consumption (kWh/m³)",
-            ),
-            vertical_spacing=0.1,
+            rows=3, cols=1,
+            subplot_titles=("Network Efficiency (%)", "Water Loss (%)", "Energy Consumption (kWh)"),
+            vertical_spacing=0.1
         )
 
-        # Overall efficiency
+        # Efficiency trend
         fig.add_trace(
             go.Scatter(
-                x=trends_data['timestamps'],
-                y=trends_data['efficiency_trend'],
-                mode="lines",
-                name="Efficiency",
-                line=dict(color="#2ca02c", width=2),
-                fill="tozeroy",
-                fillcolor="rgba(44, 160, 44, 0.1)",
-            ),
-            row=1,
-            col=1,
+                x=trend_data['timestamps'],
+                y=trend_data['efficiency_trend'],
+                mode='lines+markers',
+                name='Efficiency',
+                line=dict(color='#2E8B57', width=2),
+                marker=dict(size=6)
+            ), row=1, col=1
         )
 
-        # Water loss
+        # Water loss trend
         fig.add_trace(
             go.Scatter(
-                x=trends_data['timestamps'],
-                y=trends_data['water_loss'],
-                mode="lines",
-                name="Water Loss",
-                line=dict(color="#dc3545", width=2),
-                fill="tozeroy",
-                fillcolor="rgba(220, 53, 69, 0.1)",
-            ),
-            row=2,
-            col=1,
+                x=trend_data['timestamps'],
+                y=trend_data['water_loss'],
+                mode='lines+markers',
+                name='Water Loss',
+                line=dict(color='#DC143C', width=2),
+                marker=dict(size=6)
+            ), row=2, col=1
         )
 
-        # Energy consumption
+        # Energy consumption trend
         fig.add_trace(
             go.Scatter(
-                x=trends_data['timestamps'],
-                y=trends_data['energy_consumption'],
-                mode="lines",
-                name="Energy",
-                line=dict(color="#ff7f0e", width=2),
-            ),
-            row=3,
-            col=1,
+                x=trend_data['timestamps'],
+                y=trend_data['energy_consumption'],
+                mode='lines+markers',
+                name='Energy',
+                line=dict(color='#FF8C00', width=2),
+                marker=dict(size=6)
+            ), row=3, col=1
         )
 
-        # Add target lines
-        fig.add_hline(
-            y=95,
-            line_dash="dash",
-            line_color="green",
-            row=1,
-            col=1,
-            annotation_text="Target: 95%",
-        )
-        fig.add_hline(
-            y=5,
-            line_dash="dash",
-            line_color="red",
-            row=2,
-            col=1,
-            annotation_text="Target: <5%",
-        )
-        fig.add_hline(
-            y=0.40,
-            line_dash="dash",
-            line_color="orange",
-            row=3,
-            col=1,
-            annotation_text="Target: 0.40",
-        )
-
-        fig.update_layout(height=600, showlegend=False, hovermode="x unified")
-
+        fig.update_layout(height=500, showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
 
-    def _get_efficiency_trends_data(self, time_range: str) -> dict:
-        """Get efficiency trends data over time."""
+    @st.cache_data
+    def _get_efficiency_trends(self, time_range: str) -> dict:
+        """Calculate efficiency trends over time periods."""
         try:
-            # Calculate time delta for trends
-            time_deltas = {
-                "Last 6 Hours": (timedelta(hours=6), "30min"),
-                "Last 24 Hours": (timedelta(hours=24), "1H"),
-                "Last 3 Days": (timedelta(days=3), "6H"),
-                "Last Week": (timedelta(days=7), "1D"),
-                "Last Month": (timedelta(days=30), "1D"),
-                "Last Year": (timedelta(days=365), "1W"),
-            }
-
-            delta, freq = time_deltas.get(time_range, (timedelta(hours=24), "1H"))
-            
-            # Use the actual available data range
-            data_end = datetime(2025, 3, 31, 23, 59, 59)
-            data_start = datetime(2024, 11, 13, 0, 0, 0)
-            
-            end_time = min(data_end, datetime.now())
-            start_time = max(data_start, end_time - delta)
-            
-            # Create time periods for trend analysis
-            time_periods = pd.date_range(start=start_time, end=end_time, freq=freq)
-            
-            if len(time_periods) == 0:
-                return {
-                    'timestamps': [],
-                    'efficiency_trend': [],
-                    'water_loss': [],
-                    'energy_consumption': []
-                }
-            
-            # Get sensor data for each time period
             from uuid import UUID
             from src.infrastructure.di_container import Container
             
@@ -237,16 +160,45 @@ class EfficiencyTab:
                     "project_id": "abbanoa-464816",
                     "dataset_id": "water_infrastructure",
                     "credentials_path": None,
-                    "location": "US",
+                    "location": "EU",  # Fixed location
                 }
             })
             
             sensor_repo = container.sensor_reading_repository()
+            
+            # Calculate time delta for periods
+            time_deltas = {
+                "Last 6 Hours": timedelta(hours=6),
+                "Last 24 Hours": timedelta(hours=24),
+                "Last 3 Days": timedelta(days=3),
+                "Last Week": timedelta(days=7),
+                "Last Month": timedelta(days=30),
+                "Last Year": timedelta(days=365),
+            }
+
+            delta = time_deltas.get(time_range, timedelta(hours=24))
+            # Use actual data range
+            data_end = datetime(2025, 3, 31, 23, 59, 59)
+            data_start = datetime(2024, 11, 13, 0, 0, 0)
+            
+            end_time = min(data_end, datetime.now())
+            start_time = max(data_start, end_time - delta)
+            
+            # Create time periods for trend analysis
+            periods = min(10, max(1, int(delta.total_seconds() / 3600)))  # Max 10 periods
+            period_duration = (end_time - start_time) / periods
+            time_periods = [start_time + i * period_duration for i in range(periods + 1)]
+            
+            # Updated node mapping with actual node IDs
             node_mapping = {
-                "Sant'Anna": UUID("00000000-0000-0000-0000-000000000001"),
-                "Seneca": UUID("00000000-0000-0000-0000-000000000002"),
-                "Selargius Tank": UUID("00000000-0000-0000-0000-000000000003"),
-                "Quartucciu Tank": UUID("00000000-0000-0000-0000-000000000004"),
+                "NODE 281492": UUID("00000000-0000-0000-0000-000000000001"),
+                "NODE 211514": UUID("00000000-0000-0000-0000-000000000002"),
+                "NODE 288400": UUID("00000000-0000-0000-0000-000000000003"),
+                "NODE 288399": UUID("00000000-0000-0000-0000-000000000004"),
+                "NODE 215542": UUID("00000000-0000-0000-0000-000000000005"),
+                "NODE 273933": UUID("00000000-0000-0000-0000-000000000006"),
+                "NODE 215600": UUID("00000000-0000-0000-0000-000000000007"),
+                "NODE 287156": UUID("00000000-0000-0000-0000-000000000008"),
             }
             
             # Calculate efficiency for each time period
@@ -376,6 +328,7 @@ class EfficiencyTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
+    @st.cache_data
     def _get_node_efficiency_data(self) -> dict:
         """Get efficiency data for each node."""
         try:
@@ -388,16 +341,22 @@ class EfficiencyTab:
                     "project_id": "abbanoa-464816",
                     "dataset_id": "water_infrastructure",
                     "credentials_path": None,
-                    "location": "US",
+                    "location": "EU",  # Fixed location
                 }
             })
             
             sensor_repo = container.sensor_reading_repository()
+            
+            # Updated node mapping with actual node IDs
             node_mapping = {
-                "Sant'Anna": UUID("00000000-0000-0000-0000-000000000001"),
-                "Seneca": UUID("00000000-0000-0000-0000-000000000002"),
-                "Selargius Tank": UUID("00000000-0000-0000-0000-000000000003"),
-                "Quartucciu Tank": UUID("00000000-0000-0000-0000-000000000004"),
+                "Primary Station": UUID("00000000-0000-0000-0000-000000000001"),  # 281492
+                "Secondary Station": UUID("00000000-0000-0000-0000-000000000002"),  # 211514
+                "Distribution A": UUID("00000000-0000-0000-0000-000000000003"),  # 288400
+                "Distribution B": UUID("00000000-0000-0000-0000-000000000004"),  # 288399
+                "Junction C": UUID("00000000-0000-0000-0000-000000000005"),  # 215542
+                "Supply Control": UUID("00000000-0000-0000-0000-000000000006"),  # 273933
+                "Pressure Station": UUID("00000000-0000-0000-0000-000000000007"),  # 215600
+                "Remote Point": UUID("00000000-0000-0000-0000-000000000008"),  # 287156
             }
             
             # Get recent data for efficiency calculation
@@ -466,19 +425,24 @@ class EfficiencyTab:
         except Exception as e:
             st.warning(f"Error calculating node efficiency: {str(e)}")
             return {
-                "Sant'Anna": 0.0,
-                "Seneca": 0.0,
-                "Selargius Tank": 0.0,
-                "Quartucciu Tank": 0.0,
+                "Primary Station": 0.0,
+                "Secondary Station": 0.0,
+                "Distribution A": 0.0,
+                "Distribution B": 0.0,
+                "Junction C": 0.0,
+                "Supply Control": 0.0,
+                "Pressure Station": 0.0,
+                "Remote Point": 0.0,
             }
 
     def _render_loss_distribution(self) -> None:
         """Render water loss distribution pie chart."""
-        # Get loss distribution data
         loss_data = self._get_loss_distribution_data()
         
         labels = list(loss_data.keys())
         values = list(loss_data.values())
+        
+        colors = ["#ff9999", "#66b3ff", "#99ff99", "#ffcc99", "#ff99cc"]
 
         fig = go.Figure(
             data=[
@@ -486,26 +450,21 @@ class EfficiencyTab:
                     labels=labels,
                     values=values,
                     hole=0.3,
-                    marker_colors=["#2ca02c", "#ff7f0e", "#ffc107", "#dc3545"],
+                    marker=dict(colors=colors),
+                    textinfo="label+percent",
+                    textposition="outside",
                 )
             ]
         )
 
-        fig.update_traces(
-            textposition="inside",
-            textinfo="percent+label",
-            hoverinfo="label+percent+value",
-        )
-
         fig.update_layout(
             height=350,
-            annotations=[
-                dict(text="Loss<br>Distribution", x=0.5, y=0.5, font_size=16, showarrow=False)
-            ],
+            margin=dict(t=20, b=20, l=20, r=20),
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
+    @st.cache_data
     def _get_loss_distribution_data(self) -> dict:
         """Get water loss distribution data."""
         try:
@@ -599,6 +558,7 @@ class EfficiencyTab:
 
         st.plotly_chart(fig, use_container_width=True)
 
+    @st.cache_data
     def _get_pressure_analysis_data(self) -> dict:
         """Get pressure analysis data for nodes."""
         try:
@@ -611,16 +571,22 @@ class EfficiencyTab:
                     "project_id": "abbanoa-464816",
                     "dataset_id": "water_infrastructure",
                     "credentials_path": None,
-                    "location": "US",
+                    "location": "EU",  # Fixed location
                 }
             })
             
             sensor_repo = container.sensor_reading_repository()
+            
+            # Updated node mapping for pressure analysis
             node_mapping = {
-                "Sant'Anna": UUID("00000000-0000-0000-0000-000000000001"),
-                "Seneca": UUID("00000000-0000-0000-0000-000000000002"),
-                "Selargius Tank": UUID("00000000-0000-0000-0000-000000000003"),
-                "Quartucciu Tank": UUID("00000000-0000-0000-0000-000000000004"),
+                "Primary Station": UUID("00000000-0000-0000-0000-000000000001"),  # 281492
+                "Secondary Station": UUID("00000000-0000-0000-0000-000000000002"),  # 211514
+                "Distribution A": UUID("00000000-0000-0000-0000-000000000003"),  # 288400
+                "Distribution B": UUID("00000000-0000-0000-0000-000000000004"),  # 288399
+                "Junction C": UUID("00000000-0000-0000-0000-000000000005"),  # 215542
+                "Supply Control": UUID("00000000-0000-0000-0000-000000000006"),  # 273933
+                "Pressure Station": UUID("00000000-0000-0000-0000-000000000007"),  # 215600
+                "Remote Point": UUID("00000000-0000-0000-0000-000000000008"),  # 287156
             }
             
             # Get recent data for pressure analysis
@@ -692,118 +658,20 @@ class EfficiencyTab:
             st.warning(f"Error calculating pressure analysis: {str(e)}")
             return {
                 'current_pressure': {
-                    "Sant'Anna": 0.0,
-                    "Seneca": 0.0,
-                    "Selargius Tank": 0.0,
-                    "Quartucciu Tank": 0.0,
+                    "Primary Station": 0.0,
+                    "Secondary Station": 0.0,
+                    "Distribution A": 0.0,
+                    "Distribution B": 0.0,
+                    "Junction C": 0.0,
+                    "Supply Control": 0.0,
+                    "Pressure Station": 0.0,
+                    "Remote Point": 0.0,
                 },
-                'optimal_min': [3.0, 3.0, 3.0, 3.0],
-                'optimal_max': [4.5, 4.5, 4.5, 4.5],
+                'optimal_min': [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0],
+                'optimal_max': [4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5],
             }
 
-    def _render_energy_analysis(self) -> None:
-        """Render energy consumption analysis."""
-        # No synthetic data - all zeros
-        hours = list(range(24))
-        pumping_energy = [0] * 24
-        treatment_energy = [0] * 24
-        distribution_energy = [0] * 24
-
-        fig = go.Figure()
-
-        # Stacked area chart
-        fig.add_trace(
-            go.Scatter(
-                x=hours,
-                y=pumping_energy,
-                mode="lines",
-                name="Pumping",
-                stackgroup="one",
-                fillcolor="rgba(31, 119, 180, 0.5)",
-            )
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=hours,
-                y=treatment_energy,
-                mode="lines",
-                name="Treatment",
-                stackgroup="one",
-                fillcolor="rgba(255, 127, 14, 0.5)",
-            )
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=hours,
-                y=distribution_energy,
-                mode="lines",
-                name="Distribution",
-                stackgroup="one",
-                fillcolor="rgba(44, 160, 44, 0.5)",
-            )
-        )
-
-        fig.update_layout(
-            height=350,
-            xaxis_title="Hour of Day",
-            yaxis_title="Energy Consumption (kWh)",
-            hovermode="x unified",
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-    def _render_recommendations(self) -> None:
-        """Render efficiency improvement recommendations."""
-        # No synthetic data
-        recommendations = []
-
-        if recommendations:
-            df = pd.DataFrame(recommendations)
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Priority": st.column_config.TextColumn("Priority", width="small"),
-                    "Area": st.column_config.TextColumn("Area", width="medium"),
-                    "Issue": st.column_config.TextColumn("Issue", width="large"),
-                    "Action": st.column_config.TextColumn(
-                        "Recommended Action", width="large"
-                    ),
-                    "Impact": st.column_config.TextColumn(
-                        "Expected Impact", width="medium"
-                    ),
-                },
-            )
-        else:
-            st.info("No recommendations available. Waiting for real data.")
-
-    def _get_energy_factor(self, hour: int) -> float:
-        """Get energy consumption factor for given hour."""
-        # Energy consumption pattern
-        if 6 <= hour <= 9:  # Morning peak
-            return 1.3
-        elif 18 <= hour <= 21:  # Evening peak
-            return 1.2
-        elif 0 <= hour <= 5:  # Night minimum
-            return 0.6
-        else:  # Daytime normal
-            return 1.0
-
-    def _get_time_params(self, time_range: str) -> tuple:
-        """Get time parameters based on selected range."""
-        params = {
-            "Last 6 Hours": (12, "30min"),
-            "Last 24 Hours": (48, "30min"),
-            "Last 3 Days": (72, "H"),
-            "Last Week": (168, "H"),
-            "Last Month": (720, "H"),  # 30 days
-            "Custom Range": None,  # Will be handled separately
-        }
-        return params.get(time_range, (48, "30min"))
-
+    @st.cache_data
     def _get_efficiency_data(self, time_range: str) -> dict:
         """Get real efficiency data from sensor readings."""
         try:
@@ -840,30 +708,34 @@ class EfficiencyTab:
                         "project_id": "abbanoa-464816",
                         "dataset_id": "water_infrastructure",
                         "credentials_path": None,
-                        "location": "US",
+                        "location": "EU",  # Fixed location
                     }
                 }
             )
 
             sensor_repo = container.sensor_reading_repository()
 
-            # Define node mappings
+            # Updated node mapping with all 8 nodes
             node_mapping = {
-                "Sant'Anna": UUID("00000000-0000-0000-0000-000000000001"),
-                "Seneca": UUID("00000000-0000-0000-0000-000000000002"),
-                "Selargius Tank": UUID("00000000-0000-0000-0000-000000000003"),
-                "Quartucciu Tank": UUID("00000000-0000-0000-0000-000000000004"),
+                "Primary Station": UUID("00000000-0000-0000-0000-000000000001"),  # 281492
+                "Secondary Station": UUID("00000000-0000-0000-0000-000000000002"),  # 211514
+                "Distribution A": UUID("00000000-0000-0000-0000-000000000003"),  # 288400
+                "Distribution B": UUID("00000000-0000-0000-0000-000000000004"),  # 288399
+                "Junction C": UUID("00000000-0000-0000-0000-000000000005"),  # 215542
+                "Supply Control": UUID("00000000-0000-0000-0000-000000000006"),  # 273933
+                "Pressure Station": UUID("00000000-0000-0000-0000-000000000007"),  # 215600
+                "Remote Point": UUID("00000000-0000-0000-0000-000000000008"),  # 287156
             }
 
-            # Fetch data for all nodes
+            # Collect data from all nodes
+            active_nodes = 0
             total_readings = 0
             total_flow = 0
             total_volume = 0
             total_pressure = 0
-            pressure_readings = 0
             flow_readings = 0
             volume_readings = 0
-            active_nodes = 0
+            pressure_readings = 0
             all_flows = []
             all_pressures = []
 

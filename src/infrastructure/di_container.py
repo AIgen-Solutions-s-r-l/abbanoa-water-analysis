@@ -123,9 +123,10 @@ class Container(containers.DeclarativeContainer):
     # Domain services
     anomaly_detection_service = providers.Singleton(
         AnomalyDetectionService,
-        z_score_threshold=config.anomaly_detection.z_score_threshold,
-        min_data_points=config.anomaly_detection.min_data_points,
-        rolling_window_hours=config.anomaly_detection.rolling_window_hours,
+        # Use default values from the class constructor
+        z_score_threshold=2.5,
+        min_data_points=10,
+        rolling_window_hours=24,
     )
 
     network_efficiency_service = providers.Singleton(

@@ -84,22 +84,39 @@ class DetectNetworkAnomaliesUseCase:
 
             # Convert to DTOs and process
             for event in anomaly_events:
+                # Calculate deviation percentage safely
+                deviation_percentage = 0.0
+                if event.measurement_value is not None and event.threshold is not None and event.threshold != 0:
+                    try:
+                        deviation_percentage = abs(
+                            (event.measurement_value - event.threshold)
+                            / event.threshold
+                            * 100
+                        )
+                    except (TypeError, ZeroDivisionError):
+                        deviation_percentage = 0.0
+
+                # Calculate expected range safely
+                expected_range = (0.0, 0.0)
+                if event.threshold is not None:
+                    try:
+                        threshold_val = float(event.threshold)
+                        expected_range = (
+                            threshold_val - (threshold_val * 0.1),
+                            threshold_val + (threshold_val * 0.1),
+                        )
+                    except (TypeError, ValueError):
+                        expected_range = (0.0, 0.0)
+
                 anomaly_dto = AnomalyDetectionResultDTO(
                     node_id=node.id,
                     timestamp=event.occurred_at,
                     anomaly_type=event.anomaly_type,
                     severity=event.severity,
                     measurement_type=event.sensor_type,
-                    actual_value=event.measurement_value,
-                    expected_range=(
-                        event.threshold - (event.threshold * 0.1),
-                        event.threshold + (event.threshold * 0.1),
-                    ),
-                    deviation_percentage=abs(
-                        (event.measurement_value - event.threshold)
-                        / event.threshold
-                        * 100
-                    ),
+                    actual_value=event.measurement_value or 0.0,
+                    expected_range=expected_range,
+                    deviation_percentage=deviation_percentage,
                     description=event.description,
                 )
 

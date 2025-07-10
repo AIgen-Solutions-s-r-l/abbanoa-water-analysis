@@ -481,19 +481,7 @@ class ConsumptionTab:
         else:  # Daytime normal
             return 1.0
 
-    def _get_time_params(self, time_range: str) -> tuple:
-        """Get time parameters based on selected range."""
-        params = {
-            "Last 6 Hours": (12, "30min"),
-            "Last 24 Hours": (48, "30min"),
-            "Last 3 Days": (72, "H"),
-            "Last Week": (168, "H"),
-            "Last Month": (720, "H"),  # 30 days
-            "Last Year": (8760, "H"),  # 365 days
-            "Custom Range": None,  # Will be handled separately
-        }
-        return params.get(time_range, (48, "30min"))
-
+    @st.cache_data
     def _get_consumption_data(
         self, time_range: str, selected_nodes: List[str]
     ) -> Optional[pd.DataFrame]:

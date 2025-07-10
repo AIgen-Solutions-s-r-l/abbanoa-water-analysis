@@ -108,8 +108,18 @@ class BackupDataProcessor:
     def process_data_log(self, file_path: Path, node_id: str) -> Optional[pd.DataFrame]:
         """Process DATA_LOG format files (standard sensor readings)."""
         try:
-            # Read with semicolon separator
-            df = pd.read_csv(file_path, sep=';', encoding='utf-8', low_memory=False)
+            # Read with semicolon separator, try different encodings
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+            df = None
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(file_path, sep=';', encoding=encoding, low_memory=False)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if df is None:
+                raise Exception("Unable to decode file with any encoding")
             
             if df.empty:
                 return None
@@ -202,8 +212,18 @@ class BackupDataProcessor:
                 elif part.strip():
                     headers.append(f'col_{i}')
                     
-            # Read data
-            df = pd.read_csv(file_path, sep=';', skiprows=1, names=headers, encoding='utf-8')
+            # Read data with different encodings
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+            df = None
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(file_path, sep=';', skiprows=1, names=headers, encoding=encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if df is None:
+                raise Exception("Unable to decode file with any encoding")
             
             if df.empty:
                 return None
@@ -419,7 +439,7 @@ def create_ml_views(client: bigquery.Client):
             ROW_NUMBER() OVER (PARTITION BY node_id, DATE(timestamp) ORDER BY timestamp DESC) as rn
         FROM `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml`
         WHERE data_quality_score > 0.5
-            AND timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 YEAR)
+            AND timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 730 DAY)
     )
     SELECT 
         timestamp,
@@ -458,7 +478,7 @@ def create_ml_views(client: bigquery.Client):
         COUNT(*) as reading_count,
         AVG(data_quality_score) as avg_quality_score
     FROM `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml`
-    WHERE timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 YEAR)
+    WHERE timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 730 DAY)
     GROUP BY date, node_id, district_id
     """
     
