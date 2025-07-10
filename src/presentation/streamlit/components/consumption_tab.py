@@ -19,6 +19,8 @@ from src.application.dto.analysis_results_dto import ConsumptionPatternDTO
 from src.application.use_cases.analyze_consumption_patterns import (
     AnalyzeConsumptionPatternsUseCase,
 )
+from src.infrastructure.di_container import Container
+from src.presentation.streamlit.utils.data_optimizer import DataOptimizer, show_optimization_info
 
 
 class ConsumptionTab:
@@ -27,6 +29,10 @@ class ConsumptionTab:
     def __init__(_self, analyze_consumption_use_case: AnalyzeConsumptionPatternsUseCase):
         """Initialize the consumption tab with use case."""
         _self.analyze_consumption_use_case = analyze_consumption_use_case
+        # Initialize optimizer
+        container = Container()
+        _self.sensor_repo = container.sensor_reading_repository()
+        _self.optimizer = DataOptimizer(_self.sensor_repo)
 
     def render(_self, time_range: str, selected_nodes: List[str]) -> None:
         """
@@ -37,6 +43,16 @@ class ConsumptionTab:
             selected_nodes: List of selected nodes
         """
         st.header("📈 Consumption Patterns Analysis")
+        
+        # Show optimization info for large time ranges
+        if time_range in ["Last Month", "Last Year"]:
+            time_delta = _self._get_time_delta(time_range)
+            days = time_delta.days
+            estimated_records = days * 24 * 12  # Rough estimate
+            
+            recommendations = _self.optimizer.get_performance_recommendations(days, estimated_records)
+            if recommendations:
+                st.warning("⚡ **Performance Optimization**\n\n" + "\n".join(recommendations))
 
         # Get consumption data for metrics calculation
         consumption_data = _self._get_consumption_data(time_range, selected_nodes)
@@ -473,173 +489,114 @@ class ConsumptionTab:
         """Get consumption factor for given hour."""
         # Typical residential consumption pattern
         if 6 <= hour <= 9:  # Morning peak
-            return 1.2 + 0.1 * (hour - 6)
+            return 1.5
         elif 18 <= hour <= 21:  # Evening peak
-            return 1.1 + 0.05 * (hour - 18)
-        elif 0 <= hour <= 5:  # Night minimum
-            return 0.5 + 0.05 * hour
+            return 1.8
+        elif 22 <= hour <= 5:  # Night low
+            return 0.4
         else:  # Daytime normal
             return 1.0
+
+    def _get_time_delta(_self, time_range: str) -> timedelta:
+        """Get time delta for the given time range."""
+        time_deltas = {
+            "Last 6 Hours": timedelta(hours=6),
+            "Last 24 Hours": timedelta(hours=24),
+            "Last 3 Days": timedelta(days=3),
+            "Last Week": timedelta(days=7),
+            "Last Month": timedelta(days=30),
+            "Last Year": timedelta(days=365),
+        }
+        return time_deltas.get(time_range, timedelta(hours=24))
 
     @st.cache_data
     def _get_consumption_data(
         _self, time_range: str, selected_nodes: List[str]
     ) -> Optional[pd.DataFrame]:
-        """Get real consumption data directly from repository."""
+        """Get real consumption data with optimization."""
         try:
             # Calculate time delta
-            time_deltas = {
-                "Last 6 Hours": timedelta(hours=6),
-                "Last 24 Hours": timedelta(hours=24),
-                "Last 3 Days": timedelta(days=3),
-                "Last Week": timedelta(days=7),
-                "Last Month": timedelta(days=30),
-                "Last Year": timedelta(days=365),
-            }
+            time_delta = _self._get_time_delta(time_range)
+            end_time = datetime.now()
+            start_time = end_time - time_delta
 
-            # Handle custom date range
-            if time_range == "Custom Range" and hasattr(
-                st.session_state, "custom_date_range"
-            ):
-                start_date, end_date = st.session_state.custom_date_range
-                # Convert dates to datetime
-                start_time = datetime.combine(start_date, datetime.min.time())
-                end_time = datetime.combine(end_date, datetime.max.time())
-            else:
-                delta = time_deltas.get(time_range, timedelta(hours=24))
-                # Use the actual available data range: November 13, 2024 to March 31, 2025
-                data_end = datetime(2025, 3, 31, 23, 59, 59)
-                data_start = datetime(2024, 11, 13, 0, 0, 0)
-
-                # Calculate desired end time (use current time or data end, whichever is earlier)
-                end_time = min(data_end, datetime.now())
-
-                # Calculate start time, but don't go before data start
-                proposed_start = end_time - delta
-                start_time = max(proposed_start, data_start)
-
-            # Get data directly from repository
-            from uuid import UUID
-
-            from src.infrastructure.di_container import Container
-
-            container = Container()
-            container.config.from_dict(
-                {
-                    "bigquery": {
-                        "project_id": "abbanoa-464816",
-                        "dataset_id": "water_infrastructure",
-                        "credentials_path": None,
-                        "location": "US",
-                    }
-                }
-            )
-
-            sensor_repo = container.sensor_reading_repository()
-
-            # Define node mappings
+            # Node mapping
             node_mapping = {
-                "Sant'Anna": UUID("00000000-0000-0000-0000-000000000001"),
-                "Seneca": UUID("00000000-0000-0000-0000-000000000002"),
-                "Selargius Tank": UUID("00000000-0000-0000-0000-000000000003"),
+                "Primary Station": UUID("00000000-0000-0000-0000-000000000001"),
+                "Secondary Station": UUID("00000000-0000-0000-0000-000000000002"),
+                "Distribution A": UUID("00000000-0000-0000-0000-000000000003"),
+                "Distribution B": UUID("00000000-0000-0000-0000-000000000004"),
+                "Junction C": UUID("00000000-0000-0000-0000-000000000005"),
+                "Supply Control": UUID("00000000-0000-0000-0000-000000000006"),
+                "Pressure Station": UUID("00000000-0000-0000-0000-000000000007"),
+                "Remote Point": UUID("00000000-0000-0000-0000-000000000008"),
             }
 
-            # Determine which nodes to fetch
-            if "All Nodes" in selected_nodes:
-                nodes_to_fetch = list(node_mapping.keys())
-            else:
-                nodes_to_fetch = [
-                    node for node in selected_nodes if node in node_mapping
-                ]
-
-            if not nodes_to_fetch:
-                st.warning("No valid nodes selected")
-                return None
-
-            # Fetch data for each node
             all_data = []
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            optimization_info = None
 
-            for node_name in nodes_to_fetch:
-                node_id = node_mapping[node_name]
-                try:
-                    readings = loop.run_until_complete(
-                        sensor_repo.get_by_node_id(
-                            node_id=node_id, start_time=start_time, end_time=end_time
-                        )
-                    )
-
-                    for reading in readings:
-                        # Handle both value objects and raw values
-                        flow_val = reading.flow_rate
-                        if hasattr(flow_val, "value"):
-                            flow_val = flow_val.value
-                        elif flow_val is None:
-                            flow_val = 0
-
-                        vol_val = reading.volume
-                        if hasattr(vol_val, "value"):
-                            vol_val = vol_val.value
-                        elif vol_val is None:
-                            vol_val = 0
-
-                        all_data.append(
-                            {
-                                "timestamp": reading.timestamp,
-                                "node_name": node_name,
-                                "flow_rate": float(flow_val),
-                                "volume": float(vol_val),
-                            }
-                        )
-
-                except Exception as e:
-                    st.warning(f"Error fetching data for {node_name}: {str(e)}")
+            for node_name in selected_nodes:
+                if node_name == "All Nodes":
+                    continue
+                
+                node_id = node_mapping.get(node_name)
+                if not node_id:
                     continue
 
+                # Use data optimizer for large time ranges
+                if time_delta.days > 7:  # Use optimization for ranges > 1 week
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    
+                    try:
+                        readings, opt_info = loop.run_until_complete(
+                            _self.optimizer.get_optimized_data(node_id, start_time, end_time)
+                        )
+                        if not optimization_info:  # Show info only once
+                            optimization_info = opt_info
+                    finally:
+                        loop.close()
+                else:
+                    # Use direct repository access for small time ranges
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    
+                    try:
+                        readings = loop.run_until_complete(
+                            _self.sensor_repo.get_by_node_id(node_id, start_time, end_time)
+                        )
+                    finally:
+                        loop.close()
+
+                # Convert to DataFrame format
+                for reading in readings:
+                    flow_val = reading.flow_rate.value if reading.flow_rate else 0
+                    pressure_val = reading.pressure.value if reading.pressure else 0
+                    
+                    all_data.append({
+                        "timestamp": reading.timestamp,
+                        "node_id": str(reading.node_id),
+                        "node_name": node_name,
+                        "flow_rate": flow_val,
+                        "pressure": pressure_val,
+                        "consumption": flow_val * _self._get_hourly_factor(reading.timestamp.hour),
+                        "is_anomaly": reading.is_anomaly
+                    })
+
             if not all_data:
-                st.info(
-                    f"No data found for the selected time range ({start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')})"
-                )
                 return None
 
-            # Convert to DataFrame and pivot
-            df = pd.DataFrame(all_data)
-            df = df.pivot_table(
-                index="timestamp",
-                columns="node_name",
-                values="flow_rate",
-                aggfunc="mean",
-            ).reset_index()
+            # Show optimization info if available
+            if optimization_info:
+                show_optimization_info(optimization_info)
 
-            # Fill NaN values with 0 and ensure all numeric columns are float type
-            df = df.fillna(0)
-            
-            # Ensure timestamp column is properly typed
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            
-            # Ensure all other columns are numeric (float) type
-            numeric_cols = [col for col in df.columns if col != "timestamp"]
-            for col in numeric_cols:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
-
-            st.success(
-                f"✅ Found {len(all_data)} readings across {len(nodes_to_fetch)} nodes"
-            )
-
-            return df
+            return pd.DataFrame(all_data)
 
         except Exception as e:
-            # Show specific error for debugging
             st.error(f"Error fetching consumption data: {str(e)}")
-            st.info(
-                "Possible causes: BigQuery not connected, no data in selected range, or missing credentials."
-            )
-            import traceback
-
-            st.code(traceback.format_exc())
-
-        return None
+            return None
 
     def _calculate_consumption_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> dict:
         """Calculate consumption metrics from real data."""

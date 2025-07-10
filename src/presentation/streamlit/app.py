@@ -31,6 +31,7 @@ from src.presentation.streamlit.components.forecast_tab import ForecastTab
 from src.presentation.streamlit.components.sidebar_filters import SidebarFilters
 from src.presentation.streamlit.config.theme import apply_custom_theme
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
+from src.presentation.streamlit.utils.performance_monitor import performance_monitor
 
 # Page configuration
 st.set_page_config(
@@ -136,7 +137,7 @@ class DashboardApp:
         reports_tab = ReportsTab()
 
         # Create tabs - combining new and old functionality
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
             [
                 "📈 Forecast",
                 "📊 Overview",
@@ -144,42 +145,73 @@ class DashboardApp:
                 "📈 Consumption Patterns",
                 "🔗 Network Efficiency",
                 "📋 Reports",
+                "⚡ Performance Monitor",
             ]
         )
 
         with tab1:
             # New forecast tab
-            self.forecast_tab.render()
+            with st.spinner("Loading forecast data..."):
+                # Measure forecast tab performance
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Forecast Tab", current_time_range)
+                def render_forecast_tab():
+                    return self.forecast_tab.render()
+                render_forecast_tab()
 
         with tab2:
             # Old dashboard overview
-            overview_tab.render(
-                time_range=st.session_state.get("time_range", "Last 24 Hours"),
-                selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
-            )
+            with st.spinner("Loading overview data..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Overview Tab", current_time_range)
+                def render_overview_tab():
+                    return overview_tab.render(
+                        time_range=current_time_range,
+                        selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
+                    )
+                render_overview_tab()
 
         with tab3:
             # Anomaly detection from old dashboard
-            anomaly_tab.render(
-                time_range=st.session_state.get("time_range", "Last 24 Hours")
-            )
+            with st.spinner("Loading anomaly data..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Anomaly Tab", current_time_range)
+                def render_anomaly_tab():
+                    return anomaly_tab.render(time_range=current_time_range)
+                render_anomaly_tab()
 
         with tab4:
             # Consumption patterns from old dashboard
-            consumption_tab.render(
-                time_range=st.session_state.get("time_range", "Last 24 Hours"),
-                selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
-            )
+            with st.spinner("Loading consumption data..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Consumption Tab", current_time_range)
+                def render_consumption_tab():
+                    return consumption_tab.render(
+                        time_range=current_time_range,
+                        selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
+                    )
+                render_consumption_tab()
 
         with tab5:
             # Network efficiency from old dashboard
-            efficiency_tab.render(
-                time_range=st.session_state.get("time_range", "Last 24 Hours")
-            )
+            with st.spinner("Loading efficiency data..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Efficiency Tab", current_time_range)
+                def render_efficiency_tab():
+                    return efficiency_tab.render(time_range=current_time_range)
+                render_efficiency_tab()
 
         with tab6:
             # Reports from old dashboard
-            reports_tab.render()
+            with st.spinner("Loading reports..."):
+                @performance_monitor.measure_time("Reports Tab", "N/A")
+                def render_reports_tab():
+                    return reports_tab.render()
+                render_reports_tab()
+
+        with tab7:
+            # Performance monitoring tab
+            performance_monitor.render_performance_dashboard()
 
     def run(self) -> None:
         """Run the main dashboard application."""
