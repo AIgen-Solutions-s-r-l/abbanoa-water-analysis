@@ -166,7 +166,7 @@ class ForecastCalculationService:
             @district_id as district_id,
             @metric as metric
         FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
-        WHERE node_id LIKE CONCAT(@district_id, '%')
+        WHERE node_id = @district_id
             AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @days DAY)
             AND timestamp <= CURRENT_TIMESTAMP()
         GROUP BY DATE(timestamp)
@@ -244,7 +244,7 @@ class ForecastCalculationService:
                     ELSE flow_rate
                 END) as avg_value
             FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
-            WHERE node_id LIKE CONCAT(@district_id, '%')
+            WHERE node_id = @district_id
                 AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)
                 AND timestamp <= CURRENT_TIMESTAMP()
             GROUP BY DATE(timestamp)

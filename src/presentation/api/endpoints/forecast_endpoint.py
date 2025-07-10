@@ -74,7 +74,7 @@ async def get_forecast(
     metric: str,
     horizon: int = Query(7, ge=1, le=30, description="Forecast horizon in days"),
     include_historical: bool = Query(True, description="Include historical data"),
-    historical_days: int = Query(30, ge=0, le=90, description="Days of historical data"),
+    historical_days: int = Query(30, ge=0, le=120, description="Days of historical data"),
     use_case: ForecastConsumption = Depends(get_forecast_use_case)
 ) -> ForecastResponse:
     """
@@ -102,8 +102,8 @@ async def get_forecast(
         )
         
         # Validate inputs
-        valid_districts = ["DIST_001", "DIST_002"]
-        valid_metrics = ["flow_rate", "pressure", "reservoir_level"]
+        valid_districts = ["node-serbatoio", "node-seneca", "node-santanna", "DIST_001", "DIST_002"]
+        valid_metrics = ["flow_rate", "pressure", "temperature"]
         
         if district_id not in valid_districts:
             raise HTTPException(

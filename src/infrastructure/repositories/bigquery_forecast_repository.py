@@ -92,7 +92,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
                     ELSE flow_rate
                 END) as avg_value
             FROM `{self.client.project_id}.{self.client.dataset_id}.v_sensor_readings_normalized`
-            WHERE node_id LIKE CONCAT(LEFT(@district_metric_id, 8), '%')
+            WHERE node_id = LEFT(@district_metric_id, STRPOS(@district_metric_id, '_') - 1)
                 AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)
                 AND timestamp <= CURRENT_TIMESTAMP()
             GROUP BY DATE(timestamp)
