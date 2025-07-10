@@ -1,87 +1,61 @@
 version: '3.8'
 
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    image: abbanoa-api:latest
-    container_name: abbanoa-api
+  redis:
+    image: redis:7-alpine
+    container_name: abbanoa-redis
     ports:
-      - "8000:8000"
-    environment:
-      # Google Cloud settings
-      - GOOGLE_CLOUD_PROJECT=abbanoa-464816
-      - BIGQUERY_PROJECT_ID=abbanoa-464816
-      - BIGQUERY_DATASET_ID=water_infrastructure
-      - BIGQUERY_LOCATION=EU
-      
-      # API settings
-      - LOG_LEVEL=INFO
-      - API_V1_PREFIX=/api/v1
-      
-      # Anomaly detection settings
-      - ANOMALY_Z_SCORE=3.0
-      - ANOMALY_MIN_POINTS=10
-      - ANOMALY_WINDOW_HOURS=24
-      
+      - "6379:6379"
     volumes:
-      # Mount Google Cloud credentials if using service account
-      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/app/credentials.json:ro
-      # Mount gcloud config for application default credentials
-      - ~/.config/gcloud:/home/apiuser/.config/gcloud:ro
-      
-    # Set credentials path if mounted
-    command: >
-      sh -c "
-        if [ -f /app/credentials.json ]; then
-          export GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
-        fi &&
-        uvicorn src.presentation.api.app:app --host 0.0.0.0 --port 8000 --reload
-      "
-      
-    restart: unless-stopped
-    
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    
-    # Health check
+      - redis-data:/data
+    command: redis-server --appendonly yes --appendfsync everysec
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  # Optional: Streamlit dashboard container
-  dashboard:
+  cache-initializer:
     build:
       context: .
-      dockerfile: Dockerfile.dashboard
-    image: abbanoa-dashboard:latest
+      dockerfile: Dockerfile.cache
+    container_name: abbanoa-cache-init
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_TTL_HOURS=24
+      - CACHE_REFRESH_HOURS=6
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python -m src.infrastructure.cache.cache_initializer
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: abbanoa-dashboard
     ports:
-      - "8502:8502"
+      - "8501:8501"
     environment:
-      - GOOGLE_CLOUD_PROJECT=abbanoa-464816
-      - API_BASE_URL=http://api:8000
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
-      # Mount Google Cloud credentials
-      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/app/credentials.json:ro
-      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
+      - ./credentials:/app/credentials:ro
     depends_on:
-      - api
+      redis:
+        condition: service_healthy
+      cache-initializer:
+        condition: service_started
     restart: unless-stopped
-    profiles:
-      - full  # Only start with --profile full
+    command: streamlit run src/presentation/streamlit/app.py --server.port=8501 --server.address=0.0.0.0
 
-networks:
-  default:
-    name: abbanoa-network
+volumes:
+  redis-data:
+EOF < /dev/null

@@ -213,7 +213,7 @@ class OverviewTab:
                 )
     
     @st.cache_data
-    def _render_system_alerts(self) -> None:
+    def _render_system_alerts(_self) -> None:
         """Render system alerts section with optimization."""
         # Get real-time alerts from sensor data
         alerts = self._get_system_alerts()
@@ -239,7 +239,7 @@ class OverviewTab:
             st.success("✅ No active alerts. All systems operating normally.")
 
     @st.cache_data
-    def _get_system_alerts(self) -> List[dict]:
+    def _get_system_alerts(_self) -> List[dict]:
         """Analyze real sensor data to detect system alerts with optimization."""
         alerts = []
 
@@ -298,10 +298,10 @@ class OverviewTab:
         return alerts
 
     @st.cache_data
-    def _get_efficiency_data(self, time_range: str) -> Optional[pd.DataFrame]:
+    def _get_efficiency_data(_self, time_range: str) -> Optional[pd.DataFrame]:
         """Get efficiency data with optimization."""
         try:
-            time_delta = self._get_time_delta(time_range)
+            time_delta = _self._get_time_delta(time_range)
             end_time = datetime.now()
             start_time = end_time - time_delta
 
@@ -371,14 +371,14 @@ class OverviewTab:
             return None
 
     @st.cache_data
-    def _get_real_flow_data(self, selected_nodes: List[str]) -> pd.DataFrame:
+    def _get_real_flow_data(_self, selected_nodes: List[str]) -> pd.DataFrame:
         """Get real flow data with optimization."""
         # This method would be similar to _get_efficiency_data
         # but focused on flow data for the selected nodes
         return self._get_efficiency_data("Last 24 Hours")  # Default to 24 hours for real-time view
 
     @st.cache_data
-    def _get_latest_node_data(self) -> Dict[str, Any]:
+    def _get_latest_node_data(_self) -> Dict[str, Any]:
         """Get latest node data with optimization."""
         try:
             # Get latest data from primary station
