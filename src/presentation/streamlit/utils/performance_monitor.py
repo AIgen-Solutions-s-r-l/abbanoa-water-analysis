@@ -60,6 +60,10 @@ class PerformanceMonitor:
                           execution_time: float, success: bool, 
                           error_msg: Optional[str], timestamp: datetime):
         """Record performance data to session state."""
+        # Ensure performance_data is initialized
+        if 'performance_data' not in st.session_state:
+            st.session_state.performance_data = []
+            
         performance_record = {
             'component': component_name,
             'time_range': time_range,
@@ -78,10 +82,15 @@ class PerformanceMonitor:
     
     def get_performance_data(self) -> List[Dict[str, Any]]:
         """Get all recorded performance data."""
+        if 'performance_data' not in st.session_state:
+            st.session_state.performance_data = []
         return st.session_state.performance_data
     
     def get_performance_summary(self) -> Dict[str, Any]:
         """Get performance summary statistics."""
+        if 'performance_data' not in st.session_state:
+            st.session_state.performance_data = []
+            
         if not st.session_state.performance_data:
             return {}
         
@@ -103,6 +112,10 @@ class PerformanceMonitor:
     def render_performance_dashboard(self):
         """Render a performance monitoring dashboard."""
         st.header("🔍 Performance Monitor")
+        
+        # Ensure performance_data is initialized
+        if 'performance_data' not in st.session_state:
+            st.session_state.performance_data = []
         
         if not st.session_state.performance_data:
             st.info("No performance data collected yet. Navigate through different tabs and time ranges to collect data.")
@@ -210,7 +223,8 @@ class PerformanceMonitor:
         
         # Clear data button
         if st.button("Clear Performance Data"):
-            st.session_state.performance_data = []
+            if 'performance_data' in st.session_state:
+                st.session_state.performance_data = []
             st.rerun()
     
     def _show_recommendations(self, df: pd.DataFrame):
