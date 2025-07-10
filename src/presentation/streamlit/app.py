@@ -151,25 +151,50 @@ class DashboardApp:
 
     def render_tabs(self) -> None:
         """Render the main tab navigation."""
-        # Import the old dashboard components
-        from src.presentation.streamlit.components.anomaly_tab import AnomalyTab
-        from src.presentation.streamlit.components.consumption_tab import ConsumptionTab
-        from src.presentation.streamlit.components.efficiency_tab import EfficiencyTab
-        from src.presentation.streamlit.components.reports_tab import ReportsTab
+        # Check if API is available
+        from src.presentation.streamlit.utils.api_client import get_api_client
+        api_client = get_api_client()
+        use_api = api_client.health_check()
         
-        # Use Redis-based overview tab if cache is initialized
-        if st.session_state.get("cache_initialized", False):
-            from src.presentation.streamlit.components.overview_tab_redis import OverviewTab
-            # Redis version doesn't need use case
+        if use_api:
+            # Use API-based components for better performance
+            from src.presentation.streamlit.components.overview_tab_api import OverviewTab
+            from src.presentation.streamlit.components.anomaly_tab_api import AnomalyTab
+            from src.presentation.streamlit.components.efficiency_tab_api import EfficiencyTab
+            
             overview_tab = OverviewTab()
+            anomaly_tab = AnomalyTab()
+            efficiency_tab = EfficiencyTab()
+            
+            # Still use old components for tabs not yet migrated
+            from src.presentation.streamlit.components.consumption_tab import ConsumptionTab
+            from src.presentation.streamlit.components.reports_tab import ReportsTab
+            consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
+            reports_tab = ReportsTab()
+            
+            st.session_state.using_api = True
+            
         else:
-            from src.presentation.streamlit.components.overview_tab import OverviewTab
-            # Regular version needs use case
-            overview_tab = OverviewTab(self.calculate_efficiency_use_case)
-        anomaly_tab = AnomalyTab(self.detect_anomalies_use_case)
-        consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
-        efficiency_tab = EfficiencyTab(self.calculate_efficiency_use_case)
-        reports_tab = ReportsTab()
+            # Fallback to old components if API is not available
+            from src.presentation.streamlit.components.anomaly_tab import AnomalyTab
+            from src.presentation.streamlit.components.consumption_tab import ConsumptionTab
+            from src.presentation.streamlit.components.efficiency_tab import EfficiencyTab
+            from src.presentation.streamlit.components.reports_tab import ReportsTab
+            
+            # Use Redis-based overview tab if cache is initialized
+            if st.session_state.get("cache_initialized", False):
+                from src.presentation.streamlit.components.overview_tab_redis import OverviewTab
+                overview_tab = OverviewTab()
+            else:
+                from src.presentation.streamlit.components.overview_tab import OverviewTab
+                overview_tab = OverviewTab(self.calculate_efficiency_use_case)
+                
+            anomaly_tab = AnomalyTab(self.detect_anomalies_use_case)
+            consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
+            efficiency_tab = EfficiencyTab(self.calculate_efficiency_use_case)
+            reports_tab = ReportsTab()
+            
+            st.session_state.using_api = False
 
         # Create tabs - combining new and old functionality
         tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
@@ -262,7 +287,9 @@ class DashboardApp:
         st.markdown("---")
 
         # Check data architecture status
-        if st.session_state.get("hybrid_architecture", False):
+        if st.session_state.get("using_api", False):
+            data_source = "🚀 Using Processing Services API (Optimized)"
+        elif st.session_state.get("hybrid_architecture", False):
             if st.session_state.get("cache_initialized", False):
                 data_source = "🟢 Hybrid Architecture Active (Redis + PostgreSQL + BigQuery)"
             else:
