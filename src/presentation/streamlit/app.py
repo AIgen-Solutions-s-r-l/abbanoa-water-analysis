@@ -8,6 +8,7 @@ orchestrating the various tabs and components.
 import asyncio
 from datetime import datetime
 from typing import Optional
+import os
 
 import streamlit as st
 from dependency_injector.wiring import Provide, inject
@@ -25,6 +26,10 @@ from src.application.use_cases.detect_network_anomalies import (
 
 # Import DI container
 from src.infrastructure.di_container import Container
+
+# Import hybrid architecture components
+from src.infrastructure.cache.cache_initializer import initialize_cache_on_startup
+from src.infrastructure.etl.etl_scheduler import get_etl_scheduler
 
 # Import components
 from src.presentation.streamlit.components.forecast_tab import ForecastTab
@@ -57,6 +62,26 @@ if "initialized" not in st.session_state:
     st.session_state.horizon = 7
     st.session_state.last_update = datetime.now()
     st.session_state.bigquery_connected = True  # We have real data in BigQuery!
+    st.session_state.hybrid_architecture = True  # Using PostgreSQL + Redis + BigQuery
+    
+    # Initialize hybrid architecture on first load
+    with st.spinner("Initializing hybrid data architecture..."):
+        # Set Redis configuration
+        os.environ["REDIS_HOST"] = os.getenv("REDIS_HOST", "localhost")
+        os.environ["REDIS_PORT"] = os.getenv("REDIS_PORT", "6379")
+        
+        # Initialize cache (non-blocking)
+        try:
+            # This will check if cache needs initialization
+            # but won't block the dashboard from loading
+            asyncio.create_task(asyncio.to_thread(
+                initialize_cache_on_startup, 
+                force_refresh=False
+            ))
+            st.session_state.cache_initialized = True
+        except Exception as e:
+            st.warning(f"Cache initialization in progress: {e}")
+            st.session_state.cache_initialized = False
 
 
 @st.cache_resource
@@ -126,8 +151,13 @@ class DashboardApp:
         from src.presentation.streamlit.components.anomaly_tab import AnomalyTab
         from src.presentation.streamlit.components.consumption_tab import ConsumptionTab
         from src.presentation.streamlit.components.efficiency_tab import EfficiencyTab
-        from src.presentation.streamlit.components.overview_tab import OverviewTab
         from src.presentation.streamlit.components.reports_tab import ReportsTab
+        
+        # Use Redis-based overview tab if cache is initialized
+        if st.session_state.get("cache_initialized", False):
+            from src.presentation.streamlit.components.overview_tab_redis import OverviewTab
+        else:
+            from src.presentation.streamlit.components.overview_tab import OverviewTab
 
         # Initialize old dashboard components with use cases
         overview_tab = OverviewTab(self.calculate_efficiency_use_case)
@@ -226,12 +256,16 @@ class DashboardApp:
         # Footer with data source indicator
         st.markdown("---")
 
-        # Check if we're using real data
-        data_source = (
-            "🟢 Connected to BigQuery"
-            if st.session_state.get("bigquery_connected", False)
-            else "🟡 Using Demo Data"
-        )
+        # Check data architecture status
+        if st.session_state.get("hybrid_architecture", False):
+            if st.session_state.get("cache_initialized", False):
+                data_source = "🟢 Hybrid Architecture Active (Redis + PostgreSQL + BigQuery)"
+            else:
+                data_source = "🟡 Hybrid Architecture Initializing..."
+        elif st.session_state.get("bigquery_connected", False):
+            data_source = "🔵 Connected to BigQuery Only"
+        else:
+            data_source = "⚫ Using Demo Data"
 
         st.markdown(
             f"""
