@@ -1,6 +1,11 @@
 # Changelog
 
 
+
+## [v1.2.2.0] - 2025-07-10
+
+- ✨ feat: integrate new sensor nodes from backup data
+
 ## [v1.2.1.0] - 2025-07-10
 
 - ✨ feat: add ML/AI-ready data pipeline for backup sensor data
