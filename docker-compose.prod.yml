@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: abbanoa-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-abbanoa}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./src/infrastructure/database/postgres_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - abbanoa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: abbanoa-redis
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 4gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - abbanoa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  etl-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-etl-scheduler
+    command: python -m src.infrastructure.etl.etl_scheduler
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./credentials:/app/credentials:ro
+      - ./logs:/app/logs
+    networks:
+      - abbanoa-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  etl-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-etl-init
+    command: >
+      sh -c "
+        python -m src.infrastructure.etl.bigquery_to_postgres_etl &&
+        python init_redis_cache.py --force --stats
+      "
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - abbanoa-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-dashboard
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - abbanoa-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      etl-scheduler:
+        condition: service_started
+    restart: unless-stopped
+    command: streamlit run src/presentation/streamlit/app.py --server.port=8501 --server.address=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: abbanoa-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - abbanoa-network
+    depends_on:
+      - streamlit
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: abbanoa-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - abbanoa-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: abbanoa-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - abbanoa-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  abbanoa-network:
+    driver: bridge
