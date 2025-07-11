@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.3.2] - 2025-07-11
+
+### Bug Fixes
+- fix(overview): use timezone-aware datetime for comparisons
+
+### Documentation
+- docs: update documentation for timezone-aware datetime fix
+
 ## [v1.2.3.1] - 2025-07-11
 
 ### Bug Fixes
