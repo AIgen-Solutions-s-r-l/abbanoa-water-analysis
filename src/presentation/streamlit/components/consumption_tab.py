@@ -7,6 +7,7 @@ This component analyzes and displays water consumption patterns across the netwo
 import asyncio
 from datetime import datetime, timedelta
 from typing import List, Optional
+from uuid import UUID
 
 import numpy as np
 import pandas as pd
