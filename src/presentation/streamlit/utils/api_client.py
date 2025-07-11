@@ -88,15 +88,15 @@ class APIClient:
             return None
             
     @st.cache_data(ttl=60)  # Cache for 1 minute
-    def get_nodes(self) -> List[Dict[str, Any]]:
+    def get_nodes(_self) -> List[Dict[str, Any]]:
         """Get list of all active nodes."""
-        result = self._make_request("GET", "/api/v1/nodes")
+        result = _self._make_request("GET", "/api/v1/nodes")
         return result or []
         
     @st.cache_data(ttl=30)  # Cache for 30 seconds
-    def get_node_metrics(self, node_id: str, time_window: str = "1hour") -> Optional[Dict[str, Any]]:
+    def get_node_metrics(_self, node_id: str, time_window: str = "1hour") -> Optional[Dict[str, Any]]:
         """Get latest metrics for a specific node."""
-        result = self._make_request(
+        result = _self._make_request(
             "GET", 
             f"/api/v1/nodes/{node_id}/metrics",
             params={"time_window": time_window}
@@ -105,7 +105,7 @@ class APIClient:
         
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def get_node_history(
-        self, 
+        _self, 
         node_id: str,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
@@ -119,7 +119,7 @@ class APIClient:
         if end_time:
             params["end_time"] = end_time.isoformat()
             
-        result = self._make_request(
+        result = _self._make_request(
             "GET",
             f"/api/v1/nodes/{node_id}/history",
             params=params
@@ -134,9 +134,9 @@ class APIClient:
         return pd.DataFrame()
         
     @st.cache_data(ttl=60)
-    def get_network_metrics(self, time_range: str = "24h") -> Optional[Dict[str, Any]]:
+    def get_network_metrics(_self, time_range: str = "24h") -> Optional[Dict[str, Any]]:
         """Get network-wide metrics."""
-        result = self._make_request(
+        result = _self._make_request(
             "GET",
             "/api/v1/network/metrics",
             params={"time_range": time_range}
@@ -145,7 +145,7 @@ class APIClient:
         
     @st.cache_data(ttl=300)
     def get_network_efficiency(
-        self,
+        _self,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None
     ) -> Optional[Dict[str, Any]]:
@@ -157,7 +157,7 @@ class APIClient:
         if end_time:
             params["end_time"] = end_time.isoformat()
             
-        result = self._make_request(
+        result = _self._make_request(
             "GET",
             "/api/v1/network/efficiency",
             params=params
@@ -166,13 +166,13 @@ class APIClient:
         
     @st.cache_data(ttl=60)
     def get_predictions(
-        self,
+        _self,
         node_id: str,
         model_type: str = "flow_prediction",
         horizon_hours: int = 24
     ) -> List[Dict[str, Any]]:
         """Get ML predictions for a node."""
-        result = self._make_request(
+        result = _self._make_request(
             "GET",
             f"/api/v1/predictions/{node_id}",
             params={
@@ -184,7 +184,7 @@ class APIClient:
         
     @st.cache_data(ttl=300)
     def get_anomalies(
-        self,
+        _self,
         hours: int = 24,
         node_id: Optional[str] = None,
         severity: Optional[str] = None
@@ -197,7 +197,7 @@ class APIClient:
         if severity:
             params["severity"] = severity
             
-        result = self._make_request(
+        result = _self._make_request(
             "GET",
             "/api/v1/anomalies",
             params=params
@@ -205,24 +205,24 @@ class APIClient:
         return result or []
         
     @st.cache_data(ttl=60)
-    def get_data_quality(self, node_id: str) -> Optional[Dict[str, Any]]:
+    def get_data_quality(_self, node_id: str) -> Optional[Dict[str, Any]]:
         """Get data quality metrics for a node."""
-        result = self._make_request(
+        result = _self._make_request(
             "GET",
             f"/api/v1/quality/{node_id}"
         )
         return result
         
     @st.cache_data(ttl=30)
-    def get_system_status(self) -> Optional[Dict[str, Any]]:
+    def get_system_status(_self) -> Optional[Dict[str, Any]]:
         """Get overall system status."""
-        result = self._make_request("GET", "/api/v1/status")
+        result = _self._make_request("GET", "/api/v1/status")
         return result
         
     @st.cache_data(ttl=10)  # Short cache for dashboard
-    def get_dashboard_summary(self) -> Optional[Dict[str, Any]]:
+    def get_dashboard_summary(_self) -> Optional[Dict[str, Any]]:
         """Get summary data for dashboard display."""
-        result = self._make_request("GET", "/api/v1/dashboard/summary")
+        result = _self._make_request("GET", "/api/v1/dashboard/summary")
         return result
         
     def health_check(self) -> bool:

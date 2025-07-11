@@ -7,7 +7,7 @@ using parallel processing for optimal performance.
 
 import asyncio
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import pandas as pd
@@ -88,14 +88,15 @@ class DataProcessor:
                 tasks.append(task)
             
             # Wait for all tasks to complete
-            for future in as_completed(tasks):
-                try:
-                    batch_result = future.result()
-                    total_records += batch_result['records_processed']
-                    processed_nodes.extend(batch_result['nodes_processed'])
-                    failed_nodes.extend(batch_result['nodes_failed'])
-                except Exception as e:
-                    logger.error(f"Batch processing failed: {e}")
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.error(f"Batch processing failed: {result}")
+                else:
+                    total_records += result['records_processed']
+                    processed_nodes.extend(result['nodes_processed'])
+                    failed_nodes.extend(result['nodes_failed'])
             
             # 3. Compute network-wide metrics
             await self._compute_network_efficiency(start_timestamp, end_timestamp)

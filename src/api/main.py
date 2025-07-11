@@ -6,7 +6,7 @@ and system status without requiring direct database access.
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 
@@ -112,7 +112,7 @@ app.add_middleware(
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "timestamp": datetime.now()}
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc)}
 
 
 # Node endpoints
@@ -174,7 +174,7 @@ async def get_node_history(
     try:
         # Default time range if not specified
         if not end_time:
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
         if not start_time:
             start_time = end_time - timedelta(days=7)
             
@@ -216,7 +216,7 @@ async def get_network_metrics(
         
         if cached:
             return NetworkMetrics(
-                timestamp=datetime.now(),
+                timestamp=datetime.now(timezone.utc),
                 active_nodes=int(cached.get(b'active_nodes', 0)),
                 total_flow=float(cached.get(b'total_flow', 0)),
                 avg_pressure=float(cached.get(b'avg_pressure', 0)),
@@ -239,7 +239,7 @@ async def get_network_metrics(
         metrics = await app.state.postgres.get_system_metrics(interval)
         
         return NetworkMetrics(
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             active_nodes=metrics.get('active_nodes', 0),
             total_flow=metrics.get('total_flow', 0),
             avg_pressure=metrics.get('avg_pressure', 0),
@@ -260,7 +260,7 @@ async def get_network_efficiency(
     """Get network efficiency metrics."""
     try:
         if not end_time:
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
         if not start_time:
             start_time = end_time - timedelta(days=1)
             
@@ -351,7 +351,7 @@ async def get_data_quality(node_id: str):
             # Return default quality metrics
             return DataQuality(
                 node_id=node_id,
-                check_timestamp=datetime.now(),
+                check_timestamp=datetime.now(timezone.utc),
                 completeness_score=1.0,
                 validity_score=1.0,
                 consistency_score=1.0,
@@ -408,8 +408,19 @@ async def get_system_status():
         if last_job:
             if last_job['status'] == 'failed':
                 processing_status = "degraded"
-            elif (datetime.now() - last_job['completed_at']).seconds > 3600:
-                processing_status = "stale"
+            elif last_job['completed_at']:
+                # Handle timezone-aware datetime comparison
+                completed_at = last_job['completed_at']
+                if completed_at.tzinfo is None:
+                    # If naive, assume UTC
+                    completed_at = completed_at.replace(tzinfo=timezone.utc)
+                    current_time = datetime.now(timezone.utc)
+                else:
+                    current_time = datetime.now(completed_at.tzinfo)
+                    
+                time_diff = current_time - completed_at
+                if time_diff.total_seconds() > 3600:
+                    processing_status = "stale"
                 
         return SystemStatus(
             status=processing_status,
@@ -521,7 +532,7 @@ async def get_dashboard_summary():
             "nodes": [dict(n) for n in nodes],
             "network": dict(network) if network else {},
             "recent_anomalies": anomalies,
-            "last_update": datetime.now()
+            "last_update": datetime.now(timezone.utc)
         }
         
     except Exception as e:
