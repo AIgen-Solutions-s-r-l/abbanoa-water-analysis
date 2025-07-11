@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.3.1] - 2025-07-11
+
+### Bug Fixes
+- fix(overview): handle division by zero when no nodes exist
+
+### Documentation
+- docs: update documentation for division by zero fix
+
 ## [v1.2.3.0] - 2025-07-11
 
 ### Features
