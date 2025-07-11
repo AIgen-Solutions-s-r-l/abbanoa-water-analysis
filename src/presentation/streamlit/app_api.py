@@ -116,9 +116,8 @@ class DashboardApp:
         
         # Get nodes list from API
         try:
-            response = self.api_client.get("/api/v1/nodes")
-            if response and isinstance(response, list):
-                nodes = response
+            nodes = self.api_client.get_nodes()
+            if nodes:
                 node_ids = [node.get('node_id', '') for node in nodes]
                 selected_nodes = st.multiselect(
                     "Select Nodes",
