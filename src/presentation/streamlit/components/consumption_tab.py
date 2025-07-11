@@ -26,16 +26,17 @@ class ConsumptionTab:
     def __init__(self):
         """Initialize the consumption tab."""
         self.hybrid_service = None
-        # Node mapping for display names to actual node IDs
+        # Node mapping for display names to actual PostgreSQL node IDs
         self.node_mapping = {
-            "Primary Station": "281492",
-            "Secondary Station": "211514", 
-            "Distribution A": "288400",
-            "Distribution B": "288399",
-            "Junction C": "215542",
-            "Supply Control": "273933",
-            "Pressure Station": "215600",
-            "Remote Point": "287156",
+            "Primary Station": "PRIMARY_STATION",
+            "Secondary Station": "SECONDARY_STATION", 
+            "Distribution A": "DISTRIBUTION_A",
+            "Distribution B": "DISTRIBUTION_B",
+            "Pump Station": "PUMP_STATION_1",
+            "Pressure Zone 1": "PRESSURE_ZONE_1",
+            "Pressure Zone 2": "PRESSURE_ZONE_2",
+            "Reservoir East": "RESERVOIR_EAST",
+            "Reservoir West": "RESERVOIR_WEST",
         }
 
     async def _get_hybrid_service(self):
@@ -207,8 +208,8 @@ class ConsumptionTab:
                 time_delta = _self._get_time_delta(time_range)
                 
                 # Use actual data range instead of current time  
-                data_end = datetime(2025, 3, 31, 23, 59, 59)
-                data_start = datetime(2024, 11, 13, 0, 0, 0)
+                data_end = datetime(2025, 7, 12, 23, 59, 59)  # Updated to current date
+                data_start = datetime(2025, 7, 9, 0, 0, 0)  # Use available PostgreSQL data range
                 
                 end_time = min(data_end, datetime.now())
                 start_time = max(data_start, end_time - time_delta)
@@ -221,44 +222,119 @@ class ConsumptionTab:
 
                 all_data = []
                 
+                # Debug: Show which nodes we're querying
+                st.info(f"🔍 Querying {len(nodes_to_query)} nodes from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}")
+                
                 # Query each node using HybridDataService
                 for node_name in nodes_to_query:
                     node_id = _self.node_mapping.get(node_name)
                     if not node_id:
                         continue
 
-                    # Use HybridDataService for intelligent tier routing
-                    df = loop.run_until_complete(
-                        hybrid_service.get_node_data(
-                            node_id=node_id,
-                            start_time=start_time,
-                            end_time=end_time,
-                            interval="30min" if time_delta.days > 7 else "5min"
+                    try:
+                        # Use HybridDataService for intelligent tier routing
+                        df = loop.run_until_complete(
+                            hybrid_service.get_node_data(
+                                node_id=node_id,
+                                start_time=start_time,
+                                end_time=end_time,
+                                interval="30min" if time_delta.days > 7 else "5min"
+                            )
                         )
-                    )
-                    
-                    if df is not None and not df.empty:
-                        # Add node information
-                        df['node_id'] = node_id
-                        df['node_name'] = node_name
                         
-                        # Calculate consumption from flow rate
-                        if 'flow_rate' in df.columns:
-                            df['consumption'] = df['flow_rate'] * _self._get_hourly_factor(df['timestamp'].dt.hour)
-                        
-                        all_data.append(df)
+                        if df is not None and not df.empty:
+                            # Add node information
+                            df['node_id'] = node_id
+                            df['node_name'] = node_name
+                            
+                            # Calculate consumption from flow rate
+                            if 'flow_rate' in df.columns:
+                                df['consumption'] = df['flow_rate'] * _self._get_hourly_factor(df['timestamp'].dt.hour)
+                            
+                            all_data.append(df)
+                            st.success(f"✅ Got {len(df)} records from {node_name}")
+                        else:
+                            st.warning(f"⚠️ No data from {node_name} ({node_id})")
+                            
+                    except Exception as node_error:
+                        st.error(f"❌ Error querying {node_name} ({node_id}): {str(node_error)}")
+                        continue
 
                 if all_data:
                     combined_df = pd.concat(all_data, ignore_index=True)
+                    st.success(f"🎉 Combined data: {len(combined_df)} total records from {len(all_data)} nodes")
                     return combined_df
                 else:
+                    st.error("❌ No data retrieved from any nodes")
+                    
+                    # Fallback: try direct PostgreSQL query
+                    st.info("🔄 Trying direct PostgreSQL fallback...")
+                    fallback_data = _self._get_fallback_data(start_time, end_time, nodes_to_query)
+                    if fallback_data is not None and not fallback_data.empty:
+                        st.success(f"✅ Fallback successful: {len(fallback_data)} records")
+                        return fallback_data
+                    
                     return None
                     
             finally:
                 loop.close()
                 
         except Exception as e:
-            st.error(f"Error fetching consumption data: {str(e)}")
+            st.error(f"❌ Critical error in data fetching: {str(e)}")
+            
+            # Show the full error for debugging
+            import traceback
+            st.error(f"Full traceback: {traceback.format_exc()}")
+            return None
+
+    def _get_fallback_data(self, start_time: datetime, end_time: datetime, nodes_to_query: List[str]) -> Optional[pd.DataFrame]:
+        """Fallback method to get data directly from PostgreSQL."""
+        try:
+            import psycopg2
+            import pandas as pd
+            
+            # Connect directly to PostgreSQL
+            conn = psycopg2.connect(
+                host="localhost",
+                port=5432,
+                database="abbanoa", 
+                user="postgres",
+                password=""
+            )
+            
+            # Get node IDs for the query
+            node_ids = [self.node_mapping.get(node_name) for node_name in nodes_to_query if self.node_mapping.get(node_name)]
+            
+            if not node_ids:
+                return None
+                
+            # Query from the 5-minute aggregates
+            query = """
+                SELECT 
+                    bucket as timestamp,
+                    node_id,
+                    avg_flow_rate as flow_rate,
+                    avg_pressure as pressure,
+                    avg_temperature as temperature
+                FROM water_infrastructure.sensor_readings_5min
+                WHERE node_id = ANY(%s)
+                AND bucket BETWEEN %s AND %s
+                ORDER BY bucket, node_id
+            """
+            
+            df = pd.read_sql_query(query, conn, params=[node_ids, start_time, end_time])
+            conn.close()
+            
+            if not df.empty:
+                # Add node names and consumption calculation
+                df['node_name'] = df['node_id'].map({v: k for k, v in self.node_mapping.items()})
+                if 'flow_rate' in df.columns:
+                    df['consumption'] = df['flow_rate'] * df['timestamp'].dt.hour.map(self._get_hourly_factor)
+                    
+            return df
+            
+        except Exception as e:
+            st.error(f"❌ Fallback query failed: {str(e)}")
             return None
 
     def _create_hourly_pattern_chart(self, consumption_data: pd.DataFrame) -> go.Figure:
