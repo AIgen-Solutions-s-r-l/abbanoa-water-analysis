@@ -28,6 +28,10 @@
    - **Issue**: `UnhashableParamError: Cannot hash argument 'self'` in cached methods
    - **Fix**: Updated all cached methods in APIClient to use `_self` instead of `self`
 
+7. **Division by Zero Error**
+   - **Issue**: `ZeroDivisionError` when calculating node percentage if no nodes exist
+   - **Fix**: Added check for empty nodes list and display "N/A" when total_nodes is 0
+
 ### Files Modified
 
 1. `/home/alessio/Customers/Abbanoa/src/presentation/streamlit/app_api.py`
