@@ -150,7 +150,8 @@ class AdvancedVisualizationHelpers:
                     lat=[start_loc[0], end_loc[0]],
                     lon=[start_loc[1], end_loc[1]],
                     mode='lines',
-                    line=dict(color='blue', width=2, opacity=0.5),
+                    line=dict(color='blue', width=2),
+                    opacity=0.5,
                     hoverinfo='skip',
                     showlegend=False
                 ))
