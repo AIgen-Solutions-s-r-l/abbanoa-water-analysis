@@ -518,8 +518,13 @@ class ConsumptionTab:
         try:
             # Calculate time delta
             time_delta = _self._get_time_delta(time_range)
-            end_time = datetime.now()
-            start_time = end_time - time_delta
+            
+            # Use actual data range instead of current time
+            data_end = datetime(2025, 3, 31, 23, 59, 59)
+            data_start = datetime(2024, 11, 13, 0, 0, 0)
+            
+            end_time = min(data_end, datetime.now())
+            start_time = max(data_start, end_time - time_delta)
 
             # Node mapping
             node_mapping = {
@@ -536,10 +541,13 @@ class ConsumptionTab:
             all_data = []
             optimization_info = None
 
-            for node_name in selected_nodes:
-                if node_name == "All Nodes":
-                    continue
-                
+            # Handle "All Nodes" selection
+            if "All Nodes" in selected_nodes:
+                nodes_to_query = list(node_mapping.keys())
+            else:
+                nodes_to_query = [node for node in selected_nodes if node != "All Nodes"]
+
+            for node_name in nodes_to_query:
                 node_id = node_mapping.get(node_name)
                 if not node_id:
                     continue
