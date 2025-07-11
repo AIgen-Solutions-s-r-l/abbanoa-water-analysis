@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.2.3.7] - 2025-07-12
+
+### Bug Fixes
+- fix(viz): move opacity property to trace level for scattermapbox lines
+  - Fixed invalid 'opacity' property in Plotly scattermapbox line configuration
+  - Moved opacity from line dict to trace level where it belongs
+  - Resolves "Invalid property specified for object of type plotly.graph_objs.scattermapbox.Line: 'opacity'" error
+  - Geographic visualization now renders correctly without property errors
+
+### Documentation
+- docs: update documentation for Plotly scattermapbox opacity property fix
+
 ## [v1.2.3.6] - 2025-07-11
 
 ### Bug Fixes
