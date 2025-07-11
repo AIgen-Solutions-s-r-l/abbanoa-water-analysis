@@ -153,10 +153,16 @@ class SidebarFilters:
 
     def _render_district_selector(self) -> None:
         """Render the district selection dropdown."""
+        # Validate session state district_id against available districts
+        current_district = st.session_state.get('district_id')
+        default_index = 0
+        if current_district and current_district in self.districts:
+            default_index = self.districts.index(current_district)
+        
         st.selectbox(
             label="Select District",
             options=self.districts,
-            index=self.districts.index(st.session_state.district_id),
+            index=default_index,
             key="district_selector",
             help="Choose the district for forecast visualization",
             on_change=self._on_district_change,
