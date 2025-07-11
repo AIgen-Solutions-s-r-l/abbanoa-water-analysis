@@ -40,6 +40,10 @@
    - **Issue**: `AttributeError: 'APIClient' object has no attribute 'get'` when loading nodes
    - **Fix**: Changed from incorrect generic `get()` method to proper `get_nodes()` method
 
+10. **AnomalyTab Render Arguments Error**
+    - **Issue**: `TypeError: AnomalyTab.render() missing 2 required positional arguments: 'time_range' and 'selected_nodes'`
+    - **Fix**: Added required time_range and selected_nodes arguments when calling anomaly_tab.render()
+
 ### Files Modified
 
 1. `/home/alessio/Customers/Abbanoa/src/presentation/streamlit/app_api.py`
