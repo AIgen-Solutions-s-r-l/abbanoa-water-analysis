@@ -25,7 +25,7 @@ class EnhancedDataFetcher:
         
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def fetch_sensor_data(
-        self,
+        _self,
         selected_nodes: List[str],
         time_range: str = "Last 24 Hours",
         metrics: Optional[List[str]] = None
@@ -38,20 +38,20 @@ class EnhancedDataFetcher:
         if not node_ids:
             return pd.DataFrame()
         
-        # Parse time range
-        end_time = datetime.now()
+        # Parse time range - use actual data timeframe (Nov 2024 - Apr 2025)
+        end_time = datetime(2025, 4, 1)
         if time_range == "Last 6 Hours":
-            start_time = end_time - timedelta(hours=6)
+            start_time = datetime(2025, 3, 31, 18, 0, 0)  # Last 6 hours of data
         elif time_range == "Last 24 Hours":
-            start_time = end_time - timedelta(hours=24)
+            start_time = datetime(2025, 3, 31, 0, 0, 0)   # Last day of data
         elif time_range == "Last 3 Days":
-            start_time = end_time - timedelta(days=3)
+            start_time = datetime(2025, 3, 29, 0, 0, 0)   # Last 3 days of data
         elif time_range == "Last 7 Days":
-            start_time = end_time - timedelta(days=7)
+            start_time = datetime(2025, 3, 25, 0, 0, 0)   # Last 7 days of data
         elif time_range == "Last 30 Days":
-            start_time = end_time - timedelta(days=30)
+            start_time = datetime(2025, 3, 1, 0, 0, 0)    # March 2025 data
         else:
-            start_time = end_time - timedelta(hours=24)
+            start_time = datetime(2025, 3, 31, 0, 0, 0)   # Default to last day
         
         # Default metrics
         if not metrics:
@@ -70,7 +70,7 @@ class EnhancedDataFetcher:
                 node_id,
                 node_name,
                 {", ".join(metrics)}
-            FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
+            FROM `{_self.project_id}.{_self.dataset_id}.v_sensor_readings_normalized`
             WHERE node_id IN ({uuid_list})
                 AND timestamp >= TIMESTAMP('{start_time.isoformat()}')
                 AND timestamp <= TIMESTAMP('{end_time.isoformat()}')
@@ -93,7 +93,7 @@ class EnhancedDataFetcher:
                 node_name,
                 {", ".join(metric_cols)},
                 data_quality_score
-            FROM `{self.project_id}.{self.dataset_id}.sensor_readings_ml`
+            FROM `{_self.project_id}.{_self.dataset_id}.sensor_readings_ml`
             WHERE node_id IN ({node_list})
                 AND timestamp >= TIMESTAMP('{start_time.isoformat()}')
                 AND timestamp <= TIMESTAMP('{end_time.isoformat()}')
@@ -105,7 +105,7 @@ class EnhancedDataFetcher:
         all_data = []
         for query in queries:
             try:
-                df = self.client.query(query).to_dataframe()
+                df = _self.client.query(query).to_dataframe()
                 if not df.empty:
                     all_data.append(df)
             except Exception as e:

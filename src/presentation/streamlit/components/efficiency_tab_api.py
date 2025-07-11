@@ -24,15 +24,9 @@ class EfficiencyTab:
         """Render the efficiency tab."""
         st.header("Network Efficiency Analysis")
         
-        # Get time range for API
-        time_range_map = {
-            "Last 6 Hours": "6h",
-            "Last 24 Hours": "24h",
-            "Last 3 Days": "3d",
-            "Last Week": "7d",
-            "Last Month": "30d"
-        }
-        api_time_range = time_range_map.get(time_range, "24h")
+        # The time_range is already in API format (e.g., "24h", "7d", "365d")
+        # No mapping needed
+        api_time_range = time_range
         
         # Get network metrics
         metrics = self.api_client.get_network_metrics(api_time_range)

@@ -104,7 +104,8 @@ class DashboardApp:
             "Last 24 Hours": "24h",
             "Last 7 Days": "7d",
             "Last 30 Days": "30d",
-            "Last 90 Days": "90d"
+            "Last 90 Days": "90d",
+            "Last 1 Year": "365d"
         }
         selected_range = st.selectbox(
             "Select Time Range",

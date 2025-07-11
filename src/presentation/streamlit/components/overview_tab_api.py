@@ -46,16 +46,9 @@ class OverviewTab:
         # Display header
         st.header("System Overview")
         
-        # Map time range to API format
-        time_range_map = {
-            "Last 6 Hours": "6h",
-            "Last 24 Hours": "24h",
-            "Last 3 Days": "3d",
-            "Last Week": "7d",
-            "Last Month": "30d",
-            "Last Year": "30d"  # API limitation
-        }
-        api_time_range = time_range_map.get(time_range, "24h")
+        # The time_range is already in API format (e.g., "24h", "7d", "365d")
+        # No mapping needed
+        api_time_range = time_range
         
         # Key metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -79,23 +72,28 @@ class OverviewTab:
                 )
                 
             with col2:
+                total_flow = network_metrics.get('total_flow', 0)
+                total_volume = network_metrics.get('total_volume', 0)
                 st.metric(
                     "Total Flow",
-                    f"{network_metrics['total_flow']:.1f} L/s",
-                    f"{network_metrics['total_volume']:.0f} m³"
+                    f"{total_flow:.1f} L/s" if total_flow is not None else "N/A",
+                    f"{total_volume:.0f} m³" if total_volume is not None else "N/A"
                 )
                 
             with col3:
+                avg_pressure = network_metrics.get('avg_pressure', 0)
                 st.metric(
                     "Avg Pressure",
-                    f"{network_metrics['avg_pressure']:.2f} bar"
+                    f"{avg_pressure:.2f} bar" if avg_pressure is not None else "N/A"
                 )
                 
             with col4:
+                efficiency = network_metrics.get('efficiency_percentage', 0)
+                anomaly_count = network_metrics.get('anomaly_count', 0)
                 st.metric(
                     "Network Efficiency",
-                    f"{network_metrics['efficiency_percentage']:.1f}%",
-                    f"{network_metrics['anomaly_count']} anomalies"
+                    f"{efficiency:.1f}%" if efficiency is not None else "N/A",
+                    f"{anomaly_count} anomalies" if anomaly_count is not None else "N/A"
                 )
         
         # Create two columns for charts
@@ -142,12 +140,12 @@ class OverviewTab:
         else:
             # Create simple bar chart of current flow rates
             node_names = [n['node_name'] for n in nodes]
-            flow_rates = [n.get('flow_rate', 0) for n in nodes]
+            flow_rates = [n.get('flow_rate', 0) if n.get('flow_rate') is not None else 0 for n in nodes]
             
             fig.add_trace(go.Bar(
                 x=node_names,
                 y=flow_rates,
-                text=[f"{fr:.1f} L/s" for fr in flow_rates],
+                text=[f"{fr:.1f} L/s" if fr is not None else "N/A" for fr in flow_rates],
                 textposition='auto',
                 marker_color='lightblue'
             ))
@@ -166,13 +164,18 @@ class OverviewTab:
         """Render node status list."""
         for node in nodes[:5]:  # Show top 5 nodes
             status_color = "🟢" if node.get('anomaly_count', 0) == 0 else "🟡"
-            quality = node.get('quality_score', 1.0) * 100
+            quality_score = node.get('quality_score')
+            quality = (quality_score * 100) if quality_score is not None else None
+            
+            flow = node.get('flow_rate', 0)
+            pressure = node.get('pressure', 0)
+            flow_str = f"{flow:.1f} L/s" if flow is not None else "N/A"
+            pressure_str = f"{pressure:.1f} bar" if pressure is not None else "N/A"
+            quality_str = f"{quality:.0f}%" if quality is not None else "N/A"
             
             st.markdown(
                 f"{status_color} **{node['node_name']}**  \n"
-                f"Flow: {node.get('flow_rate', 0):.1f} L/s | "
-                f"Pressure: {node.get('pressure', 0):.1f} bar | "
-                f"Quality: {quality:.0f}%"
+                f"Flow: {flow_str} | Pressure: {pressure_str} | Quality: {quality_str}"
             )
             
     def _render_anomalies(self, time_range: str):
@@ -202,11 +205,13 @@ class OverviewTab:
                 timestamp = datetime.fromisoformat(anomaly['timestamp'].replace('Z', '+00:00'))
                 time_ago = datetime.now(timezone.utc) - timestamp
                 
+                actual_value = anomaly.get('actual_value', 0)
+                value_str = f"{actual_value:.1f}" if actual_value is not None else "N/A"
                 st.markdown(
                     f"{severity_color} **{anomaly.get('node_name', 'Unknown')}** - "
                     f"{anomaly.get('anomaly_type', 'Unknown type')}  \n"
                     f"{self._format_time_ago(time_ago)} ago | "
-                    f"Value: {anomaly.get('actual_value', 0):.1f}"
+                    f"Value: {value_str}"
                 )
                 
     def _render_system_health(self):

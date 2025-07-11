@@ -108,8 +108,10 @@ class UnifiedDataAdapter:
     
     def count_active_nodes(self, time_range_hours: int = 24) -> int:
         """Count nodes with recent data."""
-        end_time = datetime.now()
-        start_time = end_time - timedelta(hours=time_range_hours)
+        # Use the actual data timeframe (Nov 2024 - Apr 2025) instead of current time
+        # This accounts for the fact that the data is historical, not real-time
+        end_time = datetime(2025, 4, 1)
+        start_time = datetime(2025, 3, 1)  # Look at March 2025 data
         
         # First try to query both tables
         try:

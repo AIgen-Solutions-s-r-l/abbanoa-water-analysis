@@ -196,16 +196,19 @@ class DashboardApp:
             
             st.session_state.using_api = False
 
-        # Create tabs - combining new and old functionality
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+        # Create tabs - enhanced with new comprehensive features
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs(
             [
                 "📈 Forecast",
-                "📊 Overview",
+                "🚀 Enhanced Overview",
+                "📊 KPI Dashboard", 
+                "🧪 Water Quality",
                 "🔍 Anomaly Detection",
                 "📈 Consumption Patterns",
                 "🔗 Network Efficiency",
                 "📋 Reports",
                 "⚡ Performance Monitor",
+                "📊 Classic Overview"
             ]
         )
 
@@ -220,18 +223,48 @@ class DashboardApp:
                 render_forecast_tab()
 
         with tab2:
-            # Old dashboard overview
-            with st.spinner("Loading overview data..."):
+            # Enhanced overview with comprehensive metrics
+            with st.spinner("Loading enhanced overview..."):
                 current_time_range = st.session_state.get("time_range", "Last 24 Hours")
-                @performance_monitor.measure_time("Overview Tab", current_time_range)
-                def render_overview_tab():
-                    return overview_tab.render(
+                @performance_monitor.measure_time("Enhanced Overview Tab", current_time_range)
+                def render_enhanced_overview_tab():
+                    from src.presentation.streamlit.components.enhanced_overview_tab import EnhancedOverviewTab
+                    enhanced_overview = EnhancedOverviewTab()
+                    return enhanced_overview.render(
                         time_range=current_time_range,
                         selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
                     )
-                render_overview_tab()
-
+                render_enhanced_overview_tab()
+        
         with tab3:
+            # KPI Dashboard
+            with st.spinner("Loading KPI dashboard..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("KPI Dashboard Tab", current_time_range)
+                def render_kpi_dashboard_tab():
+                    from src.presentation.streamlit.components.kpi_dashboard_tab import KPIDashboardTab
+                    kpi_dashboard = KPIDashboardTab()
+                    return kpi_dashboard.render(
+                        time_range=current_time_range,
+                        selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
+                    )
+                render_kpi_dashboard_tab()
+        
+        with tab4:
+            # Water Quality Monitoring
+            with st.spinner("Loading water quality analysis..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Water Quality Tab", current_time_range)
+                def render_water_quality_tab():
+                    from src.presentation.streamlit.components.water_quality_tab import WaterQualityTab
+                    water_quality = WaterQualityTab()
+                    return water_quality.render(
+                        time_range=current_time_range,
+                        selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
+                    )
+                render_water_quality_tab()
+
+        with tab5:
             # Anomaly detection from old dashboard
             with st.spinner("Loading anomaly data..."):
                 current_time_range = st.session_state.get("time_range", "Last 24 Hours")
@@ -240,7 +273,7 @@ class DashboardApp:
                     return anomaly_tab.render(time_range=current_time_range)
                 render_anomaly_tab()
 
-        with tab4:
+        with tab6:
             # Consumption patterns from old dashboard
             with st.spinner("Loading consumption data..."):
                 current_time_range = st.session_state.get("time_range", "Last 24 Hours")
@@ -252,7 +285,7 @@ class DashboardApp:
                     )
                 render_consumption_tab()
 
-        with tab5:
+        with tab7:
             # Network efficiency from old dashboard
             with st.spinner("Loading efficiency data..."):
                 current_time_range = st.session_state.get("time_range", "Last 24 Hours")
@@ -261,7 +294,7 @@ class DashboardApp:
                     return efficiency_tab.render(time_range=current_time_range)
                 render_efficiency_tab()
 
-        with tab6:
+        with tab8:
             # Reports from old dashboard
             with st.spinner("Loading reports..."):
                 @performance_monitor.measure_time("Reports Tab", "N/A")
@@ -269,9 +302,21 @@ class DashboardApp:
                     return reports_tab.render()
                 render_reports_tab()
 
-        with tab7:
+        with tab9:
             # Performance monitoring tab
             performance_monitor.render_performance_dashboard()
+        
+        with tab10:
+            # Classic overview (original)
+            with st.spinner("Loading classic overview..."):
+                current_time_range = st.session_state.get("time_range", "Last 24 Hours")
+                @performance_monitor.measure_time("Classic Overview Tab", current_time_range)
+                def render_classic_overview_tab():
+                    return overview_tab.render(
+                        time_range=current_time_range,
+                        selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
+                    )
+                render_classic_overview_tab()
 
     def run(self) -> None:
         """Run the main dashboard application."""
