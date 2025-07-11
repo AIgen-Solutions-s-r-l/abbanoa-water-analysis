@@ -206,7 +206,7 @@ async def get_node_history(
 # Network metrics endpoints
 @app.get("/api/v1/network/metrics", response_model=NetworkMetrics)
 async def get_network_metrics(
-    time_range: str = Query("24h", description="Time range: 1h, 6h, 24h, 3d, 7d, 30d")
+    time_range: str = Query("24h", description="Time range: 1h, 6h, 24h, 3d, 7d, 30d, 365d")
 ):
     """Get network-wide metrics."""
     try:
@@ -232,7 +232,8 @@ async def get_network_metrics(
             "24h": "24 hours",
             "3d": "3 days",
             "7d": "7 days",
-            "30d": "30 days"
+            "30d": "30 days",
+            "365d": "365 days"
         }
         interval = interval_map.get(time_range, "24 hours")
         
@@ -494,24 +495,26 @@ async def get_dashboard_summary():
     try:
         # This endpoint aggregates data for efficient dashboard loading
         async with app.state.postgres.acquire() as conn:
-            # Get node summary
+            # Get node summary with latest sensor readings
             nodes = await conn.fetch("""
                 SELECT 
                     n.node_id,
                     n.node_name,
-                    cm.avg_flow_rate as flow_rate,
-                    cm.avg_pressure as pressure,
-                    cm.anomaly_count,
-                    cm.quality_score
+                    sr.flow_rate,
+                    sr.pressure,
+                    0 as anomaly_count,
+                    sr.quality_score
                 FROM water_infrastructure.nodes n
                 LEFT JOIN LATERAL (
-                    SELECT *
-                    FROM water_infrastructure.computed_metrics
+                    SELECT 
+                        flow_rate,
+                        pressure,
+                        quality_score
+                    FROM water_infrastructure.sensor_readings
                     WHERE node_id = n.node_id
-                    AND time_window = '1hour'
-                    ORDER BY window_end DESC
+                    ORDER BY timestamp DESC
                     LIMIT 1
-                ) cm ON TRUE
+                ) sr ON TRUE
                 WHERE n.is_active = TRUE
             """)
             

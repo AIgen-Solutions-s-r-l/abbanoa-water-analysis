@@ -39,6 +39,12 @@ class ForecastTab:
             st.session_state.historical_data = None
         if "loading_forecast" not in st.session_state:
             st.session_state.loading_forecast = False
+        if "district_id" not in st.session_state:
+            st.session_state.district_id = "selargius"  # Default district
+        if "metric" not in st.session_state:
+            st.session_state.metric = "flow_rate"  # Default metric
+        if "horizon" not in st.session_state:
+            st.session_state.horizon = 7  # Default horizon in days
 
     def render(self) -> None:
         """Main render method for the forecast tab."""
@@ -57,22 +63,58 @@ class ForecastTab:
         """Render the header section of the forecast tab."""
         st.markdown("### 📈 7-Day Forecast with Historical Context")
 
-        # Get current selections from session state
-        district = st.session_state.district_id
-        metric = st.session_state.metric
-        horizon = st.session_state.horizon
+        # Create columns for controls
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # District selector
+            district_options = ["selargius", "monserrato", "quartu"]  # Add more districts as needed
+            district = st.selectbox(
+                "District",
+                options=district_options,
+                index=district_options.index(st.session_state.district_id) if st.session_state.district_id in district_options else 0,
+                key="forecast_district"
+            )
+            if district != st.session_state.district_id:
+                st.session_state.district_id = district
+                st.session_state.forecast_data = None  # Reset data to trigger refresh
+                
+        with col2:
+            # Metric selector
+            metric_options = {
+                "flow_rate": "Flow Rate (L/s)",
+                "reservoir_level": "Reservoir Level (m)",
+                "pressure": "Pressure (bar)",
+            }
+            metric = st.selectbox(
+                "Metric",
+                options=list(metric_options.keys()),
+                format_func=lambda x: metric_options[x],
+                index=list(metric_options.keys()).index(st.session_state.metric) if st.session_state.metric in metric_options else 0,
+                key="forecast_metric"
+            )
+            if metric != st.session_state.metric:
+                st.session_state.metric = metric
+                st.session_state.forecast_data = None  # Reset data to trigger refresh
+                
+        with col3:
+            # Horizon selector
+            horizon_options = [3, 7, 14, 30]
+            horizon = st.selectbox(
+                "Forecast Days",
+                options=horizon_options,
+                index=horizon_options.index(st.session_state.horizon) if st.session_state.horizon in horizon_options else 1,
+                key="forecast_horizon"
+            )
+            if horizon != st.session_state.horizon:
+                st.session_state.horizon = horizon
+                st.session_state.forecast_data = None  # Reset data to trigger refresh
 
         # Display current selection
-        metric_display = {
-            "flow_rate": "Flow Rate (L/s)",
-            "reservoir_level": "Reservoir Level (m)",
-            "pressure": "Pressure (bar)",
-        }
-
         st.markdown(
             f"""
             <div style="background-color: #f0f2f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                <strong>Current Selection:</strong> {district} | {metric_display.get(metric, metric)} | {horizon} days
+                <strong>Current Selection:</strong> {st.session_state.district_id} | {metric_options.get(st.session_state.metric, st.session_state.metric)} | {st.session_state.horizon} days
             </div>
             """,
             unsafe_allow_html=True,
