@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.3.4] - 2025-07-11
+
+### Bug Fixes
+- fix(anomaly-tab): add required time_range and selected_nodes arguments
+
+### Documentation
+- docs: update documentation for anomaly tab render arguments fix
+
 ## [v1.2.3.3] - 2025-07-11
 
 ### Bug Fixes
