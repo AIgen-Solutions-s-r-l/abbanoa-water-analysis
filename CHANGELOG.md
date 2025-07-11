@@ -1,6 +1,28 @@
 # Changelog
 
+## [v1.2.3.0] - 2025-07-11
 
+### Features
+- feat(processing): add containerized processing services with ML management
+- feat(dashboard): integrate dashboard with processing services API
+- feat(hybrid-architecture): implement PostgreSQL/TimescaleDB layer
+- feat(etl): implement BigQuery to PostgreSQL ETL pipeline
+- feat(dashboard): integrate hybrid architecture with Streamlit app
+- feat: Add comprehensive performance monitoring and optimization
+- feat: Implement caching to improve dashboard performance
+
+### Bug Fixes
+- fix(dashboard): complete node integration with sidebar updates
+- fix(dashboard): update overview tab to display all 9 nodes
+- fix(dashboard): handle missing sensor_readings_ml table gracefully
+- fix: Resolve UnhashableParamError in Streamlit cache
+- fix: Resolve import error in DataOptimizer
+- fix: Initialize session state properly in PerformanceMonitor
+- fix(etl): correct BigQuery table references and JSON serialization
+
+### Documentation
+- docs: reorganize and update documentation for v2.0.0 architecture
+- docs: add comprehensive documentation for hybrid architecture
 
 ## [v1.2.2.0] - 2025-07-10
 
