@@ -85,7 +85,10 @@ class DashboardApp:
             self.efficiency_tab.render(time_range=time_range)
 
         with tab3:
-            self.anomaly_tab.render()
+            # Get time range and selected nodes from session state
+            time_range = st.session_state.get('time_range', '7d')
+            selected_nodes = st.session_state.get('selected_nodes', [])
+            self.anomaly_tab.render(time_range=time_range, selected_nodes=selected_nodes)
 
         with tab4:
             self.forecast_tab.render()
