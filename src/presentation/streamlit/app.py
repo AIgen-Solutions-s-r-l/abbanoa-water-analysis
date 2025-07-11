@@ -270,7 +270,10 @@ class DashboardApp:
                 current_time_range = st.session_state.get("time_range", "Last 24 Hours")
                 @performance_monitor.measure_time("Anomaly Tab", current_time_range)
                 def render_anomaly_tab():
-                    return anomaly_tab.render(time_range=current_time_range)
+                    return anomaly_tab.render(
+                        time_range=current_time_range,
+                        selected_nodes=st.session_state.get("selected_nodes", ["All Nodes"]),
+                    )
                 render_anomaly_tab()
 
         with tab6:
