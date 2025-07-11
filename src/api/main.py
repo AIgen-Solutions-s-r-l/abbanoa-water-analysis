@@ -81,7 +81,10 @@ async def lifespan(app: FastAPI):
     """Manage application lifespan."""
     # Startup
     app.state.postgres = await get_postgres_manager()
-    app.state.redis = RedisCacheManager()
+    app.state.redis = RedisCacheManager(
+        redis_host=os.getenv("REDIS_HOST", "localhost"),
+        redis_port=int(os.getenv("REDIS_PORT", "6379"))
+    )
     yield
     # Shutdown
     await app.state.postgres.close()

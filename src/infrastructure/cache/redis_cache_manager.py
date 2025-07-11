@@ -14,8 +14,6 @@ from redis import Redis
 import pandas as pd
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from google.cloud import bigquery
-
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +33,6 @@ class RedisCacheManager:
             decode_responses=True
         )
         self.ttl_seconds = ttl_hours * 3600
-        self.bigquery_client = bigquery.Client(project="abbanoa-464816", location="EU")
         
     def initialize_cache(self, force_refresh: bool = False) -> None:
         """Initialize cache with pre-processed data from BigQuery."""

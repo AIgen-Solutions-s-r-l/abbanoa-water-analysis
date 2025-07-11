@@ -7,7 +7,7 @@ echo "====================================="
 echo ""
 
 # Check if services are running
-if ! docker-compose -f docker-compose.processing.yml ps | grep -q "Up"; then
+if ! docker compose -f docker compose.processing.yml ps | grep -q "Up"; then
     echo "❌ Services are not running. Start them with: ./scripts/start_processing_services.sh"
     exit 1
 fi
@@ -62,4 +62,4 @@ docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsa
 
 echo ""
 echo "📋 For detailed logs, run:"
-echo "  docker-compose -f docker-compose.processing.yml logs -f [service_name]"
+echo "  docker compose -f docker compose.processing.yml logs -f [service_name]"

@@ -16,7 +16,7 @@ services:
       - ./src/infrastructure/database/postgres_schema.sql:/docker-entrypoint-initdb.d/02-schema.sql:ro
       - ./src/infrastructure/database/computed_schema.sql:/docker-entrypoint-initdb.d/03-computed.sql:ro
     ports:
-      - "5433:5432"  # Different port to avoid conflict with host PostgreSQL
+      - "5434:5432"  # Different port to avoid conflict with other containers
     networks:
       - abbanoa-network
     restart: unless-stopped
@@ -34,7 +34,7 @@ services:
     volumes:
       - redis_processing_data:/data
     ports:
-      - "6380:6379"  # Different port to avoid conflict
+      - "6382:6379"  # Different port to avoid conflict
     networks:
       - abbanoa-network
     restart: unless-stopped
@@ -63,7 +63,7 @@ services:
       REDIS_PORT: 6379
       
       # BigQuery credentials
-      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/bigquery-key.json
+      GOOGLE_APPLICATION_CREDENTIALS: /app/bigquery-service-account-key.json
       BIGQUERY_PROJECT_ID: abbanoa-464816
       BIGQUERY_DATASET_ID: water_infrastructure
       BIGQUERY_LOCATION: EU
@@ -75,7 +75,7 @@ services:
     volumes:
       - ./logs/processing:/app/logs
       - ./models:/app/models
-      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials/bigquery-key.json:ro
+      - ./bigquery-service-account-key.json:/app/bigquery-service-account-key.json:ro
     networks:
       - abbanoa-network
     depends_on:
@@ -84,7 +84,7 @@ services:
       redis:
         condition: service_healthy
       api:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     
   # API Service
@@ -105,6 +105,14 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       
+      # BigQuery credentials
+      GOOGLE_APPLICATION_CREDENTIALS: /app/bigquery-service-account-key.json
+      BIGQUERY_PROJECT_ID: abbanoa-464816
+      BIGQUERY_DATASET_ID: water_infrastructure
+      BIGQUERY_LOCATION: EU
+      
+    volumes:
+      - ./bigquery-service-account-key.json:/app/bigquery-service-account-key.json:ro
     ports:
       - "8000:8000"
     networks:

@@ -16,6 +16,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Optional
 
+from google.cloud import bigquery
 from src.processing.service.data_processor import DataProcessor
 from src.processing.service.ml_manager import MLModelManager
 from src.processing.service.scheduler import ProcessingScheduler
@@ -194,6 +195,16 @@ class ProcessingService:
             
     async def _check_for_new_data(self) -> dict:
         """Check BigQuery for new data since last processed timestamp."""
+        # Check if BigQuery client is available
+        if not self.bigquery_client or not self.bigquery_client.client:
+            logger.error("BigQuery client not available - skipping data check")
+            return {
+                'has_new_data': False,
+                'record_count': 0,
+                'min_timestamp': None,
+                'max_timestamp': None
+            }
+        
         query = f"""
         SELECT 
             COUNT(*) as record_count,
@@ -203,9 +214,9 @@ class ProcessingService:
         WHERE timestamp > @last_timestamp
         """
         
-        job_config = self.bigquery_client.client.query_job_config()
+        job_config = bigquery.QueryJobConfig()
         job_config.query_parameters = [
-            self.bigquery_client.client.query_parameter(
+            bigquery.ScalarQueryParameter(
                 "last_timestamp", "TIMESTAMP", self.last_processed_timestamp or datetime.now() - timedelta(days=1)
             )
         ]
@@ -248,6 +259,7 @@ class ProcessingService:
             
     async def _update_job_status(self, job_id: str, status: str, result: dict):
         """Update processing job status."""
+        import json
         async with self.postgres_manager.acquire() as conn:
             await conn.execute("""
                 UPDATE water_infrastructure.processing_jobs
@@ -257,7 +269,7 @@ class ProcessingService:
                     duration_seconds = EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - started_at)),
                     result_summary = $2
                 WHERE job_id = $3
-            """, status, result, job_id)
+            """, status, json.dumps(result), job_id)
 
 
 def handle_shutdown(signum, frame):
