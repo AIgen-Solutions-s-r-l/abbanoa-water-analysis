@@ -32,6 +32,10 @@
    - **Issue**: `ZeroDivisionError` when calculating node percentage if no nodes exist
    - **Fix**: Added check for empty nodes list and display "N/A" when total_nodes is 0
 
+8. **Timezone-aware DateTime Comparison Error**
+   - **Issue**: `TypeError: can't subtract offset-naive and offset-aware datetimes` in overview tab
+   - **Fix**: Updated all datetime.now() calls to datetime.now(timezone.utc) for proper timezone-aware comparisons
+
 ### Files Modified
 
 1. `/home/alessio/Customers/Abbanoa/src/presentation/streamlit/app_api.py`
