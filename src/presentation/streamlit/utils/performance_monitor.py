@@ -29,12 +29,15 @@ class PerformanceMonitor:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 start_time = time.time()
+                # Initialize variables before try block to ensure they're available in finally
+                success = False
+                error_msg = None
+                result = None
+                
                 try:
                     result = func(*args, **kwargs)
                     success = True
-                    error_msg = None
                 except Exception as e:
-                    result = None
                     success = False
                     error_msg = str(e)
                     raise

@@ -15,6 +15,7 @@ import pandas as pd
 import json
 from enum import Enum
 
+from google.cloud import bigquery
 from src.infrastructure.database.postgres_manager import get_postgres_manager
 from src.infrastructure.cache.redis_cache_manager import RedisCacheManager
 from src.infrastructure.bigquery.bigquery_client import BigQueryClient
@@ -207,8 +208,10 @@ class HybridDataService:
         if data is not None and not data.empty:
             self._cache_dataframe(cache_key, data)
             # TODO: Consider warming PostgreSQL cache
+            return data
             
-        return data
+        # Return empty DataFrame if no data found in any tier
+        return pd.DataFrame()
         
     async def get_latest_readings(
         self,
@@ -374,12 +377,13 @@ class HybridDataService:
     ) -> Optional[pd.DataFrame]:
         """Query data from PostgreSQL."""
         try:
-            return await self.postgres_manager.get_time_series_data(
+            result = await self.postgres_manager.get_time_series_data(
                 node_id, start_time, end_time, interval
             )
+            return result if result is not None else pd.DataFrame()
         except Exception as e:
             logger.error(f"PostgreSQL query failed: {e}")
-            return None
+            return pd.DataFrame()
             
     async def _query_bigquery(
         self,
@@ -389,6 +393,11 @@ class HybridDataService:
     ) -> Optional[pd.DataFrame]:
         """Query data from BigQuery."""
         try:
+            # Skip BigQuery if client is not properly initialized
+            if not hasattr(self.bigquery_client, 'client') or self.bigquery_client.client is None:
+                logger.warning("BigQuery client not properly initialized, skipping BigQuery query")
+                return pd.DataFrame()
+                
             query = f"""
             SELECT 
                 timestamp,
@@ -401,11 +410,11 @@ class HybridDataService:
             ORDER BY timestamp
             """
             
-            job_config = self.bigquery_client.client.QueryJobConfig(
+            job_config = bigquery.QueryJobConfig(
                 query_parameters=[
-                    self.bigquery_client.client.ScalarQueryParameter("node_id", "STRING", node_id),
-                    self.bigquery_client.client.ScalarQueryParameter("start_time", "TIMESTAMP", start_time),
-                    self.bigquery_client.client.ScalarQueryParameter("end_time", "TIMESTAMP", end_time),
+                    bigquery.ScalarQueryParameter("node_id", "STRING", node_id),
+                    bigquery.ScalarQueryParameter("start_time", "TIMESTAMP", start_time),
+                    bigquery.ScalarQueryParameter("end_time", "TIMESTAMP", end_time),
                 ]
             )
             
@@ -414,7 +423,7 @@ class HybridDataService:
             
         except Exception as e:
             logger.error(f"BigQuery query failed: {e}")
-            return None
+            return pd.DataFrame()
             
     def _cache_dataframe(self, key: str, df: pd.DataFrame) -> None:
         """Cache DataFrame in Redis."""
