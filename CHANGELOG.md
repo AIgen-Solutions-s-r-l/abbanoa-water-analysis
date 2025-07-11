@@ -1,5 +1,33 @@
 # Changelog
 
+## [v1.2.3.11] - 2025-07-12
+
+### Bug Fixes
+- fix(arch): replace BigQuery direct access with HybridDataService in consumption tab
+  - Fixed critical architecture violation where consumption tab was directly querying BigQuery
+  - Implemented proper three-tier architecture (Redis → PostgreSQL → BigQuery) for operational dashboards
+  - Fixed BigQuery project ID 'None' error that was preventing data access
+  - Added architecture notification to show users the intelligent data routing
+  - Significantly improved dashboard performance by using warm storage (PostgreSQL) instead of slow BigQuery queries
+  - Fixed constructor parameters for ConsumptionTab component
+  - Updated app.py to use new ConsumptionTab constructor without dependency injection parameters
+
+### Technical Changes
+- Replaced direct `SensorDataRepository` with `HybridDataService` in consumption tab
+- Removed BigQuery repository dependencies from consumption analysis
+- Enhanced error handling and fallback mechanisms for data access
+- Added visual indicators showing three-tier architecture usage
+- Improved data fetching to respect architectural boundaries
+
+### Performance Improvements
+- Dashboard queries now use PostgreSQL warm storage for operational data
+- Avoided slow BigQuery queries through intelligent tier routing
+- Better response times for consumption pattern analysis
+- Reduced database load through proper architectural layering
+
+### Documentation
+- docs: update documentation for consumption tab architecture fix
+
 ## [v1.2.3.10] - 2025-07-12
 
 ### Bug Fixes
