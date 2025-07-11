@@ -5,7 +5,7 @@ This component displays system overview metrics fetched from the API,
 eliminating the need for direct calculations.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 import pandas as pd
 import plotly.graph_objects as go
@@ -200,7 +200,7 @@ class OverviewTab:
                 }.get(anomaly.get('severity', 'info'), "⚪")
                 
                 timestamp = datetime.fromisoformat(anomaly['timestamp'].replace('Z', '+00:00'))
-                time_ago = datetime.now() - timestamp
+                time_ago = datetime.now(timezone.utc) - timestamp
                 
                 st.markdown(
                     f"{severity_color} **{anomaly.get('node_name', 'Unknown')}** - "
@@ -228,7 +228,7 @@ class OverviewTab:
                 last_run = datetime.fromisoformat(
                     status['processing_service']['last_run'].replace('Z', '+00:00')
                 )
-                time_since = datetime.now() - last_run
+                time_since = datetime.now(timezone.utc) - last_run
                 st.text(f"Last processing: {self._format_time_ago(time_since)} ago")
                 
             # Active models
@@ -240,7 +240,7 @@ class OverviewTab:
                 latest = datetime.fromisoformat(
                     status['data_freshness']['latest_data'].replace('Z', '+00:00')
                 )
-                freshness = datetime.now() - latest
+                freshness = datetime.now(timezone.utc) - latest
                 st.text(f"Data freshness: {self._format_time_ago(freshness)} old")
                 
     def _format_time_ago(self, delta: timedelta) -> str:
