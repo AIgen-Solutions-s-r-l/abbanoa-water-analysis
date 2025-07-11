@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.2.3.10] - 2025-07-12
+
+### Bug Fixes
+- fix(data): use historical data range and fix node selection in consumption patterns
+  - Fixed empty data issue by using actual historical data range (November 2024 - March 2025) instead of current dates
+  - Fixed node selection logic to properly handle "All Nodes" selection
+  - Consumption patterns tab now displays real data with correct metrics and visualizations
+  - Resolves showing 0.0 m³ for all consumption metrics and empty charts
+
+### Documentation
+- docs: update documentation for consumption patterns data range fix
+
 ## [v1.2.3.9] - 2025-07-12
 
 ### Bug Fixes
