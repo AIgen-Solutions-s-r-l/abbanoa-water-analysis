@@ -65,10 +65,17 @@ class OverviewTab:
         
         if network_metrics:
             with col1:
+                total_nodes = len(summary['nodes'])
+                if total_nodes > 0:
+                    percentage = (network_metrics['active_nodes'] / total_nodes * 100)
+                    delta_text = f"{percentage:.0f}%"
+                else:
+                    delta_text = "N/A"
+                
                 st.metric(
                     "Active Nodes",
-                    f"{network_metrics['active_nodes']}/{len(summary['nodes'])}",
-                    f"{(network_metrics['active_nodes'] / len(summary['nodes']) * 100):.0f}%"
+                    f"{network_metrics['active_nodes']}/{total_nodes}",
+                    delta_text
                 )
                 
             with col2:

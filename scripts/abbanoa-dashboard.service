@@ -1,0 +1,20 @@
+[Unit]
+Description=Abbanoa Water Infrastructure Dashboard (API Mode)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=alessio
+Group=alessio
+WorkingDirectory=/home/alessio/Customers/Abbanoa
+Environment="PATH=/home/alessio/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/home/alessio/Customers/Abbanoa"
+Environment="API_BASE_URL=http://localhost:8000"
+ExecStartPre=/bin/bash -c 'until curl -s -f http://localhost:8000/health > /dev/null; do echo "Waiting for API..."; sleep 5; done'
+ExecStart=/home/alessio/.cache/pypoetry/virtualenvs/abbanoa-water-infrastructure-RTCwCU-i-py3.12/bin/streamlit run src/presentation/streamlit/app_api.py --server.port 8502 --server.address 127.0.0.1 --theme.base=light
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
