@@ -16,26 +16,35 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from src.application.dto.analysis_results_dto import ConsumptionPatternDTO
-from src.application.use_cases.analyze_consumption_patterns import (
-    AnalyzeConsumptionPatternsUseCase,
-)
-from src.infrastructure.di_container import Container
+from src.infrastructure.data.hybrid_data_service import get_hybrid_data_service
 from src.presentation.streamlit.utils.data_optimizer import DataOptimizer, show_optimization_info
 
 
 class ConsumptionTab:
     """Consumption patterns analysis tab."""
 
-    def __init__(_self, analyze_consumption_use_case: AnalyzeConsumptionPatternsUseCase):
-        """Initialize the consumption tab with use case."""
-        _self.analyze_consumption_use_case = analyze_consumption_use_case
-        # Initialize optimizer
-        container = Container()
-        _self.sensor_repo = container.sensor_reading_repository()
-        _self.optimizer = DataOptimizer(_self.sensor_repo)
+    def __init__(self):
+        """Initialize the consumption tab."""
+        self.hybrid_service = None
+        # Node mapping for display names to actual node IDs
+        self.node_mapping = {
+            "Primary Station": "281492",
+            "Secondary Station": "211514", 
+            "Distribution A": "288400",
+            "Distribution B": "288399",
+            "Junction C": "215542",
+            "Supply Control": "273933",
+            "Pressure Station": "215600",
+            "Remote Point": "287156",
+        }
 
-    def render(_self, time_range: str, selected_nodes: List[str]) -> None:
+    async def _get_hybrid_service(self):
+        """Get or initialize hybrid data service."""
+        if self.hybrid_service is None:
+            self.hybrid_service = await get_hybrid_data_service()
+        return self.hybrid_service
+
+    def render(self, time_range: str, selected_nodes: List[str]) -> None:
         """
         Render the consumption patterns tab.
 
@@ -45,19 +54,23 @@ class ConsumptionTab:
         """
         st.header("📈 Consumption Patterns Analysis")
         
+        # Show architecture info
+        st.info("🚀 **Using Three-Tier Architecture**: Redis (hot) → PostgreSQL (warm) → BigQuery (cold)")
+        
         # Show optimization info for large time ranges
         if time_range in ["Last Month", "Last Year"]:
-            time_delta = _self._get_time_delta(time_range)
+            time_delta = self._get_time_delta(time_range)
             days = time_delta.days
             estimated_records = days * 24 * 12  # Rough estimate
             
-            recommendations = _self.optimizer.get_performance_recommendations(days, estimated_records)
-            if recommendations:
-                st.warning("⚡ **Performance Optimization**\n\n" + "\n".join(recommendations))
+            # The optimizer is removed, so this block is no longer relevant
+            # recommendations = _self.optimizer.get_performance_recommendations(days, estimated_records)
+            # if recommendations:
+            #     st.warning("⚡ **Performance Optimization**\n\n" + "\n".join(recommendations))
 
         # Get consumption data for metrics calculation
-        consumption_data = _self._get_consumption_data(time_range, selected_nodes)
-        consumption_metrics = _self._calculate_consumption_metrics(consumption_data)
+        consumption_data = self._get_consumption_data(time_range, selected_nodes)
+        consumption_metrics = self._calculate_consumption_metrics(consumption_data)
 
         # Summary statistics
         col1, col2, col3, col4 = st.columns(4)
@@ -91,81 +104,165 @@ class ConsumptionTab:
             )
 
         # Consumption trends
-        st.subheader("Consumption Trends")
-        _self._render_consumption_trends(consumption_data)
-
-        # Pattern analysis
+        st.subheader("📊 Consumption Trends")
+        
         col1, col2 = st.columns(2)
-
+        
         with col1:
-            st.subheader("Daily Pattern")
-            _self._render_daily_pattern(consumption_data)
+            # Hourly consumption pattern
+            if consumption_data is not None and not consumption_data.empty:
+                hourly_pattern = self._create_hourly_pattern_chart(consumption_data)
+                st.plotly_chart(hourly_pattern, use_container_width=True)
+            else:
+                st.info("No data available for hourly patterns.")
 
         with col2:
-            st.subheader("Weekly Pattern")
-            _self._render_weekly_pattern(consumption_data)
+            # Daily consumption trend
+            if consumption_data is not None and not consumption_data.empty:
+                daily_trend = self._create_daily_trend_chart(consumption_data)
+                st.plotly_chart(daily_trend, use_container_width=True)
+            else:
+                st.info("No data available for daily trends.")
 
-        # Peak analysis
-        st.subheader("Peak Consumption Analysis")
-        _self._render_peak_analysis(consumption_data, selected_nodes)
-
-        # Consumption heatmap
-        st.subheader("Consumption Heatmap")
-        _self._render_consumption_heatmap(consumption_data)
+        # Consumption by node
+        st.subheader("🌐 Consumption by Node")
+        
+        if consumption_data is not None and not consumption_data.empty:
+            node_comparison = self._create_node_comparison_chart(consumption_data)
+            st.plotly_chart(node_comparison, use_container_width=True)
+        else:
+            st.info("No data available for node comparison.")
 
         # Efficiency metrics
-        st.subheader("Consumption Efficiency")
-        _self._render_efficiency_metrics(consumption_data)
+        st.subheader("⚡ Efficiency Metrics")
+        
+        efficiency_metrics = self._calculate_efficiency_metrics(consumption_data)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric(
+                label="Non-Revenue Water",
+                value=f"{efficiency_metrics['non_revenue_water']:.1f}%",
+                delta=None
+            )
+        
+        with col2:
+            st.metric(
+                label="Per Capita Consumption",
+                value=f"{efficiency_metrics['per_capita_consumption']:.0f} L/day",
+                delta=None
+            )
+        
+        with col3:
+            st.metric(
+                label="Distribution Efficiency",
+                value=f"{efficiency_metrics['distribution_efficiency']:.1f}%",
+                delta=None
+            )
 
-    def _render_consumption_trends(
-        _self, consumption_data: Optional[pd.DataFrame]
-    ) -> None:
-        """Render consumption trends chart."""
+        # Consumption heatmap
+        st.subheader("🔥 Consumption Heatmap")
+        
         if consumption_data is not None and not consumption_data.empty:
-            df = consumption_data
+            heatmap = self._create_consumption_heatmap(consumption_data)
+            st.plotly_chart(heatmap, use_container_width=True)
         else:
-            # Return empty dataframe - no synthetic data
-            df = pd.DataFrame({"timestamp": pd.DatetimeIndex([])})
+            st.info("No data available for heatmap.")
 
-        # Create line chart
-        if not df.empty and len([col for col in df.columns if col != "timestamp"]) > 0:
-            # Ensure all numeric columns are float type
-            numeric_cols = [col for col in df.columns if col != "timestamp"]
-            for col in numeric_cols:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        # Performance insights
+        st.subheader("📝 Performance Insights")
+        
+        insights = self._generate_insights(consumption_data, consumption_metrics, efficiency_metrics)
+        for insight in insights:
+            st.write(f"• {insight}")
+
+    def _get_time_delta(self, time_range: str) -> timedelta:
+        """Convert time range string to timedelta."""
+        time_deltas = {
+            "Last 6 Hours": timedelta(hours=6),
+            "Last 24 Hours": timedelta(hours=24),
+            "Last 3 Days": timedelta(days=3),
+            "Last Week": timedelta(days=7),
+            "Last Month": timedelta(days=30),
+            "Last Year": timedelta(days=365),
+        }
+        return time_deltas.get(time_range, timedelta(hours=24))
+
+    @st.cache_data
+    def _get_consumption_data(
+        _self, time_range: str, selected_nodes: List[str]
+    ) -> Optional[pd.DataFrame]:
+        """Get consumption data using HybridDataService."""
+        try:
+            # Initialize event loop if not in async context
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            fig = px.line(
-                df,
-                x="timestamp",
-                y=numeric_cols,
-                title="Water Consumption Trends",
-                labels={"value": "Consumption (m³/h)", "timestamp": "Time"},
-            )
-        else:
-            # Create empty figure if no data
-            fig = px.line(
-                title="Water Consumption Trends",
-                labels={"value": "Consumption (m³/h)", "timestamp": "Time"},
-            )
-            fig.add_annotation(
-                x=0.5, y=0.5,
-                text="No data available for selected time range",
-                showarrow=False,
-                xref="paper", yref="paper"
-            )
+            try:
+                # Get hybrid service
+                hybrid_service = loop.run_until_complete(_self._get_hybrid_service())
+                
+                # Calculate time range
+                time_delta = _self._get_time_delta(time_range)
+                
+                # Use actual data range instead of current time  
+                data_end = datetime(2025, 3, 31, 23, 59, 59)
+                data_start = datetime(2024, 11, 13, 0, 0, 0)
+                
+                end_time = min(data_end, datetime.now())
+                start_time = max(data_start, end_time - time_delta)
 
-        fig.update_layout(
-            height=400,
-            hovermode="x unified",
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-            ),
-        )
+                # Handle "All Nodes" selection
+                if "All Nodes" in selected_nodes:
+                    nodes_to_query = list(_self.node_mapping.keys())
+                else:
+                    nodes_to_query = [node for node in selected_nodes if node != "All Nodes"]
 
-        st.plotly_chart(fig, use_container_width=True)
+                all_data = []
+                
+                # Query each node using HybridDataService
+                for node_name in nodes_to_query:
+                    node_id = _self.node_mapping.get(node_name)
+                    if not node_id:
+                        continue
 
-    def _render_daily_pattern(_self, consumption_data: Optional[pd.DataFrame]) -> None:
-        """Render average daily consumption pattern."""
+                    # Use HybridDataService for intelligent tier routing
+                    df = loop.run_until_complete(
+                        hybrid_service.get_node_data(
+                            node_id=node_id,
+                            start_time=start_time,
+                            end_time=end_time,
+                            interval="30min" if time_delta.days > 7 else "5min"
+                        )
+                    )
+                    
+                    if df is not None and not df.empty:
+                        # Add node information
+                        df['node_id'] = node_id
+                        df['node_name'] = node_name
+                        
+                        # Calculate consumption from flow rate
+                        if 'flow_rate' in df.columns:
+                            df['consumption'] = df['flow_rate'] * _self._get_hourly_factor(df['timestamp'].dt.hour)
+                        
+                        all_data.append(df)
+
+                if all_data:
+                    combined_df = pd.concat(all_data, ignore_index=True)
+                    return combined_df
+                else:
+                    return None
+                    
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            st.error(f"Error fetching consumption data: {str(e)}")
+            return None
+
+    def _create_hourly_pattern_chart(self, consumption_data: pd.DataFrame) -> go.Figure:
+        """Create a line chart for hourly consumption patterns."""
         hours = list(range(24))
         consumption = [0] * 24
 
@@ -182,7 +279,7 @@ class ConsumptionTab:
                     if hour in hourly_avg.index:
                         consumption[hour] = hourly_avg[hour]
             except Exception as e:
-                st.warning(f"Error calculating daily pattern: {str(e)}")
+                st.warning(f"Error calculating hourly pattern: {str(e)}")
 
         fig = go.Figure()
         fig.add_trace(
@@ -214,11 +311,10 @@ class ConsumptionTab:
             yaxis_title="Consumption (m³/h)",
             showlegend=False,
         )
+        return fig
 
-        st.plotly_chart(fig, use_container_width=True)
-
-    def _render_weekly_pattern(_self, consumption_data: Optional[pd.DataFrame]) -> None:
-        """Render weekly consumption pattern."""
+    def _create_daily_trend_chart(self, consumption_data: pd.DataFrame) -> go.Figure:
+        """Create a bar chart for daily consumption trends."""
         days = [
             "Monday",
             "Tuesday",
@@ -247,7 +343,7 @@ class ConsumptionTab:
                         if day in daily_relative.index:
                             consumption[i] = daily_relative[day]
             except Exception as e:
-                st.warning(f"Error calculating weekly pattern: {str(e)}")
+                st.warning(f"Error calculating daily trend: {str(e)}")
 
         fig = go.Figure()
         fig.add_trace(
@@ -268,15 +364,14 @@ class ConsumptionTab:
             yaxis_title="Relative Consumption (%)",
             showlegend=False,
         )
+        return fig
 
-        st.plotly_chart(fig, use_container_width=True)
-
-    def _render_peak_analysis(_self, consumption_data: Optional[pd.DataFrame], selected_nodes: List[str]) -> None:
-        """Render peak consumption analysis."""
+    def _create_node_comparison_chart(self, consumption_data: pd.DataFrame) -> go.Figure:
+        """Create a grouped bar chart for consumption by node."""
         nodes = (
             ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"]
-            if "All Nodes" in selected_nodes
-            else selected_nodes
+            if "All Nodes" in self.node_mapping.keys()
+            else list(self.node_mapping.keys())
         )
 
         # Create peak data from real consumption data
@@ -306,7 +401,7 @@ class ConsumptionTab:
                         }
                     )
             except Exception as e:
-                st.warning(f"Error calculating peak analysis: {str(e)}")
+                st.warning(f"Error calculating node comparison: {str(e)}")
                 # Fallback to zeros if calculation fails
                 for node in nodes[:4]:
                     peak_data.append(
@@ -358,10 +453,9 @@ class ConsumptionTab:
                 orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
             ),
         )
+        return fig
 
-        st.plotly_chart(fig, use_container_width=True)
-
-    def _render_consumption_heatmap(_self, consumption_data: Optional[pd.DataFrame]) -> None:
+    def _create_consumption_heatmap(self, consumption_data: pd.DataFrame) -> go.Figure:
         """Render consumption heatmap by hour and day."""
         # Generate heatmap data
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -417,197 +511,50 @@ class ConsumptionTab:
             yaxis_title="Day of Week",
             title="Water Consumption Heatmap (m³/h)",
         )
+        return fig
 
-        st.plotly_chart(fig, use_container_width=True)
+    def _generate_insights(self, consumption_data: Optional[pd.DataFrame], consumption_metrics: dict, efficiency_metrics: dict) -> List[str]:
+        """Generate performance insights based on consumption data."""
+        insights = []
 
-    def _render_efficiency_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> None:
-        """Render consumption efficiency metrics."""
-        # Calculate real efficiency metrics from data
-        efficiency_metrics = _self._calculate_efficiency_metrics(consumption_data)
-        
-        col1, col2, col3 = st.columns(3)
+        if consumption_data is None or consumption_data.empty:
+            insights.append("No consumption data available for insights.")
+            return insights
 
-        with col1:
-            # Non-revenue water calculated from real data
-            nrw_value = efficiency_metrics['non_revenue_water']
-            fig = go.Figure(
-                go.Indicator(
-                    mode="gauge+number+delta",
-                    value=nrw_value,
-                    domain={"x": [0, 1], "y": [0, 1]},
-                    title={"text": "Non-Revenue Water (%)"},
-                    delta={"reference": 10, "relative": True},
-                    gauge={
-                        "axis": {"range": [None, 20]},
-                        "bar": {"color": "#1f77b4"},
-                        "steps": [
-                            {"range": [0, 5], "color": "lightgreen"},
-                            {"range": [5, 10], "color": "yellow"},
-                            {"range": [10, 20], "color": "lightcoral"},
-                        ],
-                        "threshold": {
-                            "line": {"color": "red", "width": 4},
-                            "thickness": 0.75,
-                            "value": 15,
-                        },
-                    },
-                )
-            )
-            fig.update_layout(height=250)
-            st.plotly_chart(fig, use_container_width=True)
+        total_consumption = consumption_metrics['total_consumption']
+        peak_hour = consumption_metrics['peak_hour']
+        min_hour = consumption_metrics['min_hour']
+        avg_daily = consumption_metrics['avg_daily']
 
-        with col2:
-            # Per capita consumption calculated from real data
-            per_capita = efficiency_metrics['per_capita_consumption']
-            fig = go.Figure(
-                go.Indicator(
-                    mode="number+delta",
-                    value=per_capita,
-                    number={"suffix": " L/day"},
-                    title={"text": "Per Capita Consumption"},
-                    delta={"reference": 200, "relative": True},
-                )
-            )
-            fig.update_layout(height=250)
-            st.plotly_chart(fig, use_container_width=True)
+        nrw_percentage = efficiency_metrics['non_revenue_water']
+        per_capita = efficiency_metrics['per_capita_consumption']
+        dist_efficiency = efficiency_metrics['distribution_efficiency']
 
-        with col3:
-            # Distribution efficiency calculated from real data
-            dist_efficiency = efficiency_metrics['distribution_efficiency']
-            fig = go.Figure(
-                go.Indicator(
-                    mode="number+delta",
-                    value=dist_efficiency,
-                    number={"suffix": "%"},
-                    title={"text": "Distribution Efficiency"},
-                    delta={"reference": 90, "relative": True},
-                )
-            )
-            fig.update_layout(height=250)
-            st.plotly_chart(fig, use_container_width=True)
+        if total_consumption > 0:
+            insights.append(f"Total water consumption: {total_consumption:.1f} m³")
+            insights.append(f"Average daily consumption: {avg_daily:.1f} m³")
+            insights.append(f"Peak consumption hour: {peak_hour}")
+            insights.append(f"Minimum consumption hour: {min_hour}")
+            insights.append(f"Non-Revenue Water: {nrw_percentage:.1f}%")
+            insights.append(f"Per Capita Consumption: {per_capita:.0f} L/day")
+            insights.append(f"Distribution Efficiency: {dist_efficiency:.1f}%")
+        else:
+            insights.append("No consumption data to analyze.")
 
-    def _get_hourly_factor(_self, hour: int) -> float:
-        """Get consumption factor for given hour."""
-        # Typical residential consumption pattern
-        if 6 <= hour <= 9:  # Morning peak
-            return 1.5
-        elif 18 <= hour <= 21:  # Evening peak
-            return 1.8
-        elif 22 <= hour <= 5:  # Night low
-            return 0.4
-        else:  # Daytime normal
-            return 1.0
+        return insights
 
-    def _get_time_delta(_self, time_range: str) -> timedelta:
-        """Get time delta for the given time range."""
-        time_deltas = {
-            "Last 6 Hours": timedelta(hours=6),
-            "Last 24 Hours": timedelta(hours=24),
-            "Last 3 Days": timedelta(days=3),
-            "Last Week": timedelta(days=7),
-            "Last Month": timedelta(days=30),
-            "Last Year": timedelta(days=365),
+    def _get_hourly_factor(self, hour: int) -> float:
+        """Get hourly consumption factor based on typical usage patterns."""
+        # Typical hourly consumption patterns (multiplier)
+        hourly_factors = {
+            0: 0.3, 1: 0.2, 2: 0.2, 3: 0.2, 4: 0.3, 5: 0.5,
+            6: 0.8, 7: 1.2, 8: 1.0, 9: 0.9, 10: 0.8, 11: 0.9,
+            12: 1.1, 13: 1.0, 14: 0.9, 15: 0.8, 16: 0.9, 17: 1.0,
+            18: 1.2, 19: 1.4, 20: 1.3, 21: 1.0, 22: 0.7, 23: 0.5
         }
-        return time_deltas.get(time_range, timedelta(hours=24))
+        return hourly_factors.get(hour, 1.0)
 
-    @st.cache_data
-    def _get_consumption_data(
-        _self, time_range: str, selected_nodes: List[str]
-    ) -> Optional[pd.DataFrame]:
-        """Get real consumption data with optimization."""
-        try:
-            # Calculate time delta
-            time_delta = _self._get_time_delta(time_range)
-            
-            # Use actual data range instead of current time
-            data_end = datetime(2025, 3, 31, 23, 59, 59)
-            data_start = datetime(2024, 11, 13, 0, 0, 0)
-            
-            end_time = min(data_end, datetime.now())
-            start_time = max(data_start, end_time - time_delta)
-
-            # Node mapping
-            node_mapping = {
-                "Primary Station": UUID("00000000-0000-0000-0000-000000000001"),
-                "Secondary Station": UUID("00000000-0000-0000-0000-000000000002"),
-                "Distribution A": UUID("00000000-0000-0000-0000-000000000003"),
-                "Distribution B": UUID("00000000-0000-0000-0000-000000000004"),
-                "Junction C": UUID("00000000-0000-0000-0000-000000000005"),
-                "Supply Control": UUID("00000000-0000-0000-0000-000000000006"),
-                "Pressure Station": UUID("00000000-0000-0000-0000-000000000007"),
-                "Remote Point": UUID("00000000-0000-0000-0000-000000000008"),
-            }
-
-            all_data = []
-            optimization_info = None
-
-            # Handle "All Nodes" selection
-            if "All Nodes" in selected_nodes:
-                nodes_to_query = list(node_mapping.keys())
-            else:
-                nodes_to_query = [node for node in selected_nodes if node != "All Nodes"]
-
-            for node_name in nodes_to_query:
-                node_id = node_mapping.get(node_name)
-                if not node_id:
-                    continue
-
-                # Use data optimizer for large time ranges
-                if time_delta.days > 7:  # Use optimization for ranges > 1 week
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    
-                    try:
-                        readings, opt_info = loop.run_until_complete(
-                            _self.optimizer.get_optimized_data(node_id, start_time, end_time)
-                        )
-                        if not optimization_info:  # Show info only once
-                            optimization_info = opt_info
-                    finally:
-                        loop.close()
-                else:
-                    # Use direct repository access for small time ranges
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    
-                    try:
-                        readings = loop.run_until_complete(
-                            _self.sensor_repo.get_by_node_id(node_id, start_time, end_time)
-                        )
-                    finally:
-                        loop.close()
-
-                # Convert to DataFrame format
-                for reading in readings:
-                    flow_val = reading.flow_rate.value if reading.flow_rate else 0
-                    pressure_val = reading.pressure.value if reading.pressure else 0
-                    
-                    all_data.append({
-                        "timestamp": reading.timestamp,
-                        "node_id": str(reading.node_id),
-                        "node_name": node_name,
-                        "flow_rate": flow_val,
-                        "pressure": pressure_val,
-                        "consumption": flow_val * _self._get_hourly_factor(reading.timestamp.hour),
-                        "is_anomaly": reading.is_anomaly
-                    })
-
-            if not all_data:
-                return None
-
-            # Show optimization info if available
-            if optimization_info:
-                show_optimization_info(optimization_info)
-
-            return pd.DataFrame(all_data)
-
-        except Exception as e:
-            st.error(f"Error fetching consumption data: {str(e)}")
-            return None
-
-    def _calculate_consumption_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> dict:
+    def _calculate_consumption_metrics(self, consumption_data: Optional[pd.DataFrame]) -> dict:
         """Calculate consumption metrics from real data."""
         if consumption_data is None or consumption_data.empty:
             return {
@@ -622,8 +569,10 @@ class ConsumptionTab:
             data_copy = consumption_data.copy()
             
             # Calculate total consumption across all nodes and time
-            numeric_columns = [col for col in data_copy.columns if col != "timestamp"]
-            if not numeric_columns:
+            numeric_columns = ['flow_rate', 'pressure', 'temperature', 'consumption']
+            available_columns = [col for col in numeric_columns if col in data_copy.columns]
+            
+            if not available_columns:
                 return {
                     "total_consumption": 0.0,
                     "peak_hour": "--:--",
@@ -631,23 +580,40 @@ class ConsumptionTab:
                     "avg_daily": 0.0,
                 }
             
-            total_consumption = data_copy[numeric_columns].sum().sum()
+            # Focus on consumption if available, otherwise use flow_rate
+            if 'consumption' in data_copy.columns:
+                total_consumption = data_copy['consumption'].sum()
+            elif 'flow_rate' in data_copy.columns:
+                total_consumption = data_copy['flow_rate'].sum()
+            else:
+                total_consumption = 0.0
 
             # Calculate hourly averages to find peak and min hours
-            data_copy['hour'] = data_copy['timestamp'].dt.hour
-            hourly_totals = data_copy.groupby('hour')[numeric_columns].sum().sum(axis=1)
-            
-            if len(hourly_totals) > 0 and hourly_totals.max() > 0:
-                peak_hour = f"{hourly_totals.idxmax():02d}:00"
-                min_hour = f"{hourly_totals.idxmin():02d}:00"
+            if 'timestamp' in data_copy.columns:
+                data_copy['hour'] = pd.to_datetime(data_copy['timestamp']).dt.hour
+                consumption_col = 'consumption' if 'consumption' in data_copy.columns else 'flow_rate'
+                
+                if consumption_col in data_copy.columns:
+                    hourly_totals = data_copy.groupby('hour')[consumption_col].sum()
+                    
+                    if len(hourly_totals) > 0 and hourly_totals.max() > 0:
+                        peak_hour = f"{hourly_totals.idxmax():02d}:00"
+                        min_hour = f"{hourly_totals.idxmin():02d}:00"
+                    else:
+                        peak_hour = "--:--"
+                        min_hour = "--:--"
+                else:
+                    peak_hour = "--:--"
+                    min_hour = "--:--"
+
+                # Calculate average daily consumption
+                data_copy['date'] = pd.to_datetime(data_copy['timestamp']).dt.date
+                daily_totals = data_copy.groupby('date')[consumption_col].sum()
+                avg_daily = daily_totals.mean() if len(daily_totals) > 0 else 0.0
             else:
                 peak_hour = "--:--"
                 min_hour = "--:--"
-
-            # Calculate average daily consumption
-            data_copy['date'] = data_copy['timestamp'].dt.date
-            daily_totals = data_copy.groupby('date')[numeric_columns].sum().sum(axis=1)
-            avg_daily = daily_totals.mean() if len(daily_totals) > 0 else 0.0
+                avg_daily = 0.0
 
             return {
                 "total_consumption": float(total_consumption),
@@ -665,7 +631,7 @@ class ConsumptionTab:
                 "avg_daily": 0.0,
             }
 
-    def _calculate_efficiency_metrics(_self, consumption_data: Optional[pd.DataFrame]) -> dict:
+    def _calculate_efficiency_metrics(self, consumption_data: Optional[pd.DataFrame]) -> dict:
         """Calculate efficiency metrics from real consumption data."""
         if consumption_data is None or consumption_data.empty:
             return {
@@ -677,9 +643,12 @@ class ConsumptionTab:
         try:
             # Make a copy to avoid modifying the original
             data_copy = consumption_data.copy()
-            numeric_columns = [col for col in data_copy.columns if col != "timestamp"]
             
-            if not numeric_columns:
+            # Get available numeric columns
+            numeric_columns = ['flow_rate', 'pressure', 'temperature', 'consumption']
+            available_columns = [col for col in numeric_columns if col in data_copy.columns]
+            
+            if not available_columns:
                 return {
                     "non_revenue_water": 0.0,
                     "per_capita_consumption": 0.0,
@@ -687,16 +656,22 @@ class ConsumptionTab:
                 }
 
             # Calculate basic consumption statistics
-            total_consumption = data_copy[numeric_columns].sum().sum()
-            avg_consumption = data_copy[numeric_columns].mean().mean()
+            consumption_col = 'consumption' if 'consumption' in data_copy.columns else 'flow_rate'
             
-            # Calculate consumption variability (coefficient of variation)
-            consumption_values = data_copy[numeric_columns].values.flatten()
-            consumption_values = consumption_values[~pd.isna(consumption_values)]
-            
-            if len(consumption_values) > 0:
-                cv = np.std(consumption_values) / np.mean(consumption_values) if np.mean(consumption_values) > 0 else 0
+            if consumption_col in data_copy.columns:
+                total_consumption = data_copy[consumption_col].sum()
+                avg_consumption = data_copy[consumption_col].mean()
+                
+                # Calculate consumption variability (coefficient of variation)
+                consumption_values = data_copy[consumption_col].dropna().values
+                
+                if len(consumption_values) > 0:
+                    cv = np.std(consumption_values) / np.mean(consumption_values) if np.mean(consumption_values) > 0 else 0
+                else:
+                    cv = 0
             else:
+                total_consumption = 0
+                avg_consumption = 0
                 cv = 0
 
             # Non-Revenue Water estimation based on consumption patterns
@@ -708,11 +683,15 @@ class ConsumptionTab:
             # Per capita consumption calculation
             # Estimate population served (this would normally come from external data)
             estimated_population = 50000  # Assumption for calculation
-            daily_consumption_liters = total_consumption * 1000  # Convert m³ to liters
-            days_in_period = (data_copy['timestamp'].max() - data_copy['timestamp'].min()).days + 1
             
-            if days_in_period > 0 and estimated_population > 0:
-                per_capita = (daily_consumption_liters / estimated_population) / days_in_period
+            if 'timestamp' in data_copy.columns:
+                daily_consumption_liters = total_consumption * 1000  # Convert m³ to liters
+                days_in_period = (pd.to_datetime(data_copy['timestamp']).max() - pd.to_datetime(data_copy['timestamp']).min()).days + 1
+                
+                if days_in_period > 0 and estimated_population > 0:
+                    per_capita = (daily_consumption_liters / estimated_population) / days_in_period
+                else:
+                    per_capita = 0
             else:
                 per_capita = 0
 

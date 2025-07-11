@@ -169,7 +169,7 @@ class DashboardApp:
             # Still use old components for tabs not yet migrated
             from src.presentation.streamlit.components.consumption_tab import ConsumptionTab
             from src.presentation.streamlit.components.reports_tab import ReportsTab
-            consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
+            consumption_tab = ConsumptionTab()
             reports_tab = ReportsTab()
             
             st.session_state.using_api = True
@@ -190,7 +190,7 @@ class DashboardApp:
                 overview_tab = OverviewTab(self.calculate_efficiency_use_case)
                 
             anomaly_tab = AnomalyTab(self.detect_anomalies_use_case)
-            consumption_tab = ConsumptionTab(self.analyze_consumption_use_case)
+            consumption_tab = ConsumptionTab()
             efficiency_tab = EfficiencyTab(self.calculate_efficiency_use_case)
             reports_tab = ReportsTab()
             
