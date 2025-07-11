@@ -36,6 +36,10 @@
    - **Issue**: `TypeError: can't subtract offset-naive and offset-aware datetimes` in overview tab
    - **Fix**: Updated all datetime.now() calls to datetime.now(timezone.utc) for proper timezone-aware comparisons
 
+9. **APIClient Method Error**
+   - **Issue**: `AttributeError: 'APIClient' object has no attribute 'get'` when loading nodes
+   - **Fix**: Changed from incorrect generic `get()` method to proper `get_nodes()` method
+
 ### Files Modified
 
 1. `/home/alessio/Customers/Abbanoa/src/presentation/streamlit/app_api.py`
