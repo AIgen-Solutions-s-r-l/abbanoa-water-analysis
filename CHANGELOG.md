@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.2.3.6] - 2025-07-11
+
+### Bug Fixes
+- fix(ui): add state validation to district filter to prevent ValueError
+  - Added validation for session state district_id against available districts
+  - Prevents ValueError when invalid district names exist in session state
+  - Gracefully defaults to first district when invalid state is encountered
+  - Resolves crash when 'selargius' district name existed in session state
+
+### Documentation
+- docs: update documentation for district filter state validation fix
+
 ## [v1.2.3.5] - 2025-07-11
 
 ### Bug Fixes
