@@ -116,9 +116,34 @@ For local development without Docker:
    # Terminal 2: Processing Service
    poetry run python src/processing/service/main.py
 
-   # Terminal 3: Dashboard
+   # Terminal 3: Dashboard (use one of these methods)
+   ./run_dashboard.sh                    # Recommended: handles PYTHONPATH automatically
+   # OR
+   poetry run python run_streamlit.py    # Alternative Python launcher
+   ```
+
+## 🚨 Troubleshooting
+
+### ModuleNotFoundError: No module named 'src'
+If you encounter this error when running the Streamlit dashboard:
+
+1. **Use the provided run script:**
+   ```bash
+   ./run_dashboard.sh
+   ```
+
+2. **Or set PYTHONPATH manually:**
+   ```bash
+   export PYTHONPATH=/path/to/abbanoa-water-analysis:$PYTHONPATH
    poetry run streamlit run src/presentation/streamlit/app.py
    ```
+
+3. **Or use the Python launcher:**
+   ```bash
+   poetry run python run_streamlit.py
+   ```
+
+The error occurs because Python needs to know where to find the project's modules. The provided scripts handle this automatically.
 
 ## 📊 Performance Metrics
 
