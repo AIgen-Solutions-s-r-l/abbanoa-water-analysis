@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.2.3.5] - 2025-07-11
+
+### Bug Fixes
+- fix(streamlit): resolve ModuleNotFoundError by correcting sys.path
+  - Added missing __init__.py files to make directories proper Python packages
+  - Updated run_dashboard.sh to properly set PYTHONPATH
+  - Created alternative launch scripts for better reliability
+  - Ensured dashboard can run in both API and standalone modes
+
+### Documentation
+- docs: clarify run instructions after path fix
+  - Added troubleshooting section for ModuleNotFoundError
+  - Updated run commands to use the provided scripts
+  - Explained why the error occurs and how to fix it
+
 ## [v1.2.3.4] - 2025-07-11
 
 ### Bug Fixes
