@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.2.3.9] - 2025-07-12
+
+### Bug Fixes
+- fix(ui): add missing UUID import to consumption patterns tab
+  - Fixed NameError where 'UUID' was not defined in consumption patterns analysis
+  - Added missing `from uuid import UUID` import statement
+  - Consumption patterns tab now loads correctly without errors
+  - Resolves "Error fetching consumption data: name 'UUID' is not defined" error
+
+### Documentation
+- docs: update documentation for consumption patterns UUID import fix
+
 ## [v1.2.3.8] - 2025-07-12
 
 ### Bug Fixes
