@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.2.3.8] - 2025-07-12
+
+### Bug Fixes
+- fix(ui): remove invalid selected_nodes parameter from EfficiencyTab render call
+  - Fixed TypeError where EfficiencyTab.render() was receiving unexpected keyword argument 'selected_nodes'
+  - Removed selected_nodes parameter from efficiency tab call to match method signature
+  - EfficiencyTab.render() only accepts time_range parameter
+  - Resolves "TypeError: EfficiencyTab.render() got an unexpected keyword argument 'selected_nodes'" error
+
+### Documentation
+- docs: update documentation for EfficiencyTab render method signature fix
+
 ## [v1.2.3.7] - 2025-07-12
 
 ### Bug Fixes
