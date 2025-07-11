@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.3.3] - 2025-07-11
+
+### Bug Fixes
+- fix(sidebar): use correct get_nodes method instead of generic get
+
+### Documentation
+- docs: update documentation for APIClient method fix
+
 ## [v1.2.3.2] - 2025-07-11
 
 ### Bug Fixes
