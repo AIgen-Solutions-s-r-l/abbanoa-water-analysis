@@ -5,10 +5,8 @@ This module implements the main forecast visualization tab with interactive
 Plotly charts and real-time data updates.
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
-
-import numpy as np
+from datetime import datetime
+from typing import Optional
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -65,20 +63,26 @@ class ForecastTab:
 
         # Create columns for controls
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             # District selector
-            district_options = ["selargius", "monserrato", "quartu"]  # Add more districts as needed
+            district_options = [
+                "selargius",
+                "monserrato",
+                "quartu",
+            ]  # Add more districts as needed
             district = st.selectbox(
                 "District",
                 options=district_options,
-                index=district_options.index(st.session_state.district_id) if st.session_state.district_id in district_options else 0,
-                key="forecast_district"
+                index=district_options.index(st.session_state.district_id)
+                if st.session_state.district_id in district_options
+                else 0,
+                key="forecast_district",
             )
             if district != st.session_state.district_id:
                 st.session_state.district_id = district
                 st.session_state.forecast_data = None  # Reset data to trigger refresh
-                
+
         with col2:
             # Metric selector
             metric_options = {
@@ -90,21 +94,25 @@ class ForecastTab:
                 "Metric",
                 options=list(metric_options.keys()),
                 format_func=lambda x: metric_options[x],
-                index=list(metric_options.keys()).index(st.session_state.metric) if st.session_state.metric in metric_options else 0,
-                key="forecast_metric"
+                index=list(metric_options.keys()).index(st.session_state.metric)
+                if st.session_state.metric in metric_options
+                else 0,
+                key="forecast_metric",
             )
             if metric != st.session_state.metric:
                 st.session_state.metric = metric
                 st.session_state.forecast_data = None  # Reset data to trigger refresh
-                
+
         with col3:
             # Horizon selector
             horizon_options = [3, 7, 14, 30]
             horizon = st.selectbox(
                 "Forecast Days",
                 options=horizon_options,
-                index=horizon_options.index(st.session_state.horizon) if st.session_state.horizon in horizon_options else 1,
-                key="forecast_horizon"
+                index=horizon_options.index(st.session_state.horizon)
+                if st.session_state.horizon in horizon_options
+                else 1,
+                key="forecast_horizon",
             )
             if horizon != st.session_state.horizon:
                 st.session_state.horizon = horizon
@@ -156,7 +164,8 @@ class ForecastTab:
             else:
                 # Provide more helpful message and debug info
                 st.warning("📊 No forecast data loaded yet.")
-                st.info("""
+                st.info(
+                    """
                 **To view forecasts:**
                 1. Ensure the API server is running (`./run_api.sh`)
                 2. Click the button below to load forecast data
@@ -165,7 +174,8 @@ class ForecastTab:
                 - 7-day predictions with 80% confidence intervals
                 - Historical context from the last 30 days
                 - ARIMA model predictions or fallback calculations
-                """)
+                """
+                )
                 if st.button("🔄 Load Forecast Data", type="primary"):
                     with st.spinner("Loading forecast data..."):
                         self._fetch_and_cache_data()
