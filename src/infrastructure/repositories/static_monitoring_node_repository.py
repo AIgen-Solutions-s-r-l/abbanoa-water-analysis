@@ -1,6 +1,5 @@
 """Static monitoring node repository for demo purposes."""
 
-from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -142,19 +141,20 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
     ) -> List[MonitoringNode]:
         """Get all monitoring nodes with optional filters."""
         nodes = self.nodes.copy()
-        
+
         if active_only:
             nodes = [node for node in nodes if node.status == NodeStatus.ACTIVE]
-        
+
         if node_type:
             nodes = [node for node in nodes if node.node_type == node_type]
-        
+
         if location:
             nodes = [
-                node for node in nodes 
+                node
+                for node in nodes
                 if location.lower() in node.location.site_name.lower()
             ]
-        
+
         return nodes
 
     async def update(self, node: MonitoringNode) -> None:
@@ -163,7 +163,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
             if existing_node.id == node.id:
                 self.nodes[i] = node
                 return
-        
+
         # If node doesn't exist, add it
         await self.add(node)
 
@@ -191,8 +191,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
     async def find_by_location(self, location: NodeLocation) -> List[MonitoringNode]:
         """Find monitoring nodes by location."""
         return [
-            node for node in self.nodes 
-            if node.location.site_name == location.site_name
+            node for node in self.nodes if node.location.site_name == location.site_name
         ]
 
     async def find_by_status(self, status: NodeStatus) -> List[MonitoringNode]:

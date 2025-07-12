@@ -6,7 +6,6 @@ using BigQuery ML for forecast data retrieval.
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import Optional
 
 import pandas as pd
@@ -118,7 +117,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         # Query parameters
         parameters = [
             ScalarQueryParameter("horizon", "INT64", horizon),
-            ScalarQueryParameter("district_metric_id", "STRING", district_metric_id)
+            ScalarQueryParameter("district_metric_id", "STRING", district_metric_id),
         ]
 
         try:
