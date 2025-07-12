@@ -23,7 +23,8 @@ Practical guides for users and developers:
 - **[Quick Start Guide](./guides/QUICK_START.md)** - Get up and running quickly
 - **[API Reference](./API_REFERENCE.md)** - Complete API documentation
 - **[Setup Guide](./SETUP_GUIDE.md)** - Installation and configuration
-- Dashboard usage instructions and troubleshooting
+- **[Troubleshooting Guide](./TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Security Guide](./SECURITY.md)** - Security practices and procedures
 
 ### 🚀 [Migration Documentation](./migration/)
 System migration and upgrade guides:
@@ -45,11 +46,13 @@ Archive of previous versions and analyses:
 Start with the [Quick Start Guide](./guides/QUICK_START.md) to get up and running quickly.
 
 ### For Developers
-- Review the [Architecture Overview](./architecture/ARCHITECTURE.md)
-- Check [Technical Documentation](./technical/) for implementation details
-- See [API Documentation](http://localhost:8000/docs) when services are running
+- Review the [Complete Architecture Guide](./ARCHITECTURE_COMPLETE.md)
+- Check [API Reference](./API_REFERENCE.md) for comprehensive API documentation
+- See [Contributing Guidelines](../CONTRIBUTING.md) for development workflow
+- Use [Troubleshooting Guide](./TROUBLESHOOTING.md) for common issues
 
 ### For System Administrators
+- [Security Guide](./SECURITY.md) for security practices and incident response
 - [Performance Improvements Guide](./technical/PERFORMANCE_IMPROVEMENTS.md)
 - [Pipeline Documentation](./technical/PIPELINE_DOCUMENTATION.md)
 - [Redis Cache Architecture](./technical/REDIS_CACHE_ARCHITECTURE.md)
