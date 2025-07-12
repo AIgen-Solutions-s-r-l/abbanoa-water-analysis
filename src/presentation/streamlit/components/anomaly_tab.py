@@ -5,11 +5,10 @@ This component displays network anomalies and alerts from the monitoring system.
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -148,9 +147,7 @@ class AnomalyTab:
             fig.update_layout(height=300, showlegend=True, hovermode="closest")
 
             st.plotly_chart(fig, use_container_width=True)
-            st.success(
-                f"✅ Found {len(anomalies)} anomalies in the selected time range"
-            )
+            st.success(f"✅ Found {len(anomalies)} anomalies in the selected time range")
         else:
             st.info("No anomalies detected in the selected time range")
 
@@ -203,9 +200,9 @@ class AnomalyTab:
                 # Map UUID to readable names (use full UUIDs)
                 node_mapping = {
                     "00000000-0000-0000-0000-000000000001": "Sant'Anna",
-                    "00000000-0000-0000-0000-000000000002": "Seneca", 
+                    "00000000-0000-0000-0000-000000000002": "Seneca",
                     "00000000-0000-0000-0000-000000000003": "Selargius Tank",
-                    "00000000-0000-0000-0000-000000000004": "Quartucciu Tank"
+                    "00000000-0000-0000-0000-000000000004": "Quartucciu Tank",
                 }
                 node_name = node_mapping.get(node_id, f"Unknown Node ({node_id[:8]})")
                 node_counts[node_name] = node_counts.get(node_name, 0) + 1
@@ -256,7 +253,7 @@ class AnomalyTab:
                     "00000000-0000-0000-0000-000000000001": "Sant'Anna",
                     "00000000-0000-0000-0000-000000000002": "Seneca",
                     "00000000-0000-0000-0000-000000000003": "Selargius Tank",
-                    "00000000-0000-0000-0000-000000000004": "Quartucciu Tank"
+                    "00000000-0000-0000-0000-000000000004": "Quartucciu Tank",
                 }
                 node_name = node_mapping.get(node_id, f"Unknown Node ({node_id[:8]})")
 
@@ -324,7 +321,7 @@ class AnomalyTab:
         """Render anomaly patterns analysis using real anomaly data."""
         # Get real anomaly data
         anomaly_results = self._fetch_anomalies(time_range)
-        
+
         # Create subplot figure
         fig = make_subplots(
             rows=1, cols=2, subplot_titles=("Hourly Pattern", "Daily Pattern")
@@ -333,14 +330,14 @@ class AnomalyTab:
         # Initialize counts
         hourly_counts = [0] * 24
         daily_counts = [0] * 7
-        
+
         if anomaly_results:
             # Count anomalies by hour and day
             for anomaly in anomaly_results:
                 # Hourly pattern (0-23)
                 hour = anomaly.timestamp.hour
                 hourly_counts[hour] += 1
-                
+
                 # Daily pattern (0=Monday, 6=Sunday)
                 day = anomaly.timestamp.weekday()
                 daily_counts[day] += 1
@@ -371,18 +368,28 @@ class AnomalyTab:
         fig.update_yaxes(title_text="Count", row=1, col=2)
 
         st.plotly_chart(fig, use_container_width=True)
-        
+
         # Show summary statistics if we have data
         if anomaly_results:
             total_anomalies = len(anomaly_results)
-            peak_hour = hourly_counts.index(max(hourly_counts)) if max(hourly_counts) > 0 else "N/A"
-            peak_day = days[daily_counts.index(max(daily_counts))] if max(daily_counts) > 0 else "N/A"
-            
+            peak_hour = (
+                hourly_counts.index(max(hourly_counts))
+                if max(hourly_counts) > 0
+                else "N/A"
+            )
+            peak_day = (
+                days[daily_counts.index(max(daily_counts))]
+                if max(daily_counts) > 0
+                else "N/A"
+            )
+
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("Total Anomalies", total_anomalies)
             with col2:
-                st.metric("Peak Hour", f"{peak_hour}:00" if peak_hour != "N/A" else peak_hour)
+                st.metric(
+                    "Peak Hour", f"{peak_hour}:00" if peak_hour != "N/A" else peak_hour
+                )
             with col3:
                 st.metric("Peak Day", peak_day)
 
@@ -403,11 +410,11 @@ class AnomalyTab:
                 # Count affected nodes - use location_name for new nodes
                 affected_node_names = set()
                 for a in anomaly_results:
-                    if hasattr(a, 'location_name') and a.location_name:
+                    if hasattr(a, "location_name") and a.location_name:
                         affected_node_names.add(a.location_name)
                     else:
                         affected_node_names.add(str(a.node_id))
-                
+
                 affected_nodes = len(affected_node_names)
 
                 # Count today's anomalies - use current date or data end date
@@ -422,6 +429,7 @@ class AnomalyTab:
 
                 # Get total nodes from mappings
                 from src.presentation.streamlit.utils.node_mappings import NEW_NODES
+
                 total_nodes = len(NEW_NODES)  # Count actual nodes with data
 
                 return {
@@ -430,7 +438,9 @@ class AnomalyTab:
                     "critical_count": critical_count,
                     "affected_nodes": affected_nodes,
                     "total_nodes": total_nodes,
-                    "affected_percentage": (affected_nodes / total_nodes * 100) if total_nodes > 0 else 0,
+                    "affected_percentage": (affected_nodes / total_nodes * 100)
+                    if total_nodes > 0
+                    else 0,
                     "avg_resolution": "45 min",
                 }
         except Exception as e:
@@ -438,8 +448,9 @@ class AnomalyTab:
 
         # Return zeros - no synthetic data
         from src.presentation.streamlit.utils.node_mappings import NEW_NODES
+
         total_nodes = len(NEW_NODES)
-        
+
         return {
             "total_anomalies": 0,
             "new_today": 0,
@@ -488,7 +499,7 @@ class AnomalyTab:
 
             # Get all node IDs including new numeric ones
             from src.presentation.streamlit.utils.node_mappings import ALL_NODE_MAPPINGS
-            
+
             # Convert string node IDs to UUIDs where possible
             node_ids = []
             for display_name, node_id in ALL_NODE_MAPPINGS.items():
@@ -498,11 +509,11 @@ class AnomalyTab:
                         node_ids.append(UUID(node_id))
                     except:
                         pass
-            
+
             # If no UUID nodes, use None to trigger default behavior
             if not node_ids:
                 node_ids = None
-            
+
             result = loop.run_until_complete(
                 _self.detect_anomalies_use_case.execute(
                     node_ids=node_ids,  # Use available UUID nodes
@@ -515,46 +526,59 @@ class AnomalyTab:
         except Exception as e:
             # Fallback to simple anomaly detection for new nodes
             try:
-                from src.presentation.streamlit.utils.simple_anomaly_detector import SimpleAnomalyDetector
-                
+                from src.presentation.streamlit.utils.simple_anomaly_detector import (
+                    SimpleAnomalyDetector,
+                )
+
                 detector = SimpleAnomalyDetector()
                 simple_anomalies = detector.detect_anomalies(time_window_hours)
-                
+
                 if not simple_anomalies:
                     st.info("No anomalies detected in the selected time range.")
                     return []
-                
+
                 # Convert to DTOs
                 anomaly_dtos = []
                 for anomaly in simple_anomalies:
                     # Map simple anomaly to DTO format
-                    severity_map = {"critical": "CRITICAL", "high": "HIGH", "medium": "MEDIUM", "low": "LOW"}
+                    severity_map = {
+                        "critical": "CRITICAL",
+                        "high": "HIGH",
+                        "medium": "MEDIUM",
+                        "low": "LOW",
+                    }
                     type_map = {
                         "high_flow": "FLOW_SPIKE",
                         "low_flow": "LOW_FLOW",
                         "no_flow": "NO_FLOW",
                         "high_pressure": "PRESSURE_SPIKE",
-                        "low_pressure": "PRESSURE_DROP"
+                        "low_pressure": "PRESSURE_DROP",
                     }
-                    
+
                     dto = AnomalyDetectionResultDTO(
-                        node_id=UUID("00000000-0000-0000-0000-000000000001"),  # Placeholder UUID
+                        node_id=UUID(
+                            "00000000-0000-0000-0000-000000000001"
+                        ),  # Placeholder UUID
                         timestamp=anomaly["timestamp"],
                         anomaly_type=type_map.get(anomaly["anomaly_type"], "UNKNOWN"),
                         severity=severity_map.get(anomaly["severity"], "MEDIUM"),
-                        measurement_type="FLOW" if "flow" in anomaly["anomaly_type"] else "PRESSURE",
-                        actual_value=anomaly["flow_rate"] if "flow" in anomaly["anomaly_type"] else anomaly["pressure"],
+                        measurement_type="FLOW"
+                        if "flow" in anomaly["anomaly_type"]
+                        else "PRESSURE",
+                        actual_value=anomaly["flow_rate"]
+                        if "flow" in anomaly["anomaly_type"]
+                        else anomaly["pressure"],
                         expected_range=(0, 100),  # Placeholder
                         deviation_percentage=20.0,  # Placeholder
                         location_name=anomaly["node_name"],
                         confidence_score=0.85,
-                        description=anomaly["description"]
+                        description=anomaly["description"],
                     )
                     anomaly_dtos.append(dto)
-                
+
                 st.success(f"✅ Detected {len(anomaly_dtos)} anomalies from sensor data")
                 return anomaly_dtos
-                
+
             except Exception as e2:
                 if "No monitoring nodes found" in str(e):
                     st.info("No monitoring nodes found in the database.")
