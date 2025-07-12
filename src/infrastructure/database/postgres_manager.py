@@ -5,12 +5,13 @@ This module provides the database connection and query management for the
 warm storage layer in our hybrid architecture.
 """
 
-import os
-import logging
 import json
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
+import logging
+import os
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import asyncpg
 import pandas as pd
 from asyncpg.pool import Pool
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class PostgresManager:
     """Manages PostgreSQL/TimescaleDB connections and operations."""
-    
+
     def __init__(
         self,
         host: Optional[str] = None,
@@ -29,11 +30,11 @@ class PostgresManager:
         user: Optional[str] = None,
         password: Optional[str] = None,
         min_pool_size: int = 10,
-        max_pool_size: int = 20
+        max_pool_size: int = 20,
     ):
         """
         Initialize PostgreSQL manager with connection parameters.
-        
+
         Args:
             host: Database host
             port: Database port
@@ -51,7 +52,7 @@ class PostgresManager:
         self.min_pool_size = min_pool_size
         self.max_pool_size = max_pool_size
         self.pool: Optional[Pool] = None
-        
+
     async def initialize(self) -> None:
         """Initialize connection pool."""
         try:
@@ -66,13 +67,15 @@ class PostgresManager:
                 command_timeout=60,
                 statement_cache_size=0,  # Disable for TimescaleDB
             )
-            logger.info(f"PostgreSQL connection pool created: {self.host}:{self.port}/{self.database}")
-            
+            logger.info(
+                f"PostgreSQL connection pool created: {self.host}:{self.port}/{self.database}"
+            )
+
             # Test connection and check TimescaleDB
             async with self.pool.acquire() as conn:
                 version = await conn.fetchval("SELECT version()")
                 logger.info(f"PostgreSQL version: {version}")
-                
+
                 # Check if TimescaleDB is installed
                 timescale_installed = await conn.fetchval(
                     "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'timescaledb')"
@@ -81,17 +84,17 @@ class PostgresManager:
                     logger.info("TimescaleDB extension is installed")
                 else:
                     logger.warning("TimescaleDB extension is not installed")
-                    
+
         except Exception as e:
             logger.error(f"Failed to initialize PostgreSQL pool: {e}")
             raise
-            
+
     async def close(self) -> None:
         """Close connection pool."""
         if self.pool:
             await self.pool.close()
             logger.info("PostgreSQL connection pool closed")
-            
+
     @asynccontextmanager
     async def acquire(self):
         """Acquire a connection from the pool."""
@@ -99,15 +102,16 @@ class PostgresManager:
             await self.initialize()
         async with self.pool.acquire() as conn:
             yield conn
-            
+
     # ====================================
     # Node Operations
     # ====================================
-    
+
     async def upsert_node(self, node_data: Dict[str, Any]) -> None:
         """Insert or update node information."""
         async with self.acquire() as conn:
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO water_infrastructure.nodes 
                     (node_id, node_name, node_type, location_name, is_active, metadata)
                 VALUES ($1, $2, $3, $4, $5, $6)
@@ -119,67 +123,81 @@ class PostgresManager:
                     is_active = EXCLUDED.is_active,
                     metadata = EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP
-            """, 
-            node_data['node_id'],
-            node_data['node_name'],
-            node_data['node_type'],
-            node_data.get('location_name'),
-            node_data.get('is_active', True),
-            json.dumps(node_data.get('metadata', {}))
+            """,
+                node_data["node_id"],
+                node_data["node_name"],
+                node_data["node_type"],
+                node_data.get("location_name"),
+                node_data.get("is_active", True),
+                json.dumps(node_data.get("metadata", {})),
             )
-            
+
     async def get_all_nodes(self) -> List[Dict[str, Any]]:
         """Get all active nodes."""
         async with self.acquire() as conn:
-            rows = await conn.fetch("""
+            rows = await conn.fetch(
+                """
                 SELECT 
                     node_id, node_name, node_type, location_name,
                     is_active, metadata, created_at, updated_at
                 FROM water_infrastructure.nodes
                 WHERE is_active = true
                 ORDER BY node_name
-            """)
+            """
+            )
             return [dict(row) for row in rows]
-            
+
     # ====================================
     # Sensor Reading Operations
     # ====================================
-    
+
     async def insert_sensor_readings_batch(self, readings: List[Dict[str, Any]]) -> int:
         """Batch insert sensor readings."""
         if not readings:
             return 0
-            
+
         async with self.acquire() as conn:
             # Prepare data for COPY
             records = []
             for reading in readings:
-                records.append((
-                    reading['timestamp'],
-                    reading['node_id'],
-                    reading.get('temperature'),
-                    reading.get('flow_rate'),
-                    reading.get('pressure'),
-                    reading.get('total_flow'),
-                    reading.get('quality_score', 1.0),
-                    reading.get('is_interpolated', False),
-                    json.dumps(reading.get('raw_data', {}))
-                ))
-                
+                records.append(
+                    (
+                        reading["timestamp"],
+                        reading["node_id"],
+                        reading.get("temperature"),
+                        reading.get("flow_rate"),
+                        reading.get("pressure"),
+                        reading.get("total_flow"),
+                        reading.get("quality_score", 1.0),
+                        reading.get("is_interpolated", False),
+                        json.dumps(reading.get("raw_data", {})),
+                    )
+                )
+
             # Use COPY for efficient batch insert
             result = await conn.copy_records_to_table(
-                'sensor_readings',
+                "sensor_readings",
                 records=records,
-                columns=['timestamp', 'node_id', 'temperature', 'flow_rate', 
-                        'pressure', 'total_flow', 'quality_score', 
-                        'is_interpolated', 'raw_data'],
-                schema_name='water_infrastructure'
+                columns=[
+                    "timestamp",
+                    "node_id",
+                    "temperature",
+                    "flow_rate",
+                    "pressure",
+                    "total_flow",
+                    "quality_score",
+                    "is_interpolated",
+                    "raw_data",
+                ],
+                schema_name="water_infrastructure",
             )
-            
+
             logger.info(f"Inserted {len(records)} sensor readings")
             return len(records)
-            
-    async def get_latest_readings(self, node_ids: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]:
+
+    async def get_latest_readings(
+        self, node_ids: Optional[List[str]] = None
+    ) -> Dict[str, Dict[str, Any]]:
         """Get latest reading for each node."""
         async with self.acquire() as conn:
             query = """
@@ -193,22 +211,22 @@ class PostgresManager:
                 )
                 SELECT * FROM latest
             """
-            
+
             if node_ids:
                 query = query.format("AND node_id = ANY($1)")
                 rows = await conn.fetch(query, node_ids)
             else:
                 query = query.format("")
                 rows = await conn.fetch(query)
-                
-            return {row['node_id']: dict(row) for row in rows}
-            
+
+            return {row["node_id"]: dict(row) for row in rows}
+
     async def get_time_series_data(
-        self, 
-        node_id: str, 
-        start_time: datetime, 
+        self,
+        node_id: str,
+        start_time: datetime,
         end_time: datetime,
-        interval: str = "5min"
+        interval: str = "5min",
     ) -> pd.DataFrame:
         """Get time series data for a node."""
         async with self.acquire() as conn:
@@ -226,20 +244,21 @@ class PostgresManager:
                 AND timestamp BETWEEN $2 AND $3
                 ORDER BY timestamp
             """
-            
+
             rows = await conn.fetch(query, node_id, start_time, end_time)
             if rows:
                 return pd.DataFrame([dict(row) for row in rows])
             return pd.DataFrame()
-            
+
     # ====================================
     # Anomaly Operations
     # ====================================
-    
+
     async def insert_anomaly(self, anomaly: Dict[str, Any]) -> int:
         """Insert a new anomaly detection."""
         async with self.acquire() as conn:
-            anomaly_id = await conn.fetchval("""
+            anomaly_id = await conn.fetchval(
+                """
                 INSERT INTO water_infrastructure.anomalies
                     (timestamp, node_id, anomaly_type, severity, measurement_type,
                      actual_value, expected_value, deviation_percentage, 
@@ -247,24 +266,21 @@ class PostgresManager:
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING anomaly_id
             """,
-            anomaly['timestamp'],
-            anomaly['node_id'],
-            anomaly['anomaly_type'],
-            anomaly['severity'],
-            anomaly.get('measurement_type'),
-            anomaly.get('actual_value'),
-            anomaly.get('expected_value'),
-            anomaly.get('deviation_percentage'),
-            anomaly.get('detection_method', 'statistical'),
-            anomaly.get('metadata', {})
+                anomaly["timestamp"],
+                anomaly["node_id"],
+                anomaly["anomaly_type"],
+                anomaly["severity"],
+                anomaly.get("measurement_type"),
+                anomaly.get("actual_value"),
+                anomaly.get("expected_value"),
+                anomaly.get("deviation_percentage"),
+                anomaly.get("detection_method", "statistical"),
+                anomaly.get("metadata", {}),
             )
             return anomaly_id
-            
+
     async def get_recent_anomalies(
-        self, 
-        hours: int = 24, 
-        node_ids: Optional[List[str]] = None,
-        limit: int = 100
+        self, hours: int = 24, node_ids: Optional[List[str]] = None, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """Get recent anomalies."""
         async with self.acquire() as conn:
@@ -280,54 +296,59 @@ class PostgresManager:
                 ORDER BY a.timestamp DESC
                 LIMIT $1
             """
-            
+
             if node_ids:
                 query = query.format(hours, "AND a.node_id = ANY($2)")
                 rows = await conn.fetch(query, limit, node_ids)
             else:
                 query = query.format(hours, "")
                 rows = await conn.fetch(query, limit)
-                
+
             return [dict(row) for row in rows]
-            
+
     # ====================================
     # ML Operations
     # ====================================
-    
+
     async def insert_ml_predictions(self, predictions: List[Dict[str, Any]]) -> int:
         """Batch insert ML predictions."""
         if not predictions:
             return 0
-            
+
         async with self.acquire() as conn:
             records = []
             for pred in predictions:
-                records.append((
-                    pred['timestamp'],
-                    pred['node_id'],
-                    pred['model_name'],
-                    pred.get('model_version', '1.0'),
-                    pred['prediction_type'],
-                    pred['prediction_horizon_hours'],
-                    pred.get('predicted_value'),
-                    pred.get('confidence_score'),
-                    pred.get('metadata', {})
-                ))
-                
-            await conn.executemany("""
+                records.append(
+                    (
+                        pred["timestamp"],
+                        pred["node_id"],
+                        pred["model_name"],
+                        pred.get("model_version", "1.0"),
+                        pred["prediction_type"],
+                        pred["prediction_horizon_hours"],
+                        pred.get("predicted_value"),
+                        pred.get("confidence_score"),
+                        pred.get("metadata", {}),
+                    )
+                )
+
+            await conn.executemany(
+                """
                 INSERT INTO water_infrastructure.ml_predictions
                     (timestamp, node_id, model_name, model_version, prediction_type,
                      prediction_horizon_hours, predicted_value, confidence_score, 
                      prediction_metadata)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            """, records)
-            
+            """,
+                records,
+            )
+
             return len(records)
-            
+
     # ====================================
     # System Metrics
     # ====================================
-    
+
     async def get_system_metrics(self, time_range: str = "24h") -> Dict[str, Any]:
         """Get system-wide metrics."""
         # If time_range already contains "hour", "day", etc., it's already a PostgreSQL interval
@@ -342,14 +363,15 @@ class PostgresManager:
                 "3d": "3 days",
                 "7d": "7 days",
                 "30d": "30 days",
-                "365d": "365 days"
+                "365d": "365 days",
             }
             interval = interval_map.get(time_range, "24 hours")
-        
+
         async with self.acquire() as conn:
             # Direct query from sensor_readings table
             # For now, get all available data regardless of time range
-            result = await conn.fetchrow(f"""
+            result = await conn.fetchrow(
+                f"""
                 WITH recent_data AS (
                     SELECT 
                         node_id,
@@ -368,65 +390,70 @@ class PostgresManager:
                     COALESCE(COUNT(*) * AVG(flow_rate) * 0.1, 0) as total_volume_m3,
                     0 as anomaly_count
                 FROM recent_data
-            """)
-            
+            """
+            )
+
             if result:
                 return dict(result)
             return {
-                'active_nodes': 0,
-                'total_flow': 0,
-                'avg_pressure': 0,
-                'total_volume_m3': 0,
-                'anomaly_count': 0
+                "active_nodes": 0,
+                "total_flow": 0,
+                "avg_pressure": 0,
+                "total_volume_m3": 0,
+                "anomaly_count": 0,
             }
-            
+
     # ====================================
     # ETL Operations
     # ====================================
-    
+
     async def log_etl_job(self, job_data: Dict[str, Any]) -> int:
         """Log ETL job execution."""
         async with self.acquire() as conn:
-            job_id = await conn.fetchval("""
+            job_id = await conn.fetchval(
+                """
                 INSERT INTO water_infrastructure.etl_jobs
                     (job_name, job_type, status, started_at, completed_at,
                      records_processed, records_failed, error_message, metadata)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING job_id
             """,
-            job_data['job_name'],
-            job_data['job_type'],
-            job_data['status'],
-            job_data['started_at'],
-            job_data.get('completed_at'),
-            job_data.get('records_processed', 0),
-            job_data.get('records_failed', 0),
-            job_data.get('error_message'),
-            json.dumps(job_data.get('metadata', {}))
+                job_data["job_name"],
+                job_data["job_type"],
+                job_data["status"],
+                job_data["started_at"],
+                job_data.get("completed_at"),
+                job_data.get("records_processed", 0),
+                job_data.get("records_failed", 0),
+                job_data.get("error_message"),
+                json.dumps(job_data.get("metadata", {})),
             )
             return job_id
-            
+
     async def update_etl_job(self, job_id: int, updates: Dict[str, Any]) -> None:
         """Update ETL job status."""
         async with self.acquire() as conn:
             set_clauses = []
             values = []
-            
+
             for i, (key, value) in enumerate(updates.items(), 1):
                 set_clauses.append(f"{key} = ${i}")
                 # Convert dict to JSON for metadata field
-                if key == 'metadata' and isinstance(value, dict):
+                if key == "metadata" and isinstance(value, dict):
                     values.append(json.dumps(value))
                 else:
                     values.append(value)
-                
+
             values.append(job_id)
-            
-            await conn.execute(f"""
+
+            await conn.execute(
+                f"""
                 UPDATE water_infrastructure.etl_jobs
                 SET {', '.join(set_clauses)}
                 WHERE job_id = ${len(values)}
-            """, *values)
+            """,
+                *values,
+            )
 
 
 # Singleton instance
