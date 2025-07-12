@@ -26,17 +26,16 @@ class ConsumptionTab:
     def __init__(self):
         """Initialize the consumption tab."""
         self.hybrid_service = None
-        # Node mapping for display names to actual PostgreSQL node IDs
+        # Node mapping for actual PostgreSQL node IDs (use numeric IDs that exist in processing database)
         self.node_mapping = {
-            "Primary Station": "PRIMARY_STATION",
-            "Secondary Station": "SECONDARY_STATION", 
-            "Distribution A": "DISTRIBUTION_A",
-            "Distribution B": "DISTRIBUTION_B",
-            "Pump Station": "PUMP_STATION_1",
-            "Pressure Zone 1": "PRESSURE_ZONE_1",
-            "Pressure Zone 2": "PRESSURE_ZONE_2",
-            "Reservoir East": "RESERVOIR_EAST",
-            "Reservoir West": "RESERVOIR_WEST",
+            "Primary Station": "281492",
+            "Secondary Station": "211514", 
+            "Distribution A": "288400",
+            "Distribution B": "288399",
+            "Junction C": "215542",
+            "Supply Control": "273933",
+            "Pressure Station": "215600",
+            "Remote Point": "287156",
         }
 
     async def _get_hybrid_service(self):
@@ -293,13 +292,13 @@ class ConsumptionTab:
             import psycopg2
             import pandas as pd
             
-            # Connect directly to PostgreSQL
+            # Connect directly to PostgreSQL processing database
             conn = psycopg2.connect(
                 host="localhost",
-                port=5432,
-                database="abbanoa", 
-                user="postgres",
-                password=""
+                port=5434,
+                database="abbanoa_processing", 
+                user="abbanoa_user",
+                password="abbanoa_secure_pass"
             )
             
             # Get node IDs for the query
@@ -308,18 +307,19 @@ class ConsumptionTab:
             if not node_ids:
                 return None
                 
-            # Query from the 5-minute aggregates
+            # Query from the main sensor readings table
             query = """
                 SELECT 
-                    bucket as timestamp,
+                    timestamp,
                     node_id,
-                    avg_flow_rate as flow_rate,
-                    avg_pressure as pressure,
-                    avg_temperature as temperature
-                FROM water_infrastructure.sensor_readings_5min
+                    flow_rate,
+                    pressure,
+                    temperature,
+                    total_flow
+                FROM water_infrastructure.sensor_readings
                 WHERE node_id = ANY(%s)
-                AND bucket BETWEEN %s AND %s
-                ORDER BY bucket, node_id
+                AND timestamp BETWEEN %s AND %s
+                ORDER BY timestamp, node_id
             """
             
             df = pd.read_sql_query(query, conn, params=[node_ids, start_time, end_time])

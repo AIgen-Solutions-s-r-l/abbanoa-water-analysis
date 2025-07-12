@@ -1,5 +1,57 @@
 # Changelog
 
+## [v1.2.3.12] - 2025-07-12
+
+### Critical Bug Fixes
+- fix(auth): resolve PostgreSQL authentication failure in HybridDataService
+  - Fixed hardcoded wrong database credentials in HybridDataService initialization
+  - Updated connection parameters to use correct processing database (abbanoa_processing)
+  - Resolved "password authentication failed for user 'postgres'" error
+  - HybridDataService now properly connects to localhost:5434/abbanoa_processing with abbanoa_user credentials
+
+- fix(imports): resolve performance_monitor import error
+  - Added missing global performance_monitor instance in performance_monitor.py module
+  - Fixed "cannot import name 'performance_monitor'" ImportError that prevented dashboard startup
+  - Dashboard now imports performance monitoring functionality correctly
+
+- fix(connections): resolve PostgreSQL connection pool issues
+  - Disabled background sync tasks in Streamlit context to prevent event loop conflicts
+  - Added connection validation before query execution
+  - Resolved "Event loop is closed" and "Connection was closed in the middle of operation" errors
+  - Improved error handling and retry logic for database operations
+
+### UI/UX Improvements
+- feat(theme): implement white/light theme for dashboard
+  - Created .streamlit/config.toml with light theme configuration
+  - Updated custom CSS to force white backgrounds and professional appearance
+  - Added Inter font family and blue accent colors (#1f77b4)
+  - Improved contrast and readability with dark text on white background
+
+- fix(consumption): update node mapping to use correct database IDs
+  - Updated consumption tab to use actual numeric node IDs from processing database
+  - Fixed node mapping from string-based to numeric IDs (281492, 211514, etc.)
+  - Updated SQL query to use main sensor_readings table instead of non-existent aggregates
+  - Consumption tab now retrieves and displays real sensor data successfully
+
+### Performance Improvements
+- Enhanced connection pool management with proper validation
+- Reduced async task conflicts through better context detection
+- Improved query performance with correct database targeting
+- Optimized background task scheduling to avoid Streamlit conflicts
+
+### Data Access Fixes
+- Fixed fallback data retrieval method to use correct database connection
+- Updated consumption tab SQL queries to use existing sensor_readings table
+- Added proper error handling for database connection issues
+- Enhanced data retrieval with 192 sensor readings across 8 nodes
+
+### Technical Changes
+- Updated postgres_manager.py to respect environment variable configurations
+- Enhanced hybrid_data_service.py with better Streamlit context detection
+- Improved consumption_tab.py with correct database connection parameters
+- Added global performance monitor instance for dashboard functionality
+- Updated theme configuration with professional white theme styling
+
 ## [v1.2.3.11] - 2025-07-12
 
 ### Bug Fixes

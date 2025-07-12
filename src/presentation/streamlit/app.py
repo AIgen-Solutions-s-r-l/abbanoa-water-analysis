@@ -38,7 +38,7 @@ from src.presentation.streamlit.config.theme import apply_custom_theme
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
 from src.presentation.streamlit.utils.performance_monitor import performance_monitor
 
-# Page configuration
+# Page configuration with white theme
 st.set_page_config(
     page_title="Abbanoa Water Network Forecasting Dashboard",
     page_icon="💧",

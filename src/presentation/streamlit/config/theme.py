@@ -16,14 +16,22 @@ def apply_custom_theme():
     /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    /* Global Styles */
+    /* Global Styles - Force White Theme */
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+        background-color: #ffffff !important;
+        color: #262730 !important;
     }
     
     /* Main container */
     .main {
         padding-top: 2rem;
+        background-color: #ffffff !important;
+    }
+    
+    /* Force white background for all containers */
+    .stApp {
+        background-color: #ffffff !important;
     }
     
     /* Headers */
@@ -37,9 +45,18 @@ def apply_custom_theme():
         color: #1f77b4;
     }
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: #f8f9fa;
+    /* Sidebar styling - White Theme */
+    .css-1d391kg, [data-testid="stSidebar"] {
+        background-color: #f8f9fa !important;
+    }
+    
+    .css-1d391kg > div {
+        background-color: #f8f9fa !important;
+    }
+    
+    /* Sidebar content */
+    .css-1d391kg .block-container {
+        background-color: #f8f9fa !important;
     }
     
     /* Metric cards */

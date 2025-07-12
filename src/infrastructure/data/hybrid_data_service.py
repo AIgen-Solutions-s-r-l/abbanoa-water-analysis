@@ -60,13 +60,13 @@ class HybridDataService:
         logger.info("Initializing hybrid data service...")
         
         # Initialize PostgreSQL with correct connection parameters
-        # Override environment variables to use the main database with data
+        # Use the processing database with actual data
         self.postgres_manager = PostgresManager(
             host="localhost",
-            port=5432,  # Main database port
-            database="abbanoa",  # Main database with actual data
-            user="postgres",
-            password="",
+            port=5434,  # Processing database port
+            database="abbanoa_processing",  # Processing database with actual data
+            user="abbanoa_user",
+            password="abbanoa_secure_pass",
             min_pool_size=2,  # Reduce pool size to avoid conflicts
             max_pool_size=5
         )
@@ -75,8 +75,20 @@ class HybridDataService:
         # Initialize Redis cache
         self.redis_manager.initialize_cache()
         
-        # Start background tasks
-        asyncio.create_task(self._background_sync())
+        # Start background tasks (only if not in Streamlit context)
+        try:
+            # Check if we're in a Streamlit context to avoid background task conflicts
+            import streamlit as st
+            # Check if we have an active Streamlit session
+            if hasattr(st, 'session_state'):
+                logger.info("Skipping background sync in Streamlit context")
+            else:
+                logger.info("Starting background sync task")
+                asyncio.create_task(self._background_sync())
+        except (ImportError, AttributeError):
+            # Not in Streamlit, safe to start background task
+            logger.info("Starting background sync task")
+            asyncio.create_task(self._background_sync())
         
         logger.info("Hybrid data service initialized")
         
@@ -387,6 +399,11 @@ class HybridDataService:
     ) -> Optional[pd.DataFrame]:
         """Query data from PostgreSQL."""
         try:
+            # Check if postgres manager is available and healthy
+            if not self.postgres_manager or not self.postgres_manager.pool:
+                logger.warning("PostgreSQL manager not available")
+                return pd.DataFrame()
+                
             result = await self.postgres_manager.get_time_series_data(
                 node_id, start_time, end_time, interval
             )
@@ -467,14 +484,24 @@ class HybridDataService:
             try:
                 # Flush write buffer every 5 minutes
                 await asyncio.sleep(300)
-                await self._flush_write_buffer()
+                
+                # Check if postgres manager is still valid
+                if self.postgres_manager and self.postgres_manager.pool:
+                    await self._flush_write_buffer()
+                else:
+                    logger.warning("PostgreSQL manager not available, skipping flush")
                 
                 # TODO: Implement PostgreSQL → BigQuery sync
                 # TODO: Implement cache warming
                 # TODO: Clean up old Redis data
                 
+            except asyncio.CancelledError:
+                logger.info("Background sync task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Background sync error: {e}")
+                # Wait a bit before retrying to avoid tight error loops
+                await asyncio.sleep(60)
                 
                 
 # Singleton instance
