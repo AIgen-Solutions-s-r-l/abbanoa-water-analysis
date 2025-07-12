@@ -509,7 +509,7 @@ class AnomalyTab:
                     # UUID node
                     try:
                         node_ids.append(UUID(node_id))
-                    except:
+                    except Exception:
                         pass
 
             # If no UUID nodes, use None to trigger default behavior

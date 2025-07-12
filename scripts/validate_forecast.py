@@ -221,7 +221,7 @@ class ForecastValidator:
                     if response.status_code == 200:
                         latencies.append(latency_ms)
 
-                except:
+                except Exception:
                     pass
 
         if latencies:

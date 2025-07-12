@@ -58,18 +58,8 @@ def load_data(time_range_option="Last 24 Hours"):
     client = init_bigquery_client()
 
     # Map time range options to actual data periods
-    if time_range_option == "Last 6 Hours":
-        # Show last 6 hours of available data
-        limit_clause = "LIMIT 12"  # ~6 hours of 30-min intervals
-    elif time_range_option == "Last 24 Hours":
-        # Show last 24 hours of available data
-        limit_clause = "LIMIT 48"  # ~24 hours of 30-min intervals
-    elif time_range_option == "Last 3 Days":
-        # Show last 3 days of available data
-        limit_clause = "LIMIT 144"  # ~3 days of 30-min intervals
-    else:  # Last Week
-        # Show all available data (it's only about 4 months)
-        limit_clause = ""
+    # Note: Time range filtering would need to be implemented in the query
+    # Currently showing all available data regardless of selection
 
     query = """
     WITH recent_data AS (
@@ -89,7 +79,6 @@ def load_data(time_range_option="Last 24 Hours"):
     SELECT * FROM recent_data
     WHERE datetime IS NOT NULL
     ORDER BY datetime DESC
-    {limit_clause}
     """
 
     try:

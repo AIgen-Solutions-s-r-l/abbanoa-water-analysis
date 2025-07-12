@@ -6,6 +6,7 @@ Tests sidebar rendering, filter interactions, and state management.
 
 from unittest.mock import MagicMock, Mock, patch
 
+import pandas as pd
 import pytest
 
 from src.presentation.streamlit.components.sidebar_filters import SidebarFilters

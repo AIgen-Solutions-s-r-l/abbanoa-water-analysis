@@ -131,7 +131,7 @@ class BigQueryPipeline:
                     table_id = self.create_or_update_table(table_config)
 
                     # Upload data
-                    upload_result = self.upload_data(df, table_id)
+                    self.upload_data(df, table_id)
 
                     results["files_processed"] += 1
                     results["total_rows"] += len(df)

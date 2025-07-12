@@ -18,7 +18,7 @@ try:
 
     response = requests.get(f"{api_base_url}/health", timeout=2)
     use_api = response.status_code == 200
-except:
+except Exception:
     use_api = False
 
 # Choose which app to run

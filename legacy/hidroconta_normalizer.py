@@ -68,7 +68,7 @@ class HidrocontaNormalizer:
                 end_date = datetime.strptime(parts[1], "%Y%m%d%H%M%S")
                 metadata["date_range_start"] = start_date.isoformat()
                 metadata["date_range_end"] = end_date.isoformat()
-            except:
+            except Exception:
                 pass
 
         # Extract PCR unit

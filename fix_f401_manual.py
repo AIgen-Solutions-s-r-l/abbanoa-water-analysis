@@ -40,8 +40,6 @@ def fix_unused_imports_simple(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     
-    original_lines = lines.copy()
-    
     # Common unused imports based on flake8 output
     unused_patterns = [
         (r'^import json\s*$', ['debug-api-connection.py', 'test_api_integration.py']),

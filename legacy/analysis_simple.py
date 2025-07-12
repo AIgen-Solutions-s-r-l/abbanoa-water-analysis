@@ -79,7 +79,7 @@ for col in df.columns:
         )
         if df[col].notna().any():
             numeric_columns.append(col)
-    except:
+    except Exception:
         pass
 
 print(f"\nColonne numeriche identificate: {len(numeric_columns)}")

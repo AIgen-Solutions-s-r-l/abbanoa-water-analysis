@@ -65,7 +65,7 @@ def parse_data_log_simple(file_path: Path, node_id: str) -> pd.DataFrame:
                             val = float(parts[i].replace(",", "."))
                             if 0 <= val <= 100:  # Reasonable sensor range
                                 values.append(val)
-                        except:
+                        except Exception:
                             continue
 
                     if values:
@@ -83,7 +83,7 @@ def parse_data_log_simple(file_path: Path, node_id: str) -> pd.DataFrame:
                                 "temperature": temp,
                             }
                         )
-            except:
+            except Exception:
                 continue
 
         if data:

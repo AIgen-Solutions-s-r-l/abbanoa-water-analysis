@@ -61,7 +61,7 @@ def main():
         try:
             dataset = client.get_dataset(dataset_id)
             print(f"✅ Dataset {DATASET_ID} already exists")
-        except:
+        except Exception:
             # Create dataset
             dataset = bigquery.Dataset(dataset_id)
             dataset.location = LOCATION

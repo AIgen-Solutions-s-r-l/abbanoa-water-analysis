@@ -321,7 +321,7 @@ class ReleaseManager:
         # Check if gh is installed
         try:
             self.run_command(["gh", "--version"], capture_output=False)
-        except:
+        except Exception:
             print("⚠️  GitHub CLI (gh) not found. Please install it to create releases.")
             print("   Visit: https://cli.github.com/")
             return

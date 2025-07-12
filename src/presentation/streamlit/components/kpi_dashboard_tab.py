@@ -86,7 +86,7 @@ class KPIDashboardTab:
                 [n for n in ALL_NODE_MAPPINGS.keys() if not n.startswith("---")]
             )
             system_health = (active_nodes / total_nodes * 100) if total_nodes > 0 else 0
-        except:
+        except Exception:
             active_nodes = 7
             total_nodes = 8
             system_health = 87.5
