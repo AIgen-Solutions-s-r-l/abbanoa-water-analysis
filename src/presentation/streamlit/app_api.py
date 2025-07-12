@@ -5,23 +5,20 @@ This version uses the REST API instead of direct BigQuery connections.
 """
 
 import os
-import streamlit as st
 from datetime import datetime, timedelta
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-from typing import Dict, List, Optional
-import asyncio
+
+import streamlit as st
+
+from src.presentation.streamlit.components.anomaly_tab_api import AnomalyTab
+from src.presentation.streamlit.components.efficiency_tab_api import EfficiencyTab
+from src.presentation.streamlit.components.forecast_tab import ForecastTab
+
+# Import existing API-based components
+from src.presentation.streamlit.components.overview_tab_api import OverviewTab
 
 # Import API client and utilities
 from src.presentation.streamlit.utils.api_client import APIClient
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
-
-# Import existing API-based components
-from src.presentation.streamlit.components.overview_tab_api import OverviewTab
-from src.presentation.streamlit.components.efficiency_tab_api import EfficiencyTab
-from src.presentation.streamlit.components.anomaly_tab_api import AnomalyTab
-from src.presentation.streamlit.components.forecast_tab import ForecastTab
 
 
 class DashboardApp:
@@ -33,20 +30,20 @@ class DashboardApp:
         api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
         self.api_client = APIClient(base_url=api_base_url)
         self.data_fetcher = DataFetcher(api_base_url=api_base_url)
-        
+
         # Initialize components (they use their own API clients)
         self.overview_tab = OverviewTab()
         self.efficiency_tab = EfficiencyTab()
         self.anomaly_tab = AnomalyTab()
         self.forecast_tab = ForecastTab(data_fetcher=self.data_fetcher)
-        
+
         # Session state
-        if 'selected_node' not in st.session_state:
+        if "selected_node" not in st.session_state:
             st.session_state.selected_node = None
-        if 'selected_date_range' not in st.session_state:
+        if "selected_date_range" not in st.session_state:
             st.session_state.selected_date_range = (
                 datetime.now() - timedelta(days=7),
-                datetime.now()
+                datetime.now(),
             )
 
     def run(self):
@@ -66,29 +63,30 @@ class DashboardApp:
             self._render_sidebar()
 
         # Main content
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "🏠 Overview",
-            "📊 Network Efficiency",
-            "⚠️ Anomalies",
-            "📈 Forecasts"
-        ])
+        tab1, tab2, tab3, tab4 = st.tabs(
+            ["🏠 Overview", "📊 Network Efficiency", "⚠️ Anomalies", "📈 Forecasts"]
+        )
 
         with tab1:
             # Get time range and selected nodes from session state
-            time_range = st.session_state.get('time_range', '7d')
-            selected_nodes = st.session_state.get('selected_nodes', [])
-            self.overview_tab.render(time_range=time_range, selected_nodes=selected_nodes)
+            time_range = st.session_state.get("time_range", "7d")
+            selected_nodes = st.session_state.get("selected_nodes", [])
+            self.overview_tab.render(
+                time_range=time_range, selected_nodes=selected_nodes
+            )
 
         with tab2:
             # Get time range from session state
-            time_range = st.session_state.get('time_range', '7d')
+            time_range = st.session_state.get("time_range", "7d")
             self.efficiency_tab.render(time_range=time_range)
 
         with tab3:
             # Get time range and selected nodes from session state
-            time_range = st.session_state.get('time_range', '7d')
-            selected_nodes = st.session_state.get('selected_nodes', [])
-            self.anomaly_tab.render(time_range=time_range, selected_nodes=selected_nodes)
+            time_range = st.session_state.get("time_range", "7d")
+            selected_nodes = st.session_state.get("selected_nodes", [])
+            self.anomaly_tab.render(
+                time_range=time_range, selected_nodes=selected_nodes
+            )
 
         with tab4:
             self.forecast_tab.render()
@@ -105,28 +103,26 @@ class DashboardApp:
             "Last 7 Days": "7d",
             "Last 30 Days": "30d",
             "Last 90 Days": "90d",
-            "Last 1 Year": "365d"
+            "Last 1 Year": "365d",
         }
         selected_range = st.selectbox(
             "Select Time Range",
             options=list(time_range_options.keys()),
-            index=1  # Default to 7 days
+            index=1,  # Default to 7 days
         )
         st.session_state.time_range = time_range_options[selected_range]
 
         # Node selector
         st.markdown("---")
         st.subheader("📍 Node Selection")
-        
+
         # Get nodes list from API
         try:
             nodes = self.api_client.get_nodes()
             if nodes:
-                node_ids = [node.get('node_id', '') for node in nodes]
+                node_ids = [node.get("node_id", "") for node in nodes]
                 selected_nodes = st.multiselect(
-                    "Select Nodes",
-                    options=node_ids,
-                    default=[]
+                    "Select Nodes", options=node_ids, default=[]
                 )
                 st.session_state.selected_nodes = selected_nodes
             else:
@@ -148,13 +144,12 @@ class DashboardApp:
         st.caption("System Status")
         status = self.api_client.get_system_status()
         if status:
-            if status.get('status') == 'healthy':
+            if status.get("status") == "healthy":
                 st.success("✅ System Healthy")
             else:
                 st.error("❌ System Issues")
-            
-            st.caption(f"Last Update: {status.get('timestamp', 'Unknown')}")
 
+            st.caption(f"Last Update: {status.get('timestamp', 'Unknown')}")
 
     def _apply_custom_css(self):
         """Apply custom CSS styling."""

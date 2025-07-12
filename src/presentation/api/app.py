@@ -1,21 +1,18 @@
 """FastAPI application for water infrastructure monitoring."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-from src.application.dto.analysis_results_dto import (
-    AnomalyDetectionResultDTO,
-    ConsumptionPatternDTO,
-    NetworkEfficiencyResultDTO,
-)
 from src.infrastructure.di_container import Container
 from src.presentation.api.endpoints.forecast_endpoint import router as forecast_router
-from src.presentation.api.middleware.error_handler import ErrorHandlerMiddleware, register_error_handlers
+from src.presentation.api.middleware.error_handler import (
+    ErrorHandlerMiddleware,
+    register_error_handlers,
+)
 
 
 # API models
@@ -102,14 +99,15 @@ app.include_router(forecast_router)
 async def startup_event():
     """Initialize application on startup."""
     import logging
+
     from src.infrastructure.logging.forecast_logger import configure_application_logging
-    
+
     # Configure logging
     configure_application_logging(log_level="INFO")
     logger = logging.getLogger(__name__)
-    
+
     logger.info("Starting Abbanoa Water Infrastructure API...")
-    
+
     # Wire the container
     container.wire(
         modules=[
@@ -120,7 +118,7 @@ async def startup_event():
             "src.application.use_cases.forecast_consumption",
         ]
     )
-    
+
     logger.info("Dependency injection container wired successfully")
     logger.info(f"API ready with forecast endpoint at /api/v1/forecasts")
 
@@ -138,13 +136,14 @@ async def health_check():
     try:
         # Quick query to verify connection
         from google.cloud import bigquery
+
         client = bigquery.Client()
         query = "SELECT 1"
         client.query(query).result()
         status = "healthy"
     except Exception:
         status = "degraded"
-    
+
     return HealthResponse(status=status, timestamp=datetime.now(), version="1.2.0.1")
 
 
