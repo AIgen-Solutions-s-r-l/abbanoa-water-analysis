@@ -369,7 +369,10 @@ class AnomalyDetectionService:
             # Enhance description to mention if multiple measurement types were affected
             if len(group_anomalies) > 1:
                 measurement_types = [a.sensor_type for a in group_anomalies]
-                best_anomaly.description = f"{best_anomaly.description} (Multiple measurements affected: {', '.join(measurement_types)})"
+                best_anomaly.description = (
+                    f"{best_anomaly.description} (Multiple measurements affected: "
+                    f"{', '.join(measurement_types)})"
+                )
 
             deduplicated_anomalies.append(best_anomaly)
 

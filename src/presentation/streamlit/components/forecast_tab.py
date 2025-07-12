@@ -128,7 +128,9 @@ class ForecastTab:
         st.markdown(
             f"""
             <div style="background-color: #f0f2f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                <strong>Current Selection:</strong> {st.session_state.district_id} | {metric_options.get(st.session_state.metric, st.session_state.metric)} | {st.session_state.horizon} days
+                <strong>Current Selection:</strong> {st.session_state.district_id} | 
+                {metric_options.get(st.session_state.metric, st.session_state.metric)} | 
+                {st.session_state.horizon} days
             </div>
             """,
             unsafe_allow_html=True,
@@ -361,7 +363,10 @@ class ForecastTab:
 
         fig.update_layout(
             title={
-                "text": f"7-Day Forecast: {st.session_state.district_id} - {metric_units.get(st.session_state.metric, '')}",
+                "text": (
+                    f"7-Day Forecast: {st.session_state.district_id} - "
+                    f"{metric_units.get(st.session_state.metric, '')}"
+                ),
                 "x": 0.5,
                 "xanchor": "center",
                 "font": {"size": 20},
@@ -437,7 +442,10 @@ class ForecastTab:
             st.download_button(
                 label="📥 Download CSV",
                 data=csv,
-                file_name=f"forecast_{st.session_state.district_id}_{st.session_state.metric}_{datetime.now().strftime('%Y%m%d')}.csv",
+                file_name=(
+                    f"forecast_{st.session_state.district_id}_"
+                    f"{st.session_state.metric}_{datetime.now().strftime('%Y%m%d')}.csv"
+                ),
                 mime="text/csv",
                 use_container_width=True,
             )
@@ -448,7 +456,10 @@ class ForecastTab:
             st.download_button(
                 label="📥 Download JSON",
                 data=json_str,
-                file_name=f"forecast_{st.session_state.district_id}_{st.session_state.metric}_{datetime.now().strftime('%Y%m%d')}.json",
+                file_name=(
+                    f"forecast_{st.session_state.district_id}_"
+                    f"{st.session_state.metric}_{datetime.now().strftime('%Y%m%d')}.json"
+                ),
                 mime="application/json",
                 use_container_width=True,
             )

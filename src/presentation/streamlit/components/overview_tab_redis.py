@@ -254,7 +254,8 @@ class OverviewTab:
                 for alert in critical_alerts[:3]:
                     st.markdown(
                         f"""
-                        <div style="background-color: #ffebee; border-left: 4px solid #f44336; padding: 12px; margin: 8px 0; border-radius: 4px;">
+                        <div style="background-color: #ffebee; border-left: 4px solid #f44336; 
+                                     padding: 12px; margin: 8px 0; border-radius: 4px;">
                             <strong>{alert['title']}</strong><br>
                             <small>{alert['node']} • {alert['timestamp']}</small><br>
                             {alert['description']}
@@ -268,7 +269,8 @@ class OverviewTab:
                 for alert in warning_alerts[:3]:
                     st.markdown(
                         f"""
-                        <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 4px;">
+                        <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; 
+                                     padding: 12px; margin: 8px 0; border-radius: 4px;">
                             <strong>{alert['title']}</strong><br>
                             <small>{alert['node']} • {alert['timestamp']}</small><br>
                             {alert['description']}
@@ -282,7 +284,8 @@ class OverviewTab:
                 for alert in info_alerts[:2]:
                     st.markdown(
                         f"""
-                        <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin: 8px 0; border-radius: 4px;">
+                        <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; 
+                                     padding: 12px; margin: 8px 0; border-radius: 4px;">
                             <strong>{alert['title']}</strong><br>
                             <small>{alert['node']} • {alert['timestamp']}</small><br>
                             {alert['description']}

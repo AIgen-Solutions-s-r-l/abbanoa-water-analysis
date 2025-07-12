@@ -221,7 +221,9 @@ class ConsumptionTab:
 
                 # Show data range being queried
                 st.info(
-                    f"🔍 Querying {len(nodes_to_query)} nodes from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}"
+                    f"🔍 Querying {len(nodes_to_query)} nodes from "
+                    f"{start_time.strftime('%Y-%m-%d %H:%M')} to "
+                    f"{end_time.strftime('%Y-%m-%d %H:%M')}"
                 )
 
                 # Query each node using HybridDataService

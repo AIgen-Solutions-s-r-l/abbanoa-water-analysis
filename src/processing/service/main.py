@@ -165,7 +165,8 @@ class ProcessingService:
                 return
 
             logger.info(
-                f"Found new data: {new_data_info['record_count']} records from {new_data_info['min_timestamp']} to {new_data_info['max_timestamp']}"
+                f"Found new data: {new_data_info['record_count']} records from "
+                f"{new_data_info['min_timestamp']} to {new_data_info['max_timestamp']}"
             )
 
             # 2. Process new data

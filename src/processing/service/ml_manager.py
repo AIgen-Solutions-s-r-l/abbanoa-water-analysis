@@ -133,7 +133,8 @@ class MLModelManager:
             > self.performance_degradation_threshold
         ):
             logger.info(
-                f"Model {model_type} performance degraded by {recent_performance['degradation_factor']:.2f}x, retraining"
+                f"Model {model_type} performance degraded by "
+                f"{recent_performance['degradation_factor']:.2f}x, retraining"
             )
             return True
 

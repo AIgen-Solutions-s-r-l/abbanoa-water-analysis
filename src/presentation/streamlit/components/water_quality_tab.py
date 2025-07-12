@@ -483,15 +483,18 @@ class WaterQualityTab:
             for _, row in df_quality.iterrows():
                 if row["Overall Score"] < 80:
                     st.warning(
-                        f"⚠️ **{row['Node']}**: Quality score {row['Overall Score']:.1f}% (Grade {row['Grade']}) - Requires attention"
+                        f"⚠️ **{row['Node']}**: Quality score {row['Overall Score']:.1f}% "
+                        f"(Grade {row['Grade']}) - Requires attention"
                     )
                 elif row["Overall Score"] < 90:
                     st.info(
-                        f"ℹ️ **{row['Node']}**: Quality score {row['Overall Score']:.1f}% (Grade {row['Grade']}) - Monitor closely"
+                        f"ℹ️ **{row['Node']}**: Quality score {row['Overall Score']:.1f}% "
+                        f"(Grade {row['Grade']}) - Monitor closely"
                     )
                 else:
                     st.success(
-                        f"✅ **{row['Node']}**: Quality score {row['Overall Score']:.1f}% (Grade {row['Grade']}) - Excellent"
+                        f"✅ **{row['Node']}**: Quality score {row['Overall Score']:.1f}% "
+                        f"(Grade {row['Grade']}) - Excellent"
                     )
 
         except Exception as e:
