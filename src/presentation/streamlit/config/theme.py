@@ -230,42 +230,6 @@ def apply_custom_theme():
     # Apply the custom CSS
     st.markdown(custom_css, unsafe_allow_html=True)
 
-    # Additional JavaScript for enhanced interactivity
-    custom_js = """
-    <script>
-    // Add smooth scrolling
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
-    
-    // Add fade-in animation for elements
-    const observerOptions = {
-        threshold: 0.1
-    };
-    
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
-            }
-        });
-    }, observerOptions);
-    
-    // Observe all metric containers
-    document.querySelectorAll('[data-testid="metric-container"]').forEach(el => {
-        observer.observe(el);
-    });
-    </script>
-    """
-
-    # Apply JavaScript (optional, may not work in all Streamlit deployments)
-    # st.markdown(custom_js, unsafe_allow_html=True)
-
 
 def get_color_palette():
     """

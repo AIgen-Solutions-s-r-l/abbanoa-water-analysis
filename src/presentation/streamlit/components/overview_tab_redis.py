@@ -244,7 +244,7 @@ class OverviewTab:
                     info_alerts.append(alert)
                 else:
                     alert["title"] = "Anomaly Detected"
-                    alert["description"] = f"Unusual reading detected"
+                    alert["description"] = "Unusual reading detected"
                     alert["severity"] = "info"
                     info_alerts.append(alert)
 

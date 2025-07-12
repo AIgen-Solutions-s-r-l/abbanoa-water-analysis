@@ -242,9 +242,6 @@ class ETLScheduler:
                     flow_rates = [
                         r["flow_rate"] for r in rows if r["flow_rate"] is not None
                     ]
-                    pressures = [
-                        r["pressure"] for r in rows if r["pressure"] is not None
-                    ]
 
                     if flow_rates:
                         avg_flow = sum(flow_rates) / len(flow_rates)

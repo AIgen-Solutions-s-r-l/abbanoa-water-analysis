@@ -579,7 +579,7 @@ class AnomalyTab:
                 st.success(f"✅ Detected {len(anomaly_dtos)} anomalies from sensor data")
                 return anomaly_dtos
 
-            except Exception as e2:
+            except Exception:
                 if "No monitoring nodes found" in str(e):
                     st.info("No monitoring nodes found in the database.")
                 else:

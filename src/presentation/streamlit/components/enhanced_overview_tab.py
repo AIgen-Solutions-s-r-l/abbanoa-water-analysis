@@ -190,7 +190,6 @@ class EnhancedOverviewTab:
 
         try:
             # Get data for metrics calculation
-            data = self.data_fetcher.fetch_sensor_data(selected_nodes, time_range)
             latest_readings = self.data_fetcher.get_latest_readings(selected_nodes)
 
             with col1:

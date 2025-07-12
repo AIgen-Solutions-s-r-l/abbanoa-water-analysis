@@ -66,7 +66,9 @@ class SensorDataRepository(ISensorReadingRepository):
         flow_rate = None
         if row.flow_rate is not None:
             try:
-                flow_rate = FlowRate(value=float(row.flow_rate), unit="liters_per_second")
+                flow_rate = FlowRate(
+                    value=float(row.flow_rate), unit="liters_per_second"
+                )
             except ValueError:
                 # Skip invalid flow rate readings
                 pass
@@ -76,7 +78,9 @@ class SensorDataRepository(ISensorReadingRepository):
             try:
                 # Create custom pressure value object that handles higher ranges
                 pressure_value = float(row.pressure)
-                if pressure_value >= 0 and pressure_value <= 100:  # Expand range to handle real data
+                if (
+                    pressure_value >= 0 and pressure_value <= 100
+                ):  # Expand range to handle real data
                     pressure = CustomPressure(value=pressure_value, unit="bar")
             except ValueError:
                 # Skip invalid pressure readings
@@ -163,7 +167,7 @@ class SensorDataRepository(ISensorReadingRepository):
 
         # Only include high-quality data
         query += " AND data_quality_score > 0.7"
-        
+
         query += " ORDER BY timestamp DESC"
 
         if limit:
@@ -289,7 +293,7 @@ class SensorDataRepository(ISensorReadingRepository):
 
 class CustomPressure(Pressure):
     """Custom pressure value object that handles higher pressure ranges."""
-    
+
     def _validate(self) -> None:
         """Validate pressure value with extended range."""
         if self.value < 0:

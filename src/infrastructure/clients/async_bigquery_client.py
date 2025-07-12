@@ -240,7 +240,7 @@ class AsyncBigQueryClient:
         for attempt in range(self.max_retry_attempts):
             try:
                 return await _run_query()
-            except (GoogleCloudError, ConnectionError) as e:
+            except (GoogleCloudError, ConnectionError):
                 if attempt == self.max_retry_attempts - 1:
                     raise
 

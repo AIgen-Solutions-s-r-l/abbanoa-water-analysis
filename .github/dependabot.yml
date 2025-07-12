@@ -1,0 +1,66 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "python"
+    assignees:
+      - "rocchi-b-a"
+    reviewers:
+      - "rocchi-b-a"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "pytest*"
+          - "black"
+          - "isort"
+          - "flake8"
+          - "mypy"
+          - "pylint"
+          - "bandit"
+          - "safety"
+          - "coverage"
+          - "pre-commit"
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "pytest*"
+          - "black"
+          - "isort"
+          - "flake8"
+          - "mypy"
+          - "pylint"
+          - "bandit"
+          - "safety"
+          - "coverage"
+          - "pre-commit"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    assignees:
+      - "rocchi-b-a"
+    reviewers:
+      - "rocchi-b-a"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

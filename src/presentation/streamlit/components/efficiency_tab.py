@@ -50,7 +50,7 @@ class EfficiencyTab:
             st.metric(
                 label="Water Loss Rate",
                 value=f"{efficiency_data.get('loss_percentage', 0):.1f}%",
-                delta=f"Target: <5%",
+                delta="Target: <5%",
             )
 
         with col3:
@@ -58,7 +58,7 @@ class EfficiencyTab:
             st.metric(
                 label="Energy Efficiency",
                 value=f"{energy_eff:.2f} kWh/m³",
-                delta=f"Target: <0.40",
+                delta="Target: <0.40",
             )
 
         with col4:
@@ -472,7 +472,7 @@ class EfficiencyTab:
                     else:
                         node_efficiencies[node_name] = 0.0
 
-                except Exception as e:
+                except Exception:
                     node_efficiencies[node_name] = 0.0
 
             return node_efficiencies
@@ -886,9 +886,6 @@ class EfficiencyTab:
                 avg_flow = total_flow / flow_readings if flow_readings > 0 else 0
                 avg_pressure = (
                     total_pressure / pressure_readings if pressure_readings > 0 else 0
-                )
-                avg_volume = (
-                    total_volume / volume_readings if volume_readings > 0 else 0
                 )
 
                 # Calculate efficiency based on flow stability and pressure consistency

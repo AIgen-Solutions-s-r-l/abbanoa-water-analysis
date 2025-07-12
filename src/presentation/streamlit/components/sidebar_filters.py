@@ -101,7 +101,7 @@ class SidebarFilters:
                 )
 
             # Node selection
-            selected_nodes = st.multiselect(
+            st.multiselect(
                 "Select Nodes",
                 [
                     "All Nodes",
@@ -211,7 +211,7 @@ class SidebarFilters:
         st.markdown("### ⚙️ Display Options")
 
         # Show confidence interval toggle
-        show_ci = st.checkbox(
+        st.checkbox(
             "Show Confidence Interval",
             value=True,
             key="show_confidence_interval",
@@ -219,7 +219,7 @@ class SidebarFilters:
         )
 
         # Show historical data toggle
-        show_historical = st.checkbox(
+        st.checkbox(
             "Show Historical Data",
             value=True,
             key="show_historical",

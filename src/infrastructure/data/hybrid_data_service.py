@@ -105,9 +105,6 @@ class HybridDataService:
 
         Flow: Redis → Buffer → PostgreSQL → BigQuery (daily)
         """
-        node_id = reading["node_id"]
-        timestamp = reading["timestamp"]
-
         # 1. Write to Redis immediately
         await self._write_to_redis(reading)
 

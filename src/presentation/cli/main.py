@@ -74,7 +74,7 @@ def normalize(ctx, file_path: str, output: Optional[str], min_coverage: float):
     try:
         nodes, readings, quality_metrics = normalizer.normalize_file(file_path)
 
-        click.echo(f"\nNormalization Results:")
+        click.echo("\nNormalization Results:")
         click.echo(f"- Nodes found: {len(nodes)}")
         click.echo(f"- Readings extracted: {len(readings)}")
         click.echo(f"- Data quality score: {quality_metrics.quality_score:.1f}%")
@@ -215,7 +215,7 @@ def analyze_consumption(
     try:
         result = asyncio.run(run_analysis())
 
-        click.echo(f"\nConsumption Pattern Analysis:")
+        click.echo("\nConsumption Pattern Analysis:")
         click.echo(f"- Pattern type: {result.pattern_type}")
         click.echo(f"- Variability: {result.variability_coefficient:.1f}%")
         click.echo(f"- Peak periods: {', '.join(result.peak_hours[:3])}")
@@ -276,7 +276,7 @@ def calculate_efficiency(
     try:
         result, leaks = asyncio.run(run_calculation())
 
-        click.echo(f"\nNetwork Efficiency Report:")
+        click.echo("\nNetwork Efficiency Report:")
         click.echo(
             f"- Period: {result.period_start.strftime('%Y-%m-%d')} to {result.period_end.strftime('%Y-%m-%d')}"
         )

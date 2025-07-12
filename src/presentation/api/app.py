@@ -120,7 +120,7 @@ async def startup_event():
     )
 
     logger.info("Dependency injection container wired successfully")
-    logger.info(f"API ready with forecast endpoint at /api/v1/forecasts")
+    logger.info("API ready with forecast endpoint at /api/v1/forecasts")
 
 
 @app.get("/", response_model=HealthResponse)

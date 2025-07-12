@@ -136,7 +136,7 @@ class SimpleAnomalyDetector:
                         }
                     )
 
-            except Exception as e:
+            except Exception:
                 # Skip nodes with errors
                 continue
 

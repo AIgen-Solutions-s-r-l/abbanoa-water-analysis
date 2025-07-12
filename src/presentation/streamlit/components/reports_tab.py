@@ -64,8 +64,8 @@ class ReportsTab:
             )
 
         with col3:
-            include_charts = st.checkbox("Include Charts", value=True)
-            include_raw_data = st.checkbox("Include Raw Data", value=False)
+            st.checkbox("Include Charts", value=True)
+            st.checkbox("Include Raw Data", value=False)
 
         # Report preview
         st.subheader("Report Preview")
@@ -282,18 +282,18 @@ class ReportsTab:
 
         with col1:
             st.markdown("##### Data Categories")
-            flow_data = st.checkbox("Flow Data", value=True)
-            pressure_data = st.checkbox("Pressure Data", value=True)
-            anomaly_data = st.checkbox("Anomaly Data")
-            efficiency_data = st.checkbox("Efficiency Metrics")
+            st.checkbox("Flow Data", value=True)
+            st.checkbox("Pressure Data", value=True)
+            st.checkbox("Anomaly Data")
+            st.checkbox("Efficiency Metrics")
 
         with col2:
             st.markdown("##### Export Format")
-            format_option = st.radio(
+            st.radio(
                 "Select Format", ["CSV", "Excel", "JSON", "PDF Report"]
             )
 
-            time_resolution = st.select_slider(
+            st.select_slider(
                 "Time Resolution",
                 ["5 min", "30 min", "1 hour", "Daily"],
                 value="30 min",
@@ -365,11 +365,11 @@ class ReportsTab:
         if scheduled:
             col1, col2 = st.columns(2)
             with col1:
-                schedule_type = st.selectbox(
+                st.selectbox(
                     "Schedule Type", ["Daily", "Weekly", "Monthly"]
                 )
             with col2:
-                email = st.text_input("Email Address", placeholder="report@example.com")
+                st.text_input("Email Address", placeholder="report@example.com")
 
             if st.button("Save Schedule"):
                 st.success("Report schedule saved!")

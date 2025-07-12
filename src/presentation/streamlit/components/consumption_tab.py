@@ -56,10 +56,6 @@ class ConsumptionTab:
 
         # Show optimization info for large time ranges
         if time_range in ["Last Month", "Last Year"]:
-            time_delta = self._get_time_delta(time_range)
-            days = time_delta.days
-            estimated_records = days * 24 * 12  # Rough estimate
-
             # The optimizer is removed, so this block is no longer relevant
             # recommendations = _self.optimizer.get_performance_recommendations(days, estimated_records)
             # if recommendations:
@@ -929,7 +925,6 @@ class ConsumptionTab:
                     cv = 0
             else:
                 total_consumption = 0
-                avg_consumption = 0
                 cv = 0
 
             # Non-Revenue Water estimation based on consumption patterns

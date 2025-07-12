@@ -175,7 +175,7 @@ class PostgresManager:
                 )
 
             # Use COPY for efficient batch insert
-            result = await conn.copy_records_to_table(
+            await conn.copy_records_to_table(
                 "sensor_readings",
                 records=records,
                 columns=[
@@ -365,13 +365,12 @@ class PostgresManager:
                 "30d": "30 days",
                 "365d": "365 days",
             }
-            interval = interval_map.get(time_range, "24 hours")
 
         async with self.acquire() as conn:
             # Direct query from sensor_readings table
             # For now, get all available data regardless of time range
             result = await conn.fetchrow(
-                f"""
+                """
                 WITH recent_data AS (
                     SELECT 
                         node_id,

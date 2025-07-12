@@ -172,7 +172,9 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
                 (
                     "STRING"
                     if isinstance(value, str)
-                    else "FLOAT64" if isinstance(value, float) else "TIMESTAMP"
+                    else "FLOAT64"
+                    if isinstance(value, float)
+                    else "TIMESTAMP"
                 ),
                 value,
             )
