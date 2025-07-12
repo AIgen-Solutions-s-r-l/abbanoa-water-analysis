@@ -56,7 +56,7 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
 
     async def get_by_id(self, node_id: UUID) -> Optional[MonitoringNode]:
         """Get a monitoring node by ID."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE id = @node_id
         LIMIT 1
@@ -78,7 +78,7 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
 
     async def get_by_name(self, name: str) -> Optional[MonitoringNode]:
         """Get a monitoring node by name."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE name = @name
         LIMIT 1
@@ -103,7 +103,7 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
         location: Optional[str] = None,
     ) -> List[MonitoringNode]:
         """Get all monitoring nodes with optional filters."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE 1=1
         """
@@ -147,7 +147,7 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
 
     async def update(self, node: MonitoringNode) -> None:
         """Update an existing monitoring node."""
-        query = f"""
+        query = """
         UPDATE `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         SET
             name = @name,
@@ -186,7 +186,7 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
 
     async def delete_by_id(self, node_id: UUID) -> None:
         """Delete a monitoring node by ID."""
-        query = f"""
+        query = """
         DELETE FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE id = @node_id
         """

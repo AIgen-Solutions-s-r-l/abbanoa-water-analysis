@@ -174,7 +174,7 @@ class ARIMAPlusModelExecutor:
         logger.info("STEP 1: Preparing Training Data")
         logger.info("=" * 60)
 
-        sql = f"""
+        sql = """
         CREATE OR REPLACE TABLE `{self.project_id}.{self.dataset_id}.training_data` AS
         WITH training_base AS (
           SELECT
@@ -255,7 +255,7 @@ class ARIMAPlusModelExecutor:
 
         if success:
             # Validate training data
-            validation_sql = f"""
+            validation_sql = """
             SELECT
               district_metric,
               COUNT(*) as record_count,
@@ -309,7 +309,7 @@ class ARIMAPlusModelExecutor:
             model_name = f"arima_{district.lower()}_{metric}"
             district_metric = f"{district}_{metric}"
 
-            sql = f"""
+            sql = """
             CREATE OR REPLACE MODEL `{self.project_id}.{self.dataset_id}.{model_name}`
             OPTIONS(
               model_type='ARIMA_PLUS',
@@ -353,7 +353,7 @@ class ARIMAPlusModelExecutor:
         logger.info("STEP 3: Evaluating Model Performance")
         logger.info("=" * 60)
 
-        sql = f"""
+        sql = """
         CREATE OR REPLACE TABLE `{self.project_id}.{self.dataset_id}.model_evaluation` AS
         WITH model_evaluations AS (
           SELECT 'DIST_001_flow_rate' as model_name, * FROM ML.EVALUATE(MODEL `{self.project_id}.{self.dataset_id}.arima_dist_001_flow_rate`)
@@ -425,7 +425,7 @@ class ARIMAPlusModelExecutor:
         )
 
         # Create holdout dataset
-        holdout_sql = f"""
+        holdout_sql = """
         CREATE OR REPLACE TABLE `{self.project_id}.{self.dataset_id}.holdout_data` AS
         SELECT
           date_utc as ds,
@@ -466,7 +466,7 @@ class ARIMAPlusModelExecutor:
         logger.info("STEP 5: Performance Summary")
         logger.info("=" * 60)
 
-        sql = f"""
+        sql = """
         CREATE OR REPLACE VIEW `{self.project_id}.{self.dataset_id}.performance_summary` AS
         SELECT
           'ARIMA_PLUS Baseline Models' as model_type,
@@ -519,9 +519,9 @@ class ARIMAPlusModelExecutor:
     def execute_full_pipeline(self) -> Dict:
         """Execute the complete ARIMA_PLUS model pipeline."""
         logger.info("Starting ARIMA_PLUS Model Training Pipeline")
-        logger.info(f"Target: MAPE ≤ 15% across pilot districts")
-        logger.info(f"Districts: DIST_001, DIST_002")
-        logger.info(f"Metrics: flow_rate, pressure, reservoir_level")
+        logger.info("Target: MAPE ≤ 15% across pilot districts")
+        logger.info("Districts: DIST_001, DIST_002")
+        logger.info("Metrics: flow_rate, pressure, reservoir_level")
 
         start_time = time.time()
 

@@ -218,7 +218,7 @@ class BigQueryToPostgresETL:
         """Sync node metadata from BigQuery to PostgreSQL."""
         logger.info("Syncing node metadata")
 
-        query = f"""
+        query = """
         SELECT DISTINCT
             node_id,
             FIRST_VALUE(node_name) OVER (PARTITION BY node_id ORDER BY timestamp DESC) as node_name,
@@ -249,7 +249,7 @@ class BigQueryToPostgresETL:
         """Sync data for a specific node and time range."""
         try:
             # Query BigQuery
-            query = f"""
+            query = """
             SELECT
                 timestamp,
                 node_id,

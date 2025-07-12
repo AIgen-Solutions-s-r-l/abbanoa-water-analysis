@@ -51,7 +51,7 @@ def main():
     print("\n1. Creating tables...")
 
     # Create water_networks table
-    query1 = f"""
+    query1 = """
     CREATE TABLE IF NOT EXISTS `{PROJECT_ID}.{DATASET_ID}.water_networks` (
         id STRING NOT NULL,
         name STRING NOT NULL,
@@ -65,7 +65,7 @@ def main():
     execute_query(query1)
 
     # Create monitoring_nodes table
-    query2 = f"""
+    query2 = """
     CREATE TABLE IF NOT EXISTS `{PROJECT_ID}.{DATASET_ID}.monitoring_nodes` (
         id STRING NOT NULL,
         network_id STRING NOT NULL,
@@ -83,7 +83,7 @@ def main():
     execute_query(query2)
 
     # Create sensor_readings table
-    query3 = f"""
+    query3 = """
     CREATE TABLE IF NOT EXISTS `{PROJECT_ID}.{DATASET_ID}.sensor_readings` (
         id STRING NOT NULL,
         node_id STRING NOT NULL,
@@ -105,7 +105,7 @@ def main():
 
     # Insert network
     network_id = str(uuid.uuid4())
-    query4 = f"""
+    query4 = """
     INSERT INTO `{PROJECT_ID}.{DATASET_ID}.water_networks`
     VALUES
       ('{network_id}', 'Selargius Water Network', 'Selargius', 4, 50.5, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())
@@ -126,7 +126,7 @@ def main():
             f"('{node_id}', '{network_id}', '{name}', '{node_type}', 39.2238, 9.1422, NULL, true, NULL, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())"
         )
 
-    query5 = f"""
+    query5 = """
     INSERT INTO `{PROJECT_ID}.{DATASET_ID}.monitoring_nodes`
     VALUES {', '.join(values)}
     """
@@ -156,7 +156,7 @@ def main():
     batch_size = 100
     for i in range(0, len(readings), batch_size):
         batch = readings[i : i + batch_size]
-        query = f"""
+        query = """
         INSERT INTO `{PROJECT_ID}.{DATASET_ID}.sensor_readings`
         VALUES {', '.join(batch)}
         """
@@ -165,7 +165,7 @@ def main():
     print("\n4. Testing data...")
 
     # Test query
-    test_query = f"""
+    test_query = """
     SELECT
       COUNT(*) as total_readings,
       COUNT(DISTINCT node_id) as unique_nodes,

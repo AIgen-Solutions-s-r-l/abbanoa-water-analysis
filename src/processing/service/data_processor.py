@@ -154,7 +154,7 @@ class DataProcessor:
         self, node_id: str, start_timestamp: datetime, end_timestamp: datetime
     ) -> pd.DataFrame:
         """Fetch data for a specific node from BigQuery."""
-        query = f"""
+        query = """
         SELECT
             timestamp,
             node_id,
@@ -317,7 +317,7 @@ class DataProcessor:
         self, start_timestamp: datetime, end_timestamp: datetime
     ) -> List[str]:
         """Get list of nodes that have data in the time range."""
-        query = f"""
+        query = """
         SELECT DISTINCT node_id
         FROM `{self.bigquery_client.project_id}.{self.bigquery_client.dataset_id}.sensor_readings_ml`
         WHERE timestamp BETWEEN @start_timestamp AND @end_timestamp

@@ -14,7 +14,7 @@ print("-" * 50)
 
 for node_id in nodes:
     # Get latest reading with non-zero flow
-    query = f"""
+    query = """
     SELECT
         node_id,
         MAX(timestamp) as latest_timestamp,
@@ -38,7 +38,7 @@ for node_id in nodes:
         print(f"  Total readings: {row.total_readings}")
 
         # Get a recent non-zero reading
-        query2 = f"""
+        query2 = """
         SELECT timestamp, flow_rate, pressure
         FROM `abbanoa-464816.water_infrastructure.sensor_readings_ml`
         WHERE node_id = "{node_id}"

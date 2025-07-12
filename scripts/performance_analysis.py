@@ -204,9 +204,9 @@ class PerformanceAnalyzer:
             print(f"   🔥 Max fetch time: {max_fetch_time:.2f}s")
 
             if max_fetch_time > 10:
-                print(f"   ⚠️  WARNING: Maximum fetch time exceeds 10 seconds!")
+                print("   ⚠️  WARNING: Maximum fetch time exceeds 10 seconds!")
             if total_time > 30:
-                print(f"   ⚠️  WARNING: Total time for all nodes exceeds 30 seconds!")
+                print("   ⚠️  WARNING: Total time for all nodes exceeds 30 seconds!")
 
         return results, total_time
 
@@ -313,7 +313,7 @@ class PerformanceAnalyzer:
                 year_total_time = year_successful[0]["total_all_nodes_time"]
                 year_records = sum(r["record_count"] for r in year_successful)
 
-                print(f"\n📅 Specific Analysis for 'Last Year':")
+                print("\n📅 Specific Analysis for 'Last Year':")
                 print(f"   🕒 Total loading time: {year_total_time:.2f}s")
                 print(f"   📊 Total records: {year_records:,}")
 

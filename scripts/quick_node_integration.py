@@ -162,7 +162,7 @@ class BackupNodeAdapter:
         node_list = ", ".join([f"'{node_id}'" for node_id in node_ids])
         metric_cols = ", ".join(metrics)
 
-        query = f"""
+        query = """
         SELECT
             timestamp,
             node_id,

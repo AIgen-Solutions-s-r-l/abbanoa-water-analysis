@@ -58,7 +58,7 @@ df.set_index("DATA_RIFERIMENTO", inplace=True)
 
 # Check for missing values
 missing_values = df.isnull().sum()
-print(f"\nValori mancanti per colonna:")
+print("\nValori mancanti per colonna:")
 print(missing_values[missing_values > 0])
 
 if df.isnull().any().any():

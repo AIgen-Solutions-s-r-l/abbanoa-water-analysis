@@ -70,7 +70,7 @@ try:
     mae = np.mean(np.abs(test['y'].values - test_forecast['yhat'].values))
     mape = np.mean(np.abs((test['y'].values - test_forecast['yhat'].values) / test['y'].values)) * 100
 
-    print(f"\\nPerformance sul test set:")
+    print("\\nPerformance sul test set:")
     print(f"MAE: {mae:.2f} L/S")
     print(f"MAPE: {mape:.2f}%")
 

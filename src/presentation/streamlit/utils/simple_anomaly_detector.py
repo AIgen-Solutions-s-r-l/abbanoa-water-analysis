@@ -35,7 +35,7 @@ class SimpleAnomalyDetector:
         for node_id in numeric_nodes:
             try:
                 # Query for anomaly detection
-                query = f"""
+                query = """
                 WITH node_stats AS (
                     SELECT
                         node_id,

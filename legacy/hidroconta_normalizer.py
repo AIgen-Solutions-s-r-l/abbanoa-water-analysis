@@ -268,7 +268,7 @@ class HidrocontaNormalizer:
             ),
         }
 
-        print(f"\n✅ Processing complete:")
+        print("\n✅ Processing complete:")
         print(f"   📁 Files processed: {metadata_summary['files_processed']}")
         print(f"   📊 Total records: {metadata_summary['total_records']}")
         print(f"   🔧 PCR units: {', '.join(metadata_summary['pcr_units'])}")
@@ -395,8 +395,8 @@ def main():
         print(f"🗄️ BigQuery schema saved to: {schema_file}")
 
         # Display summary
-        print(f"\n📊 Data Summary:")
-        print(f"   🏢 Site: Teatinos (Hidroconta)")
+        print("\n📊 Data Summary:")
+        print("   🏢 Site: Teatinos (Hidroconta)")
         print(f"   📁 Files: {metadata['files_processed']}")
         print(f"   📊 Records: {metadata['total_records']:,}")
         print(f"   🔧 PCR Units: {', '.join(metadata['pcr_units'])}")
@@ -407,9 +407,9 @@ def main():
             for error in metadata["processing_errors"]:
                 print(f"      • {error}")
 
-        print(f"\n✅ Ready for BigQuery import!")
-        print(f"   Dataset: teatinos_infrastructure")
-        print(f"   Table: sensor_data")
+        print("\n✅ Ready for BigQuery import!")
+        print("   Dataset: teatinos_infrastructure")
+        print("   Table: sensor_data")
         print(f"   Schema: {schema_file}")
         print(f"   Data: {output_file}")
 

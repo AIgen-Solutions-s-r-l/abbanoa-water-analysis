@@ -418,7 +418,7 @@ class HybridDataService:
                 )
                 return pd.DataFrame()
 
-            query = f"""
+            query = """
             SELECT
                 timestamp,
                 temperature,

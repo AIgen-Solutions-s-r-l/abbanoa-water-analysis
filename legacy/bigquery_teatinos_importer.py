@@ -111,7 +111,7 @@ class TeatinoBigQueryImporter:
         with open(metadata_file, "r") as f:
             metadata = json.load(f)
 
-        print(f"📊 Data summary:")
+        print("📊 Data summary:")
         print(f"   Records: {metadata['total_records']:,}")
         print(f"   Files: {metadata['files_processed']}")
         print(f"   Data types: {', '.join(metadata['data_types'].keys())}")
@@ -141,14 +141,14 @@ class TeatinoBigQueryImporter:
         job.result()  # Wait for completion
 
         if job.errors:
-            print(f"❌ Upload errors:")
+            print("❌ Upload errors:")
             for error in job.errors:
                 print(f"   • {error}")
             return False
 
         # Verify upload
         table = self.client.get_table(table_ref)
-        print(f"✅ Upload successful!")
+        print("✅ Upload successful!")
         print(f"   📊 Rows in BigQuery: {table.num_rows:,}")
         print(f"   💾 Table size: {table.num_bytes / (1024*1024):.1f} MB")
         print(f"   📅 Last modified: {table.modified}")
@@ -209,7 +209,7 @@ class TeatinoBigQueryImporter:
             },
         ]
 
-        print(f"\n🔍 Running data quality checks...")
+        print("\n🔍 Running data quality checks...")
 
         for check in checks:
             print(f"\n📋 {check['name']}:")
@@ -236,7 +236,7 @@ class TeatinoBigQueryImporter:
             except Exception as e:
                 print(f"   ❌ Error: {str(e)}")
 
-        print(f"\n✅ Quality checks complete!")
+        print("\n✅ Quality checks complete!")
 
     def create_sample_queries(self):
         """Create sample queries for analyzing Teatinos data"""
@@ -331,14 +331,14 @@ ORDER BY z_score DESC, datetime DESC
 """,
         }
 
-        print(f"\n📝 Creating sample analysis queries...")
+        print("\n📝 Creating sample analysis queries...")
 
         for filename, query in queries.items():
             with open(filename, "w") as f:
                 f.write(query.strip())
             print(f"   💾 {filename}")
 
-        print(f"✅ Sample queries created!")
+        print("✅ Sample queries created!")
 
 
 def main():
@@ -375,15 +375,15 @@ def main():
             # Create sample queries
             importer.create_sample_queries()
 
-            print(f"\n🎉 Teatinos data successfully imported to BigQuery!")
-            print(f"   🗄️ Dataset: teatinos_infrastructure")
-            print(f"   📊 Table: sensor_data")
+            print("\n🎉 Teatinos data successfully imported to BigQuery!")
+            print("   🗄️ Dataset: teatinos_infrastructure")
+            print("   📊 Table: sensor_data")
             print(
-                f"   🔗 Console: https://console.cloud.google.com/bigquery?project=abbanoa-464816"
+                "   🔗 Console: https://console.cloud.google.com/bigquery?project=abbanoa-464816"
             )
 
         else:
-            print(f"❌ Upload failed")
+            print("❌ Upload failed")
 
     except Exception as e:
         print(f"❌ Error: {str(e)}")

@@ -43,7 +43,7 @@ for col, desc in column_mapping.items():
     ):
         key_metrics.append((col, desc))
 
-print(f"\nMetriche chiave identificate per l'analisi:")
+print("\nMetriche chiave identificate per l'analisi:")
 for i, (col, desc) in enumerate(key_metrics[:5]):
     print(f"{i+1}. {desc}")
 

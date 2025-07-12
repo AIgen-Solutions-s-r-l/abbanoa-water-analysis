@@ -65,7 +65,7 @@ class EnhancedDataFetcher:
         uuid_nodes = [nid for nid in node_ids if nid.startswith("00000000")]
         if uuid_nodes:
             uuid_list = ", ".join([f"'{nid}'" for nid in uuid_nodes])
-            query1 = f"""
+            query1 = """
             SELECT
                 timestamp,
                 node_id,
@@ -87,7 +87,7 @@ class EnhancedDataFetcher:
                 if metric in ["flow_rate", "pressure", "temperature", "volume"]:
                     metric_cols.append(metric)
 
-            query2 = f"""
+            query2 = """
             SELECT
                 timestamp,
                 node_id,
@@ -148,7 +148,7 @@ class EnhancedDataFetcher:
             # Query for UUID nodes from normalized view
             if uuid_nodes:
                 uuid_placeholders = ", ".join([f'"{nid}"' for nid in uuid_nodes])
-                query1 = f"""
+                query1 = """
                 WITH latest_uuid AS (
                     SELECT
                         node_id,
@@ -169,7 +169,7 @@ class EnhancedDataFetcher:
             # Query for numeric nodes from ML table
             if numeric_nodes:
                 numeric_placeholders = ", ".join([f'"{nid}"' for nid in numeric_nodes])
-                query2 = f"""
+                query2 = """
                 WITH latest_numeric AS (
                     SELECT
                         node_id,

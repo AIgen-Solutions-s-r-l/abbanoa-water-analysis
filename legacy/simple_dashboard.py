@@ -75,7 +75,7 @@ print("\n=== REPORT OPERATIVO GIORNALIERO ===")
 print(f"Data: {datetime.now().strftime('%d/%m/%Y')}")
 print(f"\nUltima lettura: {df.index[-1]}")
 print(f"Portata attuale: {df['L/S'].iloc[-1]:.2f} L/S")
-print(f"\nStatistiche ultime 24h:")
+print("\nStatistiche ultime 24h:")
 last_24h = df[df.index >= df.index[-1] - timedelta(hours=24)]
 print(f"  - Media: {last_24h['L/S'].mean():.2f} L/S")
 print(

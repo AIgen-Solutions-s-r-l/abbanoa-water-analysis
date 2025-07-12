@@ -43,7 +43,7 @@ def main():
 
     # Check sensor_data table
     print("\n1. Checking sensor_data table...")
-    query = f"""
+    query = """
     SELECT
       COUNT(*) as total_rows,
       COUNT(DISTINCT data) as unique_dates,
@@ -64,7 +64,7 @@ def main():
 
     # Get sample data
     print("\n2. Sample data from sensor_data...")
-    query2 = f"""
+    query2 = """
     SELECT
       data,
       ora,
@@ -89,7 +89,7 @@ def main():
 
     # Create a view for easier access
     print("\n3. Creating view for dashboard access...")
-    view_query = f"""
+    view_query = """
     CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET_ID}.v_sensor_readings_normalized` AS
     SELECT
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as timestamp,
@@ -134,7 +134,7 @@ def main():
 
     # Test the view
     print("\n4. Testing normalized view...")
-    test_view = f"""
+    test_view = """
     SELECT
       COUNT(*) as total_readings,
       COUNT(DISTINCT node_id) as nodes,

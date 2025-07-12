@@ -63,7 +63,7 @@ def test_bigquery_data():
 
         if not df.empty:
             print(f"✅ Found {len(df)} readings")
-            print(f"\nSample data:")
+            print("\nSample data:")
             print(
                 df[
                     [

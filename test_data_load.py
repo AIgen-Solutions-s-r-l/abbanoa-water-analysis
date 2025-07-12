@@ -61,7 +61,7 @@ async def test_data_load():
     print(f"✅ Inserted node: {test_node}")
 
     # Get some recent data for this node
-    query = f"""
+    query = """
     SELECT timestamp, temperature, flow_rate, pressure, volume
     FROM `abbanoa-464816.water_infrastructure.sensor_readings`
     WHERE node_id = '{test_node}'
@@ -119,13 +119,13 @@ async def test_data_load():
         print(f"📍 Cached data: {cached}")
 
         print("\n✅ Test data load completed successfully!")
-        print(f"\nYou can now:")
+        print("\nYou can now:")
         print(
-            f"1. Run comprehensive tests: poetry run python test_hybrid_architecture.py"
+            "1. Run comprehensive tests: poetry run python test_hybrid_architecture.py"
         )
-        print(f"2. Check the dashboard at http://localhost:8501")
+        print("2. Check the dashboard at http://localhost:8501")
         print(
-            f"3. Run full ETL: poetry run python -m src.infrastructure.etl.bigquery_to_postgres_etl"
+            "3. Run full ETL: poetry run python -m src.infrastructure.etl.bigquery_to_postgres_etl"
         )
     else:
         print(f"\n⚠️  No recent data found for node {test_node}")

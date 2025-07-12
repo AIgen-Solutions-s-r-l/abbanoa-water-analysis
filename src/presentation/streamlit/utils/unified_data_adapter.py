@@ -49,7 +49,7 @@ class UnifiedDataAdapter:
 
         # Query original nodes
         if uuid_nodes:
-            query1 = f"""
+            query1 = """
             SELECT
                 timestamp,
                 node_id,
@@ -79,7 +79,7 @@ class UnifiedDataAdapter:
 
         # Query new nodes
         if string_nodes:
-            query2 = f"""
+            query2 = """
             SELECT
                 timestamp,
                 node_id,
@@ -124,7 +124,7 @@ class UnifiedDataAdapter:
 
         # First try to query both tables
         try:
-            query = f"""
+            query = """
             WITH all_nodes AS (
                 SELECT DISTINCT node_id
                 FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
@@ -159,7 +159,7 @@ class UnifiedDataAdapter:
             # If ML table doesn't exist, just count from normalized view
             if "sensor_readings_ml was not found" in str(e):
                 try:
-                    query = f"""
+                    query = """
                     SELECT COUNT(DISTINCT node_id) as active_nodes
                     FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
                     WHERE timestamp >= @start_time
@@ -192,7 +192,7 @@ class UnifiedDataAdapter:
             elif "db-dtypes" in str(e):
                 # If db-dtypes is missing, use direct query result
                 try:
-                    query = f"""
+                    query = """
                     WITH all_nodes AS (
                         SELECT DISTINCT node_id
                         FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`

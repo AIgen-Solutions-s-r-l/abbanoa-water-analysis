@@ -73,7 +73,7 @@ class MLDataValidator:
 
         results = {}
         for table_name in tables_to_check:
-            query = f"""
+            query = """
             SELECT COUNT(*) as row_count
             FROM `{PROJECT_ID}.{DATASET_ID}.{table_name}`
             """
@@ -102,7 +102,7 @@ class MLDataValidator:
         """Check data completeness by node and metric."""
         print("\n2. Checking data completeness...")
 
-        query = f"""
+        query = """
         WITH completeness AS (
             SELECT
                 node_id,
@@ -149,7 +149,7 @@ class MLDataValidator:
         self.validation_results["data_completeness"] = summary
 
         print(f"  Total nodes: {summary['total_nodes']}")
-        print(f"  Average completeness:")
+        print("  Average completeness:")
         for metric, pct in summary["avg_completeness"].items():
             print(f"    - {metric}: {pct:.1f}%")
 
@@ -157,7 +157,7 @@ class MLDataValidator:
         """Check data quality scores and anomalies."""
         print("\n3. Checking data quality...")
 
-        query = f"""
+        query = """
         SELECT
             district_id,
             AVG(data_quality_score) as avg_quality_score,
@@ -199,7 +199,7 @@ class MLDataValidator:
         """Check temporal coverage and gaps."""
         print("\n4. Checking temporal coverage...")
 
-        query = f"""
+        query = """
         WITH daily_counts AS (
             SELECT
                 DATE(timestamp) as date,
@@ -262,7 +262,7 @@ class MLDataValidator:
         """Analyze feature distributions for ML suitability."""
         print("\n5. Checking feature distributions...")
 
-        query = f"""
+        query = """
         SELECT
             flow_rate,
             pressure,
@@ -313,7 +313,7 @@ class MLDataValidator:
         """Check for anomalies in the data."""
         print("\n6. Checking for anomalies...")
 
-        query = f"""
+        query = """
         WITH stats AS (
             SELECT
                 node_id,

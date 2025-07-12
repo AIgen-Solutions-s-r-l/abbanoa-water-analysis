@@ -43,7 +43,7 @@ def main():
 
     # Check raw sensor_data table dates
     print("\n1. Date range in sensor_data table:")
-    query1 = f"""
+    query1 = """
     SELECT
       MIN(PARSE_DATE('%d/%m/%Y', data)) as earliest_date,
       MAX(PARSE_DATE('%d/%m/%Y', data)) as latest_date,
@@ -61,7 +61,7 @@ def main():
 
     # Check normalized view dates
     print("\n2. Date range in normalized view:")
-    query2 = f"""
+    query2 = """
     SELECT
       MIN(timestamp) as earliest_timestamp,
       MAX(timestamp) as latest_timestamp,
@@ -81,7 +81,7 @@ def main():
 
     # Get the most recent data available
     print("\n3. Most recent data by node:")
-    query3 = f"""
+    query3 = """
     SELECT
       node_id,
       node_name,
@@ -104,7 +104,7 @@ def main():
 
     # Check if we need to adjust date parsing
     print("\n4. Sample of raw dates from sensor_data:")
-    query4 = f"""
+    query4 = """
     SELECT
       data,
       ora,

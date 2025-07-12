@@ -46,7 +46,7 @@ LOCATION = "EU"
 
 def main():
     """Main setup function."""
-    print(f"\nSetting up BigQuery:")
+    print("\nSetting up BigQuery:")
     print(f"  Project: {PROJECT_ID}")
     print(f"  Dataset: {DATASET_ID}")
     print(f"  Location: {LOCATION}")

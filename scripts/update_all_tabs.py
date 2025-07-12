@@ -230,7 +230,7 @@ class UnifiedDataAdapter:
 
         # Query original nodes
         if uuid_nodes:
-            query1 = f"""
+            query1 = """
             SELECT
                 timestamp,
                 node_id,
@@ -258,7 +258,7 @@ class UnifiedDataAdapter:
 
         # Query new nodes
         if string_nodes:
-            query2 = f"""
+            query2 = """
             SELECT
                 timestamp,
                 node_id,
@@ -298,7 +298,7 @@ class UnifiedDataAdapter:
         start_time = end_time - timedelta(hours=time_range_hours)
 
         # Query both tables
-        query = f"""
+        query = """
         WITH all_nodes AS (
             SELECT DISTINCT node_id
             FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`

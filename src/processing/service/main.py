@@ -210,7 +210,7 @@ class ProcessingService:
                 "max_timestamp": None,
             }
 
-        query = f"""
+        query = """
         SELECT
             COUNT(*) as record_count,
             MIN(timestamp) as min_timestamp,

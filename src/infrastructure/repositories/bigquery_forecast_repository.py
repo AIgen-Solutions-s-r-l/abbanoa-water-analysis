@@ -79,7 +79,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             )
 
         # Build forecast query with proper input data
-        query = f"""
+        query = """
         WITH forecast_input AS (
             SELECT
                 '{district_metric_id}' as district_metric_id,
@@ -171,7 +171,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         Returns:
             True if model exists, False otherwise
         """
-        query = f"""
+        query = """
         SELECT 1
         FROM `{self.client.project_id}.{self.ml_dataset_id}.INFORMATION_SCHEMA.MODELS`
         WHERE model_name = @model_name
@@ -204,7 +204,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
         Returns:
             Dictionary containing model metadata
         """
-        query = f"""
+        query = """
         SELECT
             model_name,
             model_type,
@@ -234,7 +234,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             metadata = df.iloc[0].to_dict()
 
             # Get latest performance metrics if available
-            perf_query = f"""
+            perf_query = """
             SELECT
                 mean_absolute_percentage_error AS mape,
                 mean_absolute_error AS mae,

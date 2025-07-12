@@ -254,7 +254,7 @@ class MLModelManager:
         self, start_date: datetime, end_date: datetime, sample_rate: float
     ) -> pd.DataFrame:
         """Fetch training data from BigQuery with sampling."""
-        query = f"""
+        query = """
         SELECT
             timestamp,
             node_id,

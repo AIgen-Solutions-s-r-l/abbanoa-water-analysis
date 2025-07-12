@@ -103,8 +103,8 @@ class ARIMAPlusModelSimulator:
             district_metric = f"{district}_{metric}"
 
             logger.info(f"Creating model: {model_name}")
-            logger.info(f"  Configuration: ARIMA_PLUS with 7-day horizon")
-            logger.info(f"  Options: auto_arima=TRUE, holiday_region='IT'")
+            logger.info("  Configuration: ARIMA_PLUS with 7-day horizon")
+            logger.info("  Options: auto_arima=TRUE, holiday_region='IT'")
 
             # Simulate model training time (longer for complex metrics)
             training_time = random.uniform(30, 90)
@@ -126,7 +126,7 @@ class ARIMAPlusModelSimulator:
             )
 
         self.results["model_creation"] = model_creation_results
-        logger.info(f"Created 6/6 models successfully")
+        logger.info("Created 6/6 models successfully")
 
         return True
 
@@ -327,9 +327,9 @@ class ARIMAPlusModelSimulator:
     def execute_full_pipeline(self):
         """Execute the complete ARIMA_PLUS model pipeline simulation."""
         logger.info("Starting ARIMA_PLUS Model Training Pipeline (Simulation)")
-        logger.info(f"Target: MAPE ≤ 15% across pilot districts")
-        logger.info(f"Districts: DIST_001, DIST_002")
-        logger.info(f"Metrics: flow_rate, pressure, reservoir_level")
+        logger.info("Target: MAPE ≤ 15% across pilot districts")
+        logger.info("Districts: DIST_001, DIST_002")
+        logger.info("Metrics: flow_rate, pressure, reservoir_level")
         logger.info("=" * 60)
 
         start_time = time.time()

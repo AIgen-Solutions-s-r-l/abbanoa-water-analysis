@@ -201,23 +201,23 @@ for i, task in enumerate(ml_tasks, 1):
     print(f"TASK {i}: {task['nome'].upper()}")
     print(f"{'='*60}")
     print(f"\nTipo: {task['tipo']}")
-    print(f"\nObiettivo di Business:")
+    print("\nObiettivo di Business:")
     print(f"  {task['obiettivo_business']}")
 
-    print(f"\nVariabili Target:")
+    print("\nVariabili Target:")
     for target in task["variabili_target"]:
         print(f"  • {target}")
 
-    print(f"\nFeatures Suggerite:")
+    print("\nFeatures Suggerite:")
     for feature in task["features"][:4]:
         print(f"  • {feature}")
     if len(task["features"]) > 4:
         print(f"  • ... e altre {len(task['features'])-4} features")
 
-    print(f"\nModelli Consigliati:")
+    print("\nModelli Consigliati:")
     for j, model in enumerate(task["modelli_consigliati"], 1):
         print(f"\n  {j}. {model['nome']}")
-        print(f"     Vantaggi:")
+        print("     Vantaggi:")
         for v in model["vantaggi"][:2]:
             print(f"       + {v}")
         print(f"     Quando usarlo: {model['quando_usarlo']}")

@@ -73,7 +73,7 @@ def load_data(time_range_option="Last 24 Hours"):
         # Show all available data (it's only about 4 months)
         limit_clause = ""
 
-    query = f"""
+    query = """
     WITH recent_data AS (
       SELECT
         DATETIME(PARSE_DATE('%d/%m/%Y', data), PARSE_TIME('%H:%M:%S', ora)) as datetime,

@@ -59,7 +59,7 @@ class BigQuerySensorReadingRepository(ISensorReadingRepository):
 
     async def get_by_id(self, reading_id: UUID) -> Optional[SensorReading]:
         """Get a sensor reading by ID."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE id = @reading_id
         LIMIT 1
@@ -87,7 +87,7 @@ class BigQuerySensorReadingRepository(ISensorReadingRepository):
         limit: Optional[int] = None,
     ) -> List[SensorReading]:
         """Get sensor readings for a specific node."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE node_id = @node_id
         """
@@ -131,7 +131,7 @@ class BigQuerySensorReadingRepository(ISensorReadingRepository):
 
     async def delete_by_id(self, reading_id: UUID) -> None:
         """Delete a sensor reading by ID."""
-        query = f"""
+        query = """
         DELETE FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE id = @reading_id
         """

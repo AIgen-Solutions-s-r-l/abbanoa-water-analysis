@@ -139,7 +139,7 @@ with open("data_info.json", "w") as f:
     )
 
 print("\n✓ FASE 1 COMPLETATA")
-print(f"\nRiepilogo dataset:")
+print("\nRiepilogo dataset:")
 print(f"- Righe: {data_info['n_rows']:,}")
 print(f"- Colonne totali: {data_info['n_cols']}")
 print(f"- Colonne numeriche: {len(numeric_columns)}")

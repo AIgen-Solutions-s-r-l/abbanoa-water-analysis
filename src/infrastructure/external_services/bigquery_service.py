@@ -214,7 +214,7 @@ class BigQueryService:
         self, table_name: str, days_back: int = 30
     ) -> Dict[str, Any]:
         """Get statistics about data in a table."""
-        query = f"""
+        query = """
         SELECT
             COUNT(*) as total_records,
             COUNT(DISTINCT node_id) as unique_nodes,

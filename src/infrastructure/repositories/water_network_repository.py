@@ -52,7 +52,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
 
     async def get_by_id(self, network_id: UUID) -> Optional[WaterNetwork]:
         """Get a water network by ID."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE id = @network_id
         LIMIT 1
@@ -74,7 +74,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
 
     async def get_by_name(self, name: str) -> Optional[WaterNetwork]:
         """Get a water network by name."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE name = @name
         LIMIT 1
@@ -94,7 +94,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
 
     async def get_by_region(self, region: str) -> List[WaterNetwork]:
         """Get all water networks in a region."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE region = @region
         ORDER BY name
@@ -116,7 +116,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
 
     async def get_all(self) -> List[WaterNetwork]:
         """Get all water networks."""
-        query = f"""
+        query = """
         SELECT * FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         ORDER BY region, name
         """
@@ -133,7 +133,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
 
     async def update(self, network: WaterNetwork) -> None:
         """Update an existing water network."""
-        query = f"""
+        query = """
         UPDATE `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         SET
             name = @name,
@@ -166,7 +166,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
 
     async def delete_by_id(self, network_id: UUID) -> None:
         """Delete a water network by ID."""
-        query = f"""
+        query = """
         DELETE FROM `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
         WHERE id = @network_id
         """

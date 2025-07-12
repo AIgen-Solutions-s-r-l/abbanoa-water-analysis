@@ -43,7 +43,7 @@ def main():
 
     # First, let's check the actual timestamp format
     print("\n1. Checking parsed timestamps...")
-    query_check = f"""
+    query_check = """
     SELECT
       data,
       ora,
@@ -63,7 +63,7 @@ def main():
 
     # Recreate the view with proper formatting
     print("\n2. Recreating normalized view with proper date handling...")
-    view_query = f"""
+    view_query = """
     CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET_ID}.v_sensor_readings_normalized` AS
     SELECT
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as timestamp,
@@ -108,7 +108,7 @@ def main():
 
     # Test the updated view
     print("\n3. Testing updated view...")
-    test_query = f"""
+    test_query = """
     SELECT
       node_id,
       node_name,
@@ -136,7 +136,7 @@ def main():
 
     # Check recent data
     print("\n4. Recent data sample:")
-    recent_query = f"""
+    recent_query = """
     SELECT
       FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S', timestamp) as timestamp,
       node_id,

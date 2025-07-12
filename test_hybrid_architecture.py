@@ -192,7 +192,7 @@ class HybridArchitectureTest:
             bq_client = BigQueryClient()
 
             # Test connection with a simple query
-            query = f"""
+            query = """
             SELECT COUNT(*) as count
             FROM `{bq_client.project_id}.{bq_client.dataset_id}.sensor_readings`
             WHERE timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)

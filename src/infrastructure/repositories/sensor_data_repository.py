@@ -117,7 +117,7 @@ class SensorDataRepository(ISensorReadingRepository):
         limit: Optional[int] = None,
     ) -> List[SensorReading]:
         """Get sensor readings from the ML sensor readings table."""
-        query = f"""
+        query = """
         SELECT
             timestamp,
             node_id,
@@ -205,7 +205,7 @@ class SensorDataRepository(ISensorReadingRepository):
         node_ids: Optional[List[UUID]] = None,
     ) -> List[SensorReading]:
         """Get anomalous readings using statistical analysis."""
-        query = f"""
+        query = """
         WITH stats AS (
             SELECT
                 node_id,

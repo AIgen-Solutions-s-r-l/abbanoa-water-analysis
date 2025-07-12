@@ -158,7 +158,7 @@ class DataDiagnostics:
         for table_name in tables_to_check:
             try:
                 # Check if table exists and has data
-                query = f"""
+                query = """
                 SELECT
                     COUNT(*) as total_rows,
                     MIN(timestamp) as earliest_data,
@@ -211,7 +211,7 @@ class DataDiagnostics:
 
             print("📋 Testing original node mappings...")
             for uuid_id, bigquery_id in node_mapping.items():
-                query = f"""
+                query = """
                 SELECT COUNT(*) as count
                 FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
                 WHERE node_id = '{bigquery_id}'
@@ -413,7 +413,7 @@ class DataDiagnostics:
                 "  5. Verify data exists in the expected date range (Nov 2024 - Mar 2025)"
             )
 
-        print(f"\n📋 Full results saved to diagnostics_results.json")
+        print("\n📋 Full results saved to diagnostics_results.json")
 
         # Save detailed results
         import json

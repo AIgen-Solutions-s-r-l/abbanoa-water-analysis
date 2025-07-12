@@ -468,4 +468,4 @@ if __name__ == "__main__":
     print(f"✓ Data normalized: {len(normalized_df)} rows")
     print(f"✓ BigQuery schema saved: {len(bq_schema)} fields")
     print(f"✓ Quality score: {metadata['validation']['quality_score']:.1f}%")
-    print(f"\nNext step: Upload to BigQuery using 'bq load' or Python client")
+    print("\nNext step: Upload to BigQuery using 'bq load' or Python client")

@@ -161,7 +161,7 @@ class ForecastCalculationService:
         Returns:
             DataFrame with historical data
         """
-        query = f"""
+        query = """
         SELECT
             DATE(timestamp) as timestamp,
             AVG(CASE
@@ -235,7 +235,7 @@ class ForecastCalculationService:
         # Z-score for confidence level (0.8 = 80% => z = 1.28)
         z_score = self._get_z_score(confidence_level)
 
-        query = f"""
+        query = """
         WITH forecast_input AS (
             SELECT
                 CONCAT(@district_id, '_', @metric) as district_metric_id,

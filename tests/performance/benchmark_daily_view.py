@@ -120,7 +120,7 @@ class BigQueryBenchmark:
     def benchmark_full_dataset_query(self) -> Dict:
         """Benchmark querying the full 5-year dataset."""
 
-        query = f"""
+        query = """
         SELECT
             COUNT(*) as total_records,
             COUNT(DISTINCT date_utc) as unique_dates,
@@ -142,7 +142,7 @@ class BigQueryBenchmark:
     def benchmark_single_month_query(self) -> Dict:
         """Benchmark querying a single month of data."""
 
-        query = f"""
+        query = """
         SELECT
             date_utc,
             district_id,
@@ -167,7 +167,7 @@ class BigQueryBenchmark:
     def benchmark_filtered_query(self) -> Dict:
         """Benchmark querying with multiple filters."""
 
-        query = f"""
+        query = """
         SELECT
             date_utc,
             district_id,
@@ -196,7 +196,7 @@ class BigQueryBenchmark:
     def benchmark_aggregation_query(self) -> Dict:
         """Benchmark complex aggregation query."""
 
-        query = f"""
+        query = """
         SELECT
             district_id,
             metric_type,
@@ -224,7 +224,7 @@ class BigQueryBenchmark:
     def benchmark_concurrent_queries(self, num_concurrent: int = 5) -> Dict:
         """Benchmark concurrent query execution."""
 
-        base_query = f"""
+        base_query = """
         SELECT
             COUNT(*) as record_count,
             AVG(avg_value) as overall_avg
@@ -295,7 +295,7 @@ class BigQueryBenchmark:
     def benchmark_query_plan_analysis(self) -> Dict:
         """Analyze query execution plan for optimization insights."""
 
-        query = f"""
+        query = """
         SELECT
             date_utc,
             district_id,

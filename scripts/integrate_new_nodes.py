@@ -114,7 +114,7 @@ class DashboardIntegrator:
         # Generate new node entries
         new_node_entries = []
         for node_id, info in NEW_NODES.items():
-            node_entry = f"""            MonitoringNode(
+            node_entry = """            MonitoringNode(
                 id=UUID("{info['uuid']}"),
                 name="{info['name']}",
                 location=NodeLocation(
@@ -402,7 +402,7 @@ NEW_NODES = {
 
         # Add new nodes to config
         for node_id, info in NEW_NODES.items():
-            config_content += f"""    "node_{node_id}": NodeConfig(
+            config_content += """    "node_{node_id}": NodeConfig(
         node_id="{node_id}",
         uuid="{info['uuid']}",
         bigquery_id="{info['bigquery_id']}",
@@ -447,7 +447,7 @@ VALID_DISTRICT_IDS = [f"DIST_{i:03d}" for i in range(1, len(DISTRICTS) + 1)]
 
         guide_path = project_root / "docs/NODE_INTEGRATION_GUIDE.md"
 
-        guide_content = f"""# Node Integration Guide
+        guide_content = """# Node Integration Guide
 
 ## Overview
 

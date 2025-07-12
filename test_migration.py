@@ -73,7 +73,7 @@ def test_normalization():
         normalizer = SelargiusDataNormalizer()
         nodes, readings, quality = normalizer.normalize_file(data_file)
 
-        print(f"✅ Normalization successful!")
+        print("✅ Normalization successful!")
         print(f"   - Nodes: {len(nodes)}")
         print(f"   - Readings: {len(readings)}")
         print(f"   - Quality Score: {quality.quality_score:.1f}%")
@@ -85,7 +85,7 @@ def test_normalization():
 
         if readings and len(readings) > 0:
             reading = readings[0]
-            print(f"\n   Sample Reading:")
+            print("\n   Sample Reading:")
             print(f"   - Timestamp: {reading.timestamp}")
             if reading.flow_rate:
                 print(

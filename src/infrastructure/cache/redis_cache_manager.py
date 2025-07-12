@@ -155,7 +155,7 @@ class RedisCacheManager:
         ]
 
         for range_name, hours in time_ranges:
-            query = f"""
+            query = """
             SELECT
                 node_id,
                 COUNT(*) as reading_count,

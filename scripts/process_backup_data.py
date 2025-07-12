@@ -441,7 +441,7 @@ def create_ml_views(client: bigquery.Client):
     """Create views for ML/AI processing."""
 
     # Create normalized view for ML training
-    view_query = f"""
+    view_query = """
     CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET_ID}.v_sensor_readings_normalized` AS
     WITH latest_readings AS (
         SELECT
@@ -479,7 +479,7 @@ def create_ml_views(client: bigquery.Client):
     logger.info("Created v_sensor_readings_normalized view")
 
     # Create aggregated daily view for ML
-    daily_view_query = f"""
+    daily_view_query = """
     CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET_ID}.v_daily_metrics_ml` AS
     SELECT
         DATE(timestamp) as date,
