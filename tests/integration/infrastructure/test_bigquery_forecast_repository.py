@@ -5,23 +5,18 @@ Tests the integration between the forecast repository and BigQuery,
 using a test dataset and mock ML models.
 """
 
-import asyncio
 import os
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pandas as pd
 import pytest
-from google.cloud import bigquery
 
 from src.infrastructure.clients.async_bigquery_client import AsyncBigQueryClient
 from src.infrastructure.repositories.bigquery_forecast_repository import (
     BigQueryForecastRepository,
 )
-from src.shared.exceptions.forecast_exceptions import (
-    ForecastNotFoundException,
-    ForecastServiceException,
-)
+from src.shared.exceptions.forecast_exceptions import ForecastNotFoundException
 
 
 @pytest.fixture

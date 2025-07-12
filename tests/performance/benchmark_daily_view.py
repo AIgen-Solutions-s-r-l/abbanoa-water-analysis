@@ -12,13 +12,12 @@ Performance Requirements:
 - Concurrent query handling
 """
 
-import asyncio
 import logging
 import statistics
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from datetime import datetime
+from typing import Dict, List
 
 import pandas as pd
 from google.cloud import bigquery

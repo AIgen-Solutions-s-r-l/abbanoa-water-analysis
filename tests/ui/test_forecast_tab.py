@@ -4,13 +4,12 @@ Unit tests for the ForecastTab component.
 Tests component rendering, data handling, and user interactions.
 """
 
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from datetime import datetime
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
-import streamlit as st
 
 from src.presentation.streamlit.components.forecast_tab import ForecastTab
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher

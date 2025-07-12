@@ -6,8 +6,7 @@ ensuring proper validation, error handling, and response formatting.
 """
 
 import logging
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pandas as pd
 import pytest
@@ -16,8 +15,6 @@ from src.application.use_cases.forecast_consumption import (
     ForecastConsumption,
     MetricsCollector,
 )
-from src.domain.value_objects.forecast_request import ForecastRequest
-from src.domain.value_objects.forecast_response import ForecastResponse
 from src.shared.exceptions.forecast_exceptions import (
     ForecastNotFoundException,
     ForecastServiceException,

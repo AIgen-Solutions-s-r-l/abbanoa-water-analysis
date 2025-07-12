@@ -4,10 +4,9 @@ Unit tests for the SidebarFilters component.
 Tests sidebar rendering, filter interactions, and state management.
 """
 
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-import streamlit as st
 
 from src.presentation.streamlit.components.sidebar_filters import SidebarFilters
 

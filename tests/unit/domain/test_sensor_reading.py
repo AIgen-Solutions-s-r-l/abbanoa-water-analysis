@@ -1,7 +1,7 @@
 """Unit tests for SensorReading entity."""
 
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
