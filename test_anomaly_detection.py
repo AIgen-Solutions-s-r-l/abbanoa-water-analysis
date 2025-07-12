@@ -44,7 +44,9 @@ GROUP BY node_id
 
 print("Flow anomalies (2-sigma threshold):")
 for row in client.query(query).result():
-    print(f"  Node {row.node_id}: {row.anomaly_count} anomalies, max flow: {row.max_anomaly_flow:.1f} L/s")
+    print(
+        f"  Node {row.node_id}: {row.anomaly_count} anomalies, max flow: {row.max_anomaly_flow:.1f} L/s"
+    )
 
 print()
 
@@ -66,30 +68,36 @@ HAVING COUNT(*) > 0
 
 print("Low pressure events (<2.0 bar):")
 for row in client.query(query2).result():
-    print(f"  Node {row.node_id}: {row.low_pressure_count} events, min: {row.min_pressure:.1f} bar")
+    print(
+        f"  Node {row.node_id}: {row.low_pressure_count} events, min: {row.min_pressure:.1f} bar"
+    )
 
 print()
 
 # Test 3: Test the simple anomaly detector
 try:
     import sys
-    sys.path.append('/home/alessio/Customers/Abbanoa')
-    from src.presentation.streamlit.utils.simple_anomaly_detector import SimpleAnomalyDetector
-    
+
+    sys.path.append("/home/alessio/Customers/Abbanoa")
+    from src.presentation.streamlit.utils.simple_anomaly_detector import (
+        SimpleAnomalyDetector,
+    )
+
     detector = SimpleAnomalyDetector(client)
     anomalies = detector.detect_anomalies(24 * 30)  # Last 30 days
-    
+
     print(f"Simple anomaly detector found: {len(anomalies)} anomalies")
-    
+
     # Show first 5
     for i, anomaly in enumerate(anomalies[:5]):
         print(f"\n{i+1}. {anomaly['node_name']} - {anomaly['timestamp']}")
         print(f"   Type: {anomaly['anomaly_type']}, Severity: {anomaly['severity']}")
         print(f"   {anomaly['description']}")
-        
+
 except Exception as e:
     print(f"Error testing simple anomaly detector: {e}")
     import traceback
+
     traceback.print_exc()
 
 print("\n" + "-" * 60)

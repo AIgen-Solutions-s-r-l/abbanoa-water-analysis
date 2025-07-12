@@ -99,9 +99,9 @@ class DataOptimizer:
             strategy["aggregation_interval"] = "month"
             strategy["sample_rate"] = self.strategy.SAMPLE_RATE_LARGE
             strategy["progressive_loading"] = True
-            strategy[
-                "explanation"
-            ] = "Very long range: monthly aggregation + 10% sampling"
+            strategy["explanation"] = (
+                "Very long range: monthly aggregation + 10% sampling"
+            )
 
         # Adjust based on estimated record count
         if estimated_records:
@@ -175,9 +175,9 @@ class DataOptimizer:
             "strategy": strategy,
             "original_count": original_count,
             "optimized_count": len(optimized_data),
-            "reduction_ratio": 1 - (len(optimized_data) / original_count)
-            if original_count > 0
-            else 0,
+            "reduction_ratio": (
+                1 - (len(optimized_data) / original_count) if original_count > 0 else 0
+            ),
         }
 
         return optimized_data, optimization_info
@@ -198,9 +198,9 @@ class DataOptimizer:
                     "node_id": reading.node_id,
                     "flow_rate": reading.flow_rate.value if reading.flow_rate else None,
                     "pressure": reading.pressure.value if reading.pressure else None,
-                    "temperature": reading.temperature.value
-                    if reading.temperature
-                    else None,
+                    "temperature": (
+                        reading.temperature.value if reading.temperature else None
+                    ),
                     "quality_score": reading.quality_score,
                     "is_anomaly": reading.is_anomaly,
                 }
@@ -238,21 +238,27 @@ class DataOptimizer:
                 ),  # Dummy ID for aggregated data
                 node_id=data[0].node_id,  # Use the first reading's node_id
                 timestamp=timestamp.to_pydatetime(),
-                flow_rate=Measurement(value=row["flow_rate"], unit="L/min")
-                if pd.notna(row["flow_rate"])
-                else None,
-                pressure=Measurement(value=row["pressure"], unit="bar")
-                if pd.notna(row["pressure"])
-                else None,
-                temperature=Measurement(value=row["temperature"], unit="°C")
-                if pd.notna(row["temperature"])
-                else None,
-                quality_score=row["quality_score"]
-                if pd.notna(row["quality_score"])
-                else None,
-                is_anomaly=bool(row["is_anomaly"])
-                if pd.notna(row["is_anomaly"])
-                else False,
+                flow_rate=(
+                    Measurement(value=row["flow_rate"], unit="L/min")
+                    if pd.notna(row["flow_rate"])
+                    else None
+                ),
+                pressure=(
+                    Measurement(value=row["pressure"], unit="bar")
+                    if pd.notna(row["pressure"])
+                    else None
+                ),
+                temperature=(
+                    Measurement(value=row["temperature"], unit="°C")
+                    if pd.notna(row["temperature"])
+                    else None
+                ),
+                quality_score=(
+                    row["quality_score"] if pd.notna(row["quality_score"]) else None
+                ),
+                is_anomaly=(
+                    bool(row["is_anomaly"]) if pd.notna(row["is_anomaly"]) else False
+                ),
             )
             aggregated_readings.append(reading)
 

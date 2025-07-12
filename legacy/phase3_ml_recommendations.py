@@ -5,16 +5,20 @@ import json
 print("\n### FASE 3: RACCOMANDAZIONI MODELLI ML/AI ###\n")
 
 # Load analysis results
-with open('data_info.json', 'r') as f:
+with open("data_info.json", "r") as f:
     data_info = json.load(f)
 
-with open('eda_results.json', 'r') as f:
+with open("eda_results.json", "r") as f:
     eda_results = json.load(f)
 
 # Load data for additional analysis
-df = pd.read_csv('cleaned_data.csv', sep=';', decimal=',', index_col=0, parse_dates=True)
+df = pd.read_csv(
+    "cleaned_data.csv", sep=";", decimal=",", index_col=0, parse_dates=True
+)
 
-print("Basandomi sull'analisi precedente, propongo i seguenti task di Machine Learning:\n")
+print(
+    "Basandomi sull'analisi precedente, propongo i seguenti task di Machine Learning:\n"
+)
 
 # ML Task Recommendations
 ml_tasks = []
@@ -26,7 +30,7 @@ task1 = {
     "obiettivo_business": "Ottimizzare la gestione della rete idrica prevedendo i consumi futuri per migliorare la distribuzione dell'acqua e ridurre gli sprechi",
     "variabili_target": [
         "Portata istantanea (L/S) - per prevedere il flusso d'acqua nei prossimi periodi",
-        "Portata totale (M3) - per stimare i volumi cumulativi"
+        "Portata totale (M3) - per stimare i volumi cumulativi",
     ],
     "features": [
         "Ora del giorno (pattern orari identificati)",
@@ -34,7 +38,7 @@ task1 = {
         "Mese/Stagione (pattern stagionali)",
         "Temperatura (correlazione con consumi)",
         "Valori storici (lag features)",
-        "Media mobile delle ultime 24/48 ore"
+        "Media mobile delle ultime 24/48 ore",
     ],
     "modelli_consigliati": [
         {
@@ -43,27 +47,27 @@ task1 = {
                 "Gestisce automaticamente trend e stagionalità multipla",
                 "Robusto a dati mancanti",
                 "Facile da interpretare e configurare",
-                "Ottimo per previsioni a breve-medio termine (1-7 giorni)"
+                "Ottimo per previsioni a breve-medio termine (1-7 giorni)",
             ],
             "svantaggi": [
                 "Meno accurato per previsioni a lungo termine",
-                "Non cattura relazioni complesse non lineari"
+                "Non cattura relazioni complesse non lineari",
             ],
-            "quando_usarlo": "Ideale come primo approccio per la sua semplicità e interpretabilità"
+            "quando_usarlo": "Ideale come primo approccio per la sua semplicità e interpretabilità",
         },
         {
             "nome": "SARIMA",
             "vantaggi": [
                 "Modello statistico consolidato",
                 "Cattura stagionalità e autocorrelazione",
-                "Intervalli di confidenza ben definiti"
+                "Intervalli di confidenza ben definiti",
             ],
             "svantaggi": [
                 "Richiede serie stazionarie (i dati non lo sono)",
                 "Parametri difficili da ottimizzare",
-                "Assume relazioni lineari"
+                "Assume relazioni lineari",
             ],
-            "quando_usarlo": "Dopo aver reso stazionarie le serie con differenziazione"
+            "quando_usarlo": "Dopo aver reso stazionarie le serie con differenziazione",
         },
         {
             "nome": "LSTM (Long Short-Term Memory)",
@@ -71,16 +75,16 @@ task1 = {
                 "Cattura dipendenze complesse a lungo termine",
                 "Gestisce multiple features in input",
                 "Ottimo per pattern non lineari",
-                "Può modellare relazioni tra diversi nodi della rete"
+                "Può modellare relazioni tra diversi nodi della rete",
             ],
             "svantaggi": [
                 "Richiede molti dati per training",
                 "Difficile da interpretare (black box)",
-                "Computazionalmente costoso"
+                "Computazionalmente costoso",
             ],
-            "quando_usarlo": "Per previsioni accurate quando si hanno almeno 2-3 anni di dati"
-        }
-    ]
+            "quando_usarlo": "Per previsioni accurate quando si hanno almeno 2-3 anni di dati",
+        },
+    ],
 }
 ml_tasks.append(task1)
 
@@ -92,14 +96,14 @@ task2 = {
     "variabili_target": [
         "Pattern anomali nelle portate",
         "Picchi/cali improvvisi di pressione",
-        "Deviazioni dalla relazione normale temperatura-consumo"
+        "Deviazioni dalla relazione normale temperatura-consumo",
     ],
     "features": [
         "Portata istantanea e sue variazioni",
         "Pressione e sue fluttuazioni",
         "Temperatura",
         "Differenza tra portata in ingresso e uscita nei nodi",
-        "Deviazione dalla media storica per ora/giorno"
+        "Deviazione dalla media storica per ora/giorno",
     ],
     "modelli_consigliati": [
         {
@@ -108,42 +112,42 @@ task2 = {
                 "Non richiede dati etichettati (unsupervised)",
                 "Efficiente computazionalmente",
                 "Buono per anomalie globali",
-                "Facile da implementare e interpretare"
+                "Facile da implementare e interpretare",
             ],
             "svantaggi": [
                 "Meno efficace per anomalie contestuali",
-                "Sensibile agli iperparametri"
+                "Sensibile agli iperparametri",
             ],
-            "quando_usarlo": "Come primo approccio per identificare anomalie evidenti"
+            "quando_usarlo": "Come primo approccio per identificare anomalie evidenti",
         },
         {
             "nome": "Autoencoder",
             "vantaggi": [
                 "Cattura pattern complessi normali",
                 "Ottimo per anomalie contestuali",
-                "Può apprendere rappresentazioni temporali"
+                "Può apprendere rappresentazioni temporali",
             ],
             "svantaggi": [
                 "Richiede più dati per training",
                 "Più complesso da implementare",
-                "Richiede tuning degli iperparametri"
+                "Richiede tuning degli iperparametri",
             ],
-            "quando_usarlo": "Per rilevare anomalie sottili basate sul contesto temporale"
+            "quando_usarlo": "Per rilevare anomalie sottili basate sul contesto temporale",
         },
         {
             "nome": "Statistical Process Control (SPC)",
             "vantaggi": [
                 "Semplice e interpretabile",
                 "Basato su soglie statistiche chiare",
-                "Ottimo per monitoraggio real-time"
+                "Ottimo per monitoraggio real-time",
             ],
             "svantaggi": [
                 "Assume distribuzione normale",
-                "Non cattura dipendenze temporali complesse"
+                "Non cattura dipendenze temporali complesse",
             ],
-            "quando_usarlo": "Per allarmi in tempo reale su metriche specifiche"
-        }
-    ]
+            "quando_usarlo": "Per allarmi in tempo reale su metriche specifiche",
+        },
+    ],
 }
 ml_tasks.append(task2)
 
@@ -152,15 +156,12 @@ task3 = {
     "nome": "Ottimizzazione Pressione di Rete",
     "tipo": "Predictive Optimization",
     "obiettivo_business": "Ottimizzare la pressione nella rete per minimizzare le perdite mantenendo il servizio adeguato",
-    "variabili_target": [
-        "Pressione ottimale per ogni nodo",
-        "Setpoint delle pompe"
-    ],
+    "variabili_target": ["Pressione ottimale per ogni nodo", "Setpoint delle pompe"],
     "features": [
         "Domanda prevista (dal modello di forecasting)",
         "Topologia della rete",
         "Vincoli di pressione minima/massima",
-        "Costi energetici per fascia oraria"
+        "Costi energetici per fascia oraria",
     ],
     "modelli_consigliati": [
         {
@@ -168,29 +169,29 @@ task3 = {
             "vantaggi": [
                 "Apprende strategie ottimali dal feedback",
                 "Si adatta a cambiamenti nella rete",
-                "Considera obiettivi multipli"
+                "Considera obiettivi multipli",
             ],
             "svantaggi": [
                 "Richiede simulatore della rete",
                 "Lungo tempo di training",
-                "Difficile da validare"
+                "Difficile da validare",
             ],
-            "quando_usarlo": "Per ottimizzazione avanzata con simulatore disponibile"
+            "quando_usarlo": "Per ottimizzazione avanzata con simulatore disponibile",
         },
         {
             "nome": "Gradient Boosting + Optimization",
             "vantaggi": [
                 "Predice outcome di diverse configurazioni",
                 "Più semplice del RL",
-                "Interpretabile"
+                "Interpretabile",
             ],
             "svantaggi": [
                 "Non garantisce ottimo globale",
-                "Richiede feature engineering"
+                "Richiede feature engineering",
             ],
-            "quando_usarlo": "Come approccio pragmatico iniziale"
-        }
-    ]
+            "quando_usarlo": "Come approccio pragmatico iniziale",
+        },
+    ],
 }
 ml_tasks.append(task3)
 
@@ -202,51 +203,51 @@ for i, task in enumerate(ml_tasks, 1):
     print(f"\nTipo: {task['tipo']}")
     print(f"\nObiettivo di Business:")
     print(f"  {task['obiettivo_business']}")
-    
+
     print(f"\nVariabili Target:")
-    for target in task['variabili_target']:
+    for target in task["variabili_target"]:
         print(f"  • {target}")
-    
+
     print(f"\nFeatures Suggerite:")
-    for feature in task['features'][:4]:
+    for feature in task["features"][:4]:
         print(f"  • {feature}")
-    if len(task['features']) > 4:
+    if len(task["features"]) > 4:
         print(f"  • ... e altre {len(task['features'])-4} features")
-    
+
     print(f"\nModelli Consigliati:")
-    for j, model in enumerate(task['modelli_consigliati'], 1):
+    for j, model in enumerate(task["modelli_consigliati"], 1):
         print(f"\n  {j}. {model['nome']}")
         print(f"     Vantaggi:")
-        for v in model['vantaggi'][:2]:
+        for v in model["vantaggi"][:2]:
             print(f"       + {v}")
         print(f"     Quando usarlo: {model['quando_usarlo']}")
 
 # Implementation roadmap
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("ROADMAP DI IMPLEMENTAZIONE SUGGERITA")
-print("="*60)
+print("=" * 60)
 
 roadmap = [
     {
         "fase": "Fase 1 (Settimane 1-2)",
         "attività": "Implementare Prophet per forecasting portate a 24h",
-        "motivazione": "Quick win con modello semplice e interpretabile"
+        "motivazione": "Quick win con modello semplice e interpretabile",
     },
     {
         "fase": "Fase 2 (Settimane 3-4)",
         "attività": "Implementare Isolation Forest per anomaly detection base",
-        "motivazione": "Identificare perdite evidenti e anomalie maggiori"
+        "motivazione": "Identificare perdite evidenti e anomalie maggiori",
     },
     {
         "fase": "Fase 3 (Settimane 5-8)",
         "attività": "Sviluppare LSTM per forecasting avanzato multi-nodo",
-        "motivazione": "Migliorare accuratezza considerando correlazioni tra nodi"
+        "motivazione": "Migliorare accuratezza considerando correlazioni tra nodi",
     },
     {
         "fase": "Fase 4 (Settimane 9-12)",
         "attività": "Integrare modelli in sistema di monitoraggio real-time",
-        "motivazione": "Passare da analisi a sistema operativo"
-    }
+        "motivazione": "Passare da analisi a sistema operativo",
+    },
 ]
 
 for step in roadmap:
@@ -262,11 +263,11 @@ ml_recommendations = {
         "stationarity": "Le serie non sono stazionarie - necessaria differenziazione per SARIMA",
         "correlations": "Forte correlazione tra nodi - utile per modelli multi-variati",
         "seasonality": "Pattern orari e probabilmente settimanali evidenti",
-        "data_quality": "Pochi valori mancanti, interpolazione lineare adeguata"
-    }
+        "data_quality": "Pochi valori mancanti, interpolazione lineare adeguata",
+    },
 }
 
-with open('ml_recommendations.json', 'w') as f:
+with open("ml_recommendations.json", "w") as f:
     json.dump(ml_recommendations, f, indent=2, ensure_ascii=False)
 
 print("\n✓ FASE 3 COMPLETATA")

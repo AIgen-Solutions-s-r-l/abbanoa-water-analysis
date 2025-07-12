@@ -355,9 +355,11 @@ class AnomalyDetectionService:
             group_anomalies.sort(
                 key=lambda a: (
                     severity_order.get(a.severity, 4),
-                    -abs(a.measurement_value - a.threshold)
-                    if a.measurement_value is not None and a.threshold is not None
-                    else 0,
+                    (
+                        -abs(a.measurement_value - a.threshold)
+                        if a.measurement_value is not None and a.threshold is not None
+                        else 0
+                    ),
                 )
             )
 

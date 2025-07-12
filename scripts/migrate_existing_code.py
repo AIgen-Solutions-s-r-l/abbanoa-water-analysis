@@ -13,23 +13,19 @@ def create_migration_mapping() -> Dict[str, str]:
         "data_normalizer.py": "legacy/data_normalizer.py",
         "improved_normalizer.py": "legacy/improved_normalizer.py",
         "hidroconta_normalizer.py": "legacy/hidroconta_normalizer.py",
-        
         # BigQuery pipeline
         "bigquery_pipeline.py": "legacy/bigquery_pipeline.py",
         "bigquery_teatinos_importer.py": "legacy/bigquery_teatinos_importer.py",
         "gcp_analytics_setup.py": "legacy/gcp_analytics_setup.py",
-        
         # Analysis scripts
         "analyze_quality.py": "legacy/analyze_quality.py",
         "time_series_analysis.py": "legacy/time_series_analysis.py",
         "phase2_eda.py": "legacy/phase2_eda.py",
         "phase3_ml_recommendations.py": "legacy/phase3_ml_recommendations.py",
         "prophet_prototype.py": "legacy/prophet_prototype.py",
-        
         # Dashboards
         "streamlit_dashboard.py": "legacy/streamlit_dashboard.py",
         "simple_dashboard.py": "legacy/simple_dashboard.py",
-        
         # Other files
         "analysis_simple.py": "legacy/analysis_simple.py",
     }
@@ -93,42 +89,42 @@ results = normalizer.analyze_and_normalize("data.csv")
 def main():
     """Main migration script."""
     print("🚀 Starting code migration to DDD structure...")
-    
+
     # Create legacy directory
     legacy_dir = Path("legacy")
     legacy_dir.mkdir(exist_ok=True)
-    
+
     # Get migration mapping
     file_mapping = create_migration_mapping()
-    
+
     # Move files
     moved_count = 0
     for old_path, new_path in file_mapping.items():
         old_file = Path(old_path)
         new_file = Path(new_path)
-        
+
         if old_file.exists():
             # Create directory if needed
             new_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Move file
             shutil.move(str(old_file), str(new_file))
             print(f"✓ Moved {old_path} → {new_path}")
             moved_count += 1
         else:
             print(f"⚠️  File not found: {old_path}")
-    
+
     # Create legacy README
     with open(legacy_dir / "README.md", "w") as f:
         f.write(create_legacy_readme())
-    
+
     print(f"\n✅ Migration complete! Moved {moved_count} files to legacy/")
     print("\n📋 Next steps:")
     print("1. Review the new structure in src/")
     print("2. Update any import statements in remaining files")
     print("3. Run tests to ensure everything works")
     print("4. Update deployment scripts to use new entry points")
-    
+
     # Create migration summary
     summary = {
         "Entry Points": {
@@ -147,9 +143,9 @@ def main():
             "Testability": "Isolated components with mocked dependencies",
             "Scalability": "Easy to add new features without breaking existing code",
             "Documentation": "Self-documenting domain model",
-        }
+        },
     }
-    
+
     print("\n📊 Migration Summary:")
     for category, items in summary.items():
         print(f"\n{category}:")

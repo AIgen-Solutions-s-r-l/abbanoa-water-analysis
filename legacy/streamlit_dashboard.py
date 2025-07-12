@@ -11,11 +11,12 @@ st.set_page_config(
     page_title="Abbanoa Water Infrastructure Monitor",
     page_icon="🌊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # Custom CSS for better styling
-st.markdown("""
+st.markdown(
+    """
 <style>
     .main-header {
         font-size: 2.5rem;
@@ -42,24 +43,28 @@ st.markdown("""
         font-weight: bold;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
+
 
 # Initialize BigQuery client
 @st.cache_resource
 def init_bigquery_client():
-    return bigquery.Client(project='abbanoa-464816')
+    return bigquery.Client(project="abbanoa-464816")
+
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def load_data(time_range_option="Last 24 Hours"):
     """Load water infrastructure data from BigQuery"""
     client = init_bigquery_client()
-    
+
     # Map time range options to actual data periods
     if time_range_option == "Last 6 Hours":
         # Show last 6 hours of available data
         limit_clause = "LIMIT 12"  # ~6 hours of 30-min intervals
     elif time_range_option == "Last 24 Hours":
-        # Show last 24 hours of available data  
+        # Show last 24 hours of available data
         limit_clause = "LIMIT 48"  # ~24 hours of 30-min intervals
     elif time_range_option == "Last 3 Days":
         # Show last 3 days of available data
@@ -67,7 +72,7 @@ def load_data(time_range_option="Last 24 Hours"):
     else:  # Last Week
         # Show all available data (it's only about 4 months)
         limit_clause = ""
-    
+
     query = f"""
     WITH recent_data AS (
       SELECT 
@@ -88,7 +93,7 @@ def load_data(time_range_option="Last 24 Hours"):
     ORDER BY datetime DESC
     {limit_clause}
     """
-    
+
     try:
         df = client.query(query).to_dataframe()
         return df
@@ -96,11 +101,12 @@ def load_data(time_range_option="Last 24 Hours"):
         st.error(f"Error loading data: {str(e)}")
         return pd.DataFrame()
 
+
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def load_hourly_patterns():
     """Load hourly consumption patterns"""
     client = init_bigquery_client()
-    
+
     query = """
     SELECT 
       EXTRACT(HOUR FROM PARSE_TIME('%H:%M:%S', ora)) as hour_of_day,
@@ -123,18 +129,19 @@ def load_hourly_patterns():
     GROUP BY hour_of_day, day_of_week, day_name
     ORDER BY day_of_week, hour_of_day
     """
-    
+
     try:
         return client.query(query).to_dataframe()
     except Exception as e:
         st.error(f"Error loading pattern data: {str(e)}")
         return pd.DataFrame()
 
+
 def get_system_status(flow_rate, temperature):
     """Determine system status based on current metrics"""
     if pd.isna(flow_rate) or pd.isna(temperature):
         return "🔴 NO DATA", "alert"
-    
+
     if flow_rate > 120:
         return "🔴 HIGH FLOW ALERT", "alert"
     elif flow_rate < 30:
@@ -143,6 +150,7 @@ def get_system_status(flow_rate, temperature):
         return "🟠 HIGH TEMPERATURE", "warning"
     else:
         return "🟢 SYSTEM NORMAL", "normal"
+
 
 # Sidebar
 st.sidebar.title("🌊 Abbanoa Control Center")
@@ -153,7 +161,7 @@ st.sidebar.markdown("---")
 time_range = st.sidebar.selectbox(
     "📅 Select Time Range",
     ["Last 6 Hours", "Last 24 Hours", "Last 3 Days", "Last Week"],
-    index=1
+    index=1,
 )
 
 # Time ranges now handled directly in load_data function
@@ -172,7 +180,10 @@ st.sidebar.markdown("• Consumption patterns")
 st.sidebar.markdown("• System alerts")
 
 # Main dashboard
-st.markdown('<h1 class="main-header">🌊 Abbanoa Water Infrastructure Dashboard</h1>', unsafe_allow_html=True)
+st.markdown(
+    '<h1 class="main-header">🌊 Abbanoa Water Infrastructure Dashboard</h1>',
+    unsafe_allow_html=True,
+)
 
 # Load data
 with st.spinner("🔄 Loading water infrastructure data..."):
@@ -189,36 +200,36 @@ col1, col2, col3, col4 = st.columns(4)
 latest = df.iloc[0]
 
 with col1:
-    current_flow = latest['sant_anna_flow']
-    prev_flow = df.iloc[1]['sant_anna_flow'] if len(df) > 1 else current_flow
+    current_flow = latest["sant_anna_flow"]
+    prev_flow = df.iloc[1]["sant_anna_flow"] if len(df) > 1 else current_flow
     flow_delta = current_flow - prev_flow if not pd.isna(prev_flow) else 0
-    
+
     st.metric(
         label="🌊 Current Flow Rate",
         value=f"{current_flow:.1f} L/S" if not pd.isna(current_flow) else "No data",
-        delta=f"{flow_delta:.1f} L/S" if not pd.isna(flow_delta) else None
+        delta=f"{flow_delta:.1f} L/S" if not pd.isna(flow_delta) else None,
     )
 
 with col2:
-    tank_output = latest['tank_output']
-    prev_tank = df.iloc[1]['tank_output'] if len(df) > 1 else tank_output
+    tank_output = latest["tank_output"]
+    prev_tank = df.iloc[1]["tank_output"] if len(df) > 1 else tank_output
     tank_delta = tank_output - prev_tank if not pd.isna(prev_tank) else 0
-    
+
     st.metric(
-        label="🏭 Tank Output", 
+        label="🏭 Tank Output",
         value=f"{tank_output:.1f} L/S" if not pd.isna(tank_output) else "No data",
-        delta=f"{tank_delta:.1f} L/S" if not pd.isna(tank_delta) else None
+        delta=f"{tank_delta:.1f} L/S" if not pd.isna(tank_delta) else None,
     )
 
 with col3:
-    temperature = latest['sant_anna_temp']
-    prev_temp = df.iloc[1]['sant_anna_temp'] if len(df) > 1 else temperature
+    temperature = latest["sant_anna_temp"]
+    prev_temp = df.iloc[1]["sant_anna_temp"] if len(df) > 1 else temperature
     temp_delta = temperature - prev_temp if not pd.isna(prev_temp) else 0
-    
+
     st.metric(
         label="🌡️ Temperature",
         value=f"{temperature:.1f}°C" if not pd.isna(temperature) else "No data",
-        delta=f"{temp_delta:.1f}°C" if not pd.isna(temp_delta) else None
+        delta=f"{temp_delta:.1f}°C" if not pd.isna(temp_delta) else None,
     )
 
 with col4:
@@ -235,56 +246,62 @@ with col1:
     st.subheader("📈 Flow Rate Trends")
     if not df.empty:
         fig = go.Figure()
-        
+
         # Sant Anna flow
-        fig.add_trace(go.Scatter(
-            x=df['datetime'], 
-            y=df['sant_anna_flow'],
-            name='Sant Anna Flow',
-            line=dict(color='#1f77b4', width=2),
-            hovertemplate='%{y:.1f} L/S<br>%{x}<extra></extra>'
-        ))
-        
+        fig.add_trace(
+            go.Scatter(
+                x=df["datetime"],
+                y=df["sant_anna_flow"],
+                name="Sant Anna Flow",
+                line=dict(color="#1f77b4", width=2),
+                hovertemplate="%{y:.1f} L/S<br>%{x}<extra></extra>",
+            )
+        )
+
         # Tank output
-        fig.add_trace(go.Scatter(
-            x=df['datetime'], 
-            y=df['tank_output'],
-            name='Tank Output',
-            line=dict(color='#ff7f0e', width=2),
-            hovertemplate='%{y:.1f} L/S<br>%{x}<extra></extra>'
-        ))
-        
+        fig.add_trace(
+            go.Scatter(
+                x=df["datetime"],
+                y=df["tank_output"],
+                name="Tank Output",
+                line=dict(color="#ff7f0e", width=2),
+                hovertemplate="%{y:.1f} L/S<br>%{x}<extra></extra>",
+            )
+        )
+
         # External supply (if available)
-        if 'external_supply' in df.columns:
-            fig.add_trace(go.Scatter(
-                x=df['datetime'], 
-                y=df['external_supply'],
-                name='External Supply',
-                line=dict(color='#2ca02c', width=2),
-                hovertemplate='%{y:.1f} L/S<br>%{x}<extra></extra>'
-            ))
-        
+        if "external_supply" in df.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=df["datetime"],
+                    y=df["external_supply"],
+                    name="External Supply",
+                    line=dict(color="#2ca02c", width=2),
+                    hovertemplate="%{y:.1f} L/S<br>%{x}<extra></extra>",
+                )
+            )
+
         fig.update_layout(
             title="Water Flow Rates Over Time",
             xaxis_title="Time",
             yaxis_title="Flow Rate (L/S)",
             height=400,
-            hovermode='x unified'
+            hovermode="x unified",
         )
         st.plotly_chart(fig, use_container_width=True)
 
 with col2:
     st.subheader("🌡️ Temperature Monitoring")
-    if not df.empty and 'sant_anna_temp' in df.columns:
+    if not df.empty and "sant_anna_temp" in df.columns:
         fig = px.line(
-            df, 
-            x='datetime', 
-            y='sant_anna_temp',
+            df,
+            x="datetime",
+            y="sant_anna_temp",
             title="Temperature Trend",
-            labels={'sant_anna_temp': 'Temperature (°C)', 'datetime': 'Time'}
+            labels={"sant_anna_temp": "Temperature (°C)", "datetime": "Time"},
         )
         fig.update_layout(height=400)
-        fig.update_traces(line_color='#d62728', line_width=2)
+        fig.update_traces(line_color="#d62728", line_width=2)
         st.plotly_chart(fig, use_container_width=True)
 
 # Network balance analysis
@@ -292,49 +309,57 @@ st.subheader("⚖️ Water Network Balance Analysis")
 if not df.empty:
     # Calculate network balance
     df_balance = df.copy()
-    df_balance['total_input'] = (
-        df_balance['sant_anna_flow'].fillna(0) + 
-        df_balance['seneca_flow'].fillna(0) + 
-        df_balance['external_supply'].fillna(0)
+    df_balance["total_input"] = (
+        df_balance["sant_anna_flow"].fillna(0)
+        + df_balance["seneca_flow"].fillna(0)
+        + df_balance["external_supply"].fillna(0)
     )
-    df_balance['apparent_loss'] = df_balance['total_input'] - df_balance['tank_output'].fillna(0)
-    
+    df_balance["apparent_loss"] = df_balance["total_input"] - df_balance[
+        "tank_output"
+    ].fillna(0)
+
     fig = go.Figure()
-    
+
     # Total input (area chart)
-    fig.add_trace(go.Scatter(
-        x=df_balance['datetime'], 
-        y=df_balance['total_input'],
-        fill='tonexty',
-        name='Total Input',
-        line_color='rgba(31, 119, 180, 0.7)',
-        hovertemplate='Input: %{y:.1f} L/S<extra></extra>'
-    ))
-    
+    fig.add_trace(
+        go.Scatter(
+            x=df_balance["datetime"],
+            y=df_balance["total_input"],
+            fill="tonexty",
+            name="Total Input",
+            line_color="rgba(31, 119, 180, 0.7)",
+            hovertemplate="Input: %{y:.1f} L/S<extra></extra>",
+        )
+    )
+
     # Tank output
-    fig.add_trace(go.Scatter(
-        x=df_balance['datetime'], 
-        y=df_balance['tank_output'],
-        name='Tank Output',
-        line_color='#ff7f0e',
-        hovertemplate='Output: %{y:.1f} L/S<extra></extra>'
-    ))
-    
+    fig.add_trace(
+        go.Scatter(
+            x=df_balance["datetime"],
+            y=df_balance["tank_output"],
+            name="Tank Output",
+            line_color="#ff7f0e",
+            hovertemplate="Output: %{y:.1f} L/S<extra></extra>",
+        )
+    )
+
     # Apparent loss
-    fig.add_trace(go.Scatter(
-        x=df_balance['datetime'], 
-        y=df_balance['apparent_loss'],
-        name='Apparent Loss',
-        line_color='#d62728',
-        hovertemplate='Loss: %{y:.1f} L/S<extra></extra>'
-    ))
-    
+    fig.add_trace(
+        go.Scatter(
+            x=df_balance["datetime"],
+            y=df_balance["apparent_loss"],
+            name="Apparent Loss",
+            line_color="#d62728",
+            hovertemplate="Loss: %{y:.1f} L/S<extra></extra>",
+        )
+    )
+
     fig.update_layout(
         title="Water Network Balance: Input vs Output vs Losses",
         xaxis_title="Time",
         yaxis_title="Flow Rate (L/S)",
         height=400,
-        hovermode='x unified'
+        hovermode="x unified",
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -342,25 +367,31 @@ if not df.empty:
 st.subheader("🔥 Consumption Patterns")
 with st.spinner("Loading consumption patterns..."):
     patterns_df = load_hourly_patterns()
-    
+
 if not patterns_df.empty:
     # Create heatmap
     heatmap_pivot = patterns_df.pivot(
-        index='day_name', 
-        columns='hour_of_day', 
-        values='avg_flow_rate'
+        index="day_name", columns="hour_of_day", values="avg_flow_rate"
     )
-    
+
     # Reorder days
-    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    day_order = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
     heatmap_pivot = heatmap_pivot.reindex(day_order)
-    
+
     fig = px.imshow(
         heatmap_pivot,
         labels=dict(x="Hour of Day", y="Day of Week", color="Flow Rate (L/S)"),
         title="Average Water Consumption Patterns",
         color_continuous_scale="Blues",
-        aspect="auto"
+        aspect="auto",
     )
     fig.update_layout(height=400)
     st.plotly_chart(fig, use_container_width=True)
@@ -371,21 +402,27 @@ st.subheader("📋 Key Performance Indicators")
 
 if not df.empty:
     col1, col2, col3, col4 = st.columns(4)
-    
+
     with col1:
-        avg_flow = df['sant_anna_flow'].mean()
+        avg_flow = df["sant_anna_flow"].mean()
         st.metric("📊 Average Flow Rate", f"{avg_flow:.1f} L/S")
-    
+
     with col2:
-        max_flow = df['sant_anna_flow'].max()
+        max_flow = df["sant_anna_flow"].max()
         st.metric("📈 Peak Flow Rate", f"{max_flow:.1f} L/S")
-    
+
     with col3:
-        total_volume = df['sant_anna_flow'].sum() * 0.5 / 1000  # Assuming 30-min intervals, convert to m³
+        total_volume = (
+            df["sant_anna_flow"].sum() * 0.5 / 1000
+        )  # Assuming 30-min intervals, convert to m³
         st.metric("🏺 Total Volume", f"{total_volume:.1f} m³")
-    
+
     with col4:
-        efficiency = (df['tank_output'].sum() / df['sant_anna_flow'].sum() * 100) if df['sant_anna_flow'].sum() > 0 else 0
+        efficiency = (
+            (df["tank_output"].sum() / df["sant_anna_flow"].sum() * 100)
+            if df["sant_anna_flow"].sum() > 0
+            else 0
+        )
         st.metric("⚡ Network Efficiency", f"{efficiency:.1f}%")
 
 # Recent alerts/anomalies
@@ -396,19 +433,25 @@ st.subheader("🚨 Recent Alerts")
 if not df.empty:
     alerts = []
     for idx, row in df.head(20).iterrows():
-        flow = row['sant_anna_flow']
-        temp = row['sant_anna_temp']
-        time = row['datetime']
-        
+        flow = row["sant_anna_flow"]
+        temp = row["sant_anna_temp"]
+        time = row["datetime"]
+
         if not pd.isna(flow):
             if flow > 120:
-                alerts.append(f"🔴 {time.strftime('%H:%M %d/%m')} - High flow alert: {flow:.1f} L/S")
+                alerts.append(
+                    f"🔴 {time.strftime('%H:%M %d/%m')} - High flow alert: {flow:.1f} L/S"
+                )
             elif flow < 30:
-                alerts.append(f"🟠 {time.strftime('%H:%M %d/%m')} - Low flow warning: {flow:.1f} L/S")
-        
+                alerts.append(
+                    f"🟠 {time.strftime('%H:%M %d/%m')} - Low flow warning: {flow:.1f} L/S"
+                )
+
         if not pd.isna(temp) and temp > 25:
-            alerts.append(f"🟠 {time.strftime('%H:%M %d/%m')} - High temperature: {temp:.1f}°C")
-    
+            alerts.append(
+                f"🟠 {time.strftime('%H:%M %d/%m')} - High temperature: {temp:.1f}°C"
+            )
+
     if alerts:
         for alert in alerts[:5]:  # Show last 5 alerts
             st.warning(alert)
@@ -418,31 +461,45 @@ if not df.empty:
 # Data quality section
 with st.expander("📊 Data Quality & Raw Data"):
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.write("**Data Quality Metrics:**")
         total_records = len(df)
-        missing_flow = df['sant_anna_flow'].isna().sum()
-        missing_temp = df['sant_anna_temp'].isna().sum()
-        
+        missing_flow = df["sant_anna_flow"].isna().sum()
+        missing_temp = df["sant_anna_temp"].isna().sum()
+
         st.write(f"• Total records: {total_records}")
-        st.write(f"• Missing flow data: {missing_flow} ({missing_flow/total_records*100:.1f}%)")
-        st.write(f"• Missing temperature data: {missing_temp} ({missing_temp/total_records*100:.1f}%)")
-        st.write(f"• Data completeness: {(total_records-missing_flow)/total_records*100:.1f}%")
-    
+        st.write(
+            f"• Missing flow data: {missing_flow} ({missing_flow/total_records*100:.1f}%)"
+        )
+        st.write(
+            f"• Missing temperature data: {missing_temp} ({missing_temp/total_records*100:.1f}%)"
+        )
+        st.write(
+            f"• Data completeness: {(total_records-missing_flow)/total_records*100:.1f}%"
+        )
+
     with col2:
         st.write("**Time Range:**")
         if not df.empty:
             st.write(f"• From: {df['datetime'].min().strftime('%Y-%m-%d %H:%M')}")
             st.write(f"• To: {df['datetime'].max().strftime('%Y-%m-%d %H:%M')}")
             st.write(f"• Duration: {time_range}")
-            st.write(f"• Update frequency: ~30 minutes")
-    
+            st.write("• Update frequency: ~30 minutes")
+
     # Raw data table
     st.write("**Raw Data Preview:**")
     st.dataframe(
-        df[['datetime', 'sant_anna_flow', 'tank_output', 'sant_anna_temp', 'external_supply']].head(20),
-        use_container_width=True
+        df[
+            [
+                "datetime",
+                "sant_anna_flow",
+                "tank_output",
+                "sant_anna_temp",
+                "external_supply",
+            ]
+        ].head(20),
+        use_container_width=True,
     )
 
 # Footer
@@ -454,10 +511,12 @@ st.markdown(
         Data refreshes every 5 minutes | 
         Built with Streamlit & BigQuery
     </div>
-    """, 
-    unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True,
 )
 
 # Auto-refresh notification
 st.sidebar.markdown("---")
-st.sidebar.info("💡 **Tip:** Dashboard auto-refreshes cached data every 5 minutes. Use the refresh button for immediate updates.") 
+st.sidebar.info(
+    "💡 **Tip:** Dashboard auto-refreshes cached data every 5 minutes. Use the refresh button for immediate updates."
+)

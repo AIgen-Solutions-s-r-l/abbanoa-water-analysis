@@ -5,28 +5,32 @@ import os
 import sys
 
 # Set environment variables
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser('~/.config/gcloud/application_default_credentials.json')
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.expanduser(
+    "~/.config/gcloud/application_default_credentials.json"
+)
 
 # Try to import after setting env var
 try:
     from google.cloud import bigquery
+
     print("✅ Successfully imported BigQuery")
 except ImportError as e:
     print(f"❌ Failed to import BigQuery: {e}")
     print("\nTrying alternative import method...")
-    
+
     # Add common virtualenv paths
     venv_paths = [
         "/home/alessio/.cache/pypoetry/virtualenvs/abbanoa-water-infrastructure-RTCwCU-i-py3.12/lib/python3.12/site-packages",
         "/home/alessio/.local/lib/python3.12/site-packages",
     ]
-    
+
     for path in venv_paths:
         if os.path.exists(path):
             sys.path.insert(0, path)
-    
+
     try:
         from google.cloud import bigquery
+
         print("✅ Successfully imported BigQuery from alternative path")
     except ImportError:
         print("❌ Still cannot import BigQuery")
@@ -39,18 +43,19 @@ PROJECT_ID = "abbanoa-464816"
 DATASET_ID = "water_infrastructure"
 LOCATION = "EU"
 
+
 def main():
     """Main setup function."""
     print(f"\nSetting up BigQuery:")
     print(f"  Project: {PROJECT_ID}")
     print(f"  Dataset: {DATASET_ID}")
     print(f"  Location: {LOCATION}")
-    
+
     try:
         # Initialize client
         client = bigquery.Client(project=PROJECT_ID)
         print("\n✅ Connected to BigQuery!")
-        
+
         # Check if dataset exists
         dataset_id = f"{PROJECT_ID}.{DATASET_ID}"
         try:
@@ -62,7 +67,7 @@ def main():
             dataset.location = LOCATION
             dataset = client.create_dataset(dataset)
             print(f"✅ Created dataset {DATASET_ID}")
-        
+
         # Create tables
         tables = {
             "water_networks": """
@@ -106,22 +111,23 @@ def main():
                 )
                 PARTITION BY DATE(timestamp)
                 CLUSTER BY node_id, timestamp
-            """
+            """,
         }
-        
+
         for table_name, create_sql in tables.items():
             query = create_sql.format(project=PROJECT_ID, dataset=DATASET_ID)
             job = client.query(query)
             job.result()  # Wait for completion
             print(f"✅ Table {table_name} is ready")
-        
+
         print("\n✅ BigQuery setup complete!")
-        
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
         return 1
-    
+
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

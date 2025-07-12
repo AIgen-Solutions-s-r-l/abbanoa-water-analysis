@@ -386,9 +386,11 @@ class OverviewTab:
                             "node_name": node_name,
                             "flow_rate": flow_val,
                             "pressure": pressure_val,
-                            "efficiency": min(100, max(0, (flow_val / 100) * 100))
-                            if flow_val > 0
-                            else 0,
+                            "efficiency": (
+                                min(100, max(0, (flow_val / 100) * 100))
+                                if flow_val > 0
+                                else 0
+                            ),
                             "is_anomaly": reading.is_anomaly,
                         }
                     )
@@ -439,9 +441,9 @@ class OverviewTab:
                 return {
                     "flow_rate": latest.flow_rate.value if latest.flow_rate else 0,
                     "pressure": latest.pressure.value if latest.pressure else 0,
-                    "temperature": latest.temperature.value
-                    if latest.temperature
-                    else 0,
+                    "temperature": (
+                        latest.temperature.value if latest.temperature else 0
+                    ),
                     "quality_score": latest.quality_score or 0,
                     "timestamp": latest.timestamp,
                 }

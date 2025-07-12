@@ -147,7 +147,9 @@ class AnomalyTab:
             fig.update_layout(height=300, showlegend=True, hovermode="closest")
 
             st.plotly_chart(fig, use_container_width=True)
-            st.success(f"✅ Found {len(anomalies)} anomalies in the selected time range")
+            st.success(
+                f"✅ Found {len(anomalies)} anomalies in the selected time range"
+            )
         else:
             st.info("No anomalies detected in the selected time range")
 
@@ -438,9 +440,9 @@ class AnomalyTab:
                     "critical_count": critical_count,
                     "affected_nodes": affected_nodes,
                     "total_nodes": total_nodes,
-                    "affected_percentage": (affected_nodes / total_nodes * 100)
-                    if total_nodes > 0
-                    else 0,
+                    "affected_percentage": (
+                        (affected_nodes / total_nodes * 100) if total_nodes > 0 else 0
+                    ),
                     "avg_resolution": "45 min",
                 }
         except Exception as e:
@@ -562,12 +564,14 @@ class AnomalyTab:
                         timestamp=anomaly["timestamp"],
                         anomaly_type=type_map.get(anomaly["anomaly_type"], "UNKNOWN"),
                         severity=severity_map.get(anomaly["severity"], "MEDIUM"),
-                        measurement_type="FLOW"
-                        if "flow" in anomaly["anomaly_type"]
-                        else "PRESSURE",
-                        actual_value=anomaly["flow_rate"]
-                        if "flow" in anomaly["anomaly_type"]
-                        else anomaly["pressure"],
+                        measurement_type=(
+                            "FLOW" if "flow" in anomaly["anomaly_type"] else "PRESSURE"
+                        ),
+                        actual_value=(
+                            anomaly["flow_rate"]
+                            if "flow" in anomaly["anomaly_type"]
+                            else anomaly["pressure"]
+                        ),
                         expected_range=(0, 100),  # Placeholder
                         deviation_percentage=20.0,  # Placeholder
                         location_name=anomaly["node_name"],
@@ -576,7 +580,9 @@ class AnomalyTab:
                     )
                     anomaly_dtos.append(dto)
 
-                st.success(f"✅ Detected {len(anomaly_dtos)} anomalies from sensor data")
+                st.success(
+                    f"✅ Detected {len(anomaly_dtos)} anomalies from sensor data"
+                )
                 return anomaly_dtos
 
             except Exception:

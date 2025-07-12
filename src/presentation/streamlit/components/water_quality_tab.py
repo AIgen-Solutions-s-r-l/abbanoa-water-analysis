@@ -97,9 +97,7 @@ class WaterQualityTab:
                 quality_status = (
                     "Excellent"
                     if avg_quality > 90
-                    else "Good"
-                    if avg_quality > 80
-                    else "Fair"
+                    else "Good" if avg_quality > 80 else "Fair"
                 )
                 st.metric(
                     "Overall Quality", f"{avg_quality:.1f}%", delta=quality_status
@@ -305,9 +303,12 @@ class WaterQualityTab:
             # Velocity recommendations
             st.write("**Flow Velocity Analysis**")
             for _, row in df_velocity.iterrows():
-                color = {"Low": "🔵", "Optimal": "🟢", "High": "🟠", "Critical": "🔴"}.get(
-                    row["Classification"], "⚪"
-                )
+                color = {
+                    "Low": "🔵",
+                    "Optimal": "🟢",
+                    "High": "🟠",
+                    "Critical": "🔴",
+                }.get(row["Classification"], "⚪")
 
                 st.write(
                     f"{color} **{row['Node']}**: {row['Velocity (m/s)']:.2f} m/s ({row['Classification']})"

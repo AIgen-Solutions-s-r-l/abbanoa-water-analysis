@@ -15,15 +15,18 @@ sys.path.insert(0, str(project_root))
 def main():
     """Quick integration of new nodes."""
     print("=== Quick Node Integration ===\n")
-    
+
     # 1. Update the static repository to include node mappings from sensor_readings_ml
-    static_repo_path = project_root / "src/infrastructure/repositories/static_monitoring_node_repository.py"
-    
+    static_repo_path = (
+        project_root
+        / "src/infrastructure/repositories/static_monitoring_node_repository.py"
+    )
+
     if static_repo_path.exists():
         print("1. Updating static repository to include BigQuery node mappings...")
-        
+
         # Add an additional mapping at the end of the file
-        additional_code = '''
+        additional_code = """
 
 # Additional node mappings for new backup data nodes
 BACKUP_NODE_MAPPING = {
@@ -34,16 +37,16 @@ BACKUP_NODE_MAPPING = {
     "288399": {"name": "Monitoring 288399", "type": "monitoring"},
     "288400": {"name": "Monitoring 288400", "type": "monitoring"},
 }
-'''
-        
-        with open(static_repo_path, 'a') as f:
+"""
+
+        with open(static_repo_path, "a") as f:
             f.write(additional_code)
         print("✅ Added backup node mapping")
-    
+
     # 2. Create a simple configuration override file
     config_override_path = project_root / "src/config/node_overrides.py"
     config_override_path.parent.mkdir(exist_ok=True)
-    
+
     override_content = '''"""
 Node configuration overrides for new backup data nodes.
 
@@ -111,15 +114,15 @@ def get_node_config(node_name):
             return config
     return None
 '''
-    
-    with open(config_override_path, 'w') as f:
+
+    with open(config_override_path, "w") as f:
         f.write(override_content)
     print("\n2. Created node override configuration")
-    
+
     # 3. Create a query adapter for the new nodes
     adapter_path = project_root / "src/infrastructure/adapters/backup_node_adapter.py"
     adapter_path.parent.mkdir(exist_ok=True)
-    
+
     adapter_content = '''"""
 Adapter for querying backup node data from sensor_readings_ml table.
 """
@@ -193,23 +196,29 @@ class BackupNodeAdapter:
             start_time=datetime.now() - timedelta(hours=1)
         )
 '''
-    
-    with open(adapter_path, 'w') as f:
+
+    with open(adapter_path, "w") as f:
         f.write(adapter_content)
     print("✅ Created backup node adapter\n")
-    
+
     # Print usage instructions
     print("=== Integration Complete ===\n")
     print("New nodes are now available in the configuration.")
     print("\nTo use the new nodes in your code:")
     print("\n1. Import the configuration:")
-    print("   from src.config.node_overrides import NEW_BACKUP_NODES, get_all_node_names")
+    print(
+        "   from src.config.node_overrides import NEW_BACKUP_NODES, get_all_node_names"
+    )
     print("\n2. Query data using the adapter:")
-    print("   from src.infrastructure.adapters.backup_node_adapter import BackupNodeAdapter")
+    print(
+        "   from src.infrastructure.adapters.backup_node_adapter import BackupNodeAdapter"
+    )
     print("   adapter = BackupNodeAdapter(bigquery_client)")
     print("   data = adapter.get_node_data(['215542', '281492'])")
     print("\n3. Access nodes in BigQuery:")
-    print("   SELECT * FROM sensor_readings_ml WHERE node_id IN ('215542', '215600', ...)")
+    print(
+        "   SELECT * FROM sensor_readings_ml WHERE node_id IN ('215542', '215600', ...)"
+    )
     print("\nNext steps:")
     print("- Test the dashboard with new nodes")
     print("- Update visualizations to include node grouping")

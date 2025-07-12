@@ -15,6 +15,7 @@ sys.path.insert(0, project_root)
 api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
 try:
     import requests
+
     response = requests.get(f"{api_base_url}/health", timeout=2)
     use_api = response.status_code == 200
 except:
@@ -24,17 +25,27 @@ except:
 if use_api:
     print(f"✅ API is healthy at {api_base_url}")
     print("Starting Streamlit dashboard (API mode)...")
-    app_path = os.path.join(project_root, "src", "presentation", "streamlit", "app_api.py")
+    app_path = os.path.join(
+        project_root, "src", "presentation", "streamlit", "app_api.py"
+    )
 else:
     print(f"⚠️  API is not available at {api_base_url}")
     print("Starting Streamlit dashboard (standalone mode)...")
     app_path = os.path.join(project_root, "src", "presentation", "streamlit", "app.py")
 
 # Run streamlit
-subprocess.run([
-    sys.executable, "-m", "streamlit", "run",
-    app_path,
-    "--server.port", "8502",
-    "--server.address", "127.0.0.1",
-    "--theme.base", "light"
-])
+subprocess.run(
+    [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        app_path,
+        "--server.port",
+        "8502",
+        "--server.address",
+        "127.0.0.1",
+        "--theme.base",
+        "light",
+    ]
+)

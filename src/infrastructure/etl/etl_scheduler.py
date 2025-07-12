@@ -261,15 +261,19 @@ class ETLScheduler:
                                     "timestamp": latest["timestamp"],
                                     "node_id": node_id,
                                     "anomaly_type": "flow_anomaly",
-                                    "severity": "warning"
-                                    if deviation < 4 * std_flow
-                                    else "critical",
+                                    "severity": (
+                                        "warning"
+                                        if deviation < 4 * std_flow
+                                        else "critical"
+                                    ),
                                     "measurement_type": "flow_rate",
                                     "actual_value": latest["flow_rate"],
                                     "expected_value": avg_flow,
-                                    "deviation_percentage": (deviation / avg_flow * 100)
-                                    if avg_flow > 0
-                                    else 0,
+                                    "deviation_percentage": (
+                                        (deviation / avg_flow * 100)
+                                        if avg_flow > 0
+                                        else 0
+                                    ),
                                     "detection_method": "statistical_3sigma",
                                 }
 
@@ -430,9 +434,9 @@ class ETLScheduler:
                 {
                     "id": job.id,
                     "name": job.name,
-                    "next_run": job.next_run_time.isoformat()
-                    if job.next_run_time
-                    else None,
+                    "next_run": (
+                        job.next_run_time.isoformat() if job.next_run_time else None
+                    ),
                     "trigger": str(job.trigger),
                 }
             )

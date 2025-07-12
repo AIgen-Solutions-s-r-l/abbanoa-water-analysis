@@ -95,9 +95,11 @@ class OverviewTab:
                 st.metric(
                     "Network Efficiency",
                     f"{efficiency:.1f}%" if efficiency is not None else "N/A",
-                    f"{anomaly_count} anomalies"
-                    if anomaly_count is not None
-                    else "N/A",
+                    (
+                        f"{anomaly_count} anomalies"
+                        if anomaly_count is not None
+                        else "N/A"
+                    ),
                 )
 
         # Create two columns for charts

@@ -232,9 +232,11 @@ class DataProcessor:
                 / self._expected_data_points(window)
                 * 100,
                 "anomaly_count": self._detect_anomalies(period_data),
-                "quality_score": period_data["quality_score"].mean()
-                if "quality_score" in period_data
-                else 1.0,
+                "quality_score": (
+                    period_data["quality_score"].mean()
+                    if "quality_score" in period_data
+                    else 1.0
+                ),
                 "computed_at": datetime.now(),
             }
 

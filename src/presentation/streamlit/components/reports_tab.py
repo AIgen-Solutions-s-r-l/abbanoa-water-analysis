@@ -4,7 +4,6 @@ Reports tab component for the integrated dashboard.
 This component provides report generation and data export functionality.
 """
 
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -289,9 +288,7 @@ class ReportsTab:
 
         with col2:
             st.markdown("##### Export Format")
-            st.radio(
-                "Select Format", ["CSV", "Excel", "JSON", "PDF Report"]
-            )
+            st.radio("Select Format", ["CSV", "Excel", "JSON", "PDF Report"])
 
             st.select_slider(
                 "Time Resolution",
@@ -365,9 +362,7 @@ class ReportsTab:
         if scheduled:
             col1, col2 = st.columns(2)
             with col1:
-                st.selectbox(
-                    "Schedule Type", ["Daily", "Weekly", "Monthly"]
-                )
+                st.selectbox("Schedule Type", ["Daily", "Weekly", "Monthly"])
             with col2:
                 st.text_input("Email Address", placeholder="report@example.com")
 

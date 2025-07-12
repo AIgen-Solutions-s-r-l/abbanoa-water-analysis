@@ -142,9 +142,11 @@ class BigQueryToPostgresETL:
                     "records_failed": self.stats["failed_records"],
                     "metadata": {
                         "duration_seconds": duration,
-                        "records_per_second": self.stats["processed_records"] / duration
-                        if duration > 0
-                        else 0,
+                        "records_per_second": (
+                            self.stats["processed_records"] / duration
+                            if duration > 0
+                            else 0
+                        ),
                     },
                 },
             )
@@ -289,21 +291,31 @@ class BigQueryToPostgresETL:
                     reading = {
                         "timestamp": row["timestamp"].to_pydatetime(),
                         "node_id": row["node_id"],
-                        "temperature": float(row["temperature"])
-                        if pd.notna(row["temperature"])
-                        else None,
-                        "flow_rate": float(row["flow_rate"])
-                        if pd.notna(row["flow_rate"])
-                        else None,
-                        "pressure": float(row["pressure"])
-                        if pd.notna(row["pressure"])
-                        else None,
-                        "total_flow": float(row["total_flow"])
-                        if pd.notna(row["total_flow"])
-                        else None,
-                        "quality_score": float(row["quality_score"])
-                        if pd.notna(row["quality_score"])
-                        else 1.0,
+                        "temperature": (
+                            float(row["temperature"])
+                            if pd.notna(row["temperature"])
+                            else None
+                        ),
+                        "flow_rate": (
+                            float(row["flow_rate"])
+                            if pd.notna(row["flow_rate"])
+                            else None
+                        ),
+                        "pressure": (
+                            float(row["pressure"])
+                            if pd.notna(row["pressure"])
+                            else None
+                        ),
+                        "total_flow": (
+                            float(row["total_flow"])
+                            if pd.notna(row["total_flow"])
+                            else None
+                        ),
+                        "quality_score": (
+                            float(row["quality_score"])
+                            if pd.notna(row["quality_score"])
+                            else 1.0
+                        ),
                     }
                     readings.append(reading)
 

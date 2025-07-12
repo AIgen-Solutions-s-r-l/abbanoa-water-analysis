@@ -27,7 +27,7 @@ for node_id in nodes:
         AND timestamp <= '2025-03-31'
     GROUP BY node_id
     """
-    
+
     result = list(client.query(query).result())
     if result:
         row = result[0]
@@ -36,7 +36,7 @@ for node_id in nodes:
         print(f"  Avg flow (March): {row.avg_flow:.2f} L/s")
         print(f"  Avg pressure (March): {row.avg_pressure:.2f} bar")
         print(f"  Total readings: {row.total_readings}")
-        
+
         # Get a recent non-zero reading
         query2 = f"""
         SELECT timestamp, flow_rate, pressure
@@ -46,11 +46,13 @@ for node_id in nodes:
         ORDER BY timestamp DESC
         LIMIT 1
         """
-        
+
         result2 = list(client.query(query2).result())
         if result2:
             row2 = result2[0]
-            print(f"  Last active: {row2.timestamp} - {row2.flow_rate:.2f} L/s, {row2.pressure:.2f} bar")
+            print(
+                f"  Last active: {row2.timestamp} - {row2.flow_rate:.2f} L/s, {row2.pressure:.2f} bar"
+            )
     else:
         print(f"\nNode {node_id}: No data")
 

@@ -244,11 +244,9 @@ class HybridDataService:
             latest = self.redis_manager.redis_client.hgetall(f"node:{node_id}:latest")
             if latest:
                 latest_readings[node_id] = {
-                    k.decode()
-                    if isinstance(k, bytes)
-                    else k: v.decode()
-                    if isinstance(v, bytes)
-                    else v
+                    k.decode() if isinstance(k, bytes) else k: (
+                        v.decode() if isinstance(v, bytes) else v
+                    )
                     for k, v in latest.items()
                 }
             else:
@@ -304,9 +302,9 @@ class HybridDataService:
                 anomaly = {
                     "timestamp": reading["timestamp"],
                     "node_id": node_id,
-                    "anomaly_type": "flow_spike"
-                    if flow_rate > avg_flow
-                    else "flow_drop",
+                    "anomaly_type": (
+                        "flow_spike" if flow_rate > avg_flow else "flow_drop"
+                    ),
                     "severity": "warning",
                     "measurement_type": "flow_rate",
                     "actual_value": flow_rate,

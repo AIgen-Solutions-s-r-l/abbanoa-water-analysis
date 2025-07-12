@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 # Configure matplotlib for better display
-plt.style.use('seaborn-v0_8-darkgrid')
-plt.rcParams['figure.figsize'] = (12, 6)
-plt.rcParams['font.size'] = 10
+plt.style.use("seaborn-v0_8-darkgrid")
+plt.rcParams["figure.figsize"] = (12, 6)
+plt.rcParams["font.size"] = 10
 
 print("=" * 80)
 print("ANALISI DATI SERIE STORICHE - NODI SELARGIUS")
@@ -19,19 +20,25 @@ print("=" * 80)
 print("\n### FASE 1: CARICAMENTO E PREPARAZIONE DEI DATI ###\n")
 
 # Load the CSV file
-file_path = "RAWDATA/REPORT_NODI_SELARGIUS_AGGREGATI_30_MIN_20241113060000_20250331060000.csv"
+file_path = (
+    "RAWDATA/REPORT_NODI_SELARGIUS_AGGREGATI_30_MIN_20241113060000_20250331060000.csv"
+)
 print(f"Caricamento del file: {file_path}")
 
 # Read the CSV with proper parameters
-df = pd.read_csv(file_path, 
-                 sep=';',
-                 decimal=',',
-                 skiprows=1,  # Skip the first row with units
-                 parse_dates={'DATA_RIFERIMENTO': ['DATA', 'ORA']},
-                 dayfirst=True)
+df = pd.read_csv(
+    file_path,
+    sep=";",
+    decimal=",",
+    skiprows=1,  # Skip the first row with units
+    parse_dates={"DATA_RIFERIMENTO": ["DATA", "ORA"]},
+    dayfirst=True,
+)
 
 print(f"\nDimensioni del dataset: {df.shape}")
-print(f"Periodo dati: dal {df['DATA_RIFERIMENTO'].min()} al {df['DATA_RIFERIMENTO'].max()}")
+print(
+    f"Periodo dati: dal {df['DATA_RIFERIMENTO'].min()} al {df['DATA_RIFERIMENTO'].max()}"
+)
 
 # Initial inspection
 print("\n--- Informazioni generali sul dataset ---")
@@ -47,7 +54,7 @@ print(df.describe())
 print("\n--- Pulizia e formattazione dei dati ---")
 
 # Set datetime as index
-df.set_index('DATA_RIFERIMENTO', inplace=True)
+df.set_index("DATA_RIFERIMENTO", inplace=True)
 
 # Check for missing values
 missing_values = df.isnull().sum()
@@ -56,14 +63,14 @@ print(missing_values[missing_values > 0])
 
 if df.isnull().any().any():
     print("\nApplicazione interpolazione lineare per gestire valori mancanti...")
-    df = df.interpolate(method='linear')
+    df = df.interpolate(method="linear")
     print("Interpolazione completata.")
 
 # Check for duplicates
 duplicates = df.index.duplicated().sum()
 print(f"\nRighe duplicate trovate: {duplicates}")
 if duplicates > 0:
-    df = df[~df.index.duplicated(keep='first')]
+    df = df[~df.index.duplicated(keep="first")]
     print(f"Rimosse {duplicates} righe duplicate.")
 
 # Sort by index
@@ -79,7 +86,7 @@ if len(numeric_columns) > 10:
     print(f"  ... e altre {len(numeric_columns) - 10} colonne")
 
 # Save cleaned data
-df.to_csv('cleaned_data.csv', sep=';', decimal=',')
+df.to_csv("cleaned_data.csv", sep=";", decimal=",")
 print("\nDati puliti salvati in 'cleaned_data.csv'")
 
 print("\n✓ FASE 1 COMPLETATA")

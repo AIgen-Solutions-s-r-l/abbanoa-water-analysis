@@ -27,8 +27,10 @@ for backup_dir in backup_dirs:
     total_files += len(csv_files)
     for f in csv_files:
         # Extract node ID from filename
-        if f.name.startswith(('215542', '215600', '273933', '281492', '288399', '288400')):
-            nodes_found.add(f.name.split('_')[0])
+        if f.name.startswith(
+            ("215542", "215600", "273933", "281492", "288399", "288400")
+        ):
+            nodes_found.add(f.name.split("_")[0])
 
 print(f"Total CSV files: {total_files}")
 print(f"Unique nodes found: {sorted(nodes_found)}")
@@ -38,7 +40,8 @@ print("\n📊 What would be created in BigQuery:\n")
 # Show table creation SQL
 print("1. Table: sensor_readings_ml")
 print("```sql")
-print(f"""CREATE TABLE IF NOT EXISTS `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml` (
+print(
+    f"""CREATE TABLE IF NOT EXISTS `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml` (
     timestamp TIMESTAMP REQUIRED,
     node_id STRING REQUIRED,
     district_id STRING REQUIRED,
@@ -57,7 +60,8 @@ print(f"""CREATE TABLE IF NOT EXISTS `{PROJECT_ID}.{DATASET_ID}.sensor_readings_
 )
 PARTITION BY DATE(timestamp)
 CLUSTER BY district_id, node_id, timestamp;
-""")
+"""
+)
 print("```")
 
 print("\n2. View: v_sensor_readings_normalized")
@@ -77,7 +81,9 @@ print("Date Range: November 14, 2024 - December 20, 2024")
 print("Update Frequency: 15-second intervals")
 print("Nodes to be loaded:")
 for node_id in sorted(nodes_found):
-    node_type = "distribution" if node_id in ['215542', '215600', '273933'] else "monitoring"
+    node_type = (
+        "distribution" if node_id in ["215542", "215600", "273933"] else "monitoring"
+    )
     print(f"  - {node_id} ({node_type})")
 
 print(f"\nEstimated records: ~{len(backup_dirs) * 6 * 96 * 30:,} rows")
@@ -110,8 +116,9 @@ print("   depending on network speed and data volume.")
 
 # Create sample BigQuery queries
 queries_file = Path(__file__).parent / "sample_bigquery_queries.sql"
-with open(queries_file, 'w') as f:
-    f.write(f"""-- Sample queries for the processed data
+with open(queries_file, "w") as f:
+    f.write(
+        f"""-- Sample queries for the processed data
 
 -- 1. Check nodes and data availability
 SELECT 
@@ -165,7 +172,8 @@ SELECT
     TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), MAX(timestamp), MINUTE) as minutes_since_last_reading
 FROM `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml`
 GROUP BY node_id;
-""")
+"""
+    )
 
 print(f"\n📝 Sample queries saved to: {queries_file}")
 print("\n✅ Simulation complete!")

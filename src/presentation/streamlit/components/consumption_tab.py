@@ -60,6 +60,7 @@ class ConsumptionTab:
             # recommendations = _self.optimizer.get_performance_recommendations(days, estimated_records)
             # if recommendations:
             #     st.warning("⚡ **Performance Optimization**\n\n" + "\n".join(recommendations))
+            pass
 
         # Get consumption data for metrics calculation
         consumption_data = self._get_consumption_data(time_range, selected_nodes)
@@ -563,15 +564,21 @@ class ConsumptionTab:
                         peak_data.append(
                             {
                                 "Node": str(node),
-                                "Morning Peak (6-9)": float(morning_peak)
-                                if not pd.isna(morning_peak)
-                                else 0,
-                                "Evening Peak (18-21)": float(evening_peak)
-                                if not pd.isna(evening_peak)
-                                else 0,
-                                "Night Minimum (2-5)": float(night_minimum)
-                                if not pd.isna(night_minimum)
-                                else 0,
+                                "Morning Peak (6-9)": (
+                                    float(morning_peak)
+                                    if not pd.isna(morning_peak)
+                                    else 0
+                                ),
+                                "Evening Peak (18-21)": (
+                                    float(evening_peak)
+                                    if not pd.isna(evening_peak)
+                                    else 0
+                                ),
+                                "Night Minimum (2-5)": (
+                                    float(night_minimum)
+                                    if not pd.isna(night_minimum)
+                                    else 0
+                                ),
                             }
                         )
 

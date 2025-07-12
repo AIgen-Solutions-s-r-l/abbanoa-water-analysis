@@ -127,13 +127,13 @@ class RedisCacheManager:
             key = f"node:{row['node_id']}:latest"
             value = {
                 "timestamp": row["timestamp"].isoformat(),
-                "flow_rate": float(row["flow_rate"])
-                if pd.notna(row["flow_rate"])
-                else 0,
+                "flow_rate": (
+                    float(row["flow_rate"]) if pd.notna(row["flow_rate"]) else 0
+                ),
                 "pressure": float(row["pressure"]) if pd.notna(row["pressure"]) else 0,
-                "temperature": float(row["temperature"])
-                if pd.notna(row["temperature"])
-                else 0,
+                "temperature": (
+                    float(row["temperature"]) if pd.notna(row["temperature"]) else 0
+                ),
                 "volume": float(row["volume"]) if pd.notna(row["volume"]) else 0,
             }
             self.redis_client.hset(key, mapping={k: str(v) for k, v in value.items()})
@@ -179,30 +179,38 @@ class RedisCacheManager:
                 key = f"node:{row['node_id']}:metrics:{range_name}"
                 metrics = {
                     "reading_count": int(row["reading_count"]),
-                    "avg_flow": float(row["avg_flow"])
-                    if pd.notna(row["avg_flow"])
-                    else 0,
-                    "min_flow": float(row["min_flow"])
-                    if pd.notna(row["min_flow"])
-                    else 0,
-                    "max_flow": float(row["max_flow"])
-                    if pd.notna(row["max_flow"])
-                    else 0,
-                    "stddev_flow": float(row["stddev_flow"])
-                    if pd.notna(row["stddev_flow"])
-                    else 0,
-                    "avg_pressure": float(row["avg_pressure"])
-                    if pd.notna(row["avg_pressure"])
-                    else 0,
-                    "min_pressure": float(row["min_pressure"])
-                    if pd.notna(row["min_pressure"])
-                    else 0,
-                    "max_pressure": float(row["max_pressure"])
-                    if pd.notna(row["max_pressure"])
-                    else 0,
-                    "uptime_percentage": float(row["uptime_percentage"])
-                    if pd.notna(row["uptime_percentage"])
-                    else 0,
+                    "avg_flow": (
+                        float(row["avg_flow"]) if pd.notna(row["avg_flow"]) else 0
+                    ),
+                    "min_flow": (
+                        float(row["min_flow"]) if pd.notna(row["min_flow"]) else 0
+                    ),
+                    "max_flow": (
+                        float(row["max_flow"]) if pd.notna(row["max_flow"]) else 0
+                    ),
+                    "stddev_flow": (
+                        float(row["stddev_flow"]) if pd.notna(row["stddev_flow"]) else 0
+                    ),
+                    "avg_pressure": (
+                        float(row["avg_pressure"])
+                        if pd.notna(row["avg_pressure"])
+                        else 0
+                    ),
+                    "min_pressure": (
+                        float(row["min_pressure"])
+                        if pd.notna(row["min_pressure"])
+                        else 0
+                    ),
+                    "max_pressure": (
+                        float(row["max_pressure"])
+                        if pd.notna(row["max_pressure"])
+                        else 0
+                    ),
+                    "uptime_percentage": (
+                        float(row["uptime_percentage"])
+                        if pd.notna(row["uptime_percentage"])
+                        else 0
+                    ),
                 }
                 self.redis_client.hset(
                     key, mapping={k: str(v) for k, v in metrics.items()}
@@ -280,9 +288,9 @@ class RedisCacheManager:
                 "node_id": row["node_id"],
                 "timestamp": row["timestamp"].isoformat(),
                 "anomaly_type": row["anomaly_type"],
-                "flow_rate": float(row["flow_rate"])
-                if pd.notna(row["flow_rate"])
-                else 0,
+                "flow_rate": (
+                    float(row["flow_rate"]) if pd.notna(row["flow_rate"]) else 0
+                ),
                 "pressure": float(row["pressure"]) if pd.notna(row["pressure"]) else 0,
             }
             anomalies.append(json.dumps(anomaly))

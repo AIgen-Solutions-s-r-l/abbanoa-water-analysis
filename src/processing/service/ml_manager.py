@@ -854,9 +854,9 @@ class MLModelManager:
             return {
                 "current_rmse": current_rmse,
                 "baseline_rmse": baseline_rmse,
-                "degradation_factor": current_rmse / baseline_rmse
-                if baseline_rmse > 0
-                else 1.0,
+                "degradation_factor": (
+                    current_rmse / baseline_rmse if baseline_rmse > 0 else 1.0
+                ),
             }
 
         return None

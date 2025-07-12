@@ -95,9 +95,11 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 content={
                     "error": "internal_error",
                     "message": "An unexpected error occurred. Please try again later.",
-                    "request_id": str(request.state.request_id)
-                    if hasattr(request.state, "request_id")
-                    else None,
+                    "request_id": (
+                        str(request.state.request_id)
+                        if hasattr(request.state, "request_id")
+                        else None
+                    ),
                 },
             )
 

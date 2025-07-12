@@ -202,9 +202,11 @@ class EnhancedOverviewTab:
                 st.metric(
                     "Active Nodes",
                     f"{active_nodes}/{total_nodes}",
-                    delta=f"{(active_nodes/total_nodes*100):.0f}%"
-                    if total_nodes > 0
-                    else "0%",
+                    delta=(
+                        f"{(active_nodes/total_nodes*100):.0f}%"
+                        if total_nodes > 0
+                        else "0%"
+                    ),
                 )
 
             with col2:
@@ -234,11 +236,11 @@ class EnhancedOverviewTab:
                 st.metric(
                     "Data Quality",
                     f"{avg_quality:.1f}%",
-                    delta="Excellent"
-                    if avg_quality > 90
-                    else "Good"
-                    if avg_quality > 70
-                    else "Poor",
+                    delta=(
+                        "Excellent"
+                        if avg_quality > 90
+                        else "Good" if avg_quality > 70 else "Poor"
+                    ),
                 )
 
             with col5:

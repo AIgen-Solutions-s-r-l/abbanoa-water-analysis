@@ -16,14 +16,16 @@ PROJECT_ID = "abbanoa-464816"
 DATASET_ID = "water_infrastructure"
 TABLE_ID = "sensor_data"
 
+
 def setup_bigquery_client():
     """Initialize BigQuery client"""
     client = bigquery.Client(project=PROJECT_ID)
     return client
 
+
 def create_advanced_analysis_queries():
     """Advanced SQL queries for water infrastructure analysis"""
-    
+
     queries = {
         "correlation_analysis": """
             -- Correlation analysis between different sensors
@@ -44,7 +46,6 @@ def create_advanced_analysis_queries():
             FROM daily_metrics
             ORDER BY data
         """,
-        
         "anomaly_detection": """
             -- Advanced anomaly detection using statistical methods
             WITH flow_stats AS (
@@ -80,7 +81,6 @@ def create_advanced_analysis_queries():
             ORDER BY z_score DESC
             LIMIT 50
         """,
-        
         "hourly_patterns": """
             -- Hourly consumption patterns analysis
             SELECT 
@@ -98,7 +98,6 @@ def create_advanced_analysis_queries():
             GROUP BY hour_of_day, day_of_week
             ORDER BY day_of_week, hour_of_day
         """,
-        
         "efficiency_metrics": """
             -- Network efficiency and loss analysis
             WITH flow_comparison AS (
@@ -125,15 +124,18 @@ def create_advanced_analysis_queries():
             FROM flow_comparison
             GROUP BY data
             ORDER BY data
-        """
+        """,
     }
-    
-    return {k: v.format(project=PROJECT_ID, dataset=DATASET_ID, table=TABLE_ID) 
-            for k, v in queries.items()}
+
+    return {
+        k: v.format(project=PROJECT_ID, dataset=DATASET_ID, table=TABLE_ID)
+        for k, v in queries.items()
+    }
+
 
 def create_bigquery_ml_models():
     """Create ML models using BigQuery ML for predictive analytics"""
-    
+
     ml_queries = {
         "time_series_forecasting": """
             -- Create time series forecasting model for flow prediction
@@ -153,7 +155,6 @@ def create_bigquery_ml_models():
               AND data IS NOT NULL 
               AND ora IS NOT NULL
         """,
-        
         "clustering_analysis": """
             -- Create clustering model to identify operational patterns
             CREATE OR REPLACE MODEL `{project}.{dataset}.operational_patterns_model`
@@ -174,7 +175,6 @@ def create_bigquery_ml_models():
               AND data IS NOT NULL 
               AND ora IS NOT NULL
         """,
-        
         "anomaly_detection_ml": """
             -- Create autoencoder for anomaly detection
             CREATE OR REPLACE MODEL `{project}.{dataset}.anomaly_detection_model`
@@ -198,15 +198,18 @@ def create_bigquery_ml_models():
             FROM `{project}.{dataset}.{table}`
             WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
               AND selargius_serbatoio_selargius_portata_uscita IS NOT NULL
-        """
+        """,
     }
-    
-    return {k: v.format(project=PROJECT_ID, dataset=DATASET_ID, table=TABLE_ID) 
-            for k, v in ml_queries.items()}
+
+    return {
+        k: v.format(project=PROJECT_ID, dataset=DATASET_ID, table=TABLE_ID)
+        for k, v in ml_queries.items()
+    }
+
 
 def create_real_time_monitoring_setup():
     """Setup for real-time monitoring and alerting"""
-    
+
     monitoring_queries = {
         "create_alerts_table": """
             -- Create table for storing alerts and notifications
@@ -222,7 +225,6 @@ def create_real_time_monitoring_setup():
               resolved BOOLEAN DEFAULT FALSE
             )
         """,
-        
         "real_time_monitoring_view": """
             -- Create view for real-time monitoring dashboard
             CREATE OR REPLACE VIEW `{project}.{dataset}.real_time_dashboard` AS
@@ -262,21 +264,24 @@ def create_real_time_monitoring_setup():
               FROM latest_readings WHERE rn = 1
             )
             SELECT * FROM current_status
-        """
+        """,
     }
-    
-    return {k: v.format(project=PROJECT_ID, dataset=DATASET_ID, table=TABLE_ID) 
-            for k, v in monitoring_queries.items()}
+
+    return {
+        k: v.format(project=PROJECT_ID, dataset=DATASET_ID, table=TABLE_ID)
+        for k, v in monitoring_queries.items()
+    }
+
 
 def generate_looker_studio_config():
     """Generate configuration for Looker Studio dashboard"""
-    
+
     dashboard_config = {
         "data_source": {
             "type": "BigQuery",
             "project_id": PROJECT_ID,
             "dataset_id": DATASET_ID,
-            "table_id": TABLE_ID
+            "table_id": TABLE_ID,
         },
         "recommended_charts": [
             {
@@ -284,7 +289,7 @@ def generate_looker_studio_config():
                 "type": "Time Series Chart",
                 "x_axis": "DATETIME(PARSE_DATE('%d/%m/%Y', data), PARSE_TIME('%H:%M:%S', ora))",
                 "y_axis": "selargius_nodo_via_sant_anna_portata_w_istantanea_diretta",
-                "description": "Shows flow rate trends over time"
+                "description": "Shows flow rate trends over time",
             },
             {
                 "name": "Hourly Consumption Heatmap",
@@ -292,7 +297,7 @@ def generate_looker_studio_config():
                 "x_axis": "EXTRACT(HOUR FROM PARSE_TIME('%H:%M:%S', ora))",
                 "y_axis": "EXTRACT(DAYOFWEEK FROM PARSE_DATE('%d/%m/%Y', data))",
                 "metric": "AVG(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta)",
-                "description": "Shows consumption patterns by hour and day"
+                "description": "Shows consumption patterns by hour and day",
             },
             {
                 "name": "Network Flow Balance",
@@ -300,9 +305,9 @@ def generate_looker_studio_config():
                 "metrics": [
                     "selargius_nodo_via_sant_anna_portata_w_istantanea_diretta",
                     "selargius_serbatoio_selargius_portata_uscita",
-                    "quartucciu_serbatoio_cuccuru_linu_portata_selargius"
+                    "quartucciu_serbatoio_cuccuru_linu_portata_selargius",
                 ],
-                "description": "Compares input vs output flows"
+                "description": "Compares input vs output flows",
             },
             {
                 "name": "Efficiency KPIs",
@@ -310,37 +315,38 @@ def generate_looker_studio_config():
                 "metrics": [
                     "AVG(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta)",
                     "SUM(selargius_nodo_via_sant_anna_portata_w_totale_diretta)",
-                    "COUNT(*) as total_measurements"
+                    "COUNT(*) as total_measurements",
                 ],
-                "description": "Key performance indicators"
-            }
+                "description": "Key performance indicators",
+            },
         ],
         "filters": [
             "Date range filter on data field",
             "Time filter on ora field",
-            "Sensor location dropdown"
-        ]
+            "Sensor location dropdown",
+        ],
     }
-    
+
     return dashboard_config
+
 
 if __name__ == "__main__":
     print("🚀 GCP Advanced Analytics Setup for Water Infrastructure")
     print("=" * 60)
-    
+
     # Create analysis queries
     analysis_queries = create_advanced_analysis_queries()
     ml_queries = create_bigquery_ml_models()
     monitoring_queries = create_real_time_monitoring_setup()
     dashboard_config = generate_looker_studio_config()
-    
+
     print("✅ Advanced Analysis Queries Generated")
     print("✅ BigQuery ML Models Defined")
     print("✅ Real-time Monitoring Setup Created")
     print("✅ Looker Studio Configuration Ready")
-    
+
     print("\n📊 Next Steps:")
     print("1. Run BigQuery ML models for predictive analytics")
     print("2. Set up Looker Studio dashboard")
     print("3. Configure Vertex AI Workbench for advanced analysis")
-    print("4. Implement real-time monitoring and alerting") 
+    print("4. Implement real-time monitoring and alerting")

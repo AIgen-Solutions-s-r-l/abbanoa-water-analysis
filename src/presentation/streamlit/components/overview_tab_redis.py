@@ -223,23 +223,23 @@ class OverviewTab:
 
                 if anomaly_type == "low_pressure":
                     alert["title"] = "Low Pressure Alert"
-                    alert[
-                        "description"
-                    ] = f"Pressure dropped to {alert['pressure']:.1f} bar"
+                    alert["description"] = (
+                        f"Pressure dropped to {alert['pressure']:.1f} bar"
+                    )
                     alert["severity"] = "critical"
                     critical_alerts.append(alert)
                 elif anomaly_type == "high_flow":
                     alert["title"] = "Flow Spike Detected"
-                    alert[
-                        "description"
-                    ] = f"Flow rate spiked to {alert['flow']:.1f} L/s"
+                    alert["description"] = (
+                        f"Flow rate spiked to {alert['flow']:.1f} L/s"
+                    )
                     alert["severity"] = "warning"
                     warning_alerts.append(alert)
                 elif anomaly_type == "low_flow":
                     alert["title"] = "Low Flow Detected"
-                    alert[
-                        "description"
-                    ] = f"Flow rate dropped to {alert['flow']:.1f} L/s"
+                    alert["description"] = (
+                        f"Flow rate dropped to {alert['flow']:.1f} L/s"
+                    )
                     alert["severity"] = "info"
                     info_alerts.append(alert)
                 else:

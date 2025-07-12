@@ -188,9 +188,9 @@ async def get_forecast(
                 "horizon_days": horizon,
                 "historical_days": historical_days if include_historical else 0,
                 "total_forecast_points": len(forecast_data),
-                "total_historical_points": len(historical_data)
-                if historical_data
-                else 0,
+                "total_historical_points": (
+                    len(historical_data) if historical_data else 0
+                ),
             }
         )
 
@@ -255,9 +255,9 @@ async def get_latest_forecast(
             "district_id": district_id,
             "metric": metric,
             "latest_timestamp": forecast_df["timestamp"].max().isoformat(),
-            "next_value": float(forecast_df.iloc[0]["value"])
-            if len(forecast_df) > 0
-            else None,
+            "next_value": (
+                float(forecast_df.iloc[0]["value"]) if len(forecast_df) > 0 else None
+            ),
             "generated_at": results.get("metadata", {}).get(
                 "generated_at", datetime.utcnow().isoformat()
             ),

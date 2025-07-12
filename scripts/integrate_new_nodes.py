@@ -20,94 +20,97 @@ sys.path.insert(0, str(project_root))
 
 # New nodes to add (from backup data)
 NEW_NODES = {
-    '215542': {
-        'name': 'Selargius Distribution 215542',
-        'display_name': 'Distribution 215542',
-        'type': 'distribution',
-        'district': 'Selargius',
-        'uuid': '00000000-0000-0000-0000-000000215542',
-        'bigquery_id': 'node-215542',
-        'location': {'lat': 39.2238, 'lon': 9.1422}
+    "215542": {
+        "name": "Selargius Distribution 215542",
+        "display_name": "Distribution 215542",
+        "type": "distribution",
+        "district": "Selargius",
+        "uuid": "00000000-0000-0000-0000-000000215542",
+        "bigquery_id": "node-215542",
+        "location": {"lat": 39.2238, "lon": 9.1422},
     },
-    '215600': {
-        'name': 'Selargius Distribution 215600',
-        'display_name': 'Distribution 215600',
-        'type': 'distribution',
-        'district': 'Selargius',
-        'uuid': '00000000-0000-0000-0000-000000215600',
-        'bigquery_id': 'node-215600',
-        'location': {'lat': 39.2238, 'lon': 9.1422}
+    "215600": {
+        "name": "Selargius Distribution 215600",
+        "display_name": "Distribution 215600",
+        "type": "distribution",
+        "district": "Selargius",
+        "uuid": "00000000-0000-0000-0000-000000215600",
+        "bigquery_id": "node-215600",
+        "location": {"lat": 39.2238, "lon": 9.1422},
     },
-    '273933': {
-        'name': 'Selargius Distribution 273933',
-        'display_name': 'Distribution 273933',
-        'type': 'distribution',
-        'district': 'Selargius',
-        'uuid': '00000000-0000-0000-0000-000000273933',
-        'bigquery_id': 'node-273933',
-        'location': {'lat': 39.2238, 'lon': 9.1422}
+    "273933": {
+        "name": "Selargius Distribution 273933",
+        "display_name": "Distribution 273933",
+        "type": "distribution",
+        "district": "Selargius",
+        "uuid": "00000000-0000-0000-0000-000000273933",
+        "bigquery_id": "node-273933",
+        "location": {"lat": 39.2238, "lon": 9.1422},
     },
-    '281492': {
-        'name': 'Selargius Monitoring 281492',
-        'display_name': 'Monitoring 281492',
-        'type': 'monitoring',
-        'district': 'Selargius',
-        'uuid': '00000000-0000-0000-0000-000000281492',
-        'bigquery_id': 'node-281492',
-        'location': {'lat': 39.2238, 'lon': 9.1422}
+    "281492": {
+        "name": "Selargius Monitoring 281492",
+        "display_name": "Monitoring 281492",
+        "type": "monitoring",
+        "district": "Selargius",
+        "uuid": "00000000-0000-0000-0000-000000281492",
+        "bigquery_id": "node-281492",
+        "location": {"lat": 39.2238, "lon": 9.1422},
     },
-    '288399': {
-        'name': 'Selargius Monitoring 288399',
-        'display_name': 'Monitoring 288399',
-        'type': 'monitoring',
-        'district': 'Selargius',
-        'uuid': '00000000-0000-0000-0000-000000288399',
-        'bigquery_id': 'node-288399',
-        'location': {'lat': 39.2238, 'lon': 9.1422}
+    "288399": {
+        "name": "Selargius Monitoring 288399",
+        "display_name": "Monitoring 288399",
+        "type": "monitoring",
+        "district": "Selargius",
+        "uuid": "00000000-0000-0000-0000-000000288399",
+        "bigquery_id": "node-288399",
+        "location": {"lat": 39.2238, "lon": 9.1422},
     },
-    '288400': {
-        'name': 'Selargius Monitoring 288400',
-        'display_name': 'Monitoring 288400',
-        'type': 'monitoring',
-        'district': 'Selargius',
-        'uuid': '00000000-0000-0000-0000-000000288400',
-        'bigquery_id': 'node-288400',
-        'location': {'lat': 39.2238, 'lon': 9.1422}
-    }
+    "288400": {
+        "name": "Selargius Monitoring 288400",
+        "display_name": "Monitoring 288400",
+        "type": "monitoring",
+        "district": "Selargius",
+        "uuid": "00000000-0000-0000-0000-000000288400",
+        "bigquery_id": "node-288400",
+        "location": {"lat": 39.2238, "lon": 9.1422},
+    },
 }
 
 
 class DashboardIntegrator:
     """Integrates new nodes into the dashboard configuration."""
-    
+
     def __init__(self):
         self.updates_made = []
         self.backup_files = []
-        
+
     def backup_file(self, file_path: Path):
         """Create a backup of the file before modifying."""
-        backup_path = file_path.with_suffix(file_path.suffix + '.backup')
+        backup_path = file_path.with_suffix(file_path.suffix + ".backup")
         content = file_path.read_text()
         backup_path.write_text(content)
         self.backup_files.append((file_path, backup_path))
-        
+
     def update_static_repository(self):
         """Update the static monitoring node repository."""
         print("\n1. Updating Static Repository...")
-        
-        file_path = project_root / "src/infrastructure/repositories/static_monitoring_node_repository.py"
+
+        file_path = (
+            project_root
+            / "src/infrastructure/repositories/static_monitoring_node_repository.py"
+        )
         self.backup_file(file_path)
-        
+
         content = file_path.read_text()
-        
+
         # Find the _nodes list
         nodes_start = content.find("self._nodes = [")
         nodes_end = content.find("]", nodes_start) + 1
-        
+
         if nodes_start == -1:
             print("❌ Could not find _nodes list in static repository")
             return
-            
+
         # Generate new node entries
         new_node_entries = []
         for node_id, info in NEW_NODES.items():
@@ -125,171 +128,209 @@ class DashboardIntegrator:
                 metadata={{"district": "{info['district']}", "original_id": "{node_id}"}}
             ),"""
             new_node_entries.append(node_entry)
-        
+
         # Insert new nodes before the closing bracket
         existing_nodes = content[nodes_start:nodes_end]
-        new_nodes_str = existing_nodes.rstrip(']') + '\n' + '\n'.join(new_node_entries) + '\n        ]'
-        
+        new_nodes_str = (
+            existing_nodes.rstrip("]")
+            + "\n"
+            + "\n".join(new_node_entries)
+            + "\n        ]"
+        )
+
         # Replace in content
         new_content = content[:nodes_start] + new_nodes_str + content[nodes_end:]
-        
+
         file_path.write_text(new_content)
-        self.updates_made.append(f"✅ Updated static repository with {len(NEW_NODES)} new nodes")
-        
+        self.updates_made.append(
+            f"✅ Updated static repository with {len(NEW_NODES)} new nodes"
+        )
+
     def update_sensor_repository(self):
         """Update the sensor data repository with new mappings."""
         print("\n2. Updating Sensor Repository...")
-        
-        file_path = project_root / "src/infrastructure/repositories/sensor_data_repository.py"
+
+        file_path = (
+            project_root / "src/infrastructure/repositories/sensor_data_repository.py"
+        )
         self.backup_file(file_path)
-        
+
         content = file_path.read_text()
-        
+
         # Find the node mapping
         mapping_start = content.find("uuid_to_node_mapping = {")
         mapping_end = content.find("}", mapping_start) + 1
-        
+
         if mapping_start == -1:
             print("❌ Could not find uuid_to_node_mapping")
             return
-            
+
         # Add new mappings
         new_mappings = []
         for node_id, info in NEW_NODES.items():
-            new_mappings.append(f'            "{info["uuid"]}": "{info["bigquery_id"]}",')
-        
+            new_mappings.append(
+                f'            "{info["uuid"]}": "{info["bigquery_id"]}",'
+            )
+
         # Insert before closing brace
         existing_mapping = content[mapping_start:mapping_end]
-        updated_mapping = existing_mapping.rstrip('}').rstrip() + ',\n' + '\n'.join(new_mappings) + '\n        }'
-        
+        updated_mapping = (
+            existing_mapping.rstrip("}").rstrip()
+            + ",\n"
+            + "\n".join(new_mappings)
+            + "\n        }"
+        )
+
         new_content = content[:mapping_start] + updated_mapping + content[mapping_end:]
-        
+
         file_path.write_text(new_content)
         self.updates_made.append("✅ Updated sensor repository mappings")
-        
+
     def update_sidebar_filters(self):
         """Update sidebar filters to include new nodes."""
         print("\n3. Updating Sidebar Filters...")
-        
-        file_path = project_root / "src/presentation/streamlit/components/sidebar_filters.py"
+
+        file_path = (
+            project_root / "src/presentation/streamlit/components/sidebar_filters.py"
+        )
         self.backup_file(file_path)
-        
+
         content = file_path.read_text()
-        
+
         # Find node options list
         options_pattern = r'options=\["All Nodes", "Sant\'Anna", "Seneca", "Selargius Tank", "External Supply"\]'
-        
+
         # Create new options list with grouped nodes
         new_options = [
             '"All Nodes"',
             '"--- Original Nodes ---"',
             '"Sant\'Anna"',
-            '"Seneca"', 
+            '"Seneca"',
             '"Selargius Tank"',
             '"External Supply"',
-            '"--- Distribution Nodes ---"'
+            '"--- Distribution Nodes ---"',
         ]
-        
+
         # Add distribution nodes
         for node_id, info in NEW_NODES.items():
-            if info['type'] == 'distribution':
+            if info["type"] == "distribution":
                 new_options.append(f'"{info["display_name"]}"')
-                
+
         new_options.append('"--- Monitoring Nodes ---"')
-        
+
         # Add monitoring nodes
         for node_id, info in NEW_NODES.items():
-            if info['type'] == 'monitoring':
+            if info["type"] == "monitoring":
                 new_options.append(f'"{info["display_name"]}"')
-        
+
         new_options_str = f'options=[{", ".join(new_options)}]'
-        
+
         # Replace in content
         new_content = re.sub(options_pattern, new_options_str, content)
-        
+
         file_path.write_text(new_content)
         self.updates_made.append("✅ Updated sidebar with grouped node options")
-        
+
     def update_tab_components(self):
         """Update all tab components with new node mappings."""
         print("\n4. Updating Tab Components...")
-        
+
         tab_files = [
             "overview_tab.py",
-            "consumption_patterns_tab.py", 
+            "consumption_patterns_tab.py",
             "network_efficiency_tab.py",
-            "anomaly_detection_tab.py"
+            "anomaly_detection_tab.py",
         ]
-        
+
         for tab_file in tab_files:
-            file_path = project_root / f"src/presentation/streamlit/components/{tab_file}"
+            file_path = (
+                project_root / f"src/presentation/streamlit/components/{tab_file}"
+            )
             if not file_path.exists():
                 continue
-                
+
             self.backup_file(file_path)
             content = file_path.read_text()
-            
+
             # Find node mapping dictionary
-            mapping_pattern = r'node_mapping = \{[^}]+\}'
+            mapping_pattern = r"node_mapping = \{[^}]+\}"
             mapping_match = re.search(mapping_pattern, content, re.DOTALL)
-            
+
             if not mapping_match:
                 print(f"⚠️  No node mapping found in {tab_file}")
                 continue
-                
+
             # Build new mapping
-            new_mapping_lines = ['node_mapping = {']
-            new_mapping_lines.append('    "Sant\'Anna": "00000000-0000-0000-0000-000000000001",')
-            new_mapping_lines.append('    "Seneca": "00000000-0000-0000-0000-000000000002",')
-            new_mapping_lines.append('    "Selargius Tank": "00000000-0000-0000-0000-000000000003",')
-            
+            new_mapping_lines = ["node_mapping = {"]
+            new_mapping_lines.append(
+                '    "Sant\'Anna": "00000000-0000-0000-0000-000000000001",'
+            )
+            new_mapping_lines.append(
+                '    "Seneca": "00000000-0000-0000-0000-000000000002",'
+            )
+            new_mapping_lines.append(
+                '    "Selargius Tank": "00000000-0000-0000-0000-000000000003",'
+            )
+
             # Add new nodes
             for node_id, info in NEW_NODES.items():
-                new_mapping_lines.append(f'    "{info["display_name"]}": "{info["uuid"]}",')
-            
-            new_mapping_lines.append('}')
-            new_mapping = '\n'.join(new_mapping_lines)
-            
+                new_mapping_lines.append(
+                    f'    "{info["display_name"]}": "{info["uuid"]}",'
+                )
+
+            new_mapping_lines.append("}")
+            new_mapping = "\n".join(new_mapping_lines)
+
             # Replace in content
-            new_content = content[:mapping_match.start()] + new_mapping + content[mapping_match.end():]
-            
+            new_content = (
+                content[: mapping_match.start()]
+                + new_mapping
+                + content[mapping_match.end() :]
+            )
+
             file_path.write_text(new_content)
-            
+
         self.updates_made.append(f"✅ Updated {len(tab_files)} tab components")
-        
+
     def update_forecast_config(self):
         """Update forecast configuration to include new nodes."""
         print("\n5. Updating Forecast Configuration...")
-        
+
         # Update forecast endpoint validation
         file_path = project_root / "src/presentation/api/endpoints/forecast_endpoint.py"
         if file_path.exists():
             self.backup_file(file_path)
             content = file_path.read_text()
-            
+
             # Find VALID_NODE_IDS
-            valid_nodes_pattern = r'VALID_NODE_IDS = \[[^\]]+\]'
+            valid_nodes_pattern = r"VALID_NODE_IDS = \[[^\]]+\]"
             valid_nodes_match = re.search(valid_nodes_pattern, content)
-            
+
             if valid_nodes_match:
                 # Add new node IDs
-                new_node_ids = [f'"{info["bigquery_id"]}"' for info in NEW_NODES.values()]
+                new_node_ids = [
+                    f'"{info["bigquery_id"]}"' for info in NEW_NODES.values()
+                ]
                 existing_ids = '"node-santanna", "node-seneca", "node-serbatoio"'
                 all_ids = f'{existing_ids}, {", ".join(new_node_ids)}'
-                new_valid_nodes = f'VALID_NODE_IDS = [{all_ids}]'
-                
-                new_content = content[:valid_nodes_match.start()] + new_valid_nodes + content[valid_nodes_match.end():]
+                new_valid_nodes = f"VALID_NODE_IDS = [{all_ids}]"
+
+                new_content = (
+                    content[: valid_nodes_match.start()]
+                    + new_valid_nodes
+                    + content[valid_nodes_match.end() :]
+                )
                 file_path.write_text(new_content)
-                
+
                 self.updates_made.append("✅ Updated forecast endpoint validation")
-                
+
     def create_node_config_file(self):
         """Create a centralized node configuration file."""
         print("\n6. Creating Centralized Node Configuration...")
-        
+
         config_path = project_root / "src/config/nodes.py"
         config_path.parent.mkdir(exist_ok=True)
-        
+
         config_content = '''"""
 Centralized node configuration for the water infrastructure system.
 
@@ -358,10 +399,10 @@ ORIGINAL_NODES = {
 # New nodes from backup data
 NEW_NODES = {
 '''
-        
+
         # Add new nodes to config
         for node_id, info in NEW_NODES.items():
-            config_content += f'''    "node_{node_id}": NodeConfig(
+            config_content += f"""    "node_{node_id}": NodeConfig(
         node_id="{node_id}",
         uuid="{info['uuid']}",
         bigquery_id="{info['bigquery_id']}",
@@ -372,9 +413,9 @@ NEW_NODES = {
         latitude={info['location']['lat']},
         longitude={info['location']['lon']}
     ),
-'''
-        
-        config_content += '''}
+"""
+
+        config_content += """}
 
 # Combined node configuration
 ALL_NODES = {**ORIGINAL_NODES, **NEW_NODES}
@@ -395,18 +436,18 @@ DISTRICTS = list(set(node.district for node in ALL_NODES.values()))
 # Valid IDs for API validation
 VALID_NODE_IDS = [node.bigquery_id for node in ALL_NODES.values()]
 VALID_DISTRICT_IDS = [f"DIST_{i:03d}" for i in range(1, len(DISTRICTS) + 1)]
-'''
-        
+"""
+
         config_path.write_text(config_content)
         self.updates_made.append("✅ Created centralized node configuration")
-        
+
     def create_migration_guide(self):
         """Create a migration guide for developers."""
         print("\n7. Creating Migration Guide...")
-        
+
         guide_path = project_root / "docs/NODE_INTEGRATION_GUIDE.md"
-        
-        guide_content = f'''# Node Integration Guide
+
+        guide_content = f"""# Node Integration Guide
 
 ## Overview
 
@@ -515,15 +556,15 @@ ls src/**/*.backup
 ---
 
 Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-'''
-        
+"""
+
         guide_path.write_text(guide_content)
         self.updates_made.append("✅ Created integration guide")
-        
+
     def run_integration(self):
         """Run the complete integration process."""
         print("=== Dashboard Integration Process ===\n")
-        
+
         try:
             # Run all updates
             self.update_static_repository()
@@ -533,29 +574,31 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             self.update_forecast_config()
             self.create_node_config_file()
             self.create_migration_guide()
-            
+
             # Summary
             print("\n=== Integration Summary ===")
             for update in self.updates_made:
                 print(update)
-                
-            print(f"\n✅ Integration complete! {len(self.updates_made)} components updated.")
+
+            print(
+                f"\n✅ Integration complete! {len(self.updates_made)} components updated."
+            )
             print(f"\nBackup files created: {len(self.backup_files)}")
-            
+
             # Save backup list
             backup_list_path = project_root / "integration_backups.txt"
-            with open(backup_list_path, 'w') as f:
+            with open(backup_list_path, "w") as f:
                 f.write(f"Integration performed: {datetime.now()}\n\n")
                 for original, backup in self.backup_files:
                     f.write(f"{original} -> {backup}\n")
-                    
+
             print(f"\nBackup list saved to: {backup_list_path}")
-            
+
         except Exception as e:
             print(f"\n❌ Error during integration: {e}")
             print("\nRolling back changes...")
             self.rollback()
-            
+
     def rollback(self):
         """Rollback all changes by restoring backups."""
         for original, backup in self.backup_files:

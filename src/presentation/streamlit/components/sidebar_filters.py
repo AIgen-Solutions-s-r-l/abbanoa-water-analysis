@@ -5,7 +5,6 @@ This module implements the interactive sidebar with district, metric,
 and horizon selectors that update without page reloads.
 """
 
-
 import streamlit as st
 
 

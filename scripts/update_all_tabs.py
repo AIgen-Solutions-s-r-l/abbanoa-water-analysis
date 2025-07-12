@@ -10,7 +10,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 
 # Node mapping to be used across all tabs
-NODE_MAPPING_CODE = '''            # Node mapping including all sensors
+NODE_MAPPING_CODE = """            # Node mapping including all sensors
             from src.presentation.streamlit.utils.node_mappings import ALL_NODE_MAPPINGS
             
             # Convert selection to node IDs
@@ -20,35 +20,39 @@ NODE_MAPPING_CODE = '''            # Node mapping including all sensors
                 node_ids = []
                 for node in selected_nodes:
                     if node in ALL_NODE_MAPPINGS:
-                        node_ids.append(ALL_NODE_MAPPINGS[node])'''
+                        node_ids.append(ALL_NODE_MAPPINGS[node])"""
+
 
 def update_overview_tab():
     """Update overview tab to use enhanced data fetcher."""
     print("Updating Overview Tab...")
-    
+
     file_path = project_root / "src/presentation/streamlit/components/overview_tab.py"
     content = file_path.read_text()
-    
+
     # Add import for enhanced data fetcher at the top
-    if "from src.presentation.streamlit.utils import EnhancedDataFetcher" not in content:
-        import_section = '''import streamlit as st
+    if (
+        "from src.presentation.streamlit.utils import EnhancedDataFetcher"
+        not in content
+    ):
+        import_section = """import streamlit as st
 
 from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO
 from src.application.use_cases.calculate_network_efficiency import (
     CalculateNetworkEfficiencyUseCase,
 )
-from src.presentation.streamlit.utils import EnhancedDataFetcher, get_node_ids_from_selection'''
-        
+from src.presentation.streamlit.utils import EnhancedDataFetcher, get_node_ids_from_selection"""
+
         content = content.replace(
-            '''import streamlit as st
+            """import streamlit as st
 
 from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO
 from src.application.use_cases.calculate_network_efficiency import (
     CalculateNetworkEfficiencyUseCase,
-)''',
-            import_section
+)""",
+            import_section,
         )
-    
+
     # Update the _get_efficiency_data method to count all nodes properly
     new_efficiency_method = '''    def _get_efficiency_data(self, time_range: str) -> dict:
         """Get real efficiency data including all nodes."""
@@ -72,86 +76,114 @@ from src.application.use_cases.calculate_network_efficiency import (
         except Exception as e:
             st.error(f"Error getting efficiency data: {e}")
             return {"active_nodes": 0, "total_flow": 0, "avg_pressure": 0, "efficiency": 0}'''
-    
+
     # Replace the method
     method_pattern = r'def _get_efficiency_data\(self, time_range: str\) -> dict:.*?return {"active_nodes": 0, "total_flow": 0, "avg_pressure": 0, "efficiency": 0}'
-    content = re.sub(method_pattern, new_efficiency_method.strip(), content, flags=re.DOTALL)
-    
+    content = re.sub(
+        method_pattern, new_efficiency_method.strip(), content, flags=re.DOTALL
+    )
+
     file_path.write_text(content)
     print("✅ Overview Tab updated")
+
 
 def update_consumption_patterns_tab():
     """Update consumption patterns tab."""
     print("Updating Consumption Patterns Tab...")
-    
-    file_path = project_root / "src/presentation/streamlit/components/consumption_patterns_tab.py"
+
+    file_path = (
+        project_root
+        / "src/presentation/streamlit/components/consumption_patterns_tab.py"
+    )
     if not file_path.exists():
         print("⚠️  Consumption patterns tab not found")
         return
-        
+
     content = file_path.read_text()
-    
+
     # Add import
     if "from src.presentation.streamlit.utils import" not in content:
-        content = "from src.presentation.streamlit.utils import get_node_ids_from_selection, ALL_NODE_MAPPINGS\n" + content
-    
+        content = (
+            "from src.presentation.streamlit.utils import get_node_ids_from_selection, ALL_NODE_MAPPINGS\n"
+            + content
+        )
+
     # Update node mapping section
-    old_mapping = r'node_mapping = \{[^}]+\}'
-    new_mapping = '''node_mapping = ALL_NODE_MAPPINGS'''
-    
+    old_mapping = r"node_mapping = \{[^}]+\}"
+    new_mapping = """node_mapping = ALL_NODE_MAPPINGS"""
+
     content = re.sub(old_mapping, new_mapping, content)
-    
+
     file_path.write_text(content)
     print("✅ Consumption Patterns Tab updated")
+
 
 def update_network_efficiency_tab():
     """Update network efficiency tab."""
     print("Updating Network Efficiency Tab...")
-    
-    file_path = project_root / "src/presentation/streamlit/components/network_efficiency_tab.py"
+
+    file_path = (
+        project_root / "src/presentation/streamlit/components/network_efficiency_tab.py"
+    )
     if not file_path.exists():
         print("⚠️  Network efficiency tab not found")
         return
-        
+
     content = file_path.read_text()
-    
+
     # Add import
     if "from src.presentation.streamlit.utils import" not in content:
-        content = "from src.presentation.streamlit.utils import get_node_ids_from_selection, ALL_NODE_MAPPINGS\n" + content
-    
+        content = (
+            "from src.presentation.streamlit.utils import get_node_ids_from_selection, ALL_NODE_MAPPINGS\n"
+            + content
+        )
+
     # Update node references
-    content = re.sub(r'node_mapping = \{[^}]+\}', 'node_mapping = ALL_NODE_MAPPINGS', content)
-    
+    content = re.sub(
+        r"node_mapping = \{[^}]+\}", "node_mapping = ALL_NODE_MAPPINGS", content
+    )
+
     file_path.write_text(content)
     print("✅ Network Efficiency Tab updated")
+
 
 def update_anomaly_detection_tab():
     """Update anomaly detection tab."""
     print("Updating Anomaly Detection Tab...")
-    
-    file_path = project_root / "src/presentation/streamlit/components/anomaly_detection_tab.py"
+
+    file_path = (
+        project_root / "src/presentation/streamlit/components/anomaly_detection_tab.py"
+    )
     if not file_path.exists():
         print("⚠️  Anomaly detection tab not found")
         return
-        
+
     content = file_path.read_text()
-    
+
     # Add import
     if "from src.presentation.streamlit.utils import" not in content:
-        content = "from src.presentation.streamlit.utils import get_node_ids_from_selection, ALL_NODE_MAPPINGS\n" + content
-    
+        content = (
+            "from src.presentation.streamlit.utils import get_node_ids_from_selection, ALL_NODE_MAPPINGS\n"
+            + content
+        )
+
     # Update node references
-    content = re.sub(r'node_mapping = \{[^}]+\}', 'node_mapping = ALL_NODE_MAPPINGS', content)
-    
+    content = re.sub(
+        r"node_mapping = \{[^}]+\}", "node_mapping = ALL_NODE_MAPPINGS", content
+    )
+
     file_path.write_text(content)
     print("✅ Anomaly Detection Tab updated")
+
 
 def create_data_adapter():
     """Create a unified data adapter for all tabs."""
     print("Creating Unified Data Adapter...")
-    
-    adapter_path = project_root / "src/presentation/streamlit/utils/unified_data_adapter.py"
-    
+
+    adapter_path = (
+        project_root / "src/presentation/streamlit/utils/unified_data_adapter.py"
+    )
+
     adapter_content = '''"""
 Unified data adapter that handles both original and new sensor nodes.
 """
@@ -299,23 +331,24 @@ class UnifiedDataAdapter:
             st.error(f"Error counting active nodes: {e}")
             return 0
 '''
-    
+
     adapter_path.write_text(adapter_content)
     print("✅ Unified Data Adapter created")
+
 
 def main():
     """Run all updates."""
     print("=== Updating All Dashboard Tabs ===\\n")
-    
+
     # Create unified adapter first
     create_data_adapter()
-    
+
     # Update all tabs
     update_overview_tab()
     update_consumption_patterns_tab()
-    update_network_efficiency_tab() 
+    update_network_efficiency_tab()
     update_anomaly_detection_tab()
-    
+
     print("\\n✅ All tabs updated to support new nodes!")
     print("\\nNext steps:")
     print("1. Restart the dashboard")

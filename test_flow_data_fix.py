@@ -20,7 +20,7 @@ try:
         MAX(timestamp) as last_reading
     FROM `abbanoa-464816.water_infrastructure.sensor_readings_ml`
     """
-    
+
     result = list(client.query(query).result())
     if result:
         row = result[0]
@@ -48,10 +48,12 @@ try:
     GROUP BY node_id
     ORDER BY node_id
     """
-    
+
     print("✅ March 2025 flow data by node:")
     for row in client.query(query).result():
-        print(f"   - Node {row.node_id}: {row.readings} readings, avg flow: {row.avg_flow:.2f} L/s, avg pressure: {row.avg_pressure:.2f} bar")
+        print(
+            f"   - Node {row.node_id}: {row.readings} readings, avg flow: {row.avg_flow:.2f} L/s, avg pressure: {row.avg_pressure:.2f} bar"
+        )
 except Exception as e:
     print(f"❌ Error fetching flow data: {e}")
 
@@ -63,10 +65,12 @@ try:
     SELECT COUNT(*) as total_records
     FROM `abbanoa-464816.water_infrastructure.v_sensor_readings_normalized`
     """
-    
+
     result = list(client.query(query).result())
     if result:
-        print(f"✅ v_sensor_readings_normalized view: {result[0].total_records:,} records")
+        print(
+            f"✅ v_sensor_readings_normalized view: {result[0].total_records:,} records"
+        )
 except Exception as e:
     print(f"❌ Error accessing normalized view: {e}")
 

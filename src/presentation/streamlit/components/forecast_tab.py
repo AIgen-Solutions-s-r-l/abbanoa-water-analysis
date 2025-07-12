@@ -74,9 +74,11 @@ class ForecastTab:
             district = st.selectbox(
                 "District",
                 options=district_options,
-                index=district_options.index(st.session_state.district_id)
-                if st.session_state.district_id in district_options
-                else 0,
+                index=(
+                    district_options.index(st.session_state.district_id)
+                    if st.session_state.district_id in district_options
+                    else 0
+                ),
                 key="forecast_district",
             )
             if district != st.session_state.district_id:
@@ -94,9 +96,11 @@ class ForecastTab:
                 "Metric",
                 options=list(metric_options.keys()),
                 format_func=lambda x: metric_options[x],
-                index=list(metric_options.keys()).index(st.session_state.metric)
-                if st.session_state.metric in metric_options
-                else 0,
+                index=(
+                    list(metric_options.keys()).index(st.session_state.metric)
+                    if st.session_state.metric in metric_options
+                    else 0
+                ),
                 key="forecast_metric",
             )
             if metric != st.session_state.metric:
@@ -109,9 +113,11 @@ class ForecastTab:
             horizon = st.selectbox(
                 "Forecast Days",
                 options=horizon_options,
-                index=horizon_options.index(st.session_state.horizon)
-                if st.session_state.horizon in horizon_options
-                else 1,
+                index=(
+                    horizon_options.index(st.session_state.horizon)
+                    if st.session_state.horizon in horizon_options
+                    else 1
+                ),
                 key="forecast_horizon",
             )
             if horizon != st.session_state.horizon:

@@ -233,9 +233,11 @@ class AnomalyTab:
         # Display with styling
         if "severity" in df.columns:
             styled_df = df[display_columns].style.applymap(
-                lambda x: severity_color(x)
-                if df.columns[df.columns.get_loc("severity")] == "severity"
-                else "",
+                lambda x: (
+                    severity_color(x)
+                    if df.columns[df.columns.get_loc("severity")] == "severity"
+                    else ""
+                ),
                 subset=["severity"],
             )
         else:

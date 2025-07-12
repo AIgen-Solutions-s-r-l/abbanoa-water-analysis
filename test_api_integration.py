@@ -11,10 +11,10 @@ from datetime import datetime
 def test_api_endpoints():
     """Test all API endpoints."""
     base_url = "http://localhost:8000"
-    
+
     print("🔍 Testing API Endpoints...")
     print("=" * 50)
-    
+
     # Test health endpoint
     print("\n1. Testing health endpoint...")
     try:
@@ -27,7 +27,7 @@ def test_api_endpoints():
     except Exception as e:
         print(f"❌ Cannot connect to API: {e}")
         return False
-        
+
     # Test nodes endpoint
     print("\n2. Testing nodes endpoint...")
     try:
@@ -41,7 +41,7 @@ def test_api_endpoints():
             print(f"❌ Nodes endpoint failed: {response.status_code}")
     except Exception as e:
         print(f"❌ Error: {e}")
-        
+
     # Test network metrics
     print("\n3. Testing network metrics...")
     try:
@@ -56,7 +56,7 @@ def test_api_endpoints():
             print(f"❌ Network metrics failed: {response.status_code}")
     except Exception as e:
         print(f"❌ Error: {e}")
-        
+
     # Test dashboard summary
     print("\n4. Testing dashboard summary...")
     try:
@@ -70,7 +70,7 @@ def test_api_endpoints():
             print(f"❌ Dashboard summary failed: {response.status_code}")
     except Exception as e:
         print(f"❌ Error: {e}")
-        
+
     # Test system status
     print("\n5. Testing system status...")
     try:
@@ -84,10 +84,10 @@ def test_api_endpoints():
             print(f"❌ System status failed: {response.status_code}")
     except Exception as e:
         print(f"❌ Error: {e}")
-        
+
     print("\n" + "=" * 50)
     print("✅ API integration test completed!")
-    
+
     return True
 
 
@@ -95,7 +95,7 @@ def test_dashboard_with_api():
     """Test dashboard with API."""
     print("\n📊 Dashboard API Integration")
     print("=" * 50)
-    
+
     print("\nTo test the dashboard with API:")
     print("1. Ensure processing services are running:")
     print("   ./scripts/start_processing_services.sh")

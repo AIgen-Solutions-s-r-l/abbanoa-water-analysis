@@ -42,9 +42,11 @@ class ForecastLogger:
                     ]
                 ),
                 dict_tracebacks,
-                JSONRenderer()
-                if sys.stdout.isatty()
-                else structlog.dev.ConsoleRenderer(),
+                (
+                    JSONRenderer()
+                    if sys.stdout.isatty()
+                    else structlog.dev.ConsoleRenderer()
+                ),
             ],
             context_class=dict,
             logger_factory=structlog.stdlib.LoggerFactory(),
