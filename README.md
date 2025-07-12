@@ -9,7 +9,7 @@
 
 Enterprise-grade water infrastructure monitoring and analytics platform for Abbanoa, featuring real-time sensor data processing, ML-powered forecasting, and comprehensive dashboards.
 
-## 🚀 Latest Release: v2.0.0
+## 🚀 Latest Release: v1.2.3.14
 
 ### Major Architecture Evolution
 - **Containerized Microservices**: Docker-based deployment with service isolation
@@ -73,7 +73,7 @@ The platform follows Domain-Driven Design principles with containerized microser
 
 ### Prerequisites
 - Docker and Docker Compose
-- Python 3.11+ (for local development)
+- Python 3.12+ (for local development)
 - Google Cloud SDK (for BigQuery access)
 
 ### Running with Docker (Recommended)
@@ -163,7 +163,7 @@ The error occurs because Python needs to know where to find the project's module
 ## 🛠️ Technology Stack
 
 ### Core Technologies
-- **Languages**: Python 3.11+
+- **Languages**: Python 3.12+
 - **Frameworks**: FastAPI, Streamlit, Pandas
 - **Databases**: PostgreSQL 15+, Redis 7+, BigQuery
 - **ML Libraries**: Scikit-learn, Prophet, TensorFlow
@@ -171,16 +171,18 @@ The error occurs because Python needs to know where to find the project's module
 
 ### Development Tools
 - **Package Management**: Poetry
-- **Code Quality**: Black, Ruff, MyPy
-- **Testing**: Pytest, Coverage
-- **CI/CD**: GitHub Actions
+- **Code Quality**: Black, Ruff, MyPy, Flake8, isort
+- **Security**: Bandit, Safety
+- **Testing**: Pytest, Coverage (with factory-boy, pytest-mock, pytest-asyncio)
+- **Documentation**: Sphinx with RTD theme
 
 ## 📈 Data Sources
 
-- **Selargius Network**: 30-minute interval sensor readings
-- **Teatinos Network**: 10-minute interval readings (when available)
-- **Coverage**: November 2024 - Present
-- **Metrics**: Flow rate, pressure, temperature, consumption
+- **Selargius Network**: 6 active monitoring nodes with 30-minute interval readings
+  - Nodes: 215542, 215600, 273933, 281492, 288399, 288400
+- **Teatinos Network**: Historical data from Hidroconta sensors (2023-2025)
+- **Coverage**: November 2024 - Present (Selargius), 2023-2025 (Teatinos)
+- **Metrics**: Flow rate (L/s), pressure (BAR), temperature (°C), total consumption (m³)
 
 ## 🔧 Configuration
 
@@ -255,6 +257,6 @@ This project is proprietary software owned by Abbanoa S.p.A. All rights reserved
 
 ---
 
-**Version**: 2.0.0  
+**Version**: 1.2.3.14  
 **Status**: Production Ready  
 **Last Updated**: July 2025
