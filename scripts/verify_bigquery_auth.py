@@ -55,7 +55,7 @@ def verify_bigquery_auth():
         # Test query execution
         print("\n📊 Testing query execution...")
         query = """
-        SELECT 
+        SELECT
             table_name,
             creation_time,
             row_count
@@ -80,7 +80,7 @@ def verify_bigquery_auth():
         # Test specific table access
         print("\n🔍 Checking sensor data tables...")
         sensor_query = """
-        SELECT 
+        SELECT
             COUNT(*) as total_records,
             MIN(timestamp) as oldest_record,
             MAX(timestamp) as newest_record

@@ -149,7 +149,7 @@ class BigQueryMonitoringNodeRepository(IMonitoringNodeRepository):
         """Update an existing monitoring node."""
         query = f"""
         UPDATE `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
-        SET 
+        SET
             name = @name,
             node_type = @node_type,
             status = @status,

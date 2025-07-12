@@ -75,7 +75,7 @@ def load_data(time_range_option="Last 24 Hours"):
 
     query = f"""
     WITH recent_data AS (
-      SELECT 
+      SELECT
         DATETIME(PARSE_DATE('%d/%m/%Y', data), PARSE_TIME('%H:%M:%S', ora)) as datetime,
         selargius_nodo_via_sant_anna_portata_w_istantanea_diretta as sant_anna_flow,
         selargius_nodo_via_seneca_portata_w_istantanea_diretta as seneca_flow,
@@ -88,7 +88,7 @@ def load_data(time_range_option="Last 24 Hours"):
       FROM `abbanoa-464816.water_infrastructure.sensor_data`
       WHERE data IS NOT NULL AND ora IS NOT NULL
     )
-    SELECT * FROM recent_data 
+    SELECT * FROM recent_data
     WHERE datetime IS NOT NULL
     ORDER BY datetime DESC
     {limit_clause}
@@ -108,7 +108,7 @@ def load_hourly_patterns():
     client = init_bigquery_client()
 
     query = """
-    SELECT 
+    SELECT
       EXTRACT(HOUR FROM PARSE_TIME('%H:%M:%S', ora)) as hour_of_day,
       EXTRACT(DAYOFWEEK FROM PARSE_DATE('%d/%m/%Y', data)) as day_of_week,
       CASE EXTRACT(DAYOFWEEK FROM PARSE_DATE('%d/%m/%Y', data))
@@ -124,7 +124,7 @@ def load_hourly_patterns():
       COUNT(*) as measurements
     FROM `abbanoa-464816.water_infrastructure.sensor_data`
     WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
-      AND ora IS NOT NULL 
+      AND ora IS NOT NULL
       AND data IS NOT NULL
     GROUP BY hour_of_day, day_of_week, day_name
     ORDER BY day_of_week, hour_of_day
@@ -507,8 +507,8 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666;'>
-        🌊 Abbanoa Water Infrastructure Dashboard | 
-        Data refreshes every 5 minutes | 
+        🌊 Abbanoa Water Infrastructure Dashboard |
+        Data refreshes every 5 minutes |
         Built with Streamlit & BigQuery
     </div>
     """,

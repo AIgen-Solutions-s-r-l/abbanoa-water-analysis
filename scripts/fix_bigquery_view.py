@@ -44,7 +44,7 @@ def main():
     # First, let's check the actual timestamp format
     print("\n1. Checking parsed timestamps...")
     query_check = f"""
-    SELECT 
+    SELECT
       data,
       ora,
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as parsed_timestamp,
@@ -75,9 +75,9 @@ def main():
       selargius_nodo_via_sant_anna_portata_w_totale_diretta as volume
     FROM `{PROJECT_ID}.{DATASET_ID}.sensor_data`
     WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
-    
+
     UNION ALL
-    
+
     SELECT
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as timestamp,
       'node-seneca' as node_id,
@@ -88,9 +88,9 @@ def main():
       selargius_nodo_via_seneca_portata_w_totale_diretta as volume
     FROM `{PROJECT_ID}.{DATASET_ID}.sensor_data`
     WHERE selargius_nodo_via_seneca_portata_w_istantanea_diretta IS NOT NULL
-    
+
     UNION ALL
-    
+
     SELECT
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as timestamp,
       'node-serbatoio' as node_id,
@@ -109,7 +109,7 @@ def main():
     # Test the updated view
     print("\n3. Testing updated view...")
     test_query = f"""
-    SELECT 
+    SELECT
       node_id,
       node_name,
       FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S', MAX(timestamp)) as latest_reading,
@@ -137,7 +137,7 @@ def main():
     # Check recent data
     print("\n4. Recent data sample:")
     recent_query = f"""
-    SELECT 
+    SELECT
       FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S', timestamp) as timestamp,
       node_id,
       ROUND(flow_rate, 2) as flow_rate,

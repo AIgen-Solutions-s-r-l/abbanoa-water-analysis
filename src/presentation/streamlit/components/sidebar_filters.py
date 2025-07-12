@@ -93,7 +93,7 @@ class SidebarFilters:
                     **Available Data Range:**
                     - Start: November 13, 2024
                     - End: March 31, 2025
-                    
+
                     Data is available in 30-minute intervals
                     from Selargius monitoring nodes.
                     """
@@ -250,18 +250,18 @@ class SidebarFilters:
                 st.markdown(
                     """
                     To connect to real data:
-                    
+
                     1. Set environment variables:
                        - `BIGQUERY_PROJECT_ID`
                        - `GOOGLE_APPLICATION_CREDENTIALS`
-                    
+
                     2. Ensure BigQuery tables exist:
                        - `monitoring_nodes`
                        - `sensor_readings`
                        - `water_networks`
-                    
+
                     3. Populate tables with data
-                    
+
                     The dashboard will automatically use
                     real data when available.
                     """
@@ -276,11 +276,11 @@ class SidebarFilters:
         with st.expander("Model Information"):
             st.markdown(
                 """
-                **Model Type:** ARIMA_PLUS  
-                **Training Data:** 2 years historical  
-                **Update Frequency:** Daily  
-                **Accuracy (MAPE):** < 15%  
-                
+                **Model Type:** ARIMA_PLUS
+                **Training Data:** 2 years historical
+                **Update Frequency:** Daily
+                **Accuracy (MAPE):** < 15%
+
                 The model uses advanced time series
                 forecasting with Italian holiday
                 adjustments and seasonal patterns.
@@ -293,16 +293,16 @@ class SidebarFilters:
                 """
                 1. **Select District:** Choose the water
                    distribution district to analyze
-                   
+
                 2. **Select Metric:** Pick the measurement
                    type (flow rate, pressure, or level)
-                   
+
                 3. **Set Horizon:** Adjust the number of
                    days to forecast (1-7 days)
-                   
+
                 4. **View Results:** The forecast will
                    update automatically without reloading
-                   
+
                 5. **Export Data:** Use the export buttons
                    to download forecast data
                 """

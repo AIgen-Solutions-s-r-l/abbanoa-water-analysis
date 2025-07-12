@@ -104,7 +104,7 @@ class RedisCacheManager:
 
         query = """
         WITH latest_readings AS (
-            SELECT 
+            SELECT
                 node_id,
                 timestamp,
                 flow_rate,
@@ -156,7 +156,7 @@ class RedisCacheManager:
 
         for range_name, hours in time_ranges:
             query = f"""
-            SELECT 
+            SELECT
                 node_id,
                 COUNT(*) as reading_count,
                 AVG(flow_rate) as avg_flow,
@@ -239,7 +239,7 @@ class RedisCacheManager:
         # Detect anomalies using statistical methods
         query = """
         WITH stats AS (
-            SELECT 
+            SELECT
                 node_id,
                 timestamp,
                 flow_rate,
@@ -252,7 +252,7 @@ class RedisCacheManager:
             WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
             WINDOW w AS (PARTITION BY node_id ORDER BY timestamp ROWS BETWEEN 48 PRECEDING AND CURRENT ROW)
         )
-        SELECT 
+        SELECT
             node_id,
             timestamp,
             flow_rate,
@@ -308,7 +308,7 @@ class RedisCacheManager:
 
         # Cache hourly aggregates for the last 7 days
         query = """
-        SELECT 
+        SELECT
             TIMESTAMP_TRUNC(timestamp, HOUR) as hour,
             node_id,
             AVG(flow_rate) as avg_flow,

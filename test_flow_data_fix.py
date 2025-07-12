@@ -13,7 +13,7 @@ print("-" * 50)
 # Test 1: Check sensor_readings_ml table
 try:
     query = """
-    SELECT 
+    SELECT
         COUNT(*) as total_records,
         COUNT(DISTINCT node_id) as unique_nodes,
         MIN(timestamp) as first_reading,
@@ -37,7 +37,7 @@ print()
 try:
     # Use March 2025 data (which we know exists)
     query = """
-    SELECT 
+    SELECT
         node_id,
         COUNT(*) as readings,
         AVG(flow_rate) as avg_flow,

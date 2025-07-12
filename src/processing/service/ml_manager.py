@@ -255,7 +255,7 @@ class MLModelManager:
     ) -> pd.DataFrame:
         """Fetch training data from BigQuery with sampling."""
         query = f"""
-        SELECT 
+        SELECT
             timestamp,
             node_id,
             flow_rate,
@@ -559,7 +559,7 @@ class MLModelManager:
         async with self.postgres_manager.acquire() as conn:
             result = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     COUNT(*) as prediction_count,
                     AVG(ABS(predicted_value - actual_value)) as avg_error
                 FROM water_infrastructure.shadow_predictions
@@ -648,7 +648,7 @@ class MLModelManager:
         async with self.postgres_manager.acquire() as conn:
             result = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     avg_flow_rate, avg_pressure, avg_temperature,
                     flow_variance, pressure_variance
                 FROM water_infrastructure.computed_metrics
@@ -757,7 +757,7 @@ class MLModelManager:
         async with self.postgres_manager.acquire() as conn:
             results = await conn.fetch(
                 """
-                SELECT 
+                SELECT
                     p.predicted_flow_rate,
                     a.avg_flow_rate as actual_flow_rate
                 FROM water_infrastructure.ml_predictions_cache p
@@ -870,7 +870,7 @@ class MLModelManager:
         async with self.postgres_manager.acquire() as conn:
             recent_stats = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     AVG(avg_flow_rate) as mean_flow,
                     STDDEV(avg_flow_rate) as std_flow,
                     AVG(avg_pressure) as mean_pressure,
@@ -883,7 +883,7 @@ class MLModelManager:
 
             historical_stats = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     AVG(avg_flow_rate) as mean_flow,
                     STDDEV(avg_flow_rate) as std_flow,
                     AVG(avg_pressure) as mean_pressure,
@@ -970,7 +970,7 @@ class MLModelManager:
             await conn.execute(
                 """
                 UPDATE water_infrastructure.ml_models
-                SET 
+                SET
                     status = $1,
                     metrics = $2,
                     model_path = $3,

@@ -503,11 +503,11 @@ class KPIDashboardTab:
             st.write(
                 """
             **Recommendation**: Implement AI-driven predictive maintenance
-            
+
             **Impact**: 15-20% reduction in maintenance costs, 5% efficiency improvement
-            
+
             **Timeline**: 6 months implementation
-            
+
             **Investment**: €50,000
             """
             )
@@ -516,11 +516,11 @@ class KPIDashboardTab:
             st.write(
                 """
             **Recommendation**: Solar-powered pumping stations
-            
+
             **Impact**: 30% reduction in energy costs, carbon neutral operations
-            
+
             **Timeline**: 12 months rollout
-            
+
             **Investment**: €200,000
             """
             )

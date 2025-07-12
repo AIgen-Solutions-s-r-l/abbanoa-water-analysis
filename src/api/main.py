@@ -141,7 +141,7 @@ async def get_node_metrics(
         async with app.state.postgres.acquire() as conn:
             result = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     cm.node_id,
                     n.node_name,
                     cm.window_end as timestamp,
@@ -152,7 +152,7 @@ async def get_node_metrics(
                     cm.anomaly_count
                 FROM water_infrastructure.computed_metrics cm
                 JOIN water_infrastructure.nodes n ON cm.node_id = n.node_id
-                WHERE cm.node_id = $1 
+                WHERE cm.node_id = $1
                 AND cm.time_window = $2
                 ORDER BY cm.window_end DESC
                 LIMIT 1
@@ -190,7 +190,7 @@ async def get_node_history(
         async with app.state.postgres.acquire() as conn:
             results = await conn.fetch(
                 """
-                SELECT 
+                SELECT
                     window_start,
                     window_end,
                     avg_flow_rate,
@@ -200,7 +200,7 @@ async def get_node_history(
                     anomaly_count,
                     quality_score
                 FROM water_infrastructure.computed_metrics
-                WHERE node_id = $1 
+                WHERE node_id = $1
                 AND time_window = $2
                 AND window_start >= $3
                 AND window_end <= $4
@@ -285,7 +285,7 @@ async def get_network_efficiency(
         async with app.state.postgres.acquire() as conn:
             result = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     computation_timestamp,
                     total_input_volume,
                     total_output_volume,
@@ -325,7 +325,7 @@ async def get_predictions(
         async with app.state.postgres.acquire() as conn:
             results = await conn.fetch(
                 """
-                SELECT 
+                SELECT
                     p.node_id,
                     p.prediction_timestamp,
                     p.target_timestamp,
@@ -361,7 +361,7 @@ async def get_data_quality(node_id: str):
         async with app.state.postgres.acquire() as conn:
             result = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     node_id,
                     check_timestamp,
                     completeness_score,
@@ -424,7 +424,7 @@ async def get_system_status():
             # Get data freshness
             freshness = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     MAX(window_end) as latest_data,
                     COUNT(DISTINCT node_id) as nodes_with_data
                 FROM water_infrastructure.computed_metrics
@@ -494,8 +494,8 @@ async def get_anomalies(
     try:
         query = (
             """
-            SELECT 
-                a.*, 
+            SELECT
+                a.*,
                 n.node_name
             FROM water_infrastructure.anomalies a
             JOIN water_infrastructure.nodes n ON a.node_id = n.node_id
@@ -536,7 +536,7 @@ async def get_dashboard_summary():
             # Get node summary with latest sensor readings
             nodes = await conn.fetch(
                 """
-                SELECT 
+                SELECT
                     n.node_id,
                     n.node_name,
                     sr.flow_rate,
@@ -545,7 +545,7 @@ async def get_dashboard_summary():
                     sr.quality_score
                 FROM water_infrastructure.nodes n
                 LEFT JOIN LATERAL (
-                    SELECT 
+                    SELECT
                         flow_rate,
                         pressure,
                         quality_score

@@ -39,7 +39,7 @@ class BackupNodeAdapter:
         metric_cols = ", ".join(metrics)
 
         query = f"""
-        SELECT 
+        SELECT
             timestamp,
             node_id,
             node_name,

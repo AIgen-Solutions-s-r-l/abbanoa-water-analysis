@@ -50,7 +50,7 @@ class UnifiedDataAdapter:
         # Query original nodes
         if uuid_nodes:
             query1 = f"""
-            SELECT 
+            SELECT
                 timestamp,
                 node_id,
                 node_name,
@@ -80,7 +80,7 @@ class UnifiedDataAdapter:
         # Query new nodes
         if string_nodes:
             query2 = f"""
-            SELECT 
+            SELECT
                 timestamp,
                 node_id,
                 node_name,
@@ -130,9 +130,9 @@ class UnifiedDataAdapter:
                 FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
                 WHERE timestamp >= @start_time
                     AND timestamp <= @end_time
-                
+
                 UNION DISTINCT
-                
+
                 SELECT DISTINCT node_id
                 FROM `{self.project_id}.{self.dataset_id}.sensor_readings_ml`
                 WHERE timestamp >= @start_time
@@ -198,9 +198,9 @@ class UnifiedDataAdapter:
                         FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
                         WHERE timestamp >= @start_time
                             AND timestamp <= @end_time
-                        
+
                         UNION DISTINCT
-                        
+
                         SELECT DISTINCT node_id
                         FROM `{self.project_id}.{self.dataset_id}.sensor_readings_ml`
                         WHERE timestamp >= @start_time

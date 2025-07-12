@@ -15,7 +15,7 @@ print("-" * 50)
 for node_id in nodes:
     # Get latest reading with non-zero flow
     query = f"""
-    SELECT 
+    SELECT
         node_id,
         MAX(timestamp) as latest_timestamp,
         AVG(flow_rate) as avg_flow,

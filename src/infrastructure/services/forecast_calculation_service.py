@@ -164,7 +164,7 @@ class ForecastCalculationService:
         query = f"""
         SELECT
             DATE(timestamp) as timestamp,
-            AVG(CASE 
+            AVG(CASE
                 WHEN @metric = 'flow_rate' THEN flow_rate
                 WHEN @metric = 'pressure' THEN pressure
                 WHEN @metric = 'temperature' THEN temperature
@@ -240,7 +240,7 @@ class ForecastCalculationService:
             SELECT
                 CONCAT(@district_id, '_', @metric) as district_metric_id,
                 DATE(timestamp) as date_utc,
-                AVG(CASE 
+                AVG(CASE
                     WHEN @metric = 'flow_rate' THEN flow_rate
                     WHEN @metric = 'pressure' THEN pressure
                     WHEN @metric = 'temperature' THEN temperature

@@ -125,7 +125,7 @@ class BigQueryService:
         views = {
             "v_latest_readings": """
                 CREATE OR REPLACE VIEW `{dataset}.v_latest_readings` AS
-                SELECT 
+                SELECT
                     node_id,
                     MAX(timestamp) as latest_reading,
                     TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), MAX(timestamp), MINUTE) as minutes_since_reading
@@ -134,7 +134,7 @@ class BigQueryService:
             """,
             "v_hourly_aggregates": """
                 CREATE OR REPLACE VIEW `{dataset}.v_hourly_aggregates` AS
-                SELECT 
+                SELECT
                     node_id,
                     TIMESTAMP_TRUNC(timestamp, HOUR) as hour,
                     AVG(flow_rate) as avg_flow_rate,
@@ -147,7 +147,7 @@ class BigQueryService:
             """,
             "v_daily_consumption": """
                 CREATE OR REPLACE VIEW `{dataset}.v_daily_consumption` AS
-                SELECT 
+                SELECT
                     node_id,
                     DATE(timestamp) as date,
                     SUM(volume) as total_volume,
@@ -160,7 +160,7 @@ class BigQueryService:
             "v_anomaly_candidates": """
                 CREATE OR REPLACE VIEW `{dataset}.v_anomaly_candidates` AS
                 WITH stats AS (
-                    SELECT 
+                    SELECT
                         node_id,
                         AVG(flow_rate) as mean_flow,
                         STDDEV(flow_rate) as std_flow,
@@ -170,13 +170,13 @@ class BigQueryService:
                     WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
                     GROUP BY node_id
                 )
-                SELECT 
+                SELECT
                     r.*,
                     ABS(r.flow_rate - s.mean_flow) / NULLIF(s.std_flow, 0) as flow_z_score,
                     ABS(r.pressure - s.mean_pressure) / NULLIF(s.std_pressure, 0) as pressure_z_score
                 FROM `{dataset}.sensor_readings` r
                 JOIN stats s ON r.node_id = s.node_id
-                WHERE 
+                WHERE
                     timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
                     AND (
                         ABS(r.flow_rate - s.mean_flow) > 3 * s.std_flow
@@ -215,7 +215,7 @@ class BigQueryService:
     ) -> Dict[str, Any]:
         """Get statistics about data in a table."""
         query = f"""
-        SELECT 
+        SELECT
             COUNT(*) as total_records,
             COUNT(DISTINCT node_id) as unique_nodes,
             MIN(timestamp) as earliest_reading,

@@ -44,7 +44,7 @@ def main():
     # Check sensor_data table
     print("\n1. Checking sensor_data table...")
     query = f"""
-    SELECT 
+    SELECT
       COUNT(*) as total_rows,
       COUNT(DISTINCT data) as unique_dates,
       MIN(data) as earliest_date,
@@ -65,7 +65,7 @@ def main():
     # Get sample data
     print("\n2. Sample data from sensor_data...")
     query2 = f"""
-    SELECT 
+    SELECT
       data,
       ora,
       selargius_nodo_via_sant_anna_temperatura_interna as temp_santanna,
@@ -101,9 +101,9 @@ def main():
       selargius_nodo_via_sant_anna_portata_w_totale_diretta as volume
     FROM `{PROJECT_ID}.{DATASET_ID}.sensor_data`
     WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
-    
+
     UNION ALL
-    
+
     SELECT
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as timestamp,
       'node-seneca' as node_id,
@@ -114,9 +114,9 @@ def main():
       selargius_nodo_via_seneca_portata_w_totale_diretta as volume
     FROM `{PROJECT_ID}.{DATASET_ID}.sensor_data`
     WHERE selargius_nodo_via_seneca_portata_w_istantanea_diretta IS NOT NULL
-    
+
     UNION ALL
-    
+
     SELECT
       PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', CONCAT(data, ' ', ora)) as timestamp,
       'node-serbatoio' as node_id,
@@ -135,7 +135,7 @@ def main():
     # Test the view
     print("\n4. Testing normalized view...")
     test_view = f"""
-    SELECT 
+    SELECT
       COUNT(*) as total_readings,
       COUNT(DISTINCT node_id) as nodes,
       AVG(flow_rate) as avg_flow,

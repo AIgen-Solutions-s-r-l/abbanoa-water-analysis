@@ -135,7 +135,7 @@ class BigQueryWaterNetworkRepository(IWaterNetworkRepository):
         """Update an existing water network."""
         query = f"""
         UPDATE `{self.connection.config.dataset_ref}.{self.TABLE_NAME}`
-        SET 
+        SET
             name = @name,
             region = @region,
             description = @description,

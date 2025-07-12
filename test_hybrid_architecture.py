@@ -140,7 +140,7 @@ class HybridArchitectureTest:
                 # Test 3: Check hypertables
                 hypertables = await conn.fetch(
                     """
-                    SELECT hypertable_name, num_chunks 
+                    SELECT hypertable_name, num_chunks
                     FROM timescaledb_information.hypertables
                     WHERE hypertable_schema = 'water_infrastructure'
                 """
@@ -152,7 +152,7 @@ class HybridArchitectureTest:
                 # Test 4: Check continuous aggregates
                 aggregates = await conn.fetch(
                     """
-                    SELECT view_name 
+                    SELECT view_name
                     FROM timescaledb_information.continuous_aggregates
                     WHERE view_schema = 'water_infrastructure'
                 """
@@ -164,7 +164,7 @@ class HybridArchitectureTest:
                 # Test 5: Sample data check
                 count = await conn.fetchval(
                     """
-                    SELECT COUNT(*) 
+                    SELECT COUNT(*)
                     FROM water_infrastructure.sensor_readings
                     WHERE timestamp > CURRENT_TIMESTAMP - INTERVAL '7 days'
                 """

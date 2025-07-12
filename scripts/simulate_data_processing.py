@@ -121,7 +121,7 @@ with open(queries_file, "w") as f:
         f"""-- Sample queries for the processed data
 
 -- 1. Check nodes and data availability
-SELECT 
+SELECT
     node_id,
     node_name,
     node_type,
@@ -134,7 +134,7 @@ GROUP BY node_id, node_name, node_type
 ORDER BY node_id;
 
 -- 2. Recent data for all nodes
-SELECT 
+SELECT
     timestamp,
     node_id,
     node_name,
@@ -149,7 +149,7 @@ ORDER BY timestamp DESC
 LIMIT 100;
 
 -- 3. Daily aggregates for dashboard
-SELECT 
+SELECT
     DATE(timestamp) as date,
     district_id,
     COUNT(DISTINCT node_id) as active_nodes,
@@ -162,9 +162,9 @@ GROUP BY date, district_id
 ORDER BY date DESC;
 
 -- 4. Node status check
-SELECT 
+SELECT
     node_id,
-    CASE 
+    CASE
         WHEN MAX(timestamp) > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR) THEN '🟢 Online'
         WHEN MAX(timestamp) > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR) THEN '🟡 Intermittent'
         ELSE '🔴 Offline'

@@ -155,7 +155,7 @@ class DataProcessor:
     ) -> pd.DataFrame:
         """Fetch data for a specific node from BigQuery."""
         query = f"""
-        SELECT 
+        SELECT
             timestamp,
             node_id,
             temperature,
@@ -352,7 +352,7 @@ class DataProcessor:
             # Get aggregated metrics for the period
             result = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     COUNT(DISTINCT node_id) as active_nodes,
                     SUM(total_volume) as total_volume,
                     AVG(avg_pressure) as avg_pressure,
@@ -397,8 +397,8 @@ class DataProcessor:
                     """
                     SELECT data_completeness, anomaly_count, quality_score
                     FROM water_infrastructure.computed_metrics
-                    WHERE node_id = $1 
-                    AND window_start >= $2 
+                    WHERE node_id = $1
+                    AND window_start >= $2
                     AND window_end <= $3
                     AND time_window = '1hour'
                 """,
@@ -418,8 +418,8 @@ class DataProcessor:
                     await conn.execute(
                         """
                         INSERT INTO water_infrastructure.data_quality_metrics
-                        (node_id, check_timestamp, time_window, 
-                         completeness_score, validity_score, consistency_score, 
+                        (node_id, check_timestamp, time_window,
+                         completeness_score, validity_score, consistency_score,
                          overall_quality_score, outliers_detected)
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     """,

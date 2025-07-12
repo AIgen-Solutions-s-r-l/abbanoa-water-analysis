@@ -166,7 +166,7 @@ def main():
 
     # Test query
     test_query = f"""
-    SELECT 
+    SELECT
       COUNT(*) as total_readings,
       COUNT(DISTINCT node_id) as unique_nodes,
       AVG(flow_rate) as avg_flow_rate,

@@ -31,7 +31,7 @@ async def sync_sensor_data():
 
     # Query to get all sensor data
     query = """
-    SELECT 
+    SELECT
         node_id,
         timestamp,
         flow_rate,
@@ -121,8 +121,8 @@ async def sync_sensor_data():
             # Insert batch into temp table
             await conn.executemany(
                 """
-                INSERT INTO temp_sensor_readings 
-                (timestamp, node_id, temperature, flow_rate, pressure, 
+                INSERT INTO temp_sensor_readings
+                (timestamp, node_id, temperature, flow_rate, pressure,
                  total_flow, quality_score, is_interpolated, raw_data)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
             """,
@@ -135,8 +135,8 @@ async def sync_sensor_data():
         # Insert into actual table
         await conn.fetch(
             """
-            INSERT INTO water_infrastructure.sensor_readings 
-            (timestamp, node_id, temperature, flow_rate, pressure, 
+            INSERT INTO water_infrastructure.sensor_readings
+            (timestamp, node_id, temperature, flow_rate, pressure,
              total_flow, quality_score, is_interpolated, raw_data)
             SELECT * FROM temp_sensor_readings
         """

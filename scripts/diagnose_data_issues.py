@@ -159,7 +159,7 @@ class DataDiagnostics:
             try:
                 # Check if table exists and has data
                 query = f"""
-                SELECT 
+                SELECT
                     COUNT(*) as total_rows,
                     MIN(timestamp) as earliest_data,
                     MAX(timestamp) as latest_data,

@@ -217,14 +217,14 @@ def create_monitoring_queries() -> Dict[str, str]:
     queries = {
         "data_freshness": """
             -- Check data freshness
-            SELECT 
+            SELECT
               MAX(timestamp) as latest_data,
               TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), MAX(timestamp), MINUTE) as minutes_behind
             FROM `{project_id}.{dataset_id}.{table_id}`
         """,
         "hourly_patterns": """
             -- Hourly consumption patterns
-            SELECT 
+            SELECT
               EXTRACT(HOUR FROM timestamp) as hour,
               AVG(metric_3) as avg_flow_rate,
               STDDEV(metric_3) as stddev_flow_rate,
@@ -237,17 +237,17 @@ def create_monitoring_queries() -> Dict[str, str]:
         "anomaly_detection": """
             -- Simple anomaly detection (values outside 3 standard deviations)
             WITH stats AS (
-              SELECT 
+              SELECT
                 AVG(metric_3) as mean_value,
                 STDDEV(metric_3) as std_value
               FROM `{project_id}.{dataset_id}.{table_id}`
               WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
             )
-            SELECT 
+            SELECT
               timestamp,
               metric_3 as flow_rate,
               ABS(metric_3 - stats.mean_value) / stats.std_value as z_score,
-              CASE 
+              CASE
                 WHEN ABS(metric_3 - stats.mean_value) > 3 * stats.std_value THEN 'ANOMALY'
                 ELSE 'NORMAL'
               END as status
@@ -258,7 +258,7 @@ def create_monitoring_queries() -> Dict[str, str]:
         """,
         "daily_summary": """
             -- Daily summary statistics
-            SELECT 
+            SELECT
               DATE(timestamp) as date,
               COUNT(*) as measurements,
               AVG(metric_3) as avg_flow_rate,

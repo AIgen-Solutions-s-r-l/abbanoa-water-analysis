@@ -84,7 +84,7 @@ class BigQueryForecastRepository(ForecastRepositoryInterface):
             SELECT
                 '{district_metric_id}' as district_metric_id,
                 DATE(timestamp) as date_utc,
-                AVG(CASE 
+                AVG(CASE
                     WHEN RIGHT(@district_metric_id, 9) = 'flow_rate' THEN flow_rate
                     WHEN RIGHT(@district_metric_id, 8) = 'pressure' THEN pressure
                     WHEN RIGHT(@district_metric_id, 11) = 'temperature' THEN temperature

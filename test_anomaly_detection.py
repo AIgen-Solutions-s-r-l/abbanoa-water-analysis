@@ -12,18 +12,18 @@ print("-" * 60)
 # Test 1: Check for flow anomalies
 query = """
 WITH flow_stats AS (
-    SELECT 
+    SELECT
         node_id,
         timestamp,
         flow_rate,
         AVG(flow_rate) OVER (
-            PARTITION BY node_id 
-            ORDER BY timestamp 
+            PARTITION BY node_id
+            ORDER BY timestamp
             ROWS BETWEEN 48 PRECEDING AND CURRENT ROW
         ) as avg_flow,
         STDDEV(flow_rate) OVER (
-            PARTITION BY node_id 
-            ORDER BY timestamp 
+            PARTITION BY node_id
+            ORDER BY timestamp
             ROWS BETWEEN 48 PRECEDING AND CURRENT ROW
         ) as stddev_flow
     FROM `abbanoa-464816.water_infrastructure.sensor_readings_ml`
@@ -31,7 +31,7 @@ WITH flow_stats AS (
         AND timestamp <= '2025-03-31'
         AND node_id IN ('215542', '273933', '288399', '288400')
 )
-SELECT 
+SELECT
     node_id,
     COUNT(*) as anomaly_count,
     MAX(flow_rate) as max_anomaly_flow,
@@ -52,7 +52,7 @@ print()
 
 # Test 2: Check for pressure anomalies
 query2 = """
-SELECT 
+SELECT
     node_id,
     COUNT(*) as low_pressure_count,
     MIN(pressure) as min_pressure,

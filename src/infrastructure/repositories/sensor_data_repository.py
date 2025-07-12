@@ -118,7 +118,7 @@ class SensorDataRepository(ISensorReadingRepository):
     ) -> List[SensorReading]:
         """Get sensor readings from the ML sensor readings table."""
         query = f"""
-        SELECT 
+        SELECT
             timestamp,
             node_id,
             node_name,
@@ -207,7 +207,7 @@ class SensorDataRepository(ISensorReadingRepository):
         """Get anomalous readings using statistical analysis."""
         query = f"""
         WITH stats AS (
-            SELECT 
+            SELECT
                 node_id,
                 AVG(flow_rate) as avg_flow,
                 STDDEV(flow_rate) as std_flow,
@@ -223,7 +223,7 @@ class SensorDataRepository(ISensorReadingRepository):
             AND temperature IS NOT NULL
             GROUP BY node_id
         )
-        SELECT 
+        SELECT
             r.timestamp,
             r.node_id,
             r.node_name,

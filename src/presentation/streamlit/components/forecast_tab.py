@@ -175,7 +175,7 @@ class ForecastTab:
                 **To view forecasts:**
                 1. Ensure the API server is running (`./run_api.sh`)
                 2. Click the button below to load forecast data
-                
+
                 The forecast will show:
                 - 7-day predictions with 80% confidence intervals
                 - Historical context from the last 30 days

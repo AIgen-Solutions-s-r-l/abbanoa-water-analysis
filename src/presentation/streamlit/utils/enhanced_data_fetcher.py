@@ -66,7 +66,7 @@ class EnhancedDataFetcher:
         if uuid_nodes:
             uuid_list = ", ".join([f"'{nid}'" for nid in uuid_nodes])
             query1 = f"""
-            SELECT 
+            SELECT
                 timestamp,
                 node_id,
                 node_name,
@@ -88,7 +88,7 @@ class EnhancedDataFetcher:
                     metric_cols.append(metric)
 
             query2 = f"""
-            SELECT 
+            SELECT
                 timestamp,
                 node_id,
                 node_name,
@@ -150,7 +150,7 @@ class EnhancedDataFetcher:
                 uuid_placeholders = ", ".join([f'"{nid}"' for nid in uuid_nodes])
                 query1 = f"""
                 WITH latest_uuid AS (
-                    SELECT 
+                    SELECT
                         node_id,
                         timestamp,
                         flow_rate,
@@ -171,7 +171,7 @@ class EnhancedDataFetcher:
                 numeric_placeholders = ", ".join([f'"{nid}"' for nid in numeric_nodes])
                 query2 = f"""
                 WITH latest_numeric AS (
-                    SELECT 
+                    SELECT
                         node_id,
                         timestamp,
                         flow_rate,

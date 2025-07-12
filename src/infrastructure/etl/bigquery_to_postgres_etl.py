@@ -250,7 +250,7 @@ class BigQueryToPostgresETL:
         try:
             # Query BigQuery
             query = f"""
-            SELECT 
+            SELECT
                 timestamp,
                 node_id,
                 temperature,

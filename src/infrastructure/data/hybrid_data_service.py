@@ -419,7 +419,7 @@ class HybridDataService:
                 return pd.DataFrame()
 
             query = f"""
-            SELECT 
+            SELECT
                 timestamp,
                 temperature,
                 flow_rate,

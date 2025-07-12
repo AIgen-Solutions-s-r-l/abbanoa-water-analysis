@@ -30,7 +30,7 @@ def create_advanced_analysis_queries():
         "correlation_analysis": """
             -- Correlation analysis between different sensors
             WITH daily_metrics AS (
-              SELECT 
+              SELECT
                 data,
                 AVG(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta) as avg_flow_sant_anna,
                 AVG(selargius_nodo_via_seneca_portata_w_istantanea_diretta) as avg_flow_seneca,
@@ -49,7 +49,7 @@ def create_advanced_analysis_queries():
         "anomaly_detection": """
             -- Advanced anomaly detection using statistical methods
             WITH flow_stats AS (
-              SELECT 
+              SELECT
                 AVG(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta) as mean_flow,
                 STDDEV(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta) as stddev_flow,
                 APPROX_QUANTILES(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta, 100)[OFFSET(25)] as q25,
@@ -58,23 +58,23 @@ def create_advanced_analysis_queries():
               WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
             ),
             iqr_bounds AS (
-              SELECT 
+              SELECT
                 *,
                 q25 - 1.5 * (q75 - q25) as lower_bound,
                 q75 + 1.5 * (q75 - q25) as upper_bound
               FROM flow_stats
             )
-            SELECT 
+            SELECT
               data,
               ora,
               selargius_nodo_via_sant_anna_portata_w_istantanea_diretta as flow_rate,
-              CASE 
-                WHEN selargius_nodo_via_sant_anna_portata_w_istantanea_diretta < (SELECT lower_bound FROM iqr_bounds) 
+              CASE
+                WHEN selargius_nodo_via_sant_anna_portata_w_istantanea_diretta < (SELECT lower_bound FROM iqr_bounds)
                   OR selargius_nodo_via_sant_anna_portata_w_istantanea_diretta > (SELECT upper_bound FROM iqr_bounds)
                 THEN 'ANOMALY'
                 ELSE 'NORMAL'
               END as anomaly_status,
-              ABS(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta - (SELECT mean_flow FROM flow_stats)) / 
+              ABS(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta - (SELECT mean_flow FROM flow_stats)) /
                 (SELECT stddev_flow FROM flow_stats) as z_score
             FROM `{project}.{dataset}.{table}`, flow_stats
             WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
@@ -83,7 +83,7 @@ def create_advanced_analysis_queries():
         """,
         "hourly_patterns": """
             -- Hourly consumption patterns analysis
-            SELECT 
+            SELECT
               EXTRACT(HOUR FROM PARSE_TIME('%H:%M:%S', ora)) as hour_of_day,
               EXTRACT(DAYOFWEEK FROM PARSE_DATE('%d/%m/%Y', data)) as day_of_week,
               AVG(selargius_nodo_via_sant_anna_portata_w_istantanea_diretta) as avg_flow_rate,
@@ -101,7 +101,7 @@ def create_advanced_analysis_queries():
         "efficiency_metrics": """
             -- Network efficiency and loss analysis
             WITH flow_comparison AS (
-              SELECT 
+              SELECT
                 data,
                 ora,
                 selargius_nodo_via_sant_anna_portata_w_istantanea_diretta as input_flow_1,
@@ -112,7 +112,7 @@ def create_advanced_analysis_queries():
               WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
                 AND selargius_serbatoio_selargius_portata_uscita IS NOT NULL
             )
-            SELECT 
+            SELECT
               data,
               AVG(input_flow_1 + COALESCE(input_flow_2, 0) + COALESCE(external_supply, 0)) as total_input,
               AVG(output_flow) as total_output,
@@ -152,7 +152,7 @@ def create_bigquery_ml_models():
               selargius_nodo_via_sant_anna_portata_w_istantanea_diretta as flow_rate
             FROM `{project}.{dataset}.{table}`
             WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
-              AND data IS NOT NULL 
+              AND data IS NOT NULL
               AND ora IS NOT NULL
         """,
         "clustering_analysis": """
@@ -172,7 +172,7 @@ def create_bigquery_ml_models():
             FROM `{project}.{dataset}.{table}`
             WHERE selargius_nodo_via_sant_anna_portata_w_istantanea_diretta IS NOT NULL
               AND selargius_serbatoio_selargius_portata_uscita IS NOT NULL
-              AND data IS NOT NULL 
+              AND data IS NOT NULL
               AND ora IS NOT NULL
         """,
         "anomaly_detection_ml": """
@@ -229,34 +229,34 @@ def create_real_time_monitoring_setup():
             -- Create view for real-time monitoring dashboard
             CREATE OR REPLACE VIEW `{project}.{dataset}.real_time_dashboard` AS
             WITH latest_readings AS (
-              SELECT 
+              SELECT
                 *,
                 ROW_NUMBER() OVER (PARTITION BY _source_file ORDER BY _ingestion_timestamp DESC) as rn
               FROM `{project}.{dataset}.{table}`
             ),
             current_status AS (
-              SELECT 
+              SELECT
                 'Sant Anna Flow' as metric_name,
                 selargius_nodo_via_sant_anna_portata_w_istantanea_diretta as current_value,
                 100.0 as threshold_high,
                 20.0 as threshold_low,
                 'L/S' as unit,
-                CASE 
+                CASE
                   WHEN selargius_nodo_via_sant_anna_portata_w_istantanea_diretta > 100 THEN 'HIGH'
                   WHEN selargius_nodo_via_sant_anna_portata_w_istantanea_diretta < 20 THEN 'LOW'
                   ELSE 'NORMAL'
                 END as status
               FROM latest_readings WHERE rn = 1
-              
+
               UNION ALL
-              
-              SELECT 
+
+              SELECT
                 'Tank Output' as metric_name,
                 selargius_serbatoio_selargius_portata_uscita as current_value,
                 80.0 as threshold_high,
                 10.0 as threshold_low,
                 'L/S' as unit,
-                CASE 
+                CASE
                   WHEN selargius_serbatoio_selargius_portata_uscita > 80 THEN 'HIGH'
                   WHEN selargius_serbatoio_selargius_portata_uscita < 10 THEN 'LOW'
                   ELSE 'NORMAL'

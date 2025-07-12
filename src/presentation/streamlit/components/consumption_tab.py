@@ -330,7 +330,7 @@ class ConsumptionTab:
 
             # Query from the main sensor readings table
             query = """
-                SELECT 
+                SELECT
                     timestamp,
                     node_id,
                     flow_rate,

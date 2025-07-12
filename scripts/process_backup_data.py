@@ -444,7 +444,7 @@ def create_ml_views(client: bigquery.Client):
     view_query = f"""
     CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET_ID}.v_sensor_readings_normalized` AS
     WITH latest_readings AS (
-        SELECT 
+        SELECT
             timestamp,
             node_id,
             district_id,
@@ -460,7 +460,7 @@ def create_ml_views(client: bigquery.Client):
         WHERE data_quality_score > 0.5
             AND timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 730 DAY)
     )
-    SELECT 
+    SELECT
         timestamp,
         node_id,
         district_id,
@@ -481,7 +481,7 @@ def create_ml_views(client: bigquery.Client):
     # Create aggregated daily view for ML
     daily_view_query = f"""
     CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET_ID}.v_daily_metrics_ml` AS
-    SELECT 
+    SELECT
         DATE(timestamp) as date,
         node_id,
         district_id,

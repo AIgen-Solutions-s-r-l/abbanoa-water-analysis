@@ -52,35 +52,35 @@ try:
         yearly_seasonality=False,  # Non abbiamo un anno completo
         changepoint_prior_scale=0.05  # Più conservativo sui cambiamenti di trend
     )
-    
+
     # Aggiungi regressori extra se necessario (es. temperatura)
     # model.add_regressor('temperature')
-    
+
     # Training
     model.fit(train)
-    
+
     # Crea dataframe per previsioni (48h nel futuro)
     future = model.make_future_dataframe(periods=48*2, freq='30min')
-    
+
     # Genera previsioni
     forecast = model.predict(future)
-    
+
     # Calcola metriche sul test set
     test_forecast = forecast[forecast['ds'].isin(test['ds'])]
     mae = np.mean(np.abs(test['y'].values - test_forecast['yhat'].values))
     mape = np.mean(np.abs((test['y'].values - test_forecast['yhat'].values) / test['y'].values)) * 100
-    
+
     print(f"\\nPerformance sul test set:")
     print(f"MAE: {mae:.2f} L/S")
     print(f"MAPE: {mape:.2f}%")
-    
+
     # Salva previsioni
     forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(48*2).to_csv('previsioni_48h.csv')
-    
+
     # Visualizza
     fig1 = model.plot(forecast)
     fig1.savefig('prophet_forecast.png')
-    
+
     fig2 = model.plot_components(forecast)
     fig2.savefig('prophet_components.png')
     """

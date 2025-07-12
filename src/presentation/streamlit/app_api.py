@@ -160,7 +160,7 @@ class DashboardApp:
             .main {
                 padding: 1rem;
             }
-            
+
             /* Metric cards */
             div[data-testid="metric-container"] {
                 background-color: #f0f2f6;
@@ -169,22 +169,22 @@ class DashboardApp:
                 border-radius: 0.5rem;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             }
-            
+
             /* Tabs */
             .stTabs [data-baseweb="tab-list"] {
                 gap: 1rem;
             }
-            
+
             .stTabs [data-baseweb="tab"] {
                 padding: 0.5rem 1rem;
                 font-weight: 500;
             }
-            
+
             /* Sidebar */
             .css-1d391kg {
                 background-color: #f5f7fa;
             }
-            
+
             /* Buttons */
             .stButton > button {
                 background-color: #0066cc;
@@ -194,18 +194,18 @@ class DashboardApp:
                 font-weight: 500;
                 transition: background-color 0.3s;
             }
-            
+
             .stButton > button:hover {
                 background-color: #0052a3;
             }
-            
+
             /* Success/Error messages */
             .stSuccess {
                 background-color: #d4edda;
                 border-color: #c3e6cb;
                 color: #155724;
             }
-            
+
             .stError {
                 background-color: #f8d7da;
                 border-color: #f5c6cb;

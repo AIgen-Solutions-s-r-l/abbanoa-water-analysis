@@ -37,30 +37,30 @@ class SimpleAnomalyDetector:
                 # Query for anomaly detection
                 query = f"""
                 WITH node_stats AS (
-                    SELECT 
+                    SELECT
                         node_id,
                         timestamp,
                         flow_rate,
                         pressure,
                         temperature,
                         AVG(flow_rate) OVER (
-                            PARTITION BY node_id 
-                            ORDER BY timestamp 
+                            PARTITION BY node_id
+                            ORDER BY timestamp
                             ROWS BETWEEN 48 PRECEDING AND CURRENT ROW
                         ) as avg_flow,
                         STDDEV(flow_rate) OVER (
-                            PARTITION BY node_id 
-                            ORDER BY timestamp 
+                            PARTITION BY node_id
+                            ORDER BY timestamp
                             ROWS BETWEEN 48 PRECEDING AND CURRENT ROW
                         ) as stddev_flow,
                         AVG(pressure) OVER (
-                            PARTITION BY node_id 
-                            ORDER BY timestamp 
+                            PARTITION BY node_id
+                            ORDER BY timestamp
                             ROWS BETWEEN 48 PRECEDING AND CURRENT ROW
                         ) as avg_pressure,
                         STDDEV(pressure) OVER (
-                            PARTITION BY node_id 
-                            ORDER BY timestamp 
+                            PARTITION BY node_id
+                            ORDER BY timestamp
                             ROWS BETWEEN 48 PRECEDING AND CURRENT ROW
                         ) as stddev_pressure
                     FROM `{self.project_id}.{self.dataset_id}.sensor_readings_ml`
@@ -71,7 +71,7 @@ class SimpleAnomalyDetector:
                 )
                 SELECT *
                 FROM node_stats
-                WHERE 
+                WHERE
                     -- Flow anomalies
                     (flow_rate > avg_flow + 3 * stddev_flow AND flow_rate > 10)
                     OR (flow_rate < avg_flow - 3 * stddev_flow AND avg_flow > 5)

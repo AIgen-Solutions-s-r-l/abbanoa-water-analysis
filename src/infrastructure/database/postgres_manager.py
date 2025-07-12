@@ -112,10 +112,10 @@ class PostgresManager:
         async with self.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO water_infrastructure.nodes 
+                INSERT INTO water_infrastructure.nodes
                     (node_id, node_name, node_type, location_name, is_active, metadata)
                 VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (node_id) 
+                ON CONFLICT (node_id)
                 DO UPDATE SET
                     node_name = EXCLUDED.node_name,
                     node_type = EXCLUDED.node_type,
@@ -137,7 +137,7 @@ class PostgresManager:
         async with self.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT 
+                SELECT
                     node_id, node_name, node_type, location_name,
                     is_active, metadata, created_at, updated_at
                 FROM water_infrastructure.nodes
@@ -233,7 +233,7 @@ class PostgresManager:
             # Use base table since materialized views are empty
             # TODO: Once materialized views are populated, switch back to them
             query = """
-                SELECT 
+                SELECT
                     timestamp,
                     flow_rate,
                     pressure,
@@ -261,7 +261,7 @@ class PostgresManager:
                 """
                 INSERT INTO water_infrastructure.anomalies
                     (timestamp, node_id, anomaly_type, severity, measurement_type,
-                     actual_value, expected_value, deviation_percentage, 
+                     actual_value, expected_value, deviation_percentage,
                      detection_method, metadata)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING anomaly_id
@@ -285,8 +285,8 @@ class PostgresManager:
         """Get recent anomalies."""
         async with self.acquire() as conn:
             query = """
-                SELECT 
-                    a.*, 
+                SELECT
+                    a.*,
                     n.node_name
                 FROM water_infrastructure.anomalies a
                 JOIN water_infrastructure.nodes n ON a.node_id = n.node_id
@@ -336,7 +336,7 @@ class PostgresManager:
                 """
                 INSERT INTO water_infrastructure.ml_predictions
                     (timestamp, node_id, model_name, model_version, prediction_type,
-                     prediction_horizon_hours, predicted_value, confidence_score, 
+                     prediction_horizon_hours, predicted_value, confidence_score,
                      prediction_metadata)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             """,
@@ -372,7 +372,7 @@ class PostgresManager:
             result = await conn.fetchrow(
                 """
                 WITH recent_data AS (
-                    SELECT 
+                    SELECT
                         node_id,
                         flow_rate,
                         pressure,
@@ -382,7 +382,7 @@ class PostgresManager:
                     -- Get all data we have (November 2024)
                     WHERE timestamp >= '2024-11-01'
                 )
-                SELECT 
+                SELECT
                     COUNT(DISTINCT node_id) as active_nodes,
                     COALESCE(AVG(flow_rate), 0) as total_flow,
                     COALESCE(AVG(pressure), 0) as avg_pressure,

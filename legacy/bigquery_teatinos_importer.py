@@ -34,10 +34,10 @@ class TeatinoBigQueryImporter:
             Infrastructure monitoring data from Teatinos water treatment facility.
             Contains sensor readings from Hidroconta system including:
             - Daily water consumption measurements
-            - Hourly consumption tracking  
+            - Hourly consumption tracking
             - Flow rate monitoring
             - Data from PCR-4 and PCR-5 units
-            
+
             Data source: Hidroconta sensor network
             Site: Teatinos, Sardinia
             Date range: 2023-2025
@@ -78,12 +78,12 @@ class TeatinoBigQueryImporter:
             table = bigquery.Table(table_ref, schema=schema)
             table.description = """
             Teatinos infrastructure sensor data from Hidroconta system.
-            
+
             Contains time-series measurements from water treatment facility:
             - Consumption metrics (daily, hourly, flow rates)
             - PCR unit monitoring data
             - Quality and metadata tracking
-            
+
             Data ingestion: Automated from CSV exports
             Update frequency: Batch imports as needed
             Retention: Indefinite for historical analysis
@@ -168,9 +168,9 @@ class TeatinoBigQueryImporter:
             {
                 "name": "Data type distribution",
                 "query": f"""
-                SELECT _data_type, COUNT(*) as count 
-                FROM `{table_ref}` 
-                GROUP BY _data_type 
+                SELECT _data_type, COUNT(*) as count
+                FROM `{table_ref}`
+                GROUP BY _data_type
                 ORDER BY count DESC
                 """,
             },
@@ -186,7 +186,7 @@ class TeatinoBigQueryImporter:
             {
                 "name": "Date range coverage",
                 "query": f"""
-                SELECT 
+                SELECT
                     MIN(datetime) as earliest_date,
                     MAX(datetime) as latest_date,
                     DATE_DIFF(DATE(MAX(datetime)), DATE(MIN(datetime)), DAY) as days_covered
@@ -196,7 +196,7 @@ class TeatinoBigQueryImporter:
             {
                 "name": "Data quality metrics",
                 "query": f"""
-                SELECT 
+                SELECT
                     COUNT(*) as total_records,
                     COUNT(DISTINCT _row_hash) as unique_records,
                     COUNT(*) - COUNT(DISTINCT _row_hash) as potential_duplicates,
@@ -246,7 +246,7 @@ class TeatinoBigQueryImporter:
         queries = {
             "daily_consumption_trends.sql": f"""
 -- Daily consumption trends for Teatinos site
-SELECT 
+SELECT
     DATE(datetime) as date,
     _pcr_unit,
     _sensor_type,
@@ -262,7 +262,7 @@ ORDER BY date DESC, _pcr_unit
 """,
             "flow_rate_monitoring.sql": f"""
 -- Flow rate monitoring analysis
-SELECT 
+SELECT
     DATETIME_TRUNC(datetime, HOUR) as hour,
     _pcr_unit,
     ROUND(AVG(value), 3) as avg_flow_rate,
@@ -277,7 +277,7 @@ ORDER BY hour DESC
             "consumption_comparison.sql": f"""
 -- Compare consumption between PCR units
 WITH daily_consumption AS (
-    SELECT 
+    SELECT
         DATE(datetime) as date,
         _pcr_unit,
         SUM(value) as total_consumption
@@ -286,7 +286,7 @@ WITH daily_consumption AS (
         AND datetime >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
     GROUP BY DATE(datetime), _pcr_unit
 )
-SELECT 
+SELECT
     date,
     SUM(CASE WHEN _pcr_unit LIKE '%PCR-4%' THEN total_consumption END) as pcr4_consumption,
     SUM(CASE WHEN _pcr_unit LIKE '%PCR-5%' THEN total_consumption END) as pcr5_consumption,
@@ -298,7 +298,7 @@ ORDER BY date DESC
             "anomaly_detection.sql": f"""
 -- Detect consumption anomalies using statistical thresholds
 WITH consumption_stats AS (
-    SELECT 
+    SELECT
         _pcr_unit,
         _data_type,
         AVG(value) as mean_value,
@@ -309,7 +309,7 @@ WITH consumption_stats AS (
     GROUP BY _pcr_unit, _data_type
 ),
 anomalies AS (
-    SELECT 
+    SELECT
         r.datetime,
         r._pcr_unit,
         r._data_type,
@@ -318,8 +318,8 @@ anomalies AS (
         s.stddev_value,
         ABS(r.value - s.mean_value) / s.stddev_value as z_score
     FROM `{table_ref}` r
-    JOIN consumption_stats s 
-        ON r._pcr_unit = s._pcr_unit 
+    JOIN consumption_stats s
+        ON r._pcr_unit = s._pcr_unit
         AND r._data_type = s._data_type
     WHERE r.datetime >= DATE_SUB(CURRENT_DATETIME(), INTERVAL 7 DAY)
         AND s.stddev_value > 0

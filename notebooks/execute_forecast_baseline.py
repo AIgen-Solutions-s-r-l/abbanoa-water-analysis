@@ -177,7 +177,7 @@ class ARIMAPlusModelExecutor:
         sql = f"""
         CREATE OR REPLACE TABLE `{self.project_id}.{self.dataset_id}.training_data` AS
         WITH training_base AS (
-          SELECT 
+          SELECT
             date_utc as ds,
             CONCAT(district_id, '_', metric_type) as district_metric,
             avg_value as y,
@@ -191,25 +191,25 @@ class ARIMAPlusModelExecutor:
             gap_filled_flag,
             data_completeness_pct,
             LAG(avg_value, 1) OVER (
-              PARTITION BY district_id, metric_type 
+              PARTITION BY district_id, metric_type
               ORDER BY date_utc
             ) as lag_1_day,
             LAG(avg_value, 7) OVER (
-              PARTITION BY district_id, metric_type 
+              PARTITION BY district_id, metric_type
               ORDER BY date_utc
             ) as lag_7_day,
             AVG(avg_value) OVER (
-              PARTITION BY district_id, metric_type 
-              ORDER BY date_utc 
+              PARTITION BY district_id, metric_type
+              ORDER BY date_utc
               ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
             ) as avg_7_day,
             AVG(avg_value) OVER (
-              PARTITION BY district_id, metric_type 
-              ORDER BY date_utc 
+              PARTITION BY district_id, metric_type
+              ORDER BY date_utc
               ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
             ) as avg_30_day
           FROM `{self.project_id}.water_infrastructure.vw_daily_timeseries`
-          WHERE 
+          WHERE
             date_utc >= DATE_SUB(CURRENT_DATE('UTC'), INTERVAL 5 YEAR)
             AND date_utc < DATE('2025-01-01')
             AND district_id IN ('DIST_001', 'DIST_002')
@@ -219,20 +219,20 @@ class ARIMAPlusModelExecutor:
             AND data_completeness_pct > 50
         ),
         training_filled AS (
-          SELECT 
+          SELECT
             *,
-            CASE 
-              WHEN y IS NULL THEN 
+            CASE
+              WHEN y IS NULL THEN
                 LAST_VALUE(y IGNORE NULLS) OVER (
-                  PARTITION BY district_metric 
-                  ORDER BY ds 
+                  PARTITION BY district_metric
+                  ORDER BY ds
                   ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
                 )
               ELSE y
             END as y_filled
           FROM training_base
         )
-        SELECT 
+        SELECT
           ds,
           y_filled as y,
           district_metric,
@@ -256,7 +256,7 @@ class ARIMAPlusModelExecutor:
         if success:
             # Validate training data
             validation_sql = f"""
-            SELECT 
+            SELECT
               district_metric,
               COUNT(*) as record_count,
               MIN(ds) as start_date,
@@ -325,12 +325,12 @@ class ARIMAPlusModelExecutor:
               clean_spikes_and_dips=TRUE,
               adjust_step_changes=TRUE
             ) AS
-            SELECT 
+            SELECT
               ds,
               y,
               district_metric
             FROM `{self.project_id}.{self.dataset_id}.training_data`
-            WHERE district_id = '{district}' 
+            WHERE district_id = '{district}'
               AND metric_type = '{metric}'
               AND district_metric = '{district_metric}'
             """
@@ -368,7 +368,7 @@ class ARIMAPlusModelExecutor:
           UNION ALL
           SELECT 'DIST_002_reservoir_level' as model_name, * FROM ML.EVALUATE(MODEL `{self.project_id}.{self.dataset_id}.arima_dist_002_reservoir_level`)
         )
-        SELECT 
+        SELECT
           model_name,
           SPLIT(model_name, '_')[OFFSET(0)] || '_' || SPLIT(model_name, '_')[OFFSET(1)] as district_id,
           SPLIT(model_name, '_')[OFFSET(2)] as metric_type,
@@ -377,7 +377,7 @@ class ARIMAPlusModelExecutor:
           root_mean_squared_error,
           mean_squared_error,
           symmetric_mean_absolute_percentage_error,
-          CASE 
+          CASE
             WHEN mean_absolute_percentage_error <= 0.15 THEN 'PASS'
             WHEN mean_absolute_percentage_error <= 0.20 THEN 'MARGINAL'
             ELSE 'FAIL'
@@ -427,7 +427,7 @@ class ARIMAPlusModelExecutor:
         # Create holdout dataset
         holdout_sql = f"""
         CREATE OR REPLACE TABLE `{self.project_id}.{self.dataset_id}.holdout_data` AS
-        SELECT 
+        SELECT
           date_utc as ds,
           CONCAT(district_id, '_', metric_type) as district_metric,
           avg_value as y_actual,
@@ -436,7 +436,7 @@ class ARIMAPlusModelExecutor:
           data_quality_flag,
           data_completeness_pct
         FROM `{self.project_id}.water_infrastructure.vw_daily_timeseries`
-        WHERE 
+        WHERE
           date_utc BETWEEN DATE('2024-01-01') AND DATE('2024-03-31')  -- Using 2024 for simulation
           AND district_id IN ('DIST_001', 'DIST_002')
           AND metric_type IN ('flow_rate', 'pressure', 'reservoir_level')
@@ -468,7 +468,7 @@ class ARIMAPlusModelExecutor:
 
         sql = f"""
         CREATE OR REPLACE VIEW `{self.project_id}.{self.dataset_id}.performance_summary` AS
-        SELECT 
+        SELECT
           'ARIMA_PLUS Baseline Models' as model_type,
           COUNT(*) as total_models,
           COUNT(CASE WHEN mape_assessment = 'PASS' THEN 1 END) as models_passed,
@@ -477,7 +477,7 @@ class ARIMAPlusModelExecutor:
           AVG(mean_absolute_percentage_error) as avg_mape,
           MIN(mean_absolute_percentage_error) as best_mape,
           MAX(mean_absolute_percentage_error) as worst_mape,
-          CASE 
+          CASE
             WHEN COUNT(CASE WHEN mape_assessment = 'PASS' THEN 1 END) = COUNT(*) THEN 'ALL_MODELS_PASS'
             WHEN COUNT(CASE WHEN mape_assessment = 'PASS' THEN 1 END) >= COUNT(*) * 0.8 THEN 'MOSTLY_PASS'
             ELSE 'NEEDS_IMPROVEMENT'

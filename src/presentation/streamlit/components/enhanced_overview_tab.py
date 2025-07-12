@@ -173,7 +173,7 @@ class EnhancedOverviewTab:
                     {status_color} System Status: <strong>{status_text}</strong>
                 </h3>
                 <p style="margin: 5px 0 0 0; color: #666;">
-                    {active_nodes}/{total_nodes} nodes active • Health: {health_percentage:.1f}% • 
+                    {active_nodes}/{total_nodes} nodes active • Health: {health_percentage:.1f}% •
                     Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                 </p>
             </div>

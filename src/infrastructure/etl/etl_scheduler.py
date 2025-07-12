@@ -225,7 +225,7 @@ class ETLScheduler:
                 async with self.postgres_manager.acquire() as conn:
                     rows = await conn.fetch(
                         """
-                        SELECT 
+                        SELECT
                             timestamp, flow_rate, pressure, temperature
                         FROM water_infrastructure.sensor_readings
                         WHERE node_id = $1
@@ -295,7 +295,7 @@ class ETLScheduler:
                 missing_data = await conn.fetch(
                     """
                     WITH expected_readings AS (
-                        SELECT 
+                        SELECT
                             n.node_id,
                             generate_series(
                                 CURRENT_TIMESTAMP - INTERVAL '24 hours',
@@ -308,17 +308,17 @@ class ETLScheduler:
                     actual_readings AS (
                         SELECT DISTINCT
                             node_id,
-                            date_trunc('hour', timestamp) + 
+                            date_trunc('hour', timestamp) +
                             INTERVAL '30 minutes' * FLOOR(EXTRACT(MINUTE FROM timestamp) / 30) as reading_time
                         FROM water_infrastructure.sensor_readings
                         WHERE timestamp > CURRENT_TIMESTAMP - INTERVAL '24 hours'
                     )
-                    SELECT 
+                    SELECT
                         e.node_id,
                         COUNT(*) as missing_readings
                     FROM expected_readings e
-                    LEFT JOIN actual_readings a 
-                        ON e.node_id = a.node_id 
+                    LEFT JOIN actual_readings a
+                        ON e.node_id = a.node_id
                         AND e.expected_time = a.reading_time
                     WHERE a.reading_time IS NULL
                     GROUP BY e.node_id
@@ -332,7 +332,7 @@ class ETLScheduler:
                 # Check for suspicious values
                 suspicious = await conn.fetch(
                     """
-                    SELECT 
+                    SELECT
                         node_id,
                         COUNT(*) as suspicious_readings
                     FROM water_infrastructure.sensor_readings

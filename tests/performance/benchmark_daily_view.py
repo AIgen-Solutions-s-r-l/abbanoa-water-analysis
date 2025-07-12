@@ -121,7 +121,7 @@ class BigQueryBenchmark:
         """Benchmark querying the full 5-year dataset."""
 
         query = f"""
-        SELECT 
+        SELECT
             COUNT(*) as total_records,
             COUNT(DISTINCT date_utc) as unique_dates,
             COUNT(DISTINCT district_id) as unique_districts,
@@ -143,7 +143,7 @@ class BigQueryBenchmark:
         """Benchmark querying a single month of data."""
 
         query = f"""
-        SELECT 
+        SELECT
             date_utc,
             district_id,
             metric_type,
@@ -168,7 +168,7 @@ class BigQueryBenchmark:
         """Benchmark querying with multiple filters."""
 
         query = f"""
-        SELECT 
+        SELECT
             date_utc,
             district_id,
             metric_type,
@@ -197,7 +197,7 @@ class BigQueryBenchmark:
         """Benchmark complex aggregation query."""
 
         query = f"""
-        SELECT 
+        SELECT
             district_id,
             metric_type,
             EXTRACT(YEAR FROM date_utc) as year,
@@ -225,7 +225,7 @@ class BigQueryBenchmark:
         """Benchmark concurrent query execution."""
 
         base_query = f"""
-        SELECT 
+        SELECT
             COUNT(*) as record_count,
             AVG(avg_value) as overall_avg
         FROM `{self.project_id}.{self.dataset_id}.{self.view_name}`
@@ -296,7 +296,7 @@ class BigQueryBenchmark:
         """Analyze query execution plan for optimization insights."""
 
         query = f"""
-        SELECT 
+        SELECT
             date_utc,
             district_id,
             metric_type,

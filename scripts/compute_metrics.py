@@ -47,11 +47,11 @@ async def compute_metrics():
         result = await conn.execute(
             """
             INSERT INTO water_infrastructure.computed_metrics (
-                timestamp, node_id, metric_type, 
+                timestamp, node_id, metric_type,
                 value, aggregation_type, time_window,
                 metadata
             )
-            SELECT 
+            SELECT
                 date_trunc('hour', timestamp) as hour,
                 node_id,
                 'flow_rate' as metric_type,
@@ -67,10 +67,10 @@ async def compute_metrics():
             FROM water_infrastructure.sensor_readings
             WHERE flow_rate IS NOT NULL
             GROUP BY date_trunc('hour', timestamp), node_id
-            
+
             UNION ALL
-            
-            SELECT 
+
+            SELECT
                 date_trunc('hour', timestamp) as hour,
                 node_id,
                 'pressure' as metric_type,
@@ -86,10 +86,10 @@ async def compute_metrics():
             FROM water_infrastructure.sensor_readings
             WHERE pressure IS NOT NULL
             GROUP BY date_trunc('hour', timestamp), node_id
-            
+
             UNION ALL
-            
-            SELECT 
+
+            SELECT
                 date_trunc('hour', timestamp) as hour,
                 node_id,
                 'temperature' as metric_type,

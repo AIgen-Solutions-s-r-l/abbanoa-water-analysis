@@ -457,7 +457,7 @@ This guide documents the integration of 6 new sensor nodes from the backup data 
 
 ### Distribution Nodes
 - **Node 215542**: Selargius Distribution Node
-- **Node 215600**: Selargius Distribution Node  
+- **Node 215600**: Selargius Distribution Node
 - **Node 273933**: Selargius Distribution Node
 
 ### Monitoring Nodes

@@ -415,8 +415,8 @@ class DashboardApp:
         st.markdown(
             f"""
             <div style="text-align: center; color: #999; font-size: 0.8rem;">
-                {data_source} | Powered by BigQuery ML | ARIMA_PLUS Models | 
-                <a href="https://github.com/AIgen-Solutions-s-r-l/abbanoa-water-analysis" 
+                {data_source} | Powered by BigQuery ML | ARIMA_PLUS Models |
+                <a href="https://github.com/AIgen-Solutions-s-r-l/abbanoa-water-analysis"
                    style="color: #1f77b4;">View on GitHub</a>
             </div>
             """,

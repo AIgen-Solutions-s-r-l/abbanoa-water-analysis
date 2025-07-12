@@ -211,7 +211,7 @@ class ProcessingService:
             }
 
         query = f"""
-        SELECT 
+        SELECT
             COUNT(*) as record_count,
             MIN(timestamp) as min_timestamp,
             MAX(timestamp) as max_timestamp
@@ -245,7 +245,7 @@ class ProcessingService:
         async with self.postgres_manager.acquire() as conn:
             result = await conn.fetchval(
                 """
-                SELECT MAX(window_end) 
+                SELECT MAX(window_end)
                 FROM water_infrastructure.computed_metrics
             """
             )
@@ -262,7 +262,7 @@ class ProcessingService:
         async with self.postgres_manager.acquire() as conn:
             job_id = await conn.fetchval(
                 """
-                INSERT INTO water_infrastructure.processing_jobs 
+                INSERT INTO water_infrastructure.processing_jobs
                 (job_type, job_name, status, triggered_by)
                 VALUES ('data_processing', 'Scheduled data processing', 'running', 'scheduler')
                 RETURNING job_id
@@ -278,7 +278,7 @@ class ProcessingService:
             await conn.execute(
                 """
                 UPDATE water_infrastructure.processing_jobs
-                SET 
+                SET
                     status = $1,
                     completed_at = CURRENT_TIMESTAMP,
                     duration_seconds = EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - started_at)),

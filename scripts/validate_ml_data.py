@@ -104,7 +104,7 @@ class MLDataValidator:
 
         query = f"""
         WITH completeness AS (
-            SELECT 
+            SELECT
                 node_id,
                 district_id,
                 COUNT(*) as total_readings,
@@ -119,7 +119,7 @@ class MLDataValidator:
             FROM `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml`
             GROUP BY node_id, district_id
         )
-        SELECT 
+        SELECT
             *,
             ROUND(flow_rate_count / total_readings * 100, 2) as flow_rate_completeness,
             ROUND(pressure_count / total_readings * 100, 2) as pressure_completeness,
@@ -158,7 +158,7 @@ class MLDataValidator:
         print("\n3. Checking data quality...")
 
         query = f"""
-        SELECT 
+        SELECT
             district_id,
             AVG(data_quality_score) as avg_quality_score,
             MIN(data_quality_score) as min_quality_score,
@@ -201,7 +201,7 @@ class MLDataValidator:
 
         query = f"""
         WITH daily_counts AS (
-            SELECT 
+            SELECT
                 DATE(timestamp) as date,
                 district_id,
                 COUNT(DISTINCT node_id) as nodes_reporting,
@@ -210,13 +210,13 @@ class MLDataValidator:
             GROUP BY date, district_id
         ),
         expected_nodes AS (
-            SELECT 
+            SELECT
                 district_id,
                 COUNT(DISTINCT node_id) as expected_nodes
             FROM `{PROJECT_ID}.{DATASET_ID}.sensor_readings_ml`
             GROUP BY district_id
         )
-        SELECT 
+        SELECT
             dc.date,
             dc.district_id,
             dc.nodes_reporting,
@@ -263,7 +263,7 @@ class MLDataValidator:
         print("\n5. Checking feature distributions...")
 
         query = f"""
-        SELECT 
+        SELECT
             flow_rate,
             pressure,
             temperature,
@@ -315,7 +315,7 @@ class MLDataValidator:
 
         query = f"""
         WITH stats AS (
-            SELECT 
+            SELECT
                 node_id,
                 AVG(flow_rate) as mean_flow,
                 STDDEV(flow_rate) as std_flow,
@@ -326,7 +326,7 @@ class MLDataValidator:
             GROUP BY node_id
         ),
         anomalies AS (
-            SELECT 
+            SELECT
                 s.timestamp,
                 s.node_id,
                 s.flow_rate,
@@ -341,7 +341,7 @@ class MLDataValidator:
             JOIN stats st ON s.node_id = st.node_id
             WHERE s.timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
         )
-        SELECT 
+        SELECT
             COUNT(*) as total_readings,
             COUNTIF(flow_z_score > 3) as flow_anomalies,
             COUNTIF(pressure_z_score > 3) as pressure_anomalies,
