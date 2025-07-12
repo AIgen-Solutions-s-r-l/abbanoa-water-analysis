@@ -6,10 +6,10 @@ Welcome to the comprehensive documentation for the Abbanoa Water Infrastructure 
 
 ### 📐 [Architecture](./architecture/)
 System design and architectural decisions:
-- High-level system architecture
-- Component design and interactions
-- Domain-driven design principles
-- Scalability and security considerations
+- **[Complete Architecture Guide](./ARCHITECTURE_COMPLETE.md)** - Comprehensive system overview
+- **[Architecture Overview](./architecture/ARCHITECTURE.md)** - High-level system design
+- **[Hybrid Architecture](./HYBRID_ARCHITECTURE.md)** - Three-tier storage implementation
+- Domain-driven design principles and component interactions
 
 ### 🔧 [Technical Documentation](./technical/)
 Detailed technical implementation guides:
@@ -20,10 +20,10 @@ Detailed technical implementation guides:
 
 ### 📚 [User Guides](./guides/)
 Practical guides for users and developers:
-- Quick start guide
-- Dashboard usage instructions
-- API integration examples
-- Troubleshooting common issues
+- **[Quick Start Guide](./guides/QUICK_START.md)** - Get up and running quickly
+- **[API Reference](./API_REFERENCE.md)** - Complete API documentation
+- **[Setup Guide](./SETUP_GUIDE.md)** - Installation and configuration
+- Dashboard usage instructions and troubleshooting
 
 ### 🚀 [Migration Documentation](./migration/)
 System migration and upgrade guides:
@@ -71,14 +71,15 @@ The Abbanoa Water Infrastructure Analytics Platform is a comprehensive solution 
 
 ## Current Version
 
-**Version 2.0.0** - Released July 2025
+**Version 1.2.3.14** - Current Release
 
-Major features in this release:
-- Containerized microservices architecture
-- ML model lifecycle management
-- Three-tier storage optimization
-- Enhanced dashboard performance
-- Comprehensive API service
+Major features in this version:
+- Domain-Driven Design architecture
+- Three-tier storage system (Redis/PostgreSQL/BigQuery)
+- ML-powered anomaly detection and forecasting
+- Comprehensive Streamlit dashboard with 10+ specialized tabs
+- FastAPI service with complete REST API
+- Containerized deployment with Docker Compose
 
 ## Getting Help
 
