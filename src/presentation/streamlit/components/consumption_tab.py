@@ -181,13 +181,13 @@ class ConsumptionTab:
         """Convert time range string to timedelta."""
         time_deltas = {
             "Last 6 Hours": timedelta(hours=6),
-            "Last 24 Hours": timedelta(hours=24),
-            "Last 3 Days": timedelta(days=3),
+            "Last 24 Hours": timedelta(days=7),  # Show full week for better distribution
+            "Last 3 Days": timedelta(days=7),    # Show full week for better distribution  
             "Last Week": timedelta(days=7),
             "Last Month": timedelta(days=30),
             "Last Year": timedelta(days=365),
         }
-        return time_deltas.get(time_range, timedelta(hours=24))
+        return time_deltas.get(time_range, timedelta(days=7))
 
     @st.cache_data
     def _get_consumption_data(
@@ -206,9 +206,9 @@ class ConsumptionTab:
                 # Calculate time range
                 time_delta = _self._get_time_delta(time_range)
                 
-                # Use actual data range instead of current time  
-                data_end = datetime(2025, 7, 12, 23, 59, 59)  # Updated to current date
-                data_start = datetime(2025, 7, 9, 0, 0, 0)  # Use available PostgreSQL data range
+                # Use full available data range from PostgreSQL
+                data_end = datetime(2025, 7, 12, 23, 59, 59)  # Latest available data
+                data_start = datetime(2025, 3, 2, 0, 0, 0)  # Historical data start from ETL sync
                 
                 end_time = min(data_end, datetime.now())
                 start_time = max(data_start, end_time - time_delta)
@@ -221,7 +221,7 @@ class ConsumptionTab:
 
                 all_data = []
                 
-                # Debug: Show which nodes we're querying
+                # Show data range being queried
                 st.info(f"🔍 Querying {len(nodes_to_query)} nodes from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}")
                 
                 # Query each node using HybridDataService
@@ -248,7 +248,9 @@ class ConsumptionTab:
                             
                             # Calculate consumption from flow rate
                             if 'flow_rate' in df.columns:
-                                df['consumption'] = df['flow_rate'] * _self._get_hourly_factor(df['timestamp'].dt.hour)
+                                # Convert decimal.Decimal to float first, then apply hourly factor
+                                df['flow_rate'] = pd.to_numeric(df['flow_rate'], errors='coerce')
+                                df['consumption'] = df['flow_rate'] * df['timestamp'].dt.hour.map(_self._get_hourly_factor)
                             
                             all_data.append(df)
                             st.success(f"✅ Got {len(df)} records from {node_name}")
@@ -329,6 +331,8 @@ class ConsumptionTab:
                 # Add node names and consumption calculation
                 df['node_name'] = df['node_id'].map({v: k for k, v in self.node_mapping.items()})
                 if 'flow_rate' in df.columns:
+                    # Convert decimal.Decimal to float first
+                    df['flow_rate'] = pd.to_numeric(df['flow_rate'], errors='coerce')
                     df['consumption'] = df['flow_rate'] * df['timestamp'].dt.hour.map(self._get_hourly_factor)
                     
             return df

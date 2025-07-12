@@ -206,33 +206,23 @@ class HybridDataService:
         """
         cache_key = f"node:{node_id}:data:{start_time.date()}:{end_time.date()}:{interval}"
         
-        # Check which tier to query based on time range
-        tier = self._determine_tier(start_time)
+        # Use PostgreSQL as primary data source (has complete dataset from ETL sync)
+        # PostgreSQL contains all historical data from BigQuery ETL sync
         
-        if tier == DataTier.HOT:
-            # Try Redis first
-            data = await self._query_redis_timeseries(node_id, start_time, end_time)
-            if data is not None:
-                return data
-                
-        if tier in [DataTier.HOT, DataTier.WARM]:
-            # Try PostgreSQL
-            data = await self._query_postgres(node_id, start_time, end_time, interval)
-            if data is not None and not data.empty:
-                # Cache in Redis for next time
-                self._cache_dataframe(cache_key, data)
-                return data
-                
-        # Fallback to BigQuery
-        data = await self._query_bigquery(node_id, start_time, end_time)
-        
-        # Cache in Redis and potentially warm up PostgreSQL
+        # Try PostgreSQL first for all time ranges
+        data = await self._query_postgres(node_id, start_time, end_time, interval)
         if data is not None and not data.empty:
+            # Cache in Redis for next time
             self._cache_dataframe(cache_key, data)
-            # TODO: Consider warming PostgreSQL cache
             return data
+        
+        # Try Redis for very recent data as fallback
+        if (datetime.now() - start_time) <= timedelta(hours=24):
+            data = await self._query_redis_timeseries(node_id, start_time, end_time)
+            if data is not None and not data.empty:
+                return data
             
-        # Return empty DataFrame if no data found in any tier
+        # Return empty DataFrame if no data found
         return pd.DataFrame()
         
     async def get_latest_readings(

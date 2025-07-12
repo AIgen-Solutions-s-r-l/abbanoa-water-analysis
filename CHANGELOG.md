@@ -1,5 +1,45 @@
 # Changelog
 
+## [v1.2.3.14] - 2025-07-12
+
+### Critical Bug Fixes
+- fix(hybrid-service): restructure tier logic to use PostgreSQL as primary data source
+  - Removed failing BigQuery tier dependency for wide date ranges
+  - PostgreSQL now serves as primary data source for all queries (contains complete ETL-synced dataset)
+  - Eliminated "No data from..." error messages and fallback confusion
+  - Streamlined data flow: PostgreSQL → Redis (fallback only)
+  - Fixed async event loop and connection pool conflicts
+
+- fix(consumption): resolve decimal.Decimal to float conversion errors  
+  - Fixed "unsupported operand type(s) for '*': 'decimal.Decimal' and 'float'" errors
+  - Added pd.to_numeric() conversion for PostgreSQL decimal values before calculations
+  - Fixed pandas Series to scalar function mapping for hourly factor calculations
+  - Consumption calculations now work properly with mixed data types
+
+### Performance Improvements
+- Enhanced time range handling for better weekly data distribution
+  - Updated default time ranges to show full 7-day patterns instead of 24-hour snapshots
+  - Improved consumption pattern visualization across all days of the week
+  - Better data distribution in heatmaps and weekly trend charts
+
+### UI/UX Improvements
+- Cleaned up debug logging and error messages for production use
+- Re-enabled Streamlit caching for improved dashboard performance
+- Removed confusing BigQuery error messages from user interface
+- Enhanced consumption data range display with realistic weekly patterns
+
+### Data Architecture Fixes
+- Simplified three-tier architecture to focus on PostgreSQL warm storage
+- Removed dependency on BigQuery for operational dashboard queries
+- Fixed PostgreSQL connection pool management for better stability
+- Enhanced error handling for database connection edge cases
+
+### Technical Changes
+- Updated HybridDataService.get_node_data() to prioritize PostgreSQL queries
+- Fixed pandas operations for PostgreSQL decimal data types
+- Improved async context handling in Streamlit environment
+- Enhanced consumption tab data processing pipeline
+
 ## [v1.2.3.13] - 2025-07-12
 
 ### Bug Fixes
