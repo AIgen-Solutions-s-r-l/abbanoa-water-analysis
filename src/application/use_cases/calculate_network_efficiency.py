@@ -1,7 +1,7 @@
 """Use case for calculating water network efficiency."""
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 from uuid import UUID
 
 from src.application.dto.analysis_results_dto import NetworkEfficiencyResultDTO

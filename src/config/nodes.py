@@ -5,7 +5,6 @@ This file contains all node definitions and mappings to avoid duplication
 across different components.
 """
 
-from typing import Dict, List
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -13,6 +12,7 @@ from datetime import datetime
 @dataclass
 class NodeConfig:
     """Configuration for a monitoring node."""
+
     node_id: str
     uuid: str
     bigquery_id: str
@@ -37,7 +37,7 @@ ORIGINAL_NODES = {
         node_type="distribution",
         district="Selargius",
         latitude=39.2547,
-        longitude=9.1642
+        longitude=9.1642,
     ),
     "seneca": NodeConfig(
         node_id="002",
@@ -48,7 +48,7 @@ ORIGINAL_NODES = {
         node_type="distribution",
         district="Selargius",
         latitude=39.2456,
-        longitude=9.1523
+        longitude=9.1523,
     ),
     "selargius_tank": NodeConfig(
         node_id="003",
@@ -59,8 +59,8 @@ ORIGINAL_NODES = {
         node_type="storage",
         district="Selargius",
         latitude=39.2501,
-        longitude=9.1589
-    )
+        longitude=9.1589,
+    ),
 }
 
 # New nodes from backup data
@@ -74,7 +74,7 @@ NEW_NODES = {
         node_type="distribution",
         district="Selargius",
         latitude=39.2238,
-        longitude=9.1422
+        longitude=9.1422,
     ),
     "node_215600": NodeConfig(
         node_id="215600",
@@ -85,7 +85,7 @@ NEW_NODES = {
         node_type="distribution",
         district="Selargius",
         latitude=39.2238,
-        longitude=9.1422
+        longitude=9.1422,
     ),
     "node_273933": NodeConfig(
         node_id="273933",
@@ -96,7 +96,7 @@ NEW_NODES = {
         node_type="distribution",
         district="Selargius",
         latitude=39.2238,
-        longitude=9.1422
+        longitude=9.1422,
     ),
     "node_281492": NodeConfig(
         node_id="281492",
@@ -107,7 +107,7 @@ NEW_NODES = {
         node_type="monitoring",
         district="Selargius",
         latitude=39.2238,
-        longitude=9.1422
+        longitude=9.1422,
     ),
     "node_288399": NodeConfig(
         node_id="288399",
@@ -118,7 +118,7 @@ NEW_NODES = {
         node_type="monitoring",
         district="Selargius",
         latitude=39.2238,
-        longitude=9.1422
+        longitude=9.1422,
     ),
     "node_288400": NodeConfig(
         node_id="288400",
@@ -129,7 +129,7 @@ NEW_NODES = {
         node_type="monitoring",
         district="Selargius",
         latitude=39.2238,
-        longitude=9.1422
+        longitude=9.1422,
     ),
 }
 
@@ -142,8 +142,12 @@ BIGQUERY_ID_TO_NODE = {node.bigquery_id: node for node in ALL_NODES.values()}
 DISPLAY_NAME_TO_UUID = {node.display_name: node.uuid for node in ALL_NODES.values()}
 
 # Node groupings
-DISTRIBUTION_NODES = [node for node in ALL_NODES.values() if node.node_type == "distribution"]
-MONITORING_NODES = [node for node in ALL_NODES.values() if node.node_type == "monitoring"]
+DISTRIBUTION_NODES = [
+    node for node in ALL_NODES.values() if node.node_type == "distribution"
+]
+MONITORING_NODES = [
+    node for node in ALL_NODES.values() if node.node_type == "monitoring"
+]
 STORAGE_NODES = [node for node in ALL_NODES.values() if node.node_type == "storage"]
 
 # Districts

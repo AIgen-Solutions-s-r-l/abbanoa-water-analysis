@@ -1,7 +1,7 @@
 """Use case for analyzing water consumption patterns."""
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List
 from uuid import UUID
 
 import numpy as np
@@ -79,7 +79,11 @@ class AnalyzeConsumptionPatternsUseCase:
                 if hour not in hourly_data:
                     hourly_data[hour] = []
                 # Handle both value objects and direct float values
-                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                flow_val = (
+                    reading.flow_rate.value
+                    if hasattr(reading.flow_rate, "value")
+                    else reading.flow_rate
+                )
                 hourly_data[hour].append(float(flow_val))
 
         average_consumption = {}
@@ -102,7 +106,11 @@ class AnalyzeConsumptionPatternsUseCase:
                 if day not in daily_data:
                     daily_data[day] = []
                 # Handle both value objects and direct float values
-                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                flow_val = (
+                    reading.flow_rate.value
+                    if hasattr(reading.flow_rate, "value")
+                    else reading.flow_rate
+                )
                 daily_data[day].append(float(flow_val))
 
         average_consumption = {}
@@ -135,7 +143,11 @@ class AnalyzeConsumptionPatternsUseCase:
                 if week not in weekly_data:
                     weekly_data[week] = []
                 # Handle both value objects and direct float values
-                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                flow_val = (
+                    reading.flow_rate.value
+                    if hasattr(reading.flow_rate, "value")
+                    else reading.flow_rate
+                )
                 weekly_data[week].append(float(flow_val))
 
         average_consumption = {}
@@ -158,7 +170,11 @@ class AnalyzeConsumptionPatternsUseCase:
                 if month not in monthly_data:
                     monthly_data[month] = []
                 # Handle both value objects and direct float values
-                flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                flow_val = (
+                    reading.flow_rate.value
+                    if hasattr(reading.flow_rate, "value")
+                    else reading.flow_rate
+                )
                 monthly_data[month].append(float(flow_val))
 
         average_consumption = {}
