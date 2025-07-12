@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from src.domain.events.base import DomainEvent
-from src.domain.value_objects.measurements import FlowRate, Pressure, Temperature
 
 
 @dataclass

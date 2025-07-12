@@ -7,7 +7,6 @@ from uuid import UUID
 from src.domain.entities.monitoring_node import MonitoringNode
 from src.domain.entities.water_network import WaterNetwork
 from src.domain.events.network_events import NetworkEfficiencyCalculatedEvent
-from src.domain.value_objects.measurements import FlowRate, Volume
 
 
 class NetworkEfficiencyService:
@@ -83,12 +82,20 @@ class NetworkEfficiencyService:
             # Sum up volumes if available, otherwise integrate flow rates
             for reading in readings:
                 if reading.volume:
-                    vol_val = reading.volume.value if hasattr(reading.volume, 'value') else reading.volume
+                    vol_val = (
+                        reading.volume.value
+                        if hasattr(reading.volume, "value")
+                        else reading.volume
+                    )
                     total_flow += vol_val
                 elif reading.flow_rate:
                     # Assume 30-minute intervals for flow rate integration
                     # Convert L/s to m³ for 30 minutes
-                    flow_val = reading.flow_rate.value if hasattr(reading.flow_rate, 'value') else reading.flow_rate
+                    flow_val = (
+                        reading.flow_rate.value
+                        if hasattr(reading.flow_rate, "value")
+                        else reading.flow_rate
+                    )
                     total_flow += flow_val * 1800 / 1000
 
         return total_flow
@@ -104,7 +111,11 @@ class NetworkEfficiencyService:
 
             # Calculate average flow rate
             readings = node.get_readings_in_range(start_time, end_time)
-            flow_rates = [r.flow_rate.value if hasattr(r.flow_rate, 'value') else r.flow_rate for r in readings if r.flow_rate]
+            flow_rates = [
+                r.flow_rate.value if hasattr(r.flow_rate, "value") else r.flow_rate
+                for r in readings
+                if r.flow_rate
+            ]
             avg_flow_rate = sum(flow_rates) / len(flow_rates) if flow_rates else 0.0
 
             contributions[node.id] = {

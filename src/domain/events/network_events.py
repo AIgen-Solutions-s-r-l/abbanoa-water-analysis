@@ -1,7 +1,6 @@
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 from typing import Any, Dict
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from src.domain.events.base import DomainEvent
 

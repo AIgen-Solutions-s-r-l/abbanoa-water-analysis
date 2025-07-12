@@ -4,7 +4,6 @@ from uuid import UUID
 
 from src.domain.entities.base import Entity
 from src.domain.entities.monitoring_node import MonitoringNode
-from src.domain.value_objects.measurements import FlowRate, Volume
 
 
 class WaterNetwork(Entity):
