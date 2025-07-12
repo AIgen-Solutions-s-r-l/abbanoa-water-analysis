@@ -15,7 +15,6 @@ import pandas as pd
 from src.application.interfaces.forecast_repository import ForecastRepositoryInterface
 from src.domain.exceptions import ValidationError
 from src.domain.value_objects.forecast_request import ForecastRequest
-from src.domain.value_objects.forecast_response import ForecastResponse
 from src.infrastructure.services.forecast_calculation_service import (
     ForecastCalculationService,
 )

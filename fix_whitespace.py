@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Fix trailing whitespace and blank lines with whitespace."""
 
-import os
 from pathlib import Path
 
 

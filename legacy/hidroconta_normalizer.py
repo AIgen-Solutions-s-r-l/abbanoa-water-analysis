@@ -4,13 +4,11 @@ Handles Italian CSV format with semicolon delimiters and comma decimal separator
 """
 
 import pandas as pd
-import numpy as np
 from datetime import datetime
 import os
 import glob
 import json
 import hashlib
-from pathlib import Path
 
 
 class HidrocontaNormalizer:

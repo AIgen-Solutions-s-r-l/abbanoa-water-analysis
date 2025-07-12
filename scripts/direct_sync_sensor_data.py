@@ -5,7 +5,6 @@ Direct sync sensor data from BigQuery sensor_readings_ml to PostgreSQL.
 
 import asyncio
 import sys
-from datetime import datetime, timedelta
 import logging
 
 # Add project root to path

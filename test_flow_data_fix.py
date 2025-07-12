@@ -2,8 +2,6 @@
 """Test script to verify flow data is accessible from BigQuery."""
 
 from google.cloud import bigquery
-from datetime import datetime, timedelta
-
 # Initialize client with EU location
 client = bigquery.Client(project="abbanoa-464816", location="EU")
 

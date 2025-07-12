@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from google.cloud import bigquery
-import numpy as np
-from datetime import datetime, timedelta
 
 # Page config
 st.set_page_config(

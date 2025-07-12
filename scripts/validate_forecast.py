@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Validation script for forecast functionality."""
 
-import asyncio
 import json
 import time
 from datetime import datetime
 
-import pandas as pd
 import requests
 
 

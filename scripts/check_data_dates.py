@@ -2,7 +2,6 @@
 """Check the actual date range of data in BigQuery."""
 
 import subprocess
-import json
 
 # Configuration
 PROJECT_ID = "abbanoa-464816"

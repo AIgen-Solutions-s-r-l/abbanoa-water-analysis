@@ -2,8 +2,6 @@
 """Test anomaly detection on sensor data."""
 
 from google.cloud import bigquery
-from datetime import datetime, timedelta
-
 client = bigquery.Client(project="abbanoa-464816", location="EU")
 
 print("Testing anomaly detection queries...")

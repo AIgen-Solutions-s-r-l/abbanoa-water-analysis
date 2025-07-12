@@ -8,7 +8,6 @@ from src.application.dto.analysis_results_dto import AnomalyDetectionResultDTO
 from src.application.interfaces.event_bus import IEventBus
 from src.application.interfaces.notification_service import (
     INotificationService,
-    NotificationPriority,
 )
 from src.application.interfaces.repositories import (
     IMonitoringNodeRepository,

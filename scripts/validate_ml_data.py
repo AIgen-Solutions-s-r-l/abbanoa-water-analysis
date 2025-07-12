@@ -8,13 +8,12 @@ This script checks data completeness, quality, and readiness for ML/AI algorithm
 import os
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from google.cloud import bigquery
 import matplotlib.pyplot as plt
-import seaborn as sns
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

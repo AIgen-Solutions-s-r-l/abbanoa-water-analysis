@@ -7,9 +7,7 @@ import os
 import sys
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 from uuid import UUID
-import pandas as pd
 import traceback
 
 # Add src to path
@@ -17,11 +15,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound, Forbidden
-from src.infrastructure.persistence.bigquery_config import (
-    BigQueryConfig,
-    BigQueryConnection,
-)
-from src.infrastructure.repositories.sensor_data_repository import SensorDataRepository
 from src.infrastructure.di_container import Container
 
 
@@ -332,9 +325,6 @@ class DataDiagnostics:
         try:
             # Test imports
             from src.presentation.streamlit.components.anomaly_tab import AnomalyTab
-            from src.application.use_cases.detect_network_anomalies import (
-                DetectNetworkAnomaliesUseCase,
-            )
 
             print("✅ Dashboard imports successful")
 

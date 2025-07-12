@@ -1,6 +1,4 @@
 import pandas as pd
-import numpy as np
-from datetime import datetime
 
 print("=" * 80)
 print("ANALISI DATI SERIE STORICHE - NODI SELARGIUS")

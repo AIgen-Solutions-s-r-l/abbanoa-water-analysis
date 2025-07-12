@@ -4,12 +4,7 @@ GCP Advanced Analytics Setup for Water Infrastructure Data
 This script demonstrates how to use GCP tools for advanced analysis
 """
 
-import pandas as pd
 from google.cloud import bigquery
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from datetime import datetime, timedelta
 
 # Configuration
 PROJECT_ID = "abbanoa-464816"

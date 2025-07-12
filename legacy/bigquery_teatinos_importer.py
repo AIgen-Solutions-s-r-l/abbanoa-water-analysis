@@ -3,14 +3,10 @@ BigQuery Importer for Teatinos Hidroconta Data
 Creates a separate dataset for the Teatinos site infrastructure data
 """
 
-import pandas as pd
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 import json
 import os
-from datetime import datetime
-
-
 class TeatinoBigQueryImporter:
     """BigQuery importer for Teatinos Hidroconta sensor data"""
 
@@ -340,7 +336,6 @@ ORDER BY z_score DESC, datetime DESC
 
         print("✅ Sample queries created!")
 
-
 def main():
     """Main function to set up BigQuery for Teatinos data"""
 
@@ -387,7 +382,6 @@ def main():
 
     except Exception as e:
         print(f"❌ Error: {str(e)}")
-
 
 if __name__ == "__main__":
     main()

@@ -2,8 +2,6 @@
 """Test node status display."""
 
 from google.cloud import bigquery
-from datetime import datetime
-
 client = bigquery.Client(project="abbanoa-464816", location="EU")
 
 # Test getting latest reading with non-zero values for each node

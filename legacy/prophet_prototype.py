@@ -1,6 +1,5 @@
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import timedelta
 import json
 
 print("=== PROTOTIPO PROPHET PER PREVISIONE PORTATE ===\n")
@@ -40,7 +39,7 @@ print(f"Test set: {len(test)} osservazioni")
 
 # Verifica se Prophet è disponibile
 try:
-    from prophet import Prophet
+    pass
 
     print("\n⚠️  Prophet disponibile! Decommentare il codice sotto per eseguire:")
     print(

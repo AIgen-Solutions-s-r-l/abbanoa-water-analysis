@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Fix F541 errors (f-strings without placeholders) in legacy directory."""
 
-import os
 import re
 from pathlib import Path
-
 
 def fix_f541_in_file(file_path):
     """Fix F541 errors in a single file."""
@@ -68,7 +66,6 @@ def fix_f541_in_file(file_path):
         return True
     return False
 
-
 def main():
     legacy_dir = Path("/home/alessio/Customers/Abbanoa/legacy")
     fixed_count = 0
@@ -79,7 +76,6 @@ def main():
             fixed_count += 1
 
     print(f"\nTotal files fixed: {fixed_count}")
-
 
 if __name__ == "__main__":
     main()

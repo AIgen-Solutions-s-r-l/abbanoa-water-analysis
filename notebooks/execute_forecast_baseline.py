@@ -10,17 +10,15 @@ This script executes the SQL notebook in stages to ensure proper model training
 and validation of the MAPE ≤ 15% requirement across pilot districts.
 """
 
-import os
 import sys
 import time
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Optional
+from datetime import datetime
+from typing import Dict, List, Tuple
 import re
 
 from google.cloud import bigquery
-from google.cloud.bigquery import QueryJobConfig, Table
-import pandas as pd
+from google.cloud.bigquery import QueryJobConfig
 
 # Configure logging
 logging.basicConfig(

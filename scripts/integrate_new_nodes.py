@@ -6,13 +6,10 @@ This script updates all necessary configuration files and repositories
 to include the 6 new nodes from the backup data processing.
 """
 
-import os
 import sys
 import re
 from pathlib import Path
 from datetime import datetime
-import json
-from typing import Dict, List, Tuple
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

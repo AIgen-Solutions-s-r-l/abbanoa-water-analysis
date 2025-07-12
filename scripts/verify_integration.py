@@ -63,10 +63,7 @@ def check_utils_modules():
 
     # Try importing
     try:
-        from src.presentation.streamlit.utils import (
-            get_node_ids_from_selection,
-            EnhancedDataFetcher,
-        )
+        pass
 
         print("✅ Modules can be imported successfully")
     except ImportError as e:

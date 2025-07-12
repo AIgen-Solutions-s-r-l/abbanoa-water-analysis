@@ -12,10 +12,6 @@ from uuid import UUID
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from src.infrastructure.di_container import Container
-from src.infrastructure.repositories.sensor_data_repository import SensorDataRepository
-from src.infrastructure.repositories.static_monitoring_node_repository import (
-    StaticMonitoringNodeRepository,
-)
 
 
 async def test_fixed_repository():
@@ -130,9 +126,6 @@ async def test_fixed_repository():
     # Test 6: Dashboard integration test
     print("\n6. Testing Dashboard Integration...")
     try:
-        from src.application.use_cases.detect_network_anomalies import (
-            DetectNetworkAnomaliesUseCase,
-        )
 
         print("   6.1: Creating use case...")
         anomaly_use_case = container.detect_network_anomalies_use_case()

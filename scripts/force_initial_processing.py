@@ -7,7 +7,7 @@ This script is useful for the first run when there's no processing history.
 import asyncio
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

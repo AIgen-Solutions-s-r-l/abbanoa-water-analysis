@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import pandas as pd
-import numpy as np
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 import re

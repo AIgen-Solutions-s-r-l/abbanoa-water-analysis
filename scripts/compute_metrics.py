@@ -5,7 +5,6 @@ Compute metrics from sensor_readings data.
 
 import asyncio
 import sys
-from datetime import datetime, timedelta
 import logging
 
 # Add project root to path

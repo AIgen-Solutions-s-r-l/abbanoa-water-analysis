@@ -6,13 +6,11 @@ This script simulates user interactions and verifies smooth state transitions.
 
 import time
 import streamlit as st
-from unittest.mock import Mock, patch
 import sys
 import os
 
 # Add src to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
 
 def test_no_reload_behavior():
     """Test that filter changes don't cause page reloads."""
@@ -89,7 +87,6 @@ def test_no_reload_behavior():
 
     return True
 
-
 def test_interaction_flow():
     """Test the actual interaction flow of the dashboard."""
 
@@ -141,7 +138,6 @@ def test_interaction_flow():
 
     print("\n" + "=" * 50)
     print("Interaction flow test complete!")
-
 
 if __name__ == "__main__":
     # Run tests

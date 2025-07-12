@@ -8,7 +8,6 @@ import asyncio
 import sys
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Any
 import logging
 
 # Add project root to path
@@ -19,7 +18,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 
 class HybridArchitectureTest:
     """Test suite for hybrid architecture components."""
@@ -416,12 +414,10 @@ class HybridArchitectureTest:
                 "  4. Start dashboard: streamlit run src/presentation/streamlit/app.py"
             )
 
-
 async def main():
     """Main test runner."""
     tester = HybridArchitectureTest()
     await tester.run_all_tests()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

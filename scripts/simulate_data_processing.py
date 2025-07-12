@@ -4,9 +4,7 @@ Simulate the data processing to show what would happen.
 This creates sample SQL and shows the expected results.
 """
 
-import os
 from pathlib import Path
-from datetime import datetime
 
 # Configuration
 BACKUP_DIR = Path(__file__).parent.parent / "RAWDATA" / "NEW_DATA" / "BACKUP"

@@ -5,7 +5,6 @@ import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend
 import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
 import warnings
 
 warnings.filterwarnings("ignore")

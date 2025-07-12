@@ -2,7 +2,6 @@
 """Fix the BigQuery view to correctly parse dates."""
 
 import subprocess
-import json
 
 # Configuration
 PROJECT_ID = "abbanoa-464816"

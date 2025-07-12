@@ -4,11 +4,10 @@ Prepares CSV data for BigQuery ingestion with proper schema and formatting
 """
 
 import pandas as pd
-import numpy as np
 from datetime import datetime
 import json
 import re
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Tuple, Optional
 import logging
 
 # Configure logging

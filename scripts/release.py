@@ -4,7 +4,6 @@ Automated Release Protocol Script
 Handles versioning, changelog updates, and GitHub release creation.
 """
 
-import os
 import sys
 import re
 import subprocess

@@ -3,7 +3,6 @@ Improved Data Normalizer with Better Quality Score Handling
 """
 
 import pandas as pd
-import numpy as np
 from datetime import datetime
 import json
 from typing import Dict, List, Optional, Tuple

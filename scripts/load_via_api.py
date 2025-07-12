@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Load sample data using BigQuery REST API."""
 
-import json
 import subprocess
 from datetime import datetime, timedelta
 import uuid

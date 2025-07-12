@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test BigQuery data access."""
 
-import json
 import subprocess
 
 # Configuration

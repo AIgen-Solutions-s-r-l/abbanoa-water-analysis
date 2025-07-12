@@ -5,16 +5,12 @@ Test script for the efficiency tab to ensure it's working with updated node mapp
 This script tests the key efficiency calculations and data fetching methods.
 """
 
-import asyncio
 import sys
 import os
-from datetime import datetime, timedelta
-from uuid import UUID
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.infrastructure.di_container import Container
 from src.presentation.streamlit.components.efficiency_tab import EfficiencyTab
 
 

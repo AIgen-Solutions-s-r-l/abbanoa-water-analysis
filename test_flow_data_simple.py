@@ -3,7 +3,6 @@
 Simple test to verify the flow data fix implementation.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -19,7 +18,6 @@ print("\n1. Checking node mappings...")
 try:
     from src.presentation.streamlit.utils.node_mappings import (
         ALL_NODE_MAPPINGS,
-        get_node_ids_from_selection,
     )
 
     print(f"✅ Found {len(ALL_NODE_MAPPINGS)} total nodes:")

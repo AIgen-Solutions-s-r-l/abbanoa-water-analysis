@@ -5,7 +5,6 @@ import os
 import sys
 from pathlib import Path
 from google.cloud import bigquery
-from google.cloud.exceptions import Conflict
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

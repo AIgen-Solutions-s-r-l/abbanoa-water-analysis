@@ -3,7 +3,7 @@
 
 import shutil
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 
 def create_migration_mapping() -> Dict[str, str]:

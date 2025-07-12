@@ -3,20 +3,16 @@ BigQuery Ingestion Pipeline for Water Infrastructure Data
 Handles authentication, table creation, data upload, and monitoring
 """
 
-import os
 import json
 import pandas as pd
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 import logging
-from pathlib import Path
-
 # Import normalizer
 from data_normalizer import WaterDataNormalizer, create_bigquery_table_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 class BigQueryPipeline:
     """Pipeline for ingesting water sensor data into BigQuery"""
@@ -168,7 +164,6 @@ class BigQueryPipeline:
 
         return results
 
-
 def generate_bq_commands(
     project_id: str, dataset_id: str, schema_file: str, data_file: str
 ) -> List[str]:
@@ -209,7 +204,6 @@ def generate_bq_commands(
     ]
 
     return commands
-
 
 def create_monitoring_queries() -> Dict[str, str]:
     """Create useful monitoring queries for the data"""
@@ -275,7 +269,6 @@ def create_monitoring_queries() -> Dict[str, str]:
     }
 
     return queries
-
 
 # Example usage and documentation
 if __name__ == "__main__":

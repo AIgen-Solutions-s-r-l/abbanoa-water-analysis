@@ -2,7 +2,6 @@
 """Debug script to test API connection from Python (simulates Streamlit)."""
 
 import requests
-import json
 import os
 
 # Test the same way Streamlit would

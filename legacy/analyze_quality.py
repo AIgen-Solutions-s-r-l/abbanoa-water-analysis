@@ -3,10 +3,7 @@ Analyze data quality issues and create an improved normalizer
 """
 
 import pandas as pd
-import numpy as np
 import json
-from typing import Dict, List, Tuple
-
 print("=== ANALISI QUALITY SCORE ===\n")
 
 # Load the normalization metadata

@@ -5,7 +5,6 @@ Simple test to load some data into the hybrid architecture.
 
 import asyncio
 import os
-from datetime import datetime, timedelta
 from google.cloud import bigquery
 
 # Set environment

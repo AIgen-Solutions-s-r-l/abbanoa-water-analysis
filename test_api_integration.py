@@ -4,10 +4,6 @@ Test script to verify API integration with dashboard.
 """
 
 import requests
-import json
-from datetime import datetime
-
-
 def test_api_endpoints():
     """Test all API endpoints."""
     base_url = "http://localhost:8000"
@@ -90,7 +86,6 @@ def test_api_endpoints():
 
     return True
 
-
 def test_dashboard_with_api():
     """Test dashboard with API."""
     print("\n📊 Dashboard API Integration")
@@ -108,7 +103,6 @@ def test_dashboard_with_api():
     print("   - No loading spinners for calculations")
     print("   - Real-time data from processed results")
     print("   - ML predictions available")
-
 
 if __name__ == "__main__":
     if test_api_endpoints():
