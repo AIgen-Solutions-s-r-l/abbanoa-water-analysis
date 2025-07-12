@@ -598,12 +598,22 @@ class ConsumptionTab:
             try:
                 # Create enhanced data with time dimensions
                 data_copy = consumption_data.copy()
+                data_copy['timestamp'] = pd.to_datetime(data_copy['timestamp'])
                 data_copy['hour'] = data_copy['timestamp'].dt.hour
                 data_copy['day_of_week'] = data_copy['timestamp'].dt.day_name()
                 data_copy['weekday_num'] = data_copy['timestamp'].dt.weekday  # Monday=0
 
-                # Get numeric columns (node consumption data)
-                numeric_columns = [col for col in data_copy.columns if col not in ["timestamp", "hour", "day_of_week", "weekday_num"]]
+                # Get only truly numeric columns and convert them properly
+                potential_numeric_cols = ['flow_rate', 'pressure', 'temperature', 'total_flow', 'consumption']
+                numeric_columns = []
+                
+                for col in potential_numeric_cols:
+                    if col in data_copy.columns:
+                        # Convert to numeric, coercing errors to NaN
+                        data_copy[col] = pd.to_numeric(data_copy[col], errors='coerce')
+                        # Only include if not all NaN values
+                        if not data_copy[col].isna().all():
+                            numeric_columns.append(col)
                 
                 if numeric_columns:
                     # Calculate average consumption across all nodes for each hour/day combination
@@ -614,7 +624,7 @@ class ConsumptionTab:
                     for _, row in heatmap_data.iterrows():
                         day_idx = int(row['weekday_num'])
                         hour_idx = int(row['hour'])
-                        consumption_val = row['consumption']
+                        consumption_val = float(row['consumption']) if not pd.isna(row['consumption']) else 0
                         
                         if 0 <= day_idx < 7 and 0 <= hour_idx < 24:
                             z_data[day_idx][hour_idx] = consumption_val

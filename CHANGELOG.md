@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.2.3.13] - 2025-07-12
+
+### Bug Fixes
+- fix(heatmap): resolve consumption heatmap data aggregation error
+  - Fixed "agg function failed [how->mean,dtype->object]" error in consumption heatmap
+  - Added explicit numeric data type conversion before pandas aggregation
+  - Enhanced handling of mixed data types with proper NaN validation
+  - Improved timestamp conversion for datetime operations
+  - Heatmap now properly displays consumption patterns instead of all zeros
+
+### Technical Changes
+- Updated consumption heatmap calculation to handle data type conversion properly
+- Added robust error handling for non-numeric columns in aggregation
+- Enhanced data validation to prevent aggregation of object-type columns
+
 ## [v1.2.3.12] - 2025-07-12
 
 ### Critical Bug Fixes
