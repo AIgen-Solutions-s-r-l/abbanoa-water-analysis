@@ -4,8 +4,6 @@ Efficiency tab component using the Processing Services API.
 This component displays network efficiency metrics from pre-computed data.
 """
 
-from datetime import datetime
-from typing import List
 import plotly.graph_objects as go
 import streamlit as st
 

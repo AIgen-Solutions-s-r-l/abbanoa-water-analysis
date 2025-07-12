@@ -17,7 +17,7 @@ import statistics
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 
 import pandas as pd
 from google.cloud import bigquery

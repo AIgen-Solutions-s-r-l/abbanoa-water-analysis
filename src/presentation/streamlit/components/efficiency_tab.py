@@ -6,7 +6,6 @@ This component displays network efficiency metrics and performance indicators.
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Optional
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots

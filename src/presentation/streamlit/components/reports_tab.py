@@ -4,7 +4,6 @@ Reports tab component for the integrated dashboard.
 This component provides report generation and data export functionality.
 """
 
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
