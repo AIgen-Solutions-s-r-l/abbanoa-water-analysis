@@ -24,7 +24,7 @@ try:
     result = list(client.query(query).result())
     if result:
         row = result[0]
-        print(f"✅ sensor_readings_ml table:")
+        print("✅ sensor_readings_ml table:")
         print(f"   - Total records: {row.total_records:,}")
         print(f"   - Unique nodes: {row.unique_nodes}")
         print(f"   - Date range: {row.first_reading} to {row.last_reading}")

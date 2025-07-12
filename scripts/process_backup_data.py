@@ -200,9 +200,8 @@ class BackupDataProcessor:
             with open(file_path, 'r', encoding='utf-8') as f:
                 header_line = f.readline().strip()
                 
-            # Parse headers and units
+            # Parse headers
             headers = []
-            units = []
             parts = header_line.split(';')
             
             for i, part in enumerate(parts):

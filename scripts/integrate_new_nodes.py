@@ -165,7 +165,7 @@ class DashboardIntegrator:
         new_content = content[:mapping_start] + updated_mapping + content[mapping_end:]
         
         file_path.write_text(new_content)
-        self.updates_made.append(f"✅ Updated sensor repository mappings")
+        self.updates_made.append("✅ Updated sensor repository mappings")
         
     def update_sidebar_filters(self):
         """Update sidebar filters to include new nodes."""
@@ -208,7 +208,7 @@ class DashboardIntegrator:
         new_content = re.sub(options_pattern, new_options_str, content)
         
         file_path.write_text(new_content)
-        self.updates_made.append(f"✅ Updated sidebar with grouped node options")
+        self.updates_made.append("✅ Updated sidebar with grouped node options")
         
     def update_tab_components(self):
         """Update all tab components with new node mappings."""
@@ -281,7 +281,7 @@ class DashboardIntegrator:
                 new_content = content[:valid_nodes_match.start()] + new_valid_nodes + content[valid_nodes_match.end():]
                 file_path.write_text(new_content)
                 
-                self.updates_made.append(f"✅ Updated forecast endpoint validation")
+                self.updates_made.append("✅ Updated forecast endpoint validation")
                 
     def create_node_config_file(self):
         """Create a centralized node configuration file."""
@@ -398,7 +398,7 @@ VALID_DISTRICT_IDS = [f"DIST_{i:03d}" for i in range(1, len(DISTRICTS) + 1)]
 '''
         
         config_path.write_text(config_content)
-        self.updates_made.append(f"✅ Created centralized node configuration")
+        self.updates_made.append("✅ Created centralized node configuration")
         
     def create_migration_guide(self):
         """Create a migration guide for developers."""
@@ -518,7 +518,7 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 '''
         
         guide_path.write_text(guide_content)
-        self.updates_made.append(f"✅ Created integration guide")
+        self.updates_made.append("✅ Created integration guide")
         
     def run_integration(self):
         """Run the complete integration process."""

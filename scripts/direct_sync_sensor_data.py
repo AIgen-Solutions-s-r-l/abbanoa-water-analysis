@@ -118,7 +118,7 @@ async def sync_sensor_data():
             logger.info(f"Processed {processed}/{total_rows} rows")
         
         # Insert into actual table
-        inserted = await conn.fetch("""
+        await conn.fetch("""
             INSERT INTO water_infrastructure.sensor_readings 
             (timestamp, node_id, temperature, flow_rate, pressure, 
              total_flow, quality_score, is_interpolated, raw_data)

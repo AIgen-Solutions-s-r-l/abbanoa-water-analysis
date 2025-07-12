@@ -104,8 +104,8 @@ async def test_use_case():
             pattern_type="daily"
         )
         
-        print(f"✅ Consumption analysis successful!")
-        print(f"  Average consumption by day:")
+        print("✅ Consumption analysis successful!")
+        print("  Average consumption by day:")
         for day, consumption in result.average_consumption.items():
             print(f"    {day}: {consumption} L/s")
         print(f"  Peak hours: {result.peak_hours}")

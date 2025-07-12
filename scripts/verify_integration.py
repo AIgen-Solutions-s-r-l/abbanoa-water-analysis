@@ -164,7 +164,7 @@ def main():
     sidebar_ok = check_sidebar_update()
     utils_ok = check_utils_modules()
     mappings_ok = check_node_mappings()
-    config_count = check_config_files()
+    check_config_files()
     
     # Summary
     if sidebar_ok and utils_ok and mappings_ok:

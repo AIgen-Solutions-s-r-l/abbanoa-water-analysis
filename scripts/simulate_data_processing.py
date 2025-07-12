@@ -73,9 +73,9 @@ print("   - Ready for time series analysis")
 print("\n📈 Expected Data Summary:\n")
 
 # Simulate data summary
-print(f"Date Range: November 14, 2024 - December 20, 2024")
-print(f"Update Frequency: 15-second intervals")
-print(f"Nodes to be loaded:")
+print("Date Range: November 14, 2024 - December 20, 2024")
+print("Update Frequency: 15-second intervals")
+print("Nodes to be loaded:")
 for node_id in sorted(nodes_found):
     node_type = "distribution" if node_id in ['215542', '215600', '273933'] else "monitoring"
     print(f"  - {node_id} ({node_type})")
@@ -105,8 +105,8 @@ print("   pip install google-cloud-bigquery pandas numpy tqdm")
 print("4. Run the processing script:")
 print("   python3 scripts/process_backup_data.py")
 
-print(f"\n🕒 Processing would take approximately 5-10 minutes")
-print(f"   depending on network speed and data volume.")
+print("\n🕒 Processing would take approximately 5-10 minutes")
+print("   depending on network speed and data volume.")
 
 # Create sample BigQuery queries
 queries_file = Path(__file__).parent / "sample_bigquery_queries.sql"

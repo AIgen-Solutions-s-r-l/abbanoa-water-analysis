@@ -118,7 +118,7 @@ class TestForecastLatency:
             start_time = time.perf_counter()
 
             try:
-                result = await forecast_use_case.get_forecast(
+                await forecast_use_case.get_forecast(
                     district_id="DIST_001", metric="flow_rate", horizon=7
                 )
 
@@ -144,7 +144,7 @@ class TestForecastLatency:
         std_latency = stdev(latencies) if len(latencies) > 1 else 0
 
         # Print results
-        print(f"\nLatency Statistics (ms):")
+        print("\nLatency Statistics (ms):")
         print(f"  Average: {avg_latency:.2f}")
         print(f"  Std Dev: {std_latency:.2f}")
         print(f"  P50: {p50:.2f}")
@@ -195,7 +195,7 @@ class TestForecastLatency:
         for i in range(num_requests):
             start_time = time.perf_counter()
 
-            result = await forecast_use_case.get_forecast(
+            await forecast_use_case.get_forecast(
                 district_id="DIST_001", metric="flow_rate", horizon=7
             )
 
@@ -207,7 +207,7 @@ class TestForecastLatency:
         p99_warm = calculate_percentile(latencies, 99)
         avg_warm = mean(latencies)
 
-        print(f"\nWarm Run Statistics (ms):")
+        print("\nWarm Run Statistics (ms):")
         print(f"  Average: {avg_warm:.2f}")
         print(f"  P99: {p99_warm:.2f}")
 
@@ -271,7 +271,7 @@ class TestForecastLatency:
         p99_concurrent = calculate_percentile(all_latencies, 99)
         avg_concurrent = mean(all_latencies)
 
-        print(f"\nConcurrent Request Statistics (ms):")
+        print("\nConcurrent Request Statistics (ms):")
         print(f"  Average: {avg_concurrent:.2f}")
         print(f"  P99: {p99_concurrent:.2f}")
 

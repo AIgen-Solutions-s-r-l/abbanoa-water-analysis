@@ -287,7 +287,7 @@ class BigQueryBenchmark:
 
         start_time = time.perf_counter()
         query_job = self.client.query(query, job_config=job_config)
-        results = query_job.result()
+        query_job.result()
         end_time = time.perf_counter()
 
         return (end_time - start_time) * 1000
@@ -458,7 +458,7 @@ def main():
 
     # Print overall summary
     summary = results["summary"]
-    print(f"\nOVERALL SUMMARY:")
+    print("\nOVERALL SUMMARY:")
     print(
         f"  Performance Tests Passed: {summary['performance_tests_passed']}/{len(['full_dataset', 'single_month', 'filtered_query', 'aggregation_query'])}"
     )

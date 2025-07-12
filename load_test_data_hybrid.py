@@ -120,7 +120,7 @@ async def load_test_data():
     
     # Get system metrics from PostgreSQL
     metrics = await postgres.get_system_metrics("24h")
-    print(f"\n📊 System Metrics:")
+    print("\n📊 System Metrics:")
     print(f"  Active Nodes: {metrics.get('active_nodes', 0)}")
     print(f"  Average Pressure: {metrics.get('avg_pressure', 0):.2f} bar")
     print(f"  Total Flow: {metrics.get('total_flow', 0):.2f} L/s")

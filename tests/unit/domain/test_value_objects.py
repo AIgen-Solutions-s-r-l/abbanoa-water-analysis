@@ -113,8 +113,8 @@ class TestLocation:
         assert coords1.longitude == 9.1097
 
         # Edge cases
-        coords2 = Coordinates(90.0, 180.0)
-        coords3 = Coordinates(-90.0, -180.0)
+        Coordinates(90.0, 180.0)
+        Coordinates(-90.0, -180.0)
 
         # Invalid coordinates
         with pytest.raises(ValueError):

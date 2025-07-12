@@ -35,7 +35,7 @@ def execute_query(query):
     if 'error' in result:
         print(f"Error: {result['error']}")
     else:
-        print(f"Query executed successfully")
+        print("Query executed successfully")
         if 'rows' in result:
             for row in result['rows']:
                 print(row)
@@ -176,10 +176,10 @@ def main():
     execute_query(test_query)
     
     print("\n✅ Sample data loaded successfully!")
-    print(f"\nYou can now access the data in BigQuery:")
+    print("\nYou can now access the data in BigQuery:")
     print(f"  Project: {PROJECT_ID}")
     print(f"  Dataset: {DATASET_ID}")
-    print(f"  Tables: water_networks, monitoring_nodes, sensor_readings")
+    print("  Tables: water_networks, monitoring_nodes, sensor_readings")
 
 
 if __name__ == "__main__":

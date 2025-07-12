@@ -213,10 +213,10 @@ def main():
         return 1
     
     print("\n✅ Pipeline complete! Data is now available in BigQuery.")
-    print(f"\nYou can query the data at:")
+    print("\nYou can query the data at:")
     print(f"  Project: {config.project_id}")
     print(f"  Dataset: {config.dataset_id}")
-    print(f"  Tables: water_networks, monitoring_nodes, sensor_readings")
+    print("  Tables: water_networks, monitoring_nodes, sensor_readings")
     
     return 0
 
