@@ -16,7 +16,7 @@ import json
 from enum import Enum
 
 from google.cloud import bigquery
-from src.infrastructure.database.postgres_manager import get_postgres_manager
+from src.infrastructure.database.postgres_manager import get_postgres_manager, PostgresManager
 from src.infrastructure.cache.redis_cache_manager import RedisCacheManager
 from src.infrastructure.bigquery.bigquery_client import BigQueryClient
 
@@ -59,8 +59,18 @@ class HybridDataService:
         """Initialize all data tier connections."""
         logger.info("Initializing hybrid data service...")
         
-        # Initialize PostgreSQL
-        self.postgres_manager = await get_postgres_manager()
+        # Initialize PostgreSQL with correct connection parameters
+        # Override environment variables to use the main database with data
+        self.postgres_manager = PostgresManager(
+            host="localhost",
+            port=5432,  # Main database port
+            database="abbanoa",  # Main database with actual data
+            user="postgres",
+            password="",
+            min_pool_size=2,  # Reduce pool size to avoid conflicts
+            max_pool_size=5
+        )
+        await self.postgres_manager.initialize()
         
         # Initialize Redis cache
         self.redis_manager.initialize_cache()

@@ -344,16 +344,29 @@ class ConsumptionTab:
 
         if consumption_data is not None and not consumption_data.empty:
             try:
-                # Calculate hourly averages from real data
-                numeric_columns = [col for col in consumption_data.columns if col != "timestamp"]
-                consumption_data_copy = consumption_data.copy()
-                consumption_data_copy['hour'] = consumption_data_copy['timestamp'].dt.hour
-                hourly_avg = consumption_data_copy.groupby('hour')[numeric_columns].mean().sum(axis=1)
+                # Ensure timestamp is datetime and add hour column
+                data_copy = consumption_data.copy()
+                data_copy['timestamp'] = pd.to_datetime(data_copy['timestamp'])
+                data_copy['hour'] = data_copy['timestamp'].dt.hour
                 
-                # Fill consumption array with real data
-                for hour in range(24):
-                    if hour in hourly_avg.index:
-                        consumption[hour] = hourly_avg[hour]
+                # Get numeric columns only
+                numeric_columns = []
+                for col in ['flow_rate', 'pressure', 'temperature', 'consumption']:
+                    if col in data_copy.columns:
+                        # Convert to numeric, coercing errors to NaN
+                        data_copy[col] = pd.to_numeric(data_copy[col], errors='coerce')
+                        if not data_copy[col].isna().all():  # Only include if not all NaN
+                            numeric_columns.append(col)
+                
+                if numeric_columns:
+                    # Calculate hourly averages for numeric columns
+                    hourly_avg = data_copy.groupby('hour')[numeric_columns].mean().sum(axis=1)
+                    
+                    # Fill consumption array with real data
+                    for hour in range(24):
+                        if hour in hourly_avg.index and not pd.isna(hourly_avg[hour]):
+                            consumption[hour] = float(hourly_avg[hour])
+                            
             except Exception as e:
                 st.warning(f"Error calculating hourly pattern: {str(e)}")
 
@@ -404,20 +417,33 @@ class ConsumptionTab:
 
         if consumption_data is not None and not consumption_data.empty:
             try:
-                # Calculate daily averages from real data
-                numeric_columns = [col for col in consumption_data.columns if col != "timestamp"]
-                consumption_data_copy = consumption_data.copy()
-                consumption_data_copy['weekday'] = consumption_data_copy['timestamp'].dt.day_name()
-                daily_avg = consumption_data_copy.groupby('weekday')[numeric_columns].mean().sum(axis=1)
+                # Ensure timestamp is datetime and add weekday column
+                data_copy = consumption_data.copy()
+                data_copy['timestamp'] = pd.to_datetime(data_copy['timestamp'])
+                data_copy['weekday'] = data_copy['timestamp'].dt.day_name()
                 
-                # Calculate relative percentages
-                if daily_avg.sum() > 0:
-                    daily_relative = (daily_avg / daily_avg.mean()) * 100
+                # Get numeric columns only  
+                numeric_columns = []
+                for col in ['flow_rate', 'pressure', 'temperature', 'consumption']:
+                    if col in data_copy.columns:
+                        # Convert to numeric, coercing errors to NaN
+                        data_copy[col] = pd.to_numeric(data_copy[col], errors='coerce')
+                        if not data_copy[col].isna().all():  # Only include if not all NaN
+                            numeric_columns.append(col)
+                
+                if numeric_columns:
+                    # Calculate daily averages for numeric columns
+                    daily_avg = data_copy.groupby('weekday')[numeric_columns].mean().sum(axis=1)
                     
-                    # Fill consumption array with real data
-                    for i, day in enumerate(days):
-                        if day in daily_relative.index:
-                            consumption[i] = daily_relative[day]
+                    # Calculate relative percentages
+                    if len(daily_avg) > 0 and daily_avg.sum() > 0:
+                        daily_relative = (daily_avg / daily_avg.mean()) * 100
+                        
+                        # Fill consumption array with real data
+                        for i, day in enumerate(days):
+                            if day in daily_relative.index and not pd.isna(daily_relative[day]):
+                                consumption[i] = float(daily_relative[day])
+                                
             except Exception as e:
                 st.warning(f"Error calculating daily trend: {str(e)}")
 
@@ -445,7 +471,7 @@ class ConsumptionTab:
     def _create_node_comparison_chart(self, consumption_data: pd.DataFrame) -> go.Figure:
         """Create a grouped bar chart for consumption by node."""
         nodes = (
-            ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"]
+            list(self.node_mapping.keys())
             if "All Nodes" in self.node_mapping.keys()
             else list(self.node_mapping.keys())
         )
@@ -457,25 +483,42 @@ class ConsumptionTab:
             try:
                 # Add hour column for time-based analysis
                 data_copy = consumption_data.copy()
+                data_copy['timestamp'] = pd.to_datetime(data_copy['timestamp'])
                 data_copy['hour'] = data_copy['timestamp'].dt.hour
                 
-                # Get available node columns from the data
-                available_nodes = [col for col in data_copy.columns if col not in ["timestamp", "hour"]]
+                # Get available node names or use node_id as fallback
+                available_nodes = []
+                if 'node_name' in data_copy.columns:
+                    available_nodes = data_copy['node_name'].unique()[:4]  # Limit to 4 nodes
+                elif 'node_id' in data_copy.columns:
+                    available_nodes = data_copy['node_id'].unique()[:4]  # Use node_id as fallback
                 
-                for node in available_nodes[:4]:  # Limit to 4 nodes for display
-                    # Calculate peak periods for each node
-                    morning_peak = data_copy[data_copy['hour'].between(6, 9)][node].mean()
-                    evening_peak = data_copy[data_copy['hour'].between(18, 21)][node].mean()
-                    night_minimum = data_copy[data_copy['hour'].between(2, 5)][node].mean()
+                # Convert flow_rate to numeric
+                if 'flow_rate' in data_copy.columns:
+                    data_copy['flow_rate'] = pd.to_numeric(data_copy['flow_rate'], errors='coerce')
+                
+                for node in available_nodes:
+                    # Filter data for this node
+                    if 'node_name' in data_copy.columns:
+                        node_data = data_copy[data_copy['node_name'] == node]
+                    else:
+                        node_data = data_copy[data_copy['node_id'] == node]
                     
-                    peak_data.append(
-                        {
-                            "Node": node,
-                            "Morning Peak (6-9)": morning_peak if not pd.isna(morning_peak) else 0,
-                            "Evening Peak (18-21)": evening_peak if not pd.isna(evening_peak) else 0,
-                            "Night Minimum (2-5)": night_minimum if not pd.isna(night_minimum) else 0,
-                        }
-                    )
+                    if not node_data.empty and 'flow_rate' in node_data.columns:
+                        # Calculate peak periods for each node
+                        morning_peak = node_data[node_data['hour'].between(6, 9)]['flow_rate'].mean()
+                        evening_peak = node_data[node_data['hour'].between(18, 21)]['flow_rate'].mean()
+                        night_minimum = node_data[node_data['hour'].between(2, 5)]['flow_rate'].mean()
+                        
+                        peak_data.append(
+                            {
+                                "Node": str(node),
+                                "Morning Peak (6-9)": float(morning_peak) if not pd.isna(morning_peak) else 0,
+                                "Evening Peak (18-21)": float(evening_peak) if not pd.isna(evening_peak) else 0,
+                                "Night Minimum (2-5)": float(night_minimum) if not pd.isna(night_minimum) else 0,
+                            }
+                        )
+                        
             except Exception as e:
                 st.warning(f"Error calculating node comparison: {str(e)}")
                 # Fallback to zeros if calculation fails
@@ -491,6 +534,17 @@ class ConsumptionTab:
         else:
             # No data available - use zeros
             for node in nodes[:4]:  # Limit to 4 nodes
+                peak_data.append(
+                    {
+                        "Node": node,
+                        "Morning Peak (6-9)": 0,
+                        "Evening Peak (18-21)": 0,
+                        "Night Minimum (2-5)": 0,
+                    }
+                )
+
+        if not peak_data:  # Ensure we have at least some data
+            for node in nodes[:4]:
                 peak_data.append(
                     {
                         "Node": node,

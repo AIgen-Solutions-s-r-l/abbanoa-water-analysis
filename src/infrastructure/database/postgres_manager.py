@@ -44,8 +44,8 @@ class PostgresManager:
             max_pool_size: Maximum pool connections
         """
         self.host = host or os.getenv("POSTGRES_HOST", "localhost")
-        self.port = port or int(os.getenv("POSTGRES_PORT", 5432))
-        self.database = database or os.getenv("POSTGRES_DB", "abbanoa")
+        self.port = port or int(os.getenv("POSTGRES_PORT", 5432))  # Force port 5432 for main database
+        self.database = database or os.getenv("POSTGRES_DB", "abbanoa")  # Force main database
         self.user = user or os.getenv("POSTGRES_USER", "postgres")
         self.password = password or os.getenv("POSTGRES_PASSWORD", "")
         self.min_pool_size = min_pool_size
