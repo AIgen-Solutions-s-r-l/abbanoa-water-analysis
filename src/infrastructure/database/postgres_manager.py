@@ -212,26 +212,19 @@ class PostgresManager:
     ) -> pd.DataFrame:
         """Get time series data for a node."""
         async with self.acquire() as conn:
-            # Use appropriate continuous aggregate based on interval
-            if interval == "5min":
-                table = "sensor_readings_5min"
-            elif interval == "1h":
-                table = "sensor_readings_hourly"
-            elif interval == "1d":
-                table = "sensor_readings_daily"
-            else:
-                table = "sensor_readings"
-                
-            query = f"""
+            # Use base table since materialized views are empty
+            # TODO: Once materialized views are populated, switch back to them
+            query = """
                 SELECT 
-                    bucket as timestamp,
-                    avg_flow_rate as flow_rate,
-                    avg_pressure as pressure,
-                    avg_temperature as temperature
-                FROM water_infrastructure.{table}
+                    timestamp,
+                    flow_rate,
+                    pressure,
+                    temperature,
+                    total_flow
+                FROM water_infrastructure.sensor_readings
                 WHERE node_id = $1
-                AND bucket BETWEEN $2 AND $3
-                ORDER BY bucket
+                AND timestamp BETWEEN $2 AND $3
+                ORDER BY timestamp
             """
             
             rows = await conn.fetch(query, node_id, start_time, end_time)
