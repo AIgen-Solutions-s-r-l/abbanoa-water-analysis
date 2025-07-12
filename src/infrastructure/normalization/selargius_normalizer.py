@@ -1,8 +1,7 @@
 """Data normalizer for Selargius water sensor data."""
 
 import re
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 

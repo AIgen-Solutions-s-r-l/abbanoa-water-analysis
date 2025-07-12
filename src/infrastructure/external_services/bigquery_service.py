@@ -1,16 +1,11 @@
 """BigQuery service for data persistence and querying."""
 
-import json
-from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud.bigquery import QueryJobConfig, ScalarQueryParameter
 from google.cloud.exceptions import NotFound
-
-from src.domain.entities.sensor_reading import SensorReading
 from src.infrastructure.persistence.bigquery_config import (
     BigQueryConfig,
     BigQueryConnection,

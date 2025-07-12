@@ -2,13 +2,6 @@
 
 from dependency_injector import containers, providers
 
-from src.application.interfaces.event_bus import IEventBus
-from src.application.interfaces.notification_service import INotificationService
-from src.application.interfaces.repositories import (
-    IMonitoringNodeRepository,
-    ISensorReadingRepository,
-    IWaterNetworkRepository,
-)
 from src.application.use_cases.analyze_consumption_patterns import (
     AnalyzeConsumptionPatternsUseCase,
 )
@@ -22,8 +15,6 @@ from src.application.use_cases.forecast_consumption import ForecastConsumption
 from src.domain.services.anomaly_detection_service import AnomalyDetectionService
 from src.domain.services.network_efficiency_service import NetworkEfficiencyService
 from src.infrastructure.clients.async_bigquery_client import AsyncBigQueryClient
-from src.infrastructure.repositories.bigquery_forecast_repository import BigQueryForecastRepository
-from src.infrastructure.services.forecast_calculation_service import ForecastCalculationService
 from src.infrastructure.external_services.bigquery_service import BigQueryService
 from src.infrastructure.external_services.event_bus import InMemoryEventBus
 from src.infrastructure.external_services.notification_service import (
@@ -33,20 +24,18 @@ from src.infrastructure.persistence.bigquery_config import (
     BigQueryConfig,
     BigQueryConnection,
 )
-from src.infrastructure.repositories.monitoring_node_repository import (
-    BigQueryMonitoringNodeRepository,
+from src.infrastructure.repositories.bigquery_forecast_repository import (
+    BigQueryForecastRepository,
 )
-from src.infrastructure.repositories.sensor_data_repository import (
-    SensorDataRepository,
-)
-from src.infrastructure.repositories.sensor_reading_repository import (
-    BigQuerySensorReadingRepository,
-)
+from src.infrastructure.repositories.sensor_data_repository import SensorDataRepository
 from src.infrastructure.repositories.static_monitoring_node_repository import (
     StaticMonitoringNodeRepository,
 )
 from src.infrastructure.repositories.water_network_repository import (
     BigQueryWaterNetworkRepository,
+)
+from src.infrastructure.services.forecast_calculation_service import (
+    ForecastCalculationService,
 )
 
 
@@ -84,7 +73,7 @@ class Container(containers.DeclarativeContainer):
     notification_service = providers.Singleton(
         LoggingNotificationService,
     )
-    
+
     # Async BigQuery client for forecast services
     async_bigquery_client = providers.Singleton(
         AsyncBigQueryClient,
@@ -108,13 +97,13 @@ class Container(containers.DeclarativeContainer):
         BigQueryWaterNetworkRepository,
         connection=bigquery_connection,
     )
-    
+
     # Forecast repositories and services
     forecast_repository = providers.Singleton(
         BigQueryForecastRepository,
         client=async_bigquery_client,
     )
-    
+
     forecast_calculation_service = providers.Singleton(
         ForecastCalculationService,
         bigquery_client=async_bigquery_client,
@@ -156,7 +145,7 @@ class Container(containers.DeclarativeContainer):
         network_efficiency_service=network_efficiency_service,
         event_bus=event_bus,
     )
-    
+
     forecast_consumption_use_case = providers.Factory(
         ForecastConsumption,
         forecast_repository=forecast_repository,
