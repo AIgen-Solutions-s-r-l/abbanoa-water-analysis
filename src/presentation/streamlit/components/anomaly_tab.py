@@ -37,9 +37,27 @@ class AnomalyTab:
             time_range: Selected time range
         """
         st.header("🔍 Anomaly Detection")
+        
+        # Show system status
+        st.info("🤖 Enhanced Local Anomaly Detection System Active - Version 3.0")
+        
+        # Cache refresh instruction
+        with st.expander("🔄 Not seeing updated results?"):
+            st.write("If you're still seeing old results, please:")
+            st.write("1. **Hard refresh**: Press Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)")
+            st.write("2. **Clear browser cache**: Go to browser settings and clear cache")
+            st.write("3. **Reload the page**: Simply refresh the browser tab")
+            if st.button("🔄 Force Refresh Data"):
+                st.rerun()
 
         # Get anomaly data
         anomaly_data = self._get_anomaly_data(time_range)
+        
+        # Debug info
+        if anomaly_data["total_anomalies"] > 0:
+            st.success(f"✅ Successfully loaded {anomaly_data['total_anomalies']} anomalies from Local Anomaly Detection System")
+        else:
+            st.warning("⚠️ No anomalies detected - System may be initializing...")
 
         # Summary metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -99,7 +117,7 @@ class AnomalyTab:
     def _render_anomaly_timeline(self, time_range: str) -> None:
         """Render anomaly timeline visualization."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.2")
+        anomaly_results = self._fetch_anomalies(time_range, "v3.0")
 
         if anomaly_results:
             # Convert to display format
@@ -157,7 +175,7 @@ class AnomalyTab:
     def _render_anomaly_types_chart(self, time_range: str) -> None:
         """Render pie chart of anomaly types."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.2")
+        anomaly_results = self._fetch_anomalies(time_range, "v3.0")
 
         if anomaly_results:
             # Count anomalies by type
@@ -193,7 +211,7 @@ class AnomalyTab:
     def _render_affected_nodes_chart(self, time_range: str) -> None:
         """Render bar chart of affected nodes."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.2")
+        anomaly_results = self._fetch_anomalies(time_range, "v3.0")
 
         if anomaly_results:
             # Count anomalies by node
@@ -237,7 +255,7 @@ class AnomalyTab:
     def _render_anomaly_list(self, time_range: str) -> None:
         """Render detailed list of recent anomalies."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.2")
+        anomaly_results = self._fetch_anomalies(time_range, "v3.0")
 
         if anomaly_results:
             # Convert to display format
@@ -323,7 +341,7 @@ class AnomalyTab:
     def _render_anomaly_patterns(self, time_range: str) -> None:
         """Render anomaly patterns analysis using real anomaly data."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.2")
+        anomaly_results = self._fetch_anomalies(time_range, "v3.0")
         
         # Create subplot figure
         fig = make_subplots(
@@ -389,7 +407,7 @@ class AnomalyTab:
     def _get_anomaly_data(_self, time_range: str) -> dict:
         """Get real anomaly data from use case."""
         try:
-            anomaly_results = _self._fetch_anomalies(time_range, "v2.2")
+            anomaly_results = _self._fetch_anomalies(time_range, "v3.0")
 
             if anomaly_results and len(anomaly_results) > 0:
                 # Count anomalies by severity
@@ -450,9 +468,9 @@ class AnomalyTab:
             "avg_resolution": "N/A",
         }
 
-    @st.cache_data(ttl=300)  # Cache for 5 minutes - reasonable refresh rate
+    # @st.cache_data(ttl=300)  # Cache disabled to force fresh results
     def _fetch_anomalies(
-        _self, time_range: str = "Last 24 Hours", _cache_key: str = "v2.2"
+        _self, time_range: str = "Last 24 Hours", _cache_key: str = "v3.0"
     ) -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
         try:
