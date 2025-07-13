@@ -16,6 +16,7 @@ from plotly.subplots import make_subplots
 
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
 from src.presentation.streamlit.components.charts.EfficiencyTrend import EfficiencyTrend
+from src.presentation.streamlit.components.KpiCard import KpiCard
 
 
 class EfficiencyTab:
@@ -25,6 +26,7 @@ class EfficiencyTab:
         """Initialize the efficiency tab with DataFetcher."""
         self.data_fetcher = DataFetcher()
         self.efficiency_trend = EfficiencyTrend(self.data_fetcher)
+        self.kpi_card = KpiCard()
 
     def render(self, time_range: str) -> None:
         """
@@ -102,47 +104,8 @@ class EfficiencyTab:
         return start_time, end_time
 
     def _render_main_metrics(self, efficiency_data: Dict[str, Any]) -> None:
-        """Render the main efficiency metrics cards."""
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            efficiency_pct = efficiency_data.get('efficiency_percentage', 0)
-            active_nodes = efficiency_data.get('active_nodes', 0)
-            total_nodes = efficiency_data.get('total_nodes', 8)
-            
-            st.metric(
-                label="Overall Efficiency",
-                value=f"{efficiency_pct:.1f}%",
-                delta=f"Active nodes: {active_nodes}/{total_nodes}",
-                delta_color="normal"
-            )
-
-        with col2:
-            loss_m3h = efficiency_data.get('loss_m3_per_hour', 0)
-            st.metric(
-                label="Water Loss Rate",
-                value=f"{loss_m3h:.1f} m³/h",
-                delta="Target: <15 m³/h",
-                delta_color="inverse" if loss_m3h > 15 else "normal"
-            )
-
-        with col3:
-            avg_pressure = efficiency_data.get('avg_pressure_mh2o', 0)
-            st.metric(
-                label="Avg Pressure",
-                value=f"{avg_pressure:.1f} mH₂O",
-                delta="Optimal: 2.5-3.5 mH₂O",
-                delta_color="normal" if 2.5 <= avg_pressure <= 3.5 else "inverse"
-            )
-
-        with col4:
-            reservoir_level = efficiency_data.get('reservoir_level_percentage', 0)
-            st.metric(
-                label="Reservoir Level",
-                value=f"{reservoir_level:.1f}%",
-                delta="Target: >70%",
-                delta_color="normal" if reservoir_level > 70 else "inverse"
-            )
+        """Render the main efficiency metrics cards using KpiCard component."""
+        self.kpi_card.render_efficiency_kpis(efficiency_data)
 
     def _render_efficiency_trends(self, time_range: str) -> None:
         """Render efficiency trends over time using the EfficiencyTrend component."""
