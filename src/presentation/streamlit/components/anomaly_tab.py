@@ -99,7 +99,7 @@ class AnomalyTab:
     def _render_anomaly_timeline(self, time_range: str) -> None:
         """Render anomaly timeline visualization."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.0")
+        anomaly_results = self._fetch_anomalies(time_range, "v2.1")
 
         if anomaly_results:
             # Convert to display format
@@ -157,7 +157,7 @@ class AnomalyTab:
     def _render_anomaly_types_chart(self, time_range: str) -> None:
         """Render pie chart of anomaly types."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.0")
+        anomaly_results = self._fetch_anomalies(time_range, "v2.1")
 
         if anomaly_results:
             # Count anomalies by type
@@ -193,7 +193,7 @@ class AnomalyTab:
     def _render_affected_nodes_chart(self, time_range: str) -> None:
         """Render bar chart of affected nodes."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.0")
+        anomaly_results = self._fetch_anomalies(time_range, "v2.1")
 
         if anomaly_results:
             # Count anomalies by node
@@ -237,7 +237,7 @@ class AnomalyTab:
     def _render_anomaly_list(self, time_range: str) -> None:
         """Render detailed list of recent anomalies."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.0")
+        anomaly_results = self._fetch_anomalies(time_range, "v2.1")
 
         if anomaly_results:
             # Convert to display format
@@ -323,7 +323,7 @@ class AnomalyTab:
     def _render_anomaly_patterns(self, time_range: str) -> None:
         """Render anomaly patterns analysis using real anomaly data."""
         # Get real anomaly data
-        anomaly_results = self._fetch_anomalies(time_range, "v2.0")
+        anomaly_results = self._fetch_anomalies(time_range, "v2.1")
         
         # Create subplot figure
         fig = make_subplots(
@@ -389,7 +389,7 @@ class AnomalyTab:
     def _get_anomaly_data(_self, time_range: str) -> dict:
         """Get real anomaly data from use case."""
         try:
-            anomaly_results = _self._fetch_anomalies(time_range, "v2.0")
+            anomaly_results = _self._fetch_anomalies(time_range, "v2.1")
 
             if anomaly_results and len(anomaly_results) > 0:
                 # Count anomalies by severity
@@ -452,7 +452,7 @@ class AnomalyTab:
 
     @st.cache_data(ttl=60)  # Short cache to force refresh
     def _fetch_anomalies(
-        _self, time_range: str = "Last 24 Hours", _cache_key: str = "v2.0"
+        _self, time_range: str = "Last 24 Hours", _cache_key: str = "v2.1"
     ) -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
         try:
