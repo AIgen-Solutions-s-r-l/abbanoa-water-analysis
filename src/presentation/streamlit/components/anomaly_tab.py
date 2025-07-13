@@ -569,10 +569,11 @@ class AnomalyTab:
                         actual_value=anomaly.actual_value,
                         expected_range=anomaly.expected_range,
                         deviation_percentage=anomaly.deviation_percentage,
-                        location_name=anomaly.node_name,
-                        confidence_score=0.85,
-                        description=anomaly.description
+                        description=f"{anomaly.node_name}: {anomaly.description}"
                     )
+                    
+                    # Add location name as attribute for display
+                    dto.location_name = anomaly.node_name
                     anomaly_dtos.append(dto)
                 
                 st.success(f"✅ Detected {len(anomaly_dtos)} anomalies using local detection")
