@@ -388,8 +388,10 @@ class AnomalyTab:
 
     def _get_anomaly_data(_self, time_range: str) -> dict:
         """Get real anomaly data from use case."""
+        print(f"📊 _get_anomaly_data called with time_range: {time_range}")
         try:
             anomaly_results = _self._fetch_anomalies(time_range, "v2.1")
+            print(f"📊 _fetch_anomalies returned {len(anomaly_results) if anomaly_results else 0} results")
 
             if anomaly_results and len(anomaly_results) > 0:
                 # Count anomalies by severity
@@ -450,11 +452,12 @@ class AnomalyTab:
             "avg_resolution": "N/A",
         }
 
-    @st.cache_data(ttl=60)  # Short cache to force refresh
+    # @st.cache_data(ttl=60)  # Temporarily disable cache to force refresh
     def _fetch_anomalies(
         _self, time_range: str = "Last 24 Hours", _cache_key: str = "v2.1"
     ) -> Optional[List[AnomalyDetectionResultDTO]]:
         """Fetch anomalies using the use case."""
+        print(f"🔍 _fetch_anomalies called with time_range: {time_range}")
         try:
             # Calculate time window based on selected range
             time_deltas = {
@@ -514,11 +517,13 @@ class AnomalyTab:
             return result
         except Exception as e:
             # Fallback to local anomaly detection
+            print(f"🔄 Fallback to LocalAnomalyDetector due to: {e}")
             try:
                 from src.presentation.streamlit.components.anomaly_detector_local import LocalAnomalyDetector
                 
                 detector = LocalAnomalyDetector()
                 local_anomalies = detector.detect_anomalies(time_window_hours)
+                print(f"✅ LocalAnomalyDetector generated {len(local_anomalies)} anomalies")
                 
                 if not local_anomalies:
                     st.info("No anomalies detected in the selected time range.")
