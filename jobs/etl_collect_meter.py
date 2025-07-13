@@ -69,7 +69,9 @@ class NetworkEfficiencyETL:
     async def initialize(self) -> None:
         """Initialize database connections."""
         self.postgres_manager = await get_postgres_manager()
-        await self.redis_manager.initialize()
+        # Fix: Use the correct method name and add bigquery_client assignment
+        self.redis_manager.bigquery_client = self.bigquery_client
+        self.redis_manager.initialize_cache()
         logger.info("Network Efficiency ETL initialized")
         
     async def collect_meter_data(self, minutes_back: int = 10) -> Dict[str, Any]:

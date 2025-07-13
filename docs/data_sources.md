@@ -6,16 +6,18 @@ The Abbanoa Water Infrastructure Analytics Platform ingests data from multiple s
 
 ## Data Sources
 
-### 1. Network Efficiency ETL Pipeline
+### 1. Network Efficiency ETL Pipeline ✅ LIVE
 
-The Network Efficiency ETL pipeline is the primary data collection system for real-time network monitoring.
+The Network Efficiency ETL pipeline is the primary data collection system for real-time network monitoring and is **currently operational**.
 
 #### Live Data Collection
 
+**Status**: ✅ **LIVE AND OPERATIONAL**  
 **Source**: BigQuery tables and CSV files  
-**Frequency**: Every 5 minutes  
+**Frequency**: Every 5 minutes (automated via cron)  
 **Pipeline**: `jobs/etl_collect_meter.py`  
 **Target**: PostgreSQL `sensor_readings` table  
+**Aggregation**: Automatic hourly aggregation via `sensor_readings_hourly` materialized view  
 
 **Data Sources**:
 - `sensor_readings_ml`: ML-optimized sensor data
@@ -24,11 +26,13 @@ The Network Efficiency ETL pipeline is the primary data collection system for re
 - CSV files from backup directories
 
 **Metrics Collected**:
-- Flow rate (L/s)
-- Pressure (bar)
-- Temperature (°C)
-- Total flow volume (m³)
-- Data quality scores
+- Flow rate (L/s) - **LIVE**
+- Pressure (bar) - **LIVE**  
+- Temperature (°C) - **LIVE**
+- Total flow volume (m³) - **LIVE**
+- Data quality scores - **LIVE**
+
+**Node Mapping**: Automated sensor to node_id mapping with metadata handling
 
 #### Historical Backfill
 
