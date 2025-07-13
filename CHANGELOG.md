@@ -1,5 +1,34 @@
 # Changelog
 
+
+## [v1.2.4.0] - 2025-07-13
+
+- ✅ test: fix efficiency component test issues and floating point precision
+- ✨ feat: upgrade API efficiency tab to use enhanced Sprint 2 components
+- 📚 docs: add comprehensive documentation for efficiency components
+- ✨ feat: add comprehensive unit tests for efficiency UI components
+- ✨ feat: implement drill-down filters with district/node multi-select
+- ✨ feat: create KpiCard component for efficiency metrics with status indicators
+- ✨ feat: create EfficiencyTrend chart component with 95% target line and rich tooltips
+- ✨ feat: refactor EfficiencyTab to use DataFetcher with loading states
+- ✨ feat: add efficiency data fetcher with 30s cache and trend methods
+- 📚 docs: document new efficiency endpoint
+- ✨ feat: create comprehensive CI pipeline for efficiency service
+- ✨ feat: create comprehensive efficiency service tests with 16 test cases
+- ✨ feat: integrate efficiency router with main FastAPI app
+- ✨ feat: create efficiency REST endpoint with comprehensive validation
+- ✨ feat: create Pydantic response schemas for efficiency endpoint
+- ✨ feat: create efficiency service with get_efficiency_summary function
+- 📚 docs: document live network efficiency pipeline
+- 🐛 fix: correct Redis cache initialization method
+- 📚 docs: document live network efficiency pipeline
+- ✨ feat: create comprehensive schema validation script for network efficiency table
+- ✨ feat: create comprehensive 90-day backfill script for network efficiency data
+- ✨ feat: add network efficiency ETL scheduling via cron.yaml and Python scheduler
+- ✨ feat: create network efficiency meter collection script without dry_run
+- ♻️ refactor: remove obsolete test scripts for anomaly detection, API integration, data loading, and flow data verification
+- ♻️ refactor: update PostgresManager to use base table for time series data retrieval
+
 ## [v1.2.3.14] - 2025-07-12
 
 ### Critical Bug Fixes

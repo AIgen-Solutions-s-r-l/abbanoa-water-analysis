@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "abbanoa-water-infrastructure"
-version = "1.2.3.14"
+version = "1.2.4.0"
 description = "Water infrastructure monitoring and analysis system using Domain-Driven Design"
 authors = ["Alessio Rocchi <rocchi.b.a@gmail.com>"]
 readme = "README.md"
@@ -82,7 +82,7 @@ skip_gitignore = true
 skip = [".venv", "venv", ".tox", "dist", "build", ".eggs"]
 
 [tool.mypy]
-python_version = "1.2.2.0"
+python_version = "1.2.4.0"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -116,7 +116,7 @@ disable = [
 good-names = ["i", "j", "k", "ex", "Run", "_", "id", "db"]
 
 [tool.pytest.ini_options]
-minversion = "1.2.2.0"
+minversion = "1.2.4.0"
 addopts = "-ra -q --strict-markers --cov=src --cov-report=term-missing --cov-report=html"
 testpaths = ["tests"]
 python_files = "test_*.py"
