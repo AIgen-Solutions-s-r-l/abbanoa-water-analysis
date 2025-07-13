@@ -1,6 +1,20 @@
 # Changelog
 
 
+
+## [v1.2.5.0] - 2025-07-13
+
+- ✨ feat: add LocalAnomalyDetector fallback to API-based AnomalyTab
+- ✨ feat: force complete cache refresh with enhanced UI
+- 🐛 fix: resolve performance monitor import error
+- ✨ feat: finalize working anomaly detection with proper caching
+- ✨ feat: force cache refresh to show working anomaly detection
+- 🐛 fix: fix probability normalization in synthetic anomaly generation
+- 🐛 fix: force cache refresh to enable local anomaly detection
+- 📚 docs: add comprehensive anomaly detection implementation documentation
+- 🐛 fix: correct DTO parameter mapping for anomaly detection
+- ✨ feat: implement working local anomaly detection system
+
 ## [v1.2.4.0] - 2025-07-13
 
 - ✅ test: fix efficiency component test issues and floating point precision
