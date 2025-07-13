@@ -218,9 +218,17 @@ class LocalAnomalyDetector:
             severity_weights = anomaly_config["severity_weights"]
             if node["type"] == "critical":
                 # Critical nodes bias toward higher severity
+                modified_weights = [severity_weights[s] * (2.0 if s in ["critical", "high"] else 0.5) for s in severity_weights.keys()]
+                # Normalize probabilities to sum to 1
+                total = sum(modified_weights)
+                if total > 0:
+                    normalized_weights = [w / total for w in modified_weights]
+                else:
+                    normalized_weights = list(severity_weights.values())
+                
                 severity = np.random.choice(
                     list(severity_weights.keys()),
-                    p=[severity_weights[s] * (2.0 if s in ["critical", "high"] else 0.5) for s in severity_weights.keys()]
+                    p=normalized_weights
                 )
             else:
                 severity = np.random.choice(
