@@ -15,6 +15,7 @@ from src.application.dto.analysis_results_dto import (
 )
 from src.infrastructure.di_container import Container
 from src.presentation.api.endpoints.forecast_endpoint import router as forecast_router
+from src.routes.efficiency import router as efficiency_router
 from src.presentation.api.middleware.error_handler import ErrorHandlerMiddleware, register_error_handlers
 
 
@@ -96,6 +97,7 @@ container.config.anomaly_detection.rolling_window_hours.from_env(
 
 # Include routers
 app.include_router(forecast_router)
+app.include_router(efficiency_router)
 
 
 @app.on_event("startup")
@@ -118,6 +120,7 @@ async def startup_event():
             "src.application.use_cases.detect_network_anomalies",
             "src.application.use_cases.calculate_network_efficiency",
             "src.application.use_cases.forecast_consumption",
+            "src.routes.efficiency",
         ]
     )
     
