@@ -1,0 +1,69 @@
+cron:
+  # Network Efficiency ETL - Meter Data Collection
+  # Collects meter data from BigQuery and loads into PostgreSQL
+  # for real-time network efficiency monitoring
+  - description: "Network Efficiency ETL - Meter Data Collection"
+    url: /etl/collect-meter
+    schedule: every 5 minutes
+    timezone: UTC
+    retry_parameters:
+      min_backoff_seconds: 60
+      max_backoff_seconds: 300
+      max_retry_attempts: 3
+    target: processing-service
+    
+  # Backup ETL job using direct script execution
+  # Alternative approach using direct Python script execution
+  - description: "Network Efficiency ETL - Direct Script Execution"
+    url: /etl/run-script
+    schedule: every 5 minutes
+    timezone: UTC
+    retry_parameters:
+      min_backoff_seconds: 60
+      max_backoff_seconds: 300
+      max_retry_attempts: 3
+    target: processing-service
+    headers:
+      X-ETL-Script: "jobs/etl_collect_meter.py"
+      X-ETL-Type: "network_efficiency"
+      
+  # Data quality check - runs every 15 minutes
+  - description: "Network Efficiency Data Quality Check"
+    url: /etl/data-quality-check
+    schedule: every 15 minutes
+    timezone: UTC
+    retry_parameters:
+      min_backoff_seconds: 120
+      max_backoff_seconds: 600
+      max_retry_attempts: 2
+    target: processing-service
+    headers:
+      X-ETL-Type: "network_efficiency"
+      
+  # Hourly network efficiency metrics calculation
+  - description: "Network Efficiency Metrics Calculation"
+    url: /etl/calculate-metrics
+    schedule: every 1 hours
+    timezone: UTC
+    retry_parameters:
+      min_backoff_seconds: 300
+      max_backoff_seconds: 1800
+      max_retry_attempts: 3
+    target: processing-service
+    headers:
+      X-ETL-Type: "network_efficiency"
+      X-Metrics-Type: "hourly"
+      
+  # Daily cache refresh and cleanup
+  - description: "Network Efficiency Cache Refresh"
+    url: /etl/cache-refresh
+    schedule: every 24 hours
+    timezone: UTC
+    retry_parameters:
+      min_backoff_seconds: 600
+      max_backoff_seconds: 3600
+      max_retry_attempts: 2
+    target: processing-service
+    headers:
+      X-ETL-Type: "network_efficiency"
+      X-Operation: "cache_refresh" 

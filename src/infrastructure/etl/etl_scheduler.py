@@ -109,7 +109,16 @@ class ETLScheduler:
             replace_existing=True
         )
         
-        # 6. Cleanup old data (weekly on Sunday at 3 AM)
+        # 6. Network efficiency ETL (every 5 minutes)
+        self.scheduler.add_job(
+            self._run_network_efficiency_etl,
+            IntervalTrigger(minutes=5),
+            id='network_efficiency_etl',
+            name='Network efficiency meter data collection',
+            replace_existing=True
+        )
+        
+        # 7. Cleanup old data (weekly on Sunday at 3 AM)
         self.scheduler.add_job(
             self._cleanup_old_data,
             CronTrigger(day_of_week=6, hour=3, minute=0),
@@ -344,6 +353,36 @@ class ETLScheduler:
                 
         except Exception as e:
             logger.error(f"Data quality check failed: {e}")
+            
+    async def _run_network_efficiency_etl(self) -> None:
+        """Run network efficiency meter data collection."""
+        logger.info("Starting network efficiency ETL job")
+        
+        try:
+            # Import the NetworkEfficiencyETL class
+            import sys
+            from pathlib import Path
+            
+            # Add jobs directory to path
+            jobs_dir = Path(__file__).parent.parent.parent.parent / "jobs"
+            sys.path.insert(0, str(jobs_dir))
+            
+            # Import and run the ETL
+            from etl_collect_meter import NetworkEfficiencyETL
+            
+            etl = NetworkEfficiencyETL()
+            await etl.initialize()
+            
+            # Collect data for the last 10 minutes
+            stats = await etl.collect_meter_data(minutes_back=10)
+            
+            if stats['processed_records'] > 0:
+                logger.info(f"Network efficiency ETL completed: {stats['processed_records']} records processed")
+            else:
+                logger.debug("Network efficiency ETL completed: no new records")
+                
+        except Exception as e:
+            logger.error(f"Network efficiency ETL failed: {e}")
             
     async def _cleanup_old_data(self) -> None:
         """Clean up old data according to retention policies."""
