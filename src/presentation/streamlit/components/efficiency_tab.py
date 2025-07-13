@@ -15,7 +15,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
-from src.presentation.streamlit.utils.plot_builder import PlotBuilder
+from src.presentation.streamlit.components.charts.EfficiencyTrend import EfficiencyTrend
 
 
 class EfficiencyTab:
@@ -24,7 +24,7 @@ class EfficiencyTab:
     def __init__(self, calculate_efficiency_use_case=None):
         """Initialize the efficiency tab with DataFetcher."""
         self.data_fetcher = DataFetcher()
-        self.plot_builder = PlotBuilder()
+        self.efficiency_trend = EfficiencyTrend(self.data_fetcher)
 
     def render(self, time_range: str) -> None:
         """
@@ -145,85 +145,21 @@ class EfficiencyTab:
             )
 
     def _render_efficiency_trends(self, time_range: str) -> None:
-        """Render efficiency trends over time."""
+        """Render efficiency trends over time using the EfficiencyTrend component."""
         st.subheader("Efficiency Trends")
         
-        with st.spinner("Loading trend data..."):
-            try:
-                # Get hours back from time range
-                hours_back = self._get_hours_from_time_range(time_range)
-                
-                # Get trend data
-                trend_data = self.data_fetcher.get_efficiency_trends(hours_back=hours_back)
-                
-                if trend_data.empty:
-                    st.warning("No trend data available for the selected time range")
-                    return
-                
-                # Create trend chart
-                fig = make_subplots(
-                    rows=3, cols=1,
-                    subplot_titles=(
-                        "Network Efficiency (%)",
-                        "Water Loss (%)",
-                        "Pressure (mH₂O)"
-                    ),
-                    vertical_spacing=0.1
-                )
-
-                # Efficiency trend with target line
-                fig.add_trace(
-                    go.Scatter(
-                        x=trend_data['timestamp'],
-                        y=trend_data['efficiency_percentage'],
-                        mode='lines+markers',
-                        name='Efficiency',
-                        line=dict(color='#2E8B57', width=2),
-                        marker=dict(size=4)
-                    ), row=1, col=1
-                )
-                
-                # Add 95% target line
-                fig.add_hline(
-                    y=95, line_dash="dash", line_color="red", 
-                    annotation_text="Target: 95%",
-                    row=1, col=1
-                )
-
-                # Water loss trend
-                fig.add_trace(
-                    go.Scatter(
-                        x=trend_data['timestamp'],
-                        y=trend_data['loss_percentage'],
-                        mode='lines+markers',
-                        name='Water Loss',
-                        line=dict(color='#DC143C', width=2),
-                        marker=dict(size=4)
-                    ), row=2, col=1
-                )
-
-                # Pressure trend
-                fig.add_trace(
-                    go.Scatter(
-                        x=trend_data['timestamp'],
-                        y=trend_data['pressure_mh2o'],
-                        mode='lines+markers',
-                        name='Pressure',
-                        line=dict(color='#FF8C00', width=2),
-                        marker=dict(size=4)
-                    ), row=3, col=1
-                )
-
-                fig.update_layout(
-                    height=600,
-                    showlegend=False,
-                    title_text="Network Efficiency Trends"
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-            except Exception as e:
-                st.error(f"Error loading trend data: {str(e)}")
+        # Get hours back from time range
+        hours_back = self._get_hours_from_time_range(time_range)
+        
+        # Use the dedicated EfficiencyTrend component
+        self.efficiency_trend.render(
+            hours_back=hours_back,
+            height=600,
+            show_target_line=True,
+            target_efficiency=95.0,
+            chart_type="line",
+            title="Network Efficiency Trends"
+        )
 
     def _get_hours_from_time_range(self, time_range: str) -> int:
         """Convert time range string to hours."""
