@@ -281,8 +281,4 @@ class PerformanceMonitor:
 
 
 # Create a global instance for use in the dashboard
-performance_monitor = PerformanceMonitor()
-
-
-# Global performance monitor instance
 performance_monitor = PerformanceMonitor() 
