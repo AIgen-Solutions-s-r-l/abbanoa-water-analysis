@@ -204,3 +204,176 @@ class DataFetcher:
             "model_accuracy_mape": 0,
             "last_model_update": None,
         }
+
+    @st.cache_data(ttl=30)  # 30-second cache for efficiency summary
+    def get_efficiency_summary(
+        _self, 
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
+    ) -> Dict[str, Any]:
+        """
+        Get network efficiency summary with 30-second cache.
+        
+        Args:
+            start_time: Start time for efficiency calculation
+            end_time: End time for efficiency calculation
+            
+        Returns:
+            Dictionary with efficiency metrics including:
+            - efficiency_percentage: Overall network efficiency
+            - loss_percentage: Water loss percentage
+            - avg_pressure: Average network pressure
+            - reservoir_level: Reservoir level percentage
+            - total_input_volume: Total water input
+            - total_output_volume: Total water output
+            - active_nodes: Number of active monitoring nodes
+        """
+        try:
+            # Use API client with appropriate endpoint
+            endpoint = "/api/v1/network/efficiency"
+            params = {}
+            
+            if start_time:
+                params["start_time"] = start_time.isoformat()
+            if end_time:
+                params["end_time"] = end_time.isoformat()
+                
+            response = _self.session.get(
+                f"{_self.api_base_url}{endpoint}",
+                params=params,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                efficiency_data = response.json()
+                
+                # Calculate derived metrics
+                efficiency_percentage = efficiency_data.get('efficiency_percentage', 95.0)
+                loss_percentage = 100.0 - efficiency_percentage
+                avg_pressure = efficiency_data.get('avg_pressure', 2.5)  # Default pressure in mH2O
+                reservoir_level = efficiency_data.get('reservoir_level', 75.0)  # Default percentage
+                
+                return {
+                    "efficiency_percentage": efficiency_percentage,
+                    "loss_percentage": loss_percentage,
+                    "loss_m3_per_hour": efficiency_data.get('total_loss_volume', 0) / 24,  # Convert to hourly
+                    "avg_pressure_mh2o": avg_pressure,
+                    "reservoir_level_percentage": reservoir_level,
+                    "total_input_volume": efficiency_data.get('total_input_volume', 0),
+                    "total_output_volume": efficiency_data.get('total_output_volume', 0),
+                    "active_nodes": efficiency_data.get('active_nodes', 0),
+                    "total_nodes": efficiency_data.get('total_nodes', 8),
+                    "last_updated": datetime.now().isoformat()
+                }
+            else:
+                logger.warning(f"API request failed with status {response.status_code}")
+                return _self._get_mock_efficiency_summary()
+                
+        except RequestException as e:
+            logger.error(f"Error fetching efficiency summary: {e}")
+            return _self._get_mock_efficiency_summary()
+    
+    @st.cache_data(ttl=60)  # 1-minute cache for trend data
+    def get_efficiency_trends(
+        _self,
+        hours_back: int = 24,
+        district_filter: Optional[str] = None,
+        node_filter: Optional[str] = None
+    ) -> pd.DataFrame:
+        """
+        Get efficiency trend data for charting.
+        
+        Args:
+            hours_back: Number of hours of historical data to fetch
+            district_filter: Optional district filter
+            node_filter: Optional node filter
+            
+        Returns:
+            DataFrame with columns: timestamp, efficiency_percentage, loss_percentage, 
+            pressure_mh2o, reservoir_level_percentage
+        """
+        try:
+            # Calculate time range
+            end_time = datetime.now()
+            start_time = end_time - timedelta(hours=hours_back)
+            
+            endpoint = "/api/v1/network/efficiency/trends"
+            params = {
+                "start_time": start_time.isoformat(),
+                "end_time": end_time.isoformat(),
+                "interval": "1hour"
+            }
+            
+            if district_filter:
+                params["district"] = district_filter
+            if node_filter:
+                params["node"] = node_filter
+                
+            response = _self.session.get(
+                f"{_self.api_base_url}{endpoint}",
+                params=params,
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                trend_data = response.json()
+                
+                if trend_data:
+                    df = pd.DataFrame(trend_data)
+                    df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    return df
+                else:
+                    return _self._get_mock_efficiency_trends(hours_back)
+            else:
+                logger.warning(f"Trends API request failed with status {response.status_code}")
+                return _self._get_mock_efficiency_trends(hours_back)
+                
+        except RequestException as e:
+            logger.error(f"Error fetching efficiency trends: {e}")
+            return _self._get_mock_efficiency_trends(hours_back)
+    
+    def _get_mock_efficiency_summary(self) -> Dict[str, Any]:
+        """Generate mock efficiency summary data for development/fallback."""
+        return {
+            "efficiency_percentage": 94.2,
+            "loss_percentage": 5.8,
+            "loss_m3_per_hour": 12.5,
+            "avg_pressure_mh2o": 2.8,
+            "reservoir_level_percentage": 78.3,
+            "total_input_volume": 5200.0,
+            "total_output_volume": 4896.4,
+            "active_nodes": 6,
+            "total_nodes": 8,
+            "last_updated": datetime.now().isoformat()
+        }
+    
+    def _get_mock_efficiency_trends(self, hours_back: int) -> pd.DataFrame:
+        """Generate mock efficiency trend data for development/fallback."""
+        end_time = datetime.now()
+        start_time = end_time - timedelta(hours=hours_back)
+        
+        # Generate hourly timestamps
+        timestamps = pd.date_range(start=start_time, end=end_time, freq='1H')
+        
+        # Generate realistic efficiency trends with some variation
+        np.random.seed(42)  # For reproducible data
+        base_efficiency = 94.0
+        efficiency_trend = base_efficiency + np.random.normal(0, 1.5, len(timestamps))
+        efficiency_trend = np.clip(efficiency_trend, 88.0, 98.0)  # Realistic bounds
+        
+        # Create complementary data
+        loss_trend = 100.0 - efficiency_trend
+        pressure_trend = 2.8 + np.random.normal(0, 0.3, len(timestamps))
+        pressure_trend = np.clip(pressure_trend, 2.0, 4.0)  # Realistic pressure range
+        
+        reservoir_trend = 78.0 + np.random.normal(0, 5.0, len(timestamps))
+        reservoir_trend = np.clip(reservoir_trend, 60.0, 95.0)  # Realistic reservoir levels
+        
+        return pd.DataFrame({
+            'timestamp': timestamps,
+            'efficiency_percentage': efficiency_trend,
+            'loss_percentage': loss_trend,
+            'pressure_mh2o': pressure_trend,
+            'reservoir_level_percentage': reservoir_trend,
+            'target_efficiency': [95.0] * len(timestamps)  # 95% target line
+        })
