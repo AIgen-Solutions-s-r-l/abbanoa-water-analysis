@@ -321,6 +321,8 @@ class DataFetcher:
                 if trend_data:
                     df = pd.DataFrame(trend_data)
                     df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    # Add target efficiency line (95% target)
+                    df['target_efficiency'] = 95.0
                     return df
                 else:
                     return _self._get_mock_efficiency_trends(hours_back)
