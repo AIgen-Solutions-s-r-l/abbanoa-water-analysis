@@ -17,6 +17,7 @@ from plotly.subplots import make_subplots
 from src.presentation.streamlit.utils.data_fetcher import DataFetcher
 from src.presentation.streamlit.components.charts.EfficiencyTrend import EfficiencyTrend
 from src.presentation.streamlit.components.KpiCard import KpiCard
+from src.presentation.streamlit.components.filters.EfficiencyFilters import EfficiencyFilters
 
 
 class EfficiencyTab:
@@ -27,6 +28,7 @@ class EfficiencyTab:
         self.data_fetcher = DataFetcher()
         self.efficiency_trend = EfficiencyTrend(self.data_fetcher)
         self.kpi_card = KpiCard()
+        self.efficiency_filters = EfficiencyFilters()
 
     def render(self, time_range: str) -> None:
         """
@@ -49,6 +51,9 @@ class EfficiencyTab:
                 
                 # Display main metrics
                 self._render_main_metrics(efficiency_data)
+                
+                # Display drill-down filters
+                self._render_drill_down_filters()
                 
                 # Display efficiency trends
                 self._render_efficiency_trends(time_range)
@@ -106,6 +111,54 @@ class EfficiencyTab:
     def _render_main_metrics(self, efficiency_data: Dict[str, Any]) -> None:
         """Render the main efficiency metrics cards using KpiCard component."""
         self.kpi_card.render_efficiency_kpis(efficiency_data)
+
+    def _render_drill_down_filters(self) -> None:
+        """Render the drill-down filters section."""
+        st.markdown("---")
+        
+        # Use expandable section to save space
+        with st.expander("🔍 Drill-Down Analysis", expanded=False):
+            st.markdown("""
+            Use these filters to drill down into specific districts or nodes for detailed analysis.
+            The charts and data below will update based on your selection.
+            """)
+            
+            # Render the filters
+            selected_districts, selected_nodes = self.efficiency_filters.render()
+            
+            # Show information about filtered data
+            if selected_districts or selected_nodes:
+                st.success(f"✅ Filters active - Data filtered for analysis")
+                
+                # Update the trend chart with filters if they exist
+                if selected_districts:
+                    filter_params = self.efficiency_filters.get_filtered_data_params()
+                    
+                    # Show filtered trend analysis
+                    st.markdown("#### 📊 Filtered Efficiency Analysis")
+                    
+                    # Get hours back from time range
+                    hours_back = self._get_hours_from_time_range(st.session_state.get("time_range", "Last 24 Hours"))
+                    
+                    # Apply filters to trend data
+                    district_filter = filter_params.get("districts")
+                    node_filter = filter_params.get("nodes")
+                    
+                    # Create filtered trend chart
+                    self.efficiency_trend.render(
+                        hours_back=hours_back,
+                        height=400,
+                        show_target_line=True,
+                        target_efficiency=95.0,
+                        chart_type="line",
+                        district_filter=district_filter,
+                        node_filter=node_filter,
+                        title="Filtered Network Efficiency Trends"
+                    )
+                else:
+                    st.info("💡 Select districts or nodes above to see filtered analysis")
+            else:
+                st.info("💡 No filters active - showing all network data")
 
     def _render_efficiency_trends(self, time_range: str) -> None:
         """Render efficiency trends over time using the EfficiencyTrend component."""
