@@ -23,6 +23,7 @@ Comprehensive documentation is available in the [docs](./docs/) directory:
 ## 🎯 Key Features
 
 ### Real-Time Monitoring
+- **Network Efficiency ETL**: Live flow and pressure data updated every 5 minutes
 - Live sensor data from thousands of monitoring nodes
 - 30-minute data refresh cycles
 - Interactive Streamlit dashboard
