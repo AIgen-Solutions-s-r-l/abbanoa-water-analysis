@@ -28,6 +28,13 @@ Comprehensive documentation is available in the [docs](./docs/) directory:
 - Interactive Streamlit dashboard
 - Mobile-responsive design
 
+### Network Efficiency ETL Pipeline
+- **Live Data Processing**: Meter data collection every 5 minutes
+- **Historical Backfill**: 90-day data backfill capabilities
+- **Multi-Source Integration**: BigQuery, CSV files, and backup data
+- **Schema Validation**: Automated data quality and schema validation
+- **Materialized Views**: Optimized hourly/daily aggregations
+
 ### Machine Learning Integration
 - Automated anomaly detection
 - Time-series forecasting (7-day predictions)
@@ -36,7 +43,7 @@ Comprehensive documentation is available in the [docs](./docs/) directory:
 
 ### Three-Tier Storage Architecture
 - **Hot Tier (Redis)**: Real-time data, <50ms access
-- **Warm Tier (PostgreSQL)**: 6-12 months operational data
+- **Warm Tier (PostgreSQL)**: 6-12 months operational data with TimescaleDB
 - **Cold Tier (BigQuery)**: Complete historical archive
 
 ### Enterprise Features
@@ -61,6 +68,42 @@ The platform follows Domain-Driven Design principles with containerized microser
 3. **Processing**: ML analysis for patterns and anomalies
 4. **API**: Unified access through FastAPI
 5. **Visualization**: Real-time dashboards via Streamlit
+
+## 🔧 ETL Operations
+
+### Network Efficiency ETL
+The platform includes a comprehensive ETL pipeline for network efficiency data:
+
+#### Live Data Collection
+```bash
+# Run meter data collection (every 5 minutes via cron)
+python jobs/etl_collect_meter.py
+
+# Collection is automatically scheduled via:
+# 1. cron.yaml - Google Cloud Scheduler
+# 2. ETL Scheduler - Python-based scheduling
+```
+
+#### Historical Backfill
+```bash
+# Backfill last 90 days
+python jobs/backfill.py --days=90
+
+# Backfill specific date range
+python jobs/backfill.py --start-date=2024-01-01 --end-date=2024-03-31
+
+# Force refresh existing data
+python jobs/backfill.py --days=30 --force-refresh
+```
+
+#### Schema Validation
+```bash
+# Validate database schema and data integrity
+python jobs/validate_schema.py --verbose
+
+# Attempt to fix issues automatically
+python jobs/validate_schema.py --fix-issues
+```
 
 ## 🚦 Quick Start
 
