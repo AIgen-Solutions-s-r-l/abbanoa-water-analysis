@@ -4,6 +4,16 @@
 
 
 
+
+## [v1.2.8.0] - 2025-07-14
+
+- 🐛 fix: add psycopg2-binary dependency for PostgreSQL fallback functionality
+- ✨ feat: add Enhanced Overview to navigation sidebar\n\n- Add Enhanced Overview navigation link to sidebar between Dashboard and Monitoring\n- Use layout/grid icon to represent comprehensive system overview\n- Enables easy access to the migrated Enhanced System Overview dashboard
+- ✨ feat: complete testing setup and implementation for Enhanced System Overview
+- 🐛 fix: remove unused setAlerts variable to fix linting error
+- ✨ feat: complete Enhanced System Overview dashboard implementation
+- ✨ feat: implement FlowAnalyticsChart component with time series, distribution and correlation analysis
+
 ## [v1.2.7.0] - 2025-07-14
 
 - ✨ feat: add Next.js frontend with authentication and mock backend
