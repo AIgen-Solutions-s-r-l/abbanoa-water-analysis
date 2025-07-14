@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import WaterKPIRibbon from '@/components/water/WaterKPIRibbon';
 import FlowAnalyticsChart from '@/components/water/FlowAnalyticsChart';
+import NetworkPerformanceAnalytics from '@/components/water/NetworkPerformanceAnalytics';
+import SystemHealthGauges from '@/components/water/SystemHealthGauges';
 import { WaterCoreMetrics, FlowAnalyticsData, WaterSystemAlert } from '@/lib/types';
 
 // Generate sample data for demonstration
@@ -172,12 +174,7 @@ export default function EnhancedOverviewPage() {
         <div className="mb-12">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">📊 Core Performance Indicators</h2>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <WaterKPIRibbon
-              metrics={metrics}
-              timeRange={selectedTimeRange}
-              showTrends={true}
-              compact={false}
-            />
+            <WaterKPIRibbon />
           </div>
         </div>
 
@@ -354,6 +351,18 @@ export default function EnhancedOverviewPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* System Health Gauges */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">🏥 System Health Indicators</h2>
+          <SystemHealthGauges />
+        </div>
+
+        {/* Network Performance Analytics */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">📊 Network Performance Analytics</h2>
+          <NetworkPerformanceAnalytics />
         </div>
 
         {/* Operational Insights */}
