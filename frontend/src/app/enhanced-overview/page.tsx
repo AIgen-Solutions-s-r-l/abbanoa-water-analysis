@@ -77,7 +77,7 @@ const generateSampleAlerts = (): WaterSystemAlert[] => [
 export default function EnhancedOverviewPage() {
   const [metrics, setMetrics] = useState<WaterCoreMetrics>(generateSampleMetrics());
   const [flowData, setFlowData] = useState<FlowAnalyticsData[]>([]);
-  const [alerts, setAlerts] = useState<WaterSystemAlert[]>(generateSampleAlerts());
+  const [alerts] = useState<WaterSystemAlert[]>(generateSampleAlerts());
   const [selectedTimeRange, setSelectedTimeRange] = useState('Last 24 Hours');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
