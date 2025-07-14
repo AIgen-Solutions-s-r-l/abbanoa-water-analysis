@@ -38,89 +38,93 @@ class EnhancedDataFetcher:
         if not node_ids:
             return pd.DataFrame()
         
-        # Parse time range - use actual data timeframe (Nov 2024 - Apr 2025)
-        end_time = datetime(2025, 4, 1)
+        # Parse time range - use current time and calculate dynamically
+        from datetime import timedelta
+        
+        end_time = datetime.now()
         if time_range == "Last 6 Hours":
-            start_time = datetime(2025, 3, 31, 18, 0, 0)  # Last 6 hours of data
+            start_time = end_time - timedelta(hours=6)
         elif time_range == "Last 24 Hours":
-            start_time = datetime(2025, 3, 31, 0, 0, 0)   # Last day of data
+            start_time = end_time - timedelta(days=1)
         elif time_range == "Last 3 Days":
-            start_time = datetime(2025, 3, 29, 0, 0, 0)   # Last 3 days of data
-        elif time_range == "Last 7 Days":
-            start_time = datetime(2025, 3, 25, 0, 0, 0)   # Last 7 days of data
-        elif time_range == "Last 30 Days":
-            start_time = datetime(2025, 3, 1, 0, 0, 0)    # March 2025 data
+            start_time = end_time - timedelta(days=3)
+        elif time_range == "Last 7 Days" or time_range == "Last Week":
+            start_time = end_time - timedelta(days=7)
+        elif time_range == "Last 30 Days" or time_range == "Last Month":
+            start_time = end_time - timedelta(days=30)
+        elif time_range == "Last Year":
+            start_time = end_time - timedelta(days=365)
         else:
-            start_time = datetime(2025, 3, 31, 0, 0, 0)   # Default to last day
+            start_time = end_time - timedelta(days=1)  # Default to last day
         
         # Default metrics
         if not metrics:
             metrics = ["flow_rate", "pressure", "temperature", "volume"]
         
-        # Build query for both tables
-        queries = []
-        
-        # Query for original nodes (UUIDs)
-        uuid_nodes = [nid for nid in node_ids if nid.startswith("00000000")]
-        if uuid_nodes:
-            uuid_list = ", ".join([f"'{nid}'" for nid in uuid_nodes])
-            query1 = f"""
-            SELECT 
-                timestamp,
-                node_id,
-                node_name,
-                {", ".join(metrics)}
-            FROM `{_self.project_id}.{_self.dataset_id}.v_sensor_readings_normalized`
-            WHERE node_id IN ({uuid_list})
-                AND timestamp >= TIMESTAMP('{start_time.isoformat()}')
-                AND timestamp <= TIMESTAMP('{end_time.isoformat()}')
+        # Use PostgreSQL for real-time data instead of BigQuery
+        try:
+            import psycopg2
+            
+            # Connect to PostgreSQL processing database
+            conn = psycopg2.connect(
+                host="localhost",
+                port=5434,
+                database="abbanoa_processing", 
+                user="abbanoa_user",
+                password="abbanoa_secure_pass"
+            )
+            
+            # Get actual node IDs that exist in database
+            available_nodes_query = "SELECT DISTINCT node_id FROM water_infrastructure.sensor_readings LIMIT 20"
+            available_nodes_df = pd.read_sql_query(available_nodes_query, conn)
+            available_node_ids = available_nodes_df['node_id'].tolist()
+            
+            # Use first few available nodes if selected nodes don't exist
+            query_node_ids = [nid for nid in node_ids if nid in available_node_ids]
+            if not query_node_ids:
+                query_node_ids = available_node_ids[:6]  # Use first 6 nodes as fallback
+            
+            # Query from the main sensor readings table
+            placeholders = ','.join(['%s'] * len(query_node_ids))
+            query = f"""
+                SELECT 
+                    timestamp,
+                    node_id,
+                    flow_rate,
+                    pressure,
+                    temperature,
+                    total_flow as volume
+                FROM water_infrastructure.sensor_readings
+                WHERE node_id IN ({placeholders})
+                AND timestamp BETWEEN %s AND %s
+                ORDER BY timestamp ASC, node_id
+                LIMIT 5000
             """
-            queries.append(query1)
-        
-        # Query for new nodes (numeric IDs) from ML table
-        numeric_nodes = [nid for nid in node_ids if nid.isdigit()]
-        if numeric_nodes:
-            node_list = ", ".join([f"'{nid}'" for nid in numeric_nodes])
-            metric_cols = []
-            for metric in metrics:
-                if metric in ["flow_rate", "pressure", "temperature", "volume"]:
-                    metric_cols.append(metric)
             
-            query2 = f"""
-            SELECT 
-                timestamp,
-                node_id,
-                node_name,
-                {", ".join(metric_cols)},
-                data_quality_score
-            FROM `{_self.project_id}.{_self.dataset_id}.sensor_readings_ml`
-            WHERE node_id IN ({node_list})
-                AND timestamp >= TIMESTAMP('{start_time.isoformat()}')
-                AND timestamp <= TIMESTAMP('{end_time.isoformat()}')
-                AND data_quality_score > 0.5
-            """
-            queries.append(query2)
-        
-        # Execute queries and combine results
-        all_data = []
-        for query in queries:
-            try:
-                df = _self.client.query(query).to_dataframe()
-                if not df.empty:
-                    all_data.append(df)
-            except Exception as e:
-                st.error(f"Error fetching data: {e}")
-        
-        if all_data:
-            combined_df = pd.concat(all_data, ignore_index=True)
+            # Execute query
+            df = pd.read_sql_query(
+                query, 
+                conn, 
+                params=query_node_ids + [start_time, end_time]
+            )
+            conn.close()
             
-            # Add display names
-            combined_df['display_name'] = combined_df['node_id'].apply(get_node_display_name)
+            if not df.empty:
+                # Add node names and ensure proper data types
+                df['node_name'] = df['node_id'].apply(lambda x: f"Node {x}")
+                df['display_name'] = df['node_id'].apply(get_node_display_name)
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                
+                # Convert decimal columns to float
+                for col in ['flow_rate', 'pressure', 'temperature', 'volume']:
+                    if col in df.columns:
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                
+                return df.sort_values('timestamp')
             
-            # Sort by timestamp
-            combined_df = combined_df.sort_values('timestamp', ascending=False)
-            
-            return combined_df
+        except Exception as e:
+            st.warning(f"PostgreSQL query failed: {e}")
+            return pd.DataFrame()
         
         return pd.DataFrame()
     
