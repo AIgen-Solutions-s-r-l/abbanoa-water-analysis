@@ -2,6 +2,17 @@
 
 
 
+
+## [v1.2.6.0] - 2025-07-14
+
+- ✨ feat: implement comprehensive API testing framework with 126 tests
+- ✨ feat: Complete KPI service implementation with comprehensive business logic
+- ✨ feat: implement comprehensive report generation system
+- ✨ feat: implement advanced forecasting endpoints with time series analysis
+- ✨ feat: implement comprehensive water quality monitoring endpoints
+- ✨ feat: implement comprehensive consumption patterns endpoints
+- ✨ feat: add comprehensive Pydantic schemas for all API endpoints
+
 ## [v1.2.5.0] - 2025-07-13
 
 - ✨ feat: add LocalAnomalyDetector fallback to API-based AnomalyTab
