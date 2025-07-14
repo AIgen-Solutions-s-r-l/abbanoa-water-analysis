@@ -9,7 +9,7 @@ npm install
 npm start
 ```
 
-The server will run on `http://localhost:8000`
+The server will run on `http://localhost:8001`
 
 ## 📋 Test Credentials
 
@@ -51,14 +51,14 @@ The server will run on `http://localhost:8000`
 ## 🧪 Testing the Frontend
 
 1. Make sure this backend is running on port 8001
-2. Start the frontend on port 3001
-3. Visit `http://localhost:3001`
+2. Start the frontend on port 3000
+3. Visit `http://localhost:3000`
 4. Use any of the test credentials to login
 5. Explore the dashboard features
 
 ## 🔧 Configuration
 
-- **Port**: 8000
+- **Port**: 8001 (to avoid conflict with existing backend on 8000)
 - **JWT Secret**: `mock-jwt-secret-key-for-testing`
 - **Token Expiry**: 24 hours
 - **CORS**: Enabled for all origins
