@@ -1,0 +1,1582 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="66" skipped="0" tests="126" time="3.279" timestamp="2025-07-13T18:43:23.332427+02:00" hostname="s01"><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_consumption_data_success" time="0.053"><failure message="assert 0 == 2&#10; +  where 0 = len([])">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a5d2540&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e18bff410&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855114521376'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 22468), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 22468)}
+
+    @pytest.mark.asyncio
+    async def test_get_consumption_data_success(
+        self, consumption_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful consumption data retrieval."""
+        # Act
+        result = await consumption_service.get_consumption_data(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        # Assert
+        assert isinstance(result, list)
+&gt;       assert len(result) == 2
+E       assert 0 == 2
+E        +  where 0 = len([])
+
+tests/unit/test_consumption_service.py:66: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_consumption_data_with_nodes_filter" time="0.003"><failure message="AssertionError: Expected 'get_consumption_data' to be called once. Called 0 times.">self = &lt;AsyncMock name='mock.get_consumption_data' id='124855111775440'&gt;
+args = (datetime.datetime(2025, 6, 13, 18, 43, 24, 199107), datetime.datetime(2025, 7, 13, 18, 43, 24, 199107), ['NODE_001'], None)
+kwargs = {}, msg = "Expected 'get_consumption_data' to be called once. Called 0 times."
+
+    def assert_called_once_with(self, /, *args, **kwargs):
+        """assert that the mock was called exactly once and that that call was
+        with the specified arguments."""
+        if not self.call_count == 1:
+            msg = ("Expected '%s' to be called once. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+&gt;           raise AssertionError(msg)
+E           AssertionError: Expected 'get_consumption_data' to be called once. Called 0 times.
+
+/usr/lib/python3.12/unittest/mock.py:955: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a5d1f40&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e1895e360&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855111770256'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 199107), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 199107)}
+
+    @pytest.mark.asyncio
+    async def test_get_consumption_data_with_nodes_filter(
+        self, consumption_service, mock_hybrid_service, test_date_range
+    ):
+        """Test consumption data retrieval with node filtering."""
+        # Arrange
+        selected_nodes = ["NODE_001"]
+    
+        # Act
+        result = await consumption_service.get_consumption_data(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            selected_nodes
+        )
+    
+        # Assert
+&gt;       mock_hybrid_service.get_consumption_data.assert_called_once_with(
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            selected_nodes,
+            None
+        )
+E       AssertionError: Expected 'get_consumption_data' to be called once. Called 0 times.
+
+tests/unit/test_consumption_service.py:92: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_consumption_data_empty_result" time="0.002" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_consumption_analytics_success" time="0.002"><failure message="assert False&#10; +  where False = isinstance(namespace(total_consumption=1500.0, average_consumption=125.0, peak_consumption=300.0, top_consumers=[], consumption_by_region={}), ConsumptionAnalytics)">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a1001a0&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e189f3260&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112381504'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 287469), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 287469)}
+
+    @pytest.mark.asyncio
+    async def test_get_consumption_analytics_success(
+        self, consumption_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful consumption analytics generation."""
+        # Arrange
+        mock_hybrid_service.get_consumption_data.return_value = [
+            {
+                "node_id": "NODE_001",
+                "timestamp": "2024-01-01T10:00:00",
+                "consumption_value": 100.0,
+                "region": "North",
+                "unit": "liters"
+            },
+            {
+                "node_id": "NODE_001",
+                "timestamp": "2024-01-01T11:00:00",
+                "consumption_value": 150.0,
+                "region": "North",
+                "unit": "liters"
+            },
+            {
+                "node_id": "NODE_002",
+                "timestamp": "2024-01-01T10:00:00",
+                "consumption_value": 200.0,
+                "region": "South",
+                "unit": "liters"
+            }
+        ]
+    
+        # Act
+        result = await consumption_service.get_consumption_analytics(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        # Assert
+&gt;       assert isinstance(result, ConsumptionAnalytics)
+E       assert False
+E        +  where False = isinstance(namespace(total_consumption=1500.0, average_consumption=125.0, peak_consumption=300.0, top_consumers=[], consumption_by_region={}), ConsumptionAnalytics)
+
+tests/unit/test_consumption_service.py:157: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_node_consumption_success" time="0.002"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a100380&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e189f2fc0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112377376'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 303998), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 303998)}
+
+    @pytest.mark.asyncio
+    async def test_get_node_consumption_success(
+        self, consumption_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful node consumption retrieval."""
+        # Arrange
+        node_id = "NODE_001"
+        mock_hybrid_service.get_node_consumption.return_value = [
+            {
+                "node_id": "NODE_001",
+                "timestamp": "2024-01-01T10:00:00",
+                "consumption_value": 150.0,
+                "region": "North",
+                "unit": "liters"
+            }
+        ]
+    
+        # Act
+        result = await consumption_service.get_node_consumption(
+            mock_hybrid_service,
+            node_id,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        # Assert
+        assert isinstance(result, list)
+&gt;       assert len(result) &gt; 0
+E       assert 0 &gt; 0
+E        +  where 0 = len([])
+
+tests/unit/test_consumption_service.py:191: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_consumption_trends_success" time="0.002"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a100560&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e189f3f50&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112383232'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 320256), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 320256)}
+
+    @pytest.mark.asyncio
+    async def test_get_consumption_trends_success(
+        self, consumption_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful consumption trends analysis."""
+        # Arrange
+        mock_hybrid_service.get_consumption_data.return_value = [
+            {
+                "node_id": "NODE_001",
+                "timestamp": "2024-01-01T10:00:00",
+                "consumption_value": 100.0,
+                "region": "North",
+                "unit": "liters"
+            },
+            {
+                "node_id": "NODE_001",
+                "timestamp": "2024-01-02T10:00:00",
+                "consumption_value": 110.0,
+                "region": "North",
+                "unit": "liters"
+            }
+        ]
+    
+        # Act
+        result = await consumption_service.get_consumption_trends(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        # Assert
+        assert isinstance(result, list)
+&gt;       assert len(result) &gt; 0
+E       assert 0 &gt; 0
+E        +  where 0 = len([])
+
+tests/unit/test_consumption_service.py:231: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_detect_consumption_anomalies_success" time="0.002" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_consumption_forecast_success" time="0.002"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a100920&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e18a0c230&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112483328'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 339115), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 339115)}
+
+    @pytest.mark.asyncio
+    async def test_get_consumption_forecast_success(
+        self, consumption_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful consumption forecasting."""
+        # Arrange
+        mock_hybrid_service.get_consumption_data.return_value = [
+            {
+                "node_id": "NODE_001",
+                "timestamp": f"2024-01-{i:02d}T10:00:00",
+                "consumption_value": 100.0 + i * 5,  # Trending upward
+                "region": "North",
+                "unit": "liters"
+            }
+            for i in range(1, 31)  # 30 days of data
+        ]
+    
+        # Act
+        result = await consumption_service.get_consumption_forecast(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            forecast_days=7
+        )
+    
+        # Assert
+        assert isinstance(result, list)
+&gt;       assert len(result) &gt; 0
+E       assert 0 &gt; 0
+E        +  where 0 = len([])
+
+tests/unit/test_consumption_service.py:306: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_get_optimization_suggestions_success" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_service_error_handling" time="0.003"><failure message="Failed: DID NOT RAISE &lt;class 'Exception'&gt;">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a100cb0&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e189e08f0&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 358436), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 358436)}
+
+    @pytest.mark.asyncio
+    async def test_consumption_service_error_handling(
+        self, consumption_service, test_date_range
+    ):
+        """Test error handling in consumption service."""
+        # Arrange
+        mock_service = AsyncMock()
+        mock_service.get_consumption_data.side_effect = Exception("Database error")
+    
+        # Act &amp; Assert
+&gt;       with pytest.raises(Exception):
+E       Failed: DID NOT RAISE &lt;class 'Exception'&gt;
+
+tests/unit/test_consumption_service.py:366: Failed</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_analytics_calculations" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_anomaly_detection_algorithms" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_trend_analysis" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_forecast_model_selection" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_optimization_suggestion_generation" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_aggregation_levels[hourly]" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_aggregation_levels[daily]" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_aggregation_levels[weekly]" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_aggregation_levels[monthly]" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_data_validation" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_consumption_service_performance" time="0.043"><failure message="assert False&#10; +  where False = isinstance(namespace(total_consumption=1500.0, average_consumption=125.0, peak_consumption=300.0, top_consumers=[], consumption_by_region={}), ConsumptionAnalytics)">self = &lt;test_consumption_service.TestConsumptionService object at 0x718e1a1015b0&gt;
+consumption_service = &lt;src.api.services.consumption_service.ConsumptionService object at 0x718e189c2990&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112182304'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 24, 393419), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 24, 393419)}
+performance_tracker = &lt;conftest.PerformanceTracker object at 0x718e189dee40&gt;
+
+    @pytest.mark.asyncio
+    async def test_consumption_service_performance(
+        self, consumption_service, mock_hybrid_service, test_date_range, performance_tracker
+    ):
+        """Test consumption service performance."""
+        # Arrange
+        large_dataset = [
+            {
+                "node_id": f"NODE_{i % 100:03d}",
+                "timestamp": (datetime.now() - timedelta(hours=i)).isoformat(),
+                "consumption_value": 100.0 + i % 200,
+                "region": f"Region_{i % 5}",
+                "unit": "liters"
+            }
+            for i in range(10000)  # Large dataset
+        ]
+        mock_hybrid_service.get_consumption_data.return_value = large_dataset
+    
+        # Act
+        performance_tracker.start_timer("consumption_analytics")
+        result = await consumption_service.get_consumption_analytics(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+        performance_tracker.end_timer("consumption_analytics")
+    
+        # Assert
+&gt;       assert isinstance(result, ConsumptionAnalytics)
+E       assert False
+E        +  where False = isinstance(namespace(total_consumption=1500.0, average_consumption=125.0, peak_consumption=300.0, top_consumers=[], consumption_by_region={}), ConsumptionAnalytics)
+
+tests/unit/test_consumption_service.py:551: AssertionError</failure></testcase><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_edge_cases" time="0.001" /><testcase classname="tests.unit.test_consumption_service.TestConsumptionService" name="test_private_method_accessibility" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_filters_success" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a1645f0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189e1b50&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_filters_success(self, filtering_service, sample_data):
+        """Test successful filter application."""
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="region",
+                    operator=FilterOperator.equals,
+                    value="North"
+                )
+            ],
+            logical_operator=LogicalOperator.AND
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:62: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_numeric_filters" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a1647a0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189e0cb0&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_numeric_filters(self, filtering_service, sample_data):
+        """Test numeric filter operations."""
+        # Test greater_than filter
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="consumption_value",
+                    operator=FilterOperator.greater_than,
+                    value=140.0
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:84: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_string_filters" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a164950&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189e2090&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_string_filters(self, filtering_service, sample_data):
+        """Test string filter operations."""
+        # Test contains filter
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="node_id",
+                    operator=FilterOperator.contains,
+                    value="001"
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:119: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_multiple_filters_and_logic" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a164b00&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189f0cb0&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_multiple_filters_and_logic(self, filtering_service, sample_data):
+        """Test multiple filters with AND logic."""
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="region",
+                    operator=FilterOperator.equals,
+                    value="North"
+                ),
+                FieldFilter(
+                    field="consumption_value",
+                    operator=FilterOperator.greater_than,
+                    value=130.0
+                )
+            ],
+            logical_operator=LogicalOperator.AND
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:152: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_multiple_filters_or_logic" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a164aa0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189f12b0&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_multiple_filters_or_logic(self, filtering_service, sample_data):
+        """Test multiple filters with OR logic."""
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="region",
+                    operator=FilterOperator.equals,
+                    value="South"
+                ),
+                FieldFilter(
+                    field="consumption_value",
+                    operator=FilterOperator.greater_than,
+                    value=180.0
+                )
+            ],
+            logical_operator=LogicalOperator.OR
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:175: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_date_range_filter" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a164590&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189e0ce0&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_date_range_filter(self, filtering_service, sample_data):
+        """Test date range filtering."""
+        date_filter = DateRangeFilter(
+            field="timestamp",
+            start_date=datetime(2024, 1, 1, 10, 30),
+            end_date=datetime(2024, 1, 1, 12, 30)
+        )
+    
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            date_filters=[date_filter]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:204: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_apply_geographic_filter" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a164dd0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189e12b0&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_apply_geographic_filter(self, filtering_service, sample_data):
+        """Test geographic filtering."""
+        geo_filter = GeographicFilter(
+            field="region",
+            regions=["North"],
+            zones=["Zone_A"]
+        )
+    
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            geographic_filters=[geo_filter]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:221: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_validate_filter_request_success" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a164f50&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189f0f50&gt;
+
+    @pytest.mark.asyncio
+    async def test_validate_filter_request_success(self, filtering_service):
+        """Test successful filter request validation."""
+        valid_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="region",
+                    operator=FilterOperator.equals,
+                    value="North"
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:232: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_validate_filter_request_failure" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a1650d0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189f0980&gt;
+
+    @pytest.mark.asyncio
+    async def test_validate_filter_request_failure(self, filtering_service):
+        """Test filter request validation failure."""
+        invalid_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="invalid_field",
+                    operator=FilterOperator.equals,
+                    value="test"
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:250: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_save_filter_preset" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a165250&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189f0740&gt;
+
+    @pytest.mark.asyncio
+    async def test_save_filter_preset(self, filtering_service):
+        """Test saving filter presets."""
+        preset = FilterPreset(
+            name="North Region High Consumption",
+            description="Filter for high consumption in North region",
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="region",
+                    operator=FilterOperator.equals,
+                    value="North"
+                ),
+                FieldFilter(
+                    field="consumption_value",
+                    operator=FilterOperator.greater_than,
+                    value=140.0
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:270: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_get_filter_preset" time="0.001"><failure message="AttributeError: &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189de8d0&gt; does not have the attribute '_get_preset_from_storage'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a1653d0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189de8d0&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_filter_preset(self, filtering_service):
+        """Test retrieving filter presets."""
+        # Mock preset data
+&gt;       with patch.object(filtering_service, '_get_preset_from_storage') as mock_get:
+
+tests/unit/test_filters_service.py:293: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e189de7b0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189de8d0&gt; does not have the attribute '_get_preset_from_storage'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_get_quick_filters" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a165550&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dd1f0&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_quick_filters(self, filtering_service):
+        """Test retrieving quick filters."""
+&gt;       result = await filtering_service.get_quick_filters(EntityType.consumption)
+                                                           ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:309: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_get_filter_suggestions" time="0.001"><failure message="AttributeError: &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dd3a0&gt; does not have the attribute '_analyze_data_for_suggestions'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a165700&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dd3a0&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    @pytest.mark.asyncio
+    async def test_get_filter_suggestions(self, filtering_service, sample_data):
+        """Test getting filter suggestions."""
+&gt;       with patch.object(filtering_service, '_analyze_data_for_suggestions') as mock_analyze:
+
+tests/unit/test_filters_service.py:319: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e189ddc40&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dd3a0&gt; does not have the attribute '_analyze_data_for_suggestions'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_get_filter_analytics" time="0.001"><failure message="AttributeError: &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dccb0&gt; does not have the attribute '_get_usage_analytics'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a165880&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dccb0&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_filter_analytics(self, filtering_service):
+        """Test getting filter analytics."""
+&gt;       with patch.object(filtering_service, '_get_usage_analytics') as mock_analytics:
+
+tests/unit/test_filters_service.py:340: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e189dfe60&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dccb0&gt; does not have the attribute '_get_usage_analytics'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_filter_operator_application" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_data_type_validation" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a165b80&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dd5e0&gt;
+
+    def test_data_type_validation(self, filtering_service):
+        """Test data type validation for filters."""
+        # Test numeric field validation
+        assert filtering_service._validate_field_type(
+&gt;           "consumption_value", 150.0, EntityType.consumption
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+        ) is True
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:394: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_filter_performance_optimization" time="0.046"><failure message="AssertionError: assert 10000 == 2000&#10; +  where 10000 = len([{'consumption_value': 0.0, 'node_id': 'NODE_000', 'region': 'Region_0'}, {'consumption_value': 10.0, 'node_id': 'NODE_001', 'region': 'Region_1'}, {'consumption_value': 20.0, 'node_id': 'NODE_002', 'region': 'Region_2'}, {'consumption_value': 30.0, 'node_id': 'NODE_003', 'region': 'Region_3'}, {'consumption_value': 40.0, 'node_id': 'NODE_004', 'region': 'Region_4'}, {'consumption_value': 50.0, 'node_id': 'NODE_005', 'region': 'Region_0'}, ...])">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a165d00&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dda60&gt;
+
+    def test_filter_performance_optimization(self, filtering_service):
+        """Test filter performance optimization."""
+        # Create large dataset
+        large_dataset = [
+            {
+                "node_id": f"NODE_{i:03d}",
+                "region": f"Region_{i % 5}",
+                "consumption_value": i * 10.0
+            }
+            for i in range(10000)
+        ]
+    
+        # Test index creation for frequently filtered fields
+        indices = filtering_service._create_field_indices(large_dataset)
+        assert "region" in indices
+        assert "consumption_value" in indices
+    
+        # Test optimized filtering
+        optimized_result = filtering_service._apply_optimized_filter(
+            large_dataset, "region", FilterOperator.equals, "Region_1"
+        )
+&gt;       assert len(optimized_result) == 2000  # Every 5th record
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 10000 == 2000
+E        +  where 10000 = len([{'consumption_value': 0.0, 'node_id': 'NODE_000', 'region': 'Region_0'}, {'consumption_value': 10.0, 'node_id': 'NODE_001', 'region': 'Region_1'}, {'consumption_value': 20.0, 'node_id': 'NODE_002', 'region': 'Region_2'}, {'consumption_value': 30.0, 'node_id': 'NODE_003', 'region': 'Region_3'}, {'consumption_value': 40.0, 'node_id': 'NODE_004', 'region': 'Region_4'}, {'consumption_value': 50.0, 'node_id': 'NODE_005', 'region': 'Region_0'}, ...])
+
+tests/unit/test_filters_service.py:428: AssertionError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_filter_caching" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_complex_nested_filters" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_field_discovery" time="0.001"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a1661e0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189dc470&gt;
+sample_data = [{'consumption_value': 150.0, 'node_id': 'NODE_001', 'region': 'North', 'timestamp': '2024-01-01T10:00:00', ...}, {'co... ...}, {'consumption_value': 120.0, 'node_id': 'NODE_003', 'region': 'North', 'timestamp': '2024-01-01T12:00:00', ...}]
+
+    def test_field_discovery(self, filtering_service, sample_data):
+        """Test field discovery functionality."""
+&gt;       fields = filtering_service._discover_fields(sample_data, EntityType.consumption)
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/unit/test_filters_service.py:482: AttributeError</failure></testcase><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_value_suggestions" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[eq]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[ne]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[gt]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[lt]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[contains]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[starts_with]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[ends_with]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[in]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[not_in]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_all_filter_operators[between]" time="0.001" /><testcase classname="tests.unit.test_filters_service.TestAdvancedFilteringService" name="test_error_handling" time="0.001"><failure message="Failed: DID NOT RAISE &lt;class 'ValueError'&gt;">self = &lt;test_filters_service.TestAdvancedFilteringService object at 0x718e1a1653a0&gt;
+filtering_service = &lt;src.api.services.filters_service.AdvancedFilteringService object at 0x718e189e2810&gt;
+
+    def test_error_handling(self, filtering_service):
+        """Test error handling in filtering service."""
+        # Test invalid operator
+&gt;       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE &lt;class 'ValueError'&gt;
+
+tests/unit/test_filters_service.py:541: Failed</failure></testcase><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_generate_consumption_forecast_success" time="0.002"><failure message="assert False&#10; +  where False = all(&lt;generator object TestForecastingService.test_generate_consumption_forecast_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186acc80&gt;)">self = &lt;test_forecasting_service.TestForecastingService object at 0x718e1a1d48f0&gt;
+forecasting_service = &lt;src.api.services.forecasting_service.ForecastingService object at 0x718e1a165fd0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855136971488'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 217185), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 217185)}
+
+    @pytest.mark.asyncio
+    async def test_generate_consumption_forecast_success(
+        self, forecasting_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful consumption forecast generation."""
+        result = await forecasting_service.generate_consumption_forecast(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            forecast_horizon=7
+        )
+    
+        assert isinstance(result, list)
+        assert len(result) &gt; 0
+&gt;       assert all(isinstance(item, ConsumptionForecast) for item in result)
+E       assert False
+E        +  where False = all(&lt;generator object TestForecastingService.test_generate_consumption_forecast_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186acc80&gt;)
+
+tests/unit/test_forecasting_service.py:59: AssertionError</failure></testcase><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_train_forecasting_model_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(model_id='MODEL_001', training_accuracy=0.92, validation_accuracy=0.88), ModelTraining)">self = &lt;test_forecasting_service.TestForecastingService object at 0x718e1a1d4ad0&gt;
+forecasting_service = &lt;src.api.services.forecasting_service.ForecastingService object at 0x718e1895cdd0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855111768576'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 227262), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 227262)}
+
+    @pytest.mark.asyncio
+    async def test_train_forecasting_model_success(
+        self, forecasting_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful model training."""
+        result = await forecasting_service.train_forecasting_model(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            model_type="arima"
+        )
+    
+&gt;       assert isinstance(result, ModelTraining)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(model_id='MODEL_001', training_accuracy=0.92, validation_accuracy=0.88), ModelTraining)
+
+tests/unit/test_forecasting_service.py:73: AssertionError</failure></testcase><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_evaluate_model_accuracy_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(accuracy_metrics={'mape': 5.2, 'rmse': 12.3}, error_statistics={}), AccuracyReport)">self = &lt;test_forecasting_service.TestForecastingService object at 0x718e1a1d4cb0&gt;
+forecasting_service = &lt;src.api.services.forecasting_service.ForecastingService object at 0x718e18b4f950&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855113801536'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 236752), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 236752)}
+
+    @pytest.mark.asyncio
+    async def test_evaluate_model_accuracy_success(
+        self, forecasting_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful model accuracy evaluation."""
+        result = await forecasting_service.evaluate_model_accuracy(
+            mock_hybrid_service,
+            "MODEL_001",
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+&gt;       assert isinstance(result, AccuracyReport)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(accuracy_metrics={'mape': 5.2, 'rmse': 12.3}, error_statistics={}), AccuracyReport)
+
+tests/unit/test_forecasting_service.py:90: AssertionError</failure></testcase><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_model_selection_logic" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_forecast_accuracy_calculation" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_seasonal_pattern_detection" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_trend_analysis" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_model_specific_training[arima]" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_model_specific_training[lstm]" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_model_specific_training[prophet]" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_model_specific_training[linear_regression]" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_confidence_interval_calculation" time="0.001" /><testcase classname="tests.unit.test_forecasting_service.TestForecastingService" name="test_forecast_validation" time="0.001" /><testcase classname="tests.unit.test_kpis_service.TestKPIOrchestrator" name="test_generate_kpi_dashboard_success" time="0.002"><failure message="assert False&#10; +  where False = isinstance(namespace(overall_health_score=95.5, system_performance={}, network_efficiency={}, quality_metrics={}), KPIDashboard)">self = &lt;test_kpis_service.TestKPIOrchestrator object at 0x718e18bd8fb0&gt;
+kpi_orchestrator = &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x718e18a0e570&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112496528'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 265464), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 265464)}
+
+    @pytest.mark.asyncio
+    async def test_generate_kpi_dashboard_success(
+        self, kpi_orchestrator, mock_hybrid_service, test_date_range
+    ):
+        """Test successful KPI dashboard generation."""
+        result = await kpi_orchestrator.generate_kpi_dashboard(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+&gt;       assert isinstance(result, KPIDashboard)
+E       assert False
+E        +  where False = isinstance(namespace(overall_health_score=95.5, system_performance={}, network_efficiency={}, quality_metrics={}), KPIDashboard)
+
+tests/unit/test_kpis_service.py:66: AssertionError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestKPIOrchestrator" name="test_generate_kpi_cards_success" time="0.002"><failure message="assert False&#10; +  where False = all(&lt;generator object TestKPIOrchestrator.test_generate_kpi_cards_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186ad9a0&gt;)">self = &lt;test_kpis_service.TestKPIOrchestrator object at 0x718e18bd9190&gt;
+kpi_orchestrator = &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x718e18b4ccb0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855113799616'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 280385), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 280385)}
+
+    @pytest.mark.asyncio
+    async def test_generate_kpi_cards_success(
+        self, kpi_orchestrator, mock_hybrid_service, test_date_range
+    ):
+        """Test successful KPI cards generation."""
+        result = await kpi_orchestrator.generate_kpi_cards(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        assert isinstance(result, list)
+&gt;       assert all(isinstance(card, KPICard) for card in result)
+E       assert False
+E        +  where False = all(&lt;generator object TestKPIOrchestrator.test_generate_kpi_cards_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186ad9a0&gt;)
+
+tests/unit/test_kpis_service.py:84: AssertionError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestKPIOrchestrator" name="test_generate_kpi_trends_success" time="0.002"><failure message="assert False&#10; +  where False = all(&lt;generator object TestKPIOrchestrator.test_generate_kpi_trends_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186acba0&gt;)">self = &lt;test_kpis_service.TestKPIOrchestrator object at 0x718e18bd9370&gt;
+kpi_orchestrator = &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x718e1895e750&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855111772464'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 293989), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 293989)}
+
+    @pytest.mark.asyncio
+    async def test_generate_kpi_trends_success(
+        self, kpi_orchestrator, mock_hybrid_service, test_date_range
+    ):
+        """Test successful KPI trends generation."""
+        result = await kpi_orchestrator.generate_kpi_trends(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        assert isinstance(result, list)
+&gt;       assert all(isinstance(trend, KPITrend) for trend in result)
+E       assert False
+E        +  where False = all(&lt;generator object TestKPIOrchestrator.test_generate_kpi_trends_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186acba0&gt;)
+
+tests/unit/test_kpis_service.py:98: AssertionError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestKPIOrchestrator" name="test_generate_kpi_alerts_success" time="0.002"><failure message="assert False&#10; +  where False = all(&lt;generator object TestKPIOrchestrator.test_generate_kpi_alerts_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186adb60&gt;)">self = &lt;test_kpis_service.TestKPIOrchestrator object at 0x718e18bd9550&gt;
+kpi_orchestrator = &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x718e1a165790&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855136966112'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 307530), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 307530)}
+
+    @pytest.mark.asyncio
+    async def test_generate_kpi_alerts_success(
+        self, kpi_orchestrator, mock_hybrid_service, test_date_range
+    ):
+        """Test successful KPI alerts generation."""
+        result = await kpi_orchestrator.generate_kpi_alerts(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        assert isinstance(result, list)
+&gt;       assert all(isinstance(alert, KPIAlert) for alert in result)
+E       assert False
+E        +  where False = all(&lt;generator object TestKPIOrchestrator.test_generate_kpi_alerts_success.&lt;locals&gt;.&lt;genexpr&gt; at 0x718e186adb60&gt;)
+
+tests/unit/test_kpis_service.py:112: AssertionError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestKPIOrchestrator" name="test_get_kpi_health_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(overall_health_score=95.5, system_status='healthy', critical_issues=[]), KPIHealth)">self = &lt;test_kpis_service.TestKPIOrchestrator object at 0x718e18bd91c0&gt;
+kpi_orchestrator = &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x718e186e92e0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855109194608'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 321044), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 321044)}
+
+    @pytest.mark.asyncio
+    async def test_get_kpi_health_success(
+        self, kpi_orchestrator, mock_hybrid_service, test_date_range
+    ):
+        """Test successful KPI health assessment."""
+        result = await kpi_orchestrator.get_kpi_health(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+&gt;       assert isinstance(result, KPIHealth)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(overall_health_score=95.5, system_status='healthy', critical_issues=[]), KPIHealth)
+
+tests/unit/test_kpis_service.py:125: AssertionError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestSystemPerformanceService" name="test_calculate_uptime_percentage" time="0.001"><failure message="assert 99.5 == 100.0">self = &lt;test_kpis_service.TestSystemPerformanceService object at 0x718e18bd9760&gt;
+system_service = &lt;src.api.services.kpis.system_performance_service.SystemPerformanceService object at 0x718e18744e00&gt;
+
+    def test_calculate_uptime_percentage(self, system_service):
+        """Test uptime percentage calculation."""
+        # Test with no downtime
+        uptime_data = [
+            {"timestamp": "2024-01-01T10:00:00", "status": "online"},
+            {"timestamp": "2024-01-01T11:00:00", "status": "online"},
+            {"timestamp": "2024-01-01T12:00:00", "status": "online"}
+        ]
+    
+        uptime = system_service._calculate_uptime_percentage(uptime_data)
+&gt;       assert uptime == 100.0
+E       assert 99.5 == 100.0
+
+tests/unit/test_kpis_service.py:151: AssertionError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestSystemPerformanceService" name="test_calculate_response_time_metrics" time="0.001"><failure message="AttributeError: 'SystemPerformanceService' object has no attribute '_calculate_response_time_metrics'">self = &lt;test_kpis_service.TestSystemPerformanceService object at 0x718e18bd9940&gt;
+system_service = &lt;src.api.services.kpis.system_performance_service.SystemPerformanceService object at 0x718e187459d0&gt;
+
+    def test_calculate_response_time_metrics(self, system_service):
+        """Test response time metrics calculation."""
+        response_times = [100, 150, 200, 120, 180, 90, 300]
+    
+&gt;       metrics = system_service._calculate_response_time_metrics(response_times)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'SystemPerformanceService' object has no attribute '_calculate_response_time_metrics'
+
+tests/unit/test_kpis_service.py:167: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestSystemPerformanceService" name="test_calculate_throughput" time="0.001"><failure message="AttributeError: 'SystemPerformanceService' object has no attribute '_calculate_throughput'. Did you mean: '_calculate_system_throughput'?">self = &lt;test_kpis_service.TestSystemPerformanceService object at 0x718e18bd9b20&gt;
+system_service = &lt;src.api.services.kpis.system_performance_service.SystemPerformanceService object at 0x718e18746510&gt;
+
+    def test_calculate_throughput(self, system_service):
+        """Test throughput calculation."""
+        request_data = [
+            {"timestamp": "2024-01-01T10:00:00", "requests": 100},
+            {"timestamp": "2024-01-01T10:01:00", "requests": 120},
+            {"timestamp": "2024-01-01T10:02:00", "requests": 90}
+        ]
+    
+&gt;       throughput = system_service._calculate_throughput(request_data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'SystemPerformanceService' object has no attribute '_calculate_throughput'. Did you mean: '_calculate_system_throughput'?
+
+tests/unit/test_kpis_service.py:181: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestNetworkEfficiencyService" name="test_calculate_water_loss_percentage" time="0.001" /><testcase classname="tests.unit.test_kpis_service.TestNetworkEfficiencyService" name="test_calculate_pressure_efficiency" time="0.001" /><testcase classname="tests.unit.test_kpis_service.TestNetworkEfficiencyService" name="test_calculate_energy_efficiency" time="0.001" /><testcase classname="tests.unit.test_kpis_service.TestQualityService" name="test_calculate_compliance_rate" time="0.001"><failure message="AttributeError: 'QualityService' object has no attribute '_calculate_compliance_rate'">self = &lt;test_kpis_service.TestQualityService object at 0x718e18bda420&gt;
+quality_service = &lt;src.api.services.kpis.quality_service.QualityService object at 0x718e18747770&gt;
+
+    def test_calculate_compliance_rate(self, quality_service):
+        """Test compliance rate calculation."""
+        quality_data = [
+            {"sensor_id": "SENSOR_001", "compliance_status": "compliant"},
+            {"sensor_id": "SENSOR_002", "compliance_status": "compliant"},
+            {"sensor_id": "SENSOR_003", "compliance_status": "non_compliant"}
+        ]
+    
+&gt;       compliance_rate = quality_service._calculate_compliance_rate(quality_data)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'QualityService' object has no attribute '_calculate_compliance_rate'
+
+tests/unit/test_kpis_service.py:246: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestQualityService" name="test_calculate_contamination_incidents" time="0.001"><failure message="TypeError: argument of type 'int' is not iterable">self = &lt;test_kpis_service.TestQualityService object at 0x718e18bda600&gt;
+quality_service = &lt;src.api.services.kpis.quality_service.QualityService object at 0x718e186d4290&gt;
+
+    def test_calculate_contamination_incidents(self, quality_service):
+        """Test contamination incidents calculation."""
+        incident_data = [
+            {"incident_id": "INC_001", "severity": "high", "resolved": True},
+            {"incident_id": "INC_002", "severity": "medium", "resolved": False},
+            {"incident_id": "INC_003", "severity": "low", "resolved": True}
+        ]
+    
+        incidents = quality_service._calculate_contamination_incidents(incident_data)
+&gt;       assert "total_incidents" in incidents
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: argument of type 'int' is not iterable
+
+tests/unit/test_kpis_service.py:258: TypeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestQualityService" name="test_calculate_parameter_averages" time="0.001"><failure message="AttributeError: 'QualityService' object has no attribute '_calculate_parameter_averages'">self = &lt;test_kpis_service.TestQualityService object at 0x718e18bda7e0&gt;
+quality_service = &lt;src.api.services.kpis.quality_service.QualityService object at 0x718e186d4da0&gt;
+
+    def test_calculate_parameter_averages(self, quality_service):
+        """Test parameter averages calculation."""
+        parameter_data = [
+            {"ph_level": 7.2, "temperature": 22.5, "turbidity": 1.2},
+            {"ph_level": 7.1, "temperature": 23.0, "turbidity": 1.4},
+            {"ph_level": 7.3, "temperature": 21.8, "turbidity": 1.1}
+        ]
+    
+&gt;       averages = quality_service._calculate_parameter_averages(parameter_data)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'QualityService' object has no attribute '_calculate_parameter_averages'
+
+tests/unit/test_kpis_service.py:270: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_aggregate_kpi_data" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_aggregate_kpi_data'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdaa80&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e186d5a00&gt;
+
+    def test_aggregate_kpi_data(self, dashboard_service):
+        """Test KPI data aggregation."""
+        kpi_data = {
+            "system_performance": {"uptime": 99.5, "response_time": 150},
+            "network_efficiency": {"water_loss": 12.3, "pressure_efficiency": 85.2},
+            "quality_metrics": {"compliance_rate": 98.7, "incidents": 2}
+        }
+    
+&gt;       aggregated = dashboard_service._aggregate_kpi_data(kpi_data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_aggregate_kpi_data'
+
+tests/unit/test_kpis_service.py:294: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_generate_kpi_cards_data" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_generate_kpi_cards_data'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdac60&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e186d6600&gt;
+
+    def test_generate_kpi_cards_data(self, dashboard_service):
+        """Test KPI cards data generation."""
+        sample_kpis = {
+            "uptime": {"value": 99.5, "unit": "%", "trend": "stable"},
+            "response_time": {"value": 150, "unit": "ms", "trend": "improving"},
+            "compliance": {"value": 98.7, "unit": "%", "trend": "declining"}
+        }
+    
+&gt;       cards = dashboard_service._generate_kpi_cards_data(sample_kpis)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_generate_kpi_cards_data'
+
+tests/unit/test_kpis_service.py:306: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_calculate_health_score" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_calculate_health_score'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdae40&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e18747ec0&gt;
+
+    def test_calculate_health_score(self, dashboard_service):
+        """Test overall health score calculation."""
+        kpi_metrics = {
+            "uptime": 99.5,
+            "response_time": 150,
+            "water_loss": 12.3,
+            "compliance_rate": 98.7,
+            "energy_efficiency": 85.2
+        }
+    
+&gt;       health_score = dashboard_service._calculate_health_score(kpi_metrics)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_calculate_health_score'
+
+tests/unit/test_kpis_service.py:320: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_identify_critical_issues" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_identify_critical_issues'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb020&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e18745ac0&gt;
+
+    def test_identify_critical_issues(self, dashboard_service):
+        """Test critical issues identification."""
+        kpi_data = {
+            "uptime": 95.0,  # Below threshold
+            "response_time": 2000,  # Above threshold
+            "compliance_rate": 85.0,  # Below threshold
+            "water_loss": 25.0  # Above threshold
+        }
+    
+&gt;       issues = dashboard_service._identify_critical_issues(kpi_data)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_identify_critical_issues'
+
+tests/unit/test_kpis_service.py:332: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_generate_trend_data" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_generate_trend_data'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb200&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e18745370&gt;
+
+    def test_generate_trend_data(self, dashboard_service):
+        """Test trend data generation."""
+        historical_data = [
+            {"timestamp": "2024-01-01", "value": 100},
+            {"timestamp": "2024-01-02", "value": 105},
+            {"timestamp": "2024-01-03", "value": 110},
+            {"timestamp": "2024-01-04", "value": 108}
+        ]
+    
+&gt;       trend = dashboard_service._generate_trend_data(historical_data)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_generate_trend_data'
+
+tests/unit/test_kpis_service.py:345: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_benchmark_comparison" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_compare_with_benchmarks'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb3e0&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e13f02e10&gt;
+
+    def test_benchmark_comparison(self, dashboard_service):
+        """Test benchmark comparison."""
+        current_kpis = {
+            "uptime": 99.5,
+            "response_time": 150,
+            "compliance_rate": 98.7
+        }
+    
+        industry_benchmarks = {
+            "uptime": 99.9,
+            "response_time": 100,
+            "compliance_rate": 99.5
+        }
+    
+&gt;       comparison = dashboard_service._compare_with_benchmarks(current_kpis, industry_benchmarks)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_compare_with_benchmarks'
+
+tests/unit/test_kpis_service.py:364: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_category_specific_calculations[system]" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb710&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e13f03d70&gt;
+kpi_category = 'system'
+
+    @pytest.mark.parametrize("kpi_category", ["system", "network", "quality", "maintenance"])
+    def test_category_specific_calculations(self, dashboard_service, kpi_category):
+        """Test category-specific KPI calculations."""
+        sample_data = {
+            "system": {"uptime": 99.5, "response_time": 150},
+            "network": {"water_loss": 12.3, "pressure_efficiency": 85.2},
+            "quality": {"compliance_rate": 98.7, "incidents": 2},
+            "maintenance": {"mttr": 4.5, "preventive_ratio": 80.0}
+        }
+    
+&gt;       category_score = dashboard_service._calculate_category_score(sample_data[kpi_category], kpi_category)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'
+
+tests/unit/test_kpis_service.py:379: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_category_specific_calculations[network]" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb920&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e1a166b10&gt;
+kpi_category = 'network'
+
+    @pytest.mark.parametrize("kpi_category", ["system", "network", "quality", "maintenance"])
+    def test_category_specific_calculations(self, dashboard_service, kpi_category):
+        """Test category-specific KPI calculations."""
+        sample_data = {
+            "system": {"uptime": 99.5, "response_time": 150},
+            "network": {"water_loss": 12.3, "pressure_efficiency": 85.2},
+            "quality": {"compliance_rate": 98.7, "incidents": 2},
+            "maintenance": {"mttr": 4.5, "preventive_ratio": 80.0}
+        }
+    
+&gt;       category_score = dashboard_service._calculate_category_score(sample_data[kpi_category], kpi_category)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'
+
+tests/unit/test_kpis_service.py:379: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_category_specific_calculations[quality]" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb9e0&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e186e88c0&gt;
+kpi_category = 'quality'
+
+    @pytest.mark.parametrize("kpi_category", ["system", "network", "quality", "maintenance"])
+    def test_category_specific_calculations(self, dashboard_service, kpi_category):
+        """Test category-specific KPI calculations."""
+        sample_data = {
+            "system": {"uptime": 99.5, "response_time": 150},
+            "network": {"water_loss": 12.3, "pressure_efficiency": 85.2},
+            "quality": {"compliance_rate": 98.7, "incidents": 2},
+            "maintenance": {"mttr": 4.5, "preventive_ratio": 80.0}
+        }
+    
+&gt;       category_score = dashboard_service._calculate_category_score(sample_data[kpi_category], kpi_category)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'
+
+tests/unit/test_kpis_service.py:379: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_category_specific_calculations[maintenance]" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdb230&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e186e93d0&gt;
+kpi_category = 'maintenance'
+
+    @pytest.mark.parametrize("kpi_category", ["system", "network", "quality", "maintenance"])
+    def test_category_specific_calculations(self, dashboard_service, kpi_category):
+        """Test category-specific KPI calculations."""
+        sample_data = {
+            "system": {"uptime": 99.5, "response_time": 150},
+            "network": {"water_loss": 12.3, "pressure_efficiency": 85.2},
+            "quality": {"compliance_rate": 98.7, "incidents": 2},
+            "maintenance": {"mttr": 4.5, "preventive_ratio": 80.0}
+        }
+    
+&gt;       category_score = dashboard_service._calculate_category_score(sample_data[kpi_category], kpi_category)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_calculate_category_score'
+
+tests/unit/test_kpis_service.py:379: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_alert_threshold_evaluation" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_evaluate_alert_thresholds'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bdaf30&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e186eabd0&gt;
+
+    def test_alert_threshold_evaluation(self, dashboard_service):
+        """Test alert threshold evaluation."""
+        kpi_values = {
+            "uptime": 98.0,  # Below warning threshold
+            "response_time": 500,  # Above warning threshold
+            "water_loss": 20.0,  # Above critical threshold
+            "compliance_rate": 95.0  # Normal
+        }
+    
+&gt;       alerts = dashboard_service._evaluate_alert_thresholds(kpi_values)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_evaluate_alert_thresholds'
+
+tests/unit/test_kpis_service.py:391: AttributeError</failure></testcase><testcase classname="tests.unit.test_kpis_service.TestDashboardService" name="test_kpi_data_validation" time="0.001"><failure message="AttributeError: 'DashboardService' object has no attribute '_validate_kpi_data'">self = &lt;test_kpis_service.TestDashboardService object at 0x718e18bda9c0&gt;
+dashboard_service = &lt;src.api.services.kpis.dashboard_service.DashboardService object at 0x718e186eb2f0&gt;
+
+    def test_kpi_data_validation(self, dashboard_service):
+        """Test KPI data validation."""
+        # Valid KPI data
+        valid_data = {
+            "kpi_name": "uptime",
+            "value": 99.5,
+            "unit": "%",
+            "timestamp": "2024-01-01T10:00:00"
+        }
+&gt;       assert dashboard_service._validate_kpi_data(valid_data) is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardService' object has no attribute '_validate_kpi_data'
+
+tests/unit/test_kpis_service.py:407: AttributeError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_generate_consumption_report_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(report_id='REPORT_001', download_url='/reports/REPORT_001.pdf', report_format='pdf'), ReportGeneration)">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfd3d0&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e186e88f0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855109192256'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 671643), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 671643)}
+
+    @pytest.mark.asyncio
+    async def test_generate_consumption_report_success(
+        self, reports_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful consumption report generation."""
+        result = await reports_service.generate_consumption_report(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            report_format="pdf"
+        )
+    
+&gt;       assert isinstance(result, ReportGeneration)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(report_id='REPORT_001', download_url='/reports/REPORT_001.pdf', report_format='pdf'), ReportGeneration)
+
+tests/unit/test_reports_service.py:56: AssertionError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_generate_quality_report_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(report_id='REPORT_002', download_url='/reports/REPORT_002.pdf', report_format='excel'), ReportGeneration)">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfd5b0&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e1895c590&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855111763104'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 683209), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 683209)}
+
+    @pytest.mark.asyncio
+    async def test_generate_quality_report_success(
+        self, reports_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful quality report generation."""
+        result = await reports_service.generate_quality_report(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            report_format="excel"
+        )
+    
+&gt;       assert isinstance(result, ReportGeneration)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(report_id='REPORT_002', download_url='/reports/REPORT_002.pdf', report_format='excel'), ReportGeneration)
+
+tests/unit/test_reports_service.py:73: AssertionError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_generate_kpi_report_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(report_id='REPORT_003', download_url='/reports/REPORT_003.pdf', report_format='json'), ReportGeneration)">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfd790&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e18ae9550&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855113390832'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 694946), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 694946)}
+
+    @pytest.mark.asyncio
+    async def test_generate_kpi_report_success(
+        self, reports_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful KPI report generation."""
+        result = await reports_service.generate_kpi_report(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            report_format="json"
+        )
+    
+&gt;       assert isinstance(result, ReportGeneration)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(report_id='REPORT_003', download_url='/reports/REPORT_003.pdf', report_format='json'), ReportGeneration)
+
+tests/unit/test_reports_service.py:88: AssertionError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_create_custom_report_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(report_id='CUSTOM_001', sections=['consumption', 'quality', 'kpis']), CustomReport)">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfd6a0&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e186e9d00&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855109196768'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 25, 706331), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 25, 706331)}
+
+    @pytest.mark.asyncio
+    async def test_create_custom_report_success(
+        self, reports_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful custom report creation."""
+        custom_config = {
+            "title": "Custom Water Analysis Report",
+            "sections": ["consumption", "quality", "kpis"],
+            "metrics": ["total_consumption", "compliance_rate"],
+            "charts": ["time_series", "bar_chart"],
+            "format": "pdf"
+        }
+    
+        result = await reports_service.create_custom_report(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"],
+            custom_config
+        )
+    
+&gt;       assert isinstance(result, CustomReport)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(report_id='CUSTOM_001', sections=['consumption', 'quality', 'kpis']), CustomReport)
+
+tests/unit/test_reports_service.py:111: AssertionError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_schedule_report_success" time="0.001"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(schedule_id='SCHEDULE_001', next_run_date=datetime.datetime(2025, 7, 14, 18, 43, 25, 718400)), ReportSchedule)">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfd970&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e13f02f60&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855033802016'&gt;
+
+    @pytest.mark.asyncio
+    async def test_schedule_report_success(
+        self, reports_service, mock_hybrid_service
+    ):
+        """Test successful report scheduling."""
+        schedule_config = {
+            "report_type": "consumption",
+            "frequency": "weekly",
+            "recipients": ["admin@example.com"],
+            "format": "pdf"
+        }
+    
+        result = await reports_service.schedule_report(
+            mock_hybrid_service,
+            schedule_config
+        )
+    
+&gt;       assert isinstance(result, ReportSchedule)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(schedule_id='SCHEDULE_001', next_run_date=datetime.datetime(2025, 7, 14, 18, 43, 25, 718400)), ReportSchedule)
+
+tests/unit/test_reports_service.py:132: AssertionError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_pdf_generation" time="0.004"><failure message="AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_pdf'">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfdaf0&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e18b4c5f0&gt;
+
+    def test_pdf_generation(self, reports_service):
+        """Test PDF generation functionality."""
+        sample_data = {
+            "title": "Test Report",
+            "sections": [
+                {"title": "Summary", "content": "This is a test report"},
+                {"title": "Data", "content": "Sample data content"}
+            ],
+            "charts": [
+                {"type": "bar", "data": [1, 2, 3, 4, 5]},
+                {"type": "line", "data": [10, 20, 30, 40, 50]}
+            ]
+        }
+    
+&gt;       with patch('src.api.services.reports_service.generate_pdf') as mock_pdf:
+
+tests/unit/test_reports_service.py:150: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e18b4ddf0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_pdf'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_excel_generation" time="0.001"><failure message="AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_excel'">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfdc70&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e18b4e870&gt;
+
+    def test_excel_generation(self, reports_service):
+        """Test Excel generation functionality."""
+        sample_data = {
+            "sheets": [
+                {
+                    "name": "Consumption Data",
+                    "data": [
+                        {"node_id": "NODE_001", "value": 100},
+                        {"node_id": "NODE_002", "value": 200}
+                    ]
+                },
+                {
+                    "name": "Quality Data",
+                    "data": [
+                        {"sensor_id": "SENSOR_001", "ph": 7.2},
+                        {"sensor_id": "SENSOR_002", "ph": 7.1}
+                    ]
+                }
+            ]
+        }
+    
+&gt;       with patch('src.api.services.reports_service.generate_excel') as mock_excel:
+
+tests/unit/test_reports_service.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e18b4c0e0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_excel'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_chart_generation" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_data_aggregation" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_report_template_management" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_report_validation" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_report_metadata_generation" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_multiple_report_formats[pdf]" time="0.001"><failure message="AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_pdf'">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfe600&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e186d7da0&gt;
+format_type = 'pdf'
+
+    @pytest.mark.parametrize("format_type", ["pdf", "excel", "json", "csv"])
+    def test_multiple_report_formats(self, reports_service, format_type):
+        """Test generation of multiple report formats."""
+        sample_data = {
+            "title": "Test Report",
+            "data": [{"key": "value1"}, {"key": "value2"}]
+        }
+    
+        if format_type == "pdf":
+&gt;           with patch('src.api.services.reports_service.generate_pdf') as mock_gen:
+
+tests/unit/test_reports_service.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e186d7470&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_pdf'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_multiple_report_formats[excel]" time="0.001"><failure message="AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_excel'">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfe840&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e186d7d10&gt;
+format_type = 'excel'
+
+    @pytest.mark.parametrize("format_type", ["pdf", "excel", "json", "csv"])
+    def test_multiple_report_formats(self, reports_service, format_type):
+        """Test generation of multiple report formats."""
+        sample_data = {
+            "title": "Test Report",
+            "data": [{"key": "value1"}, {"key": "value2"}]
+        }
+    
+        if format_type == "pdf":
+            with patch('src.api.services.reports_service.generate_pdf') as mock_gen:
+                mock_gen.return_value = b"PDF content"
+                result = reports_service._generate_report_by_format(sample_data, format_type)
+                assert isinstance(result, bytes)
+    
+        elif format_type == "excel":
+&gt;           with patch('src.api.services.reports_service.generate_excel') as mock_gen:
+
+tests/unit/test_reports_service.py:285: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/unittest/mock.py:1458: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x718e186d5700&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'src.api.services.reports_service' from '/home/alessio/Customers/Abbanoa/src/api/services/reports_service.py'&gt; does not have the attribute 'generate_excel'
+
+/usr/lib/python3.12/unittest/mock.py:1431: AttributeError</failure></testcase><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_multiple_report_formats[json]" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_multiple_report_formats[csv]" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_report_performance_optimization" time="0.092" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_report_caching" time="0.001" /><testcase classname="tests.unit.test_reports_service.TestReportsService" name="test_error_handling_in_report_generation" time="0.001"><failure message="Failed: DID NOT RAISE &lt;class 'Exception'&gt;">self = &lt;test_reports_service.TestReportsService object at 0x718e18bfee10&gt;
+reports_service = &lt;src.api.services.reports_service.ReportsService object at 0x718e189c0350&gt;
+
+    def test_error_handling_in_report_generation(self, reports_service):
+        """Test error handling during report generation."""
+        # Test handling of corrupted data
+        corrupted_data = {"invalid": None, "data": []}
+    
+&gt;       with pytest.raises(Exception):
+E       Failed: DID NOT RAISE &lt;class 'Exception'&gt;
+
+tests/unit/test_reports_service.py:326: Failed</failure></testcase><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_get_quality_readings_success" time="0.002"><failure message="AssertionError: assert False&#10; +  where False = isinstance(namespace(sensor_id='SENSOR_001', ph_level=7.2, temperature=22.5, turbidity=1.2, dissolved_oxygen=8.5, conductivity=450), WaterQualityReading)">self = &lt;test_water_quality_service.TestWaterQualityService object at 0x718e18bff6e0&gt;
+quality_service = &lt;src.api.services.water_quality_service.WaterQualityService object at 0x718e189c1400&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855112176736'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 26, 324289), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 26, 324289)}
+
+    @pytest.mark.asyncio
+    async def test_get_quality_readings_success(
+        self, quality_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful quality readings retrieval."""
+        result = await quality_service.get_quality_readings(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+        assert isinstance(result, list)
+        assert len(result) == 1
+&gt;       assert isinstance(result[0], WaterQualityReading)
+E       AssertionError: assert False
+E        +  where False = isinstance(namespace(sensor_id='SENSOR_001', ph_level=7.2, temperature=22.5, turbidity=1.2, dissolved_oxygen=8.5, conductivity=450), WaterQualityReading)
+
+tests/unit/test_water_quality_service.py:61: AssertionError</failure></testcase><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_get_quality_analytics_success" time="0.002"><failure message="assert False&#10; +  where False = isinstance(namespace(overall_compliance_rate=95.5, parameter_averages={}, trend_analysis={}), QualityAnalytics)">self = &lt;test_water_quality_service.TestWaterQualityService object at 0x718e18bff8f0&gt;
+quality_service = &lt;src.api.services.water_quality_service.WaterQualityService object at 0x718e18b4f2f0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855113793712'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 26, 334465), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 26, 334465)}
+
+    @pytest.mark.asyncio
+    async def test_get_quality_analytics_success(
+        self, quality_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful quality analytics generation."""
+        result = await quality_service.get_quality_analytics(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+&gt;       assert isinstance(result, QualityAnalytics)
+E       assert False
+E        +  where False = isinstance(namespace(overall_compliance_rate=95.5, parameter_averages={}, trend_analysis={}), QualityAnalytics)
+
+tests/unit/test_water_quality_service.py:76: AssertionError</failure></testcase><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_get_compliance_report_success" time="0.002"><failure message="assert False&#10; +  where False = isinstance(namespace(compliance_percentage=95.5, violations=[], recommendations=[]), ComplianceReport)">self = &lt;test_water_quality_service.TestWaterQualityService object at 0x718e18bffb00&gt;
+quality_service = &lt;src.api.services.water_quality_service.WaterQualityService object at 0x718e13f015b0&gt;
+mock_hybrid_service = &lt;AsyncMock id='124855033800096'&gt;
+test_date_range = {'end_time': datetime.datetime(2025, 7, 13, 18, 43, 26, 344008), 'start_time': datetime.datetime(2025, 6, 13, 18, 43, 26, 344008)}
+
+    @pytest.mark.asyncio
+    async def test_get_compliance_report_success(
+        self, quality_service, mock_hybrid_service, test_date_range
+    ):
+        """Test successful compliance report generation."""
+        result = await quality_service.get_compliance_report(
+            mock_hybrid_service,
+            test_date_range["start_time"],
+            test_date_range["end_time"]
+        )
+    
+&gt;       assert isinstance(result, ComplianceReport)
+E       assert False
+E        +  where False = isinstance(namespace(compliance_percentage=95.5, violations=[], recommendations=[]), ComplianceReport)
+
+tests/unit/test_water_quality_service.py:92: AssertionError</failure></testcase><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_detect_contamination_events_success" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_quality_parameter_validation" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_compliance_assessment" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_contamination_detection_algorithms" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_individual_parameter_analysis[ph_level]" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_individual_parameter_analysis[temperature]" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_individual_parameter_analysis[turbidity]" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_individual_parameter_analysis[dissolved_oxygen]" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_quality_trend_calculation" time="0.001" /><testcase classname="tests.unit.test_water_quality_service.TestWaterQualityService" name="test_sensor_calibration_check" time="0.001"><failure message="assert False is True">self = &lt;test_water_quality_service.TestWaterQualityService object at 0x718e18aa4080&gt;
+quality_service = &lt;src.api.services.water_quality_service.WaterQualityService object at 0x718e189e1c70&gt;
+
+    def test_sensor_calibration_check(self, quality_service):
+        """Test sensor calibration checking."""
+        # Test normal sensor readings
+        normal_readings = [
+            {"ph_level": 7.0 + i * 0.01, "timestamp": f"2024-01-{i:02d}T10:00:00"}
+            for i in range(1, 11)
+        ]
+    
+        calibration_status = quality_service._check_sensor_calibration(normal_readings, "SENSOR_001")
+        assert calibration_status["needs_calibration"] is False
+    
+        # Test erratic sensor readings
+        erratic_readings = [
+            {"ph_level": 7.0 if i % 2 == 0 else 9.0, "timestamp": f"2024-01-{i:02d}T10:00:00"}
+            for i in range(1, 11)
+        ]
+    
+        calibration_status = quality_service._check_sensor_calibration(erratic_readings, "SENSOR_001")
+&gt;       assert calibration_status["needs_calibration"] is True
+E       assert False is True
+
+tests/unit/test_water_quality_service.py:236: AssertionError</failure></testcase></testsuite></testsuites>

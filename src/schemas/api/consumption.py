@@ -10,6 +10,75 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class ConsumptionData(BaseModel):
+    """Basic consumption data point."""
+    
+    node_id: str = Field(..., description="Node identifier")
+    timestamp: str = Field(..., description="Timestamp in ISO format")
+    consumption_value: float = Field(..., description="Consumption value in L/s")
+    region: Optional[str] = Field(None, description="Region identifier")
+    quality_score: Optional[float] = Field(None, description="Data quality score")
+
+
+class ConsumptionAnalytics(BaseModel):
+    """Consumption analytics data."""
+    
+    total_consumption: float = Field(..., description="Total consumption")
+    average_consumption: float = Field(..., description="Average consumption")
+    peak_consumption: float = Field(..., description="Peak consumption")
+    top_consumers: List[str] = Field(default_factory=list, description="Top consuming nodes")
+    consumption_by_region: Dict[str, float] = Field(default_factory=dict, description="Consumption by region")
+
+
+class ConsumptionTrend(BaseModel):
+    """Consumption trend data."""
+    
+    period: str = Field(..., description="Time period")
+    trend_direction: str = Field(..., description="Trend direction")
+    change_percentage: float = Field(..., description="Change percentage")
+    confidence_level: float = Field(..., description="Confidence level")
+
+
+class ConsumptionAnomaly(BaseModel):
+    """Consumption anomaly data."""
+    
+    node_id: str = Field(..., description="Node identifier")
+    timestamp: str = Field(..., description="Timestamp")
+    anomaly_type: str = Field(..., description="Type of anomaly")
+    severity: str = Field(..., description="Severity level")
+    expected_value: float = Field(..., description="Expected value")
+    actual_value: float = Field(..., description="Actual value")
+
+
+class ConsumptionOptimization(BaseModel):
+    """Consumption optimization suggestion."""
+    
+    node_id: str = Field(..., description="Node identifier")
+    suggestion_type: str = Field(..., description="Type of suggestion")
+    description: str = Field(..., description="Optimization description")
+    potential_savings: float = Field(..., description="Potential savings")
+
+
+class OptimizationSuggestion(BaseModel):
+    """Optimization suggestion alias for ConsumptionOptimization."""
+    
+    node_id: str = Field(..., description="Node identifier")
+    suggestion_type: str = Field(..., description="Type of suggestion")
+    description: str = Field(..., description="Optimization description")
+    potential_savings: float = Field(..., description="Potential savings")
+
+
+class AnomalyDetection(BaseModel):
+    """Anomaly detection alias for ConsumptionAnomaly."""
+    
+    node_id: str = Field(..., description="Node identifier")
+    timestamp: str = Field(..., description="Timestamp")
+    anomaly_type: str = Field(..., description="Type of anomaly")
+    severity: str = Field(..., description="Severity level")
+    expected_value: float = Field(..., description="Expected value")
+    actual_value: float = Field(..., description="Actual value")
+
+
 class ConsumptionMetrics(BaseModel):
     """Consumption metrics for a time period."""
     

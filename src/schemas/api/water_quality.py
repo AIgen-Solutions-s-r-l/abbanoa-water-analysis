@@ -10,6 +10,66 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class WaterQualityReading(BaseModel):
+    """Water quality reading data."""
+    
+    sensor_id: str = Field(..., description="Sensor identifier")
+    timestamp: str = Field(..., description="Timestamp in ISO format")
+    ph_level: float = Field(..., description="pH level")
+    temperature: float = Field(..., description="Temperature in °C")
+    turbidity: float = Field(..., description="Turbidity in NTU")
+    dissolved_oxygen: float = Field(..., description="Dissolved oxygen in mg/L")
+    conductivity: float = Field(..., description="Conductivity in μS/cm")
+
+
+class QualityAnalytics(BaseModel):
+    """Quality analytics data."""
+    
+    overall_compliance_rate: float = Field(..., description="Overall compliance rate")
+    parameter_averages: Dict[str, float] = Field(default_factory=dict, description="Parameter averages")
+    trend_analysis: Dict[str, Any] = Field(default_factory=dict, description="Trend analysis")
+    violations_count: int = Field(default=0, description="Number of violations")
+
+
+class ComplianceReport(BaseModel):
+    """Compliance report data."""
+    
+    compliance_percentage: float = Field(..., description="Compliance percentage")
+    violations: List[str] = Field(default_factory=list, description="List of violations")
+    recommendations: List[str] = Field(default_factory=list, description="Recommendations")
+    period: str = Field(..., description="Report period")
+
+
+class ContaminationEvent(BaseModel):
+    """Contamination event data."""
+    
+    event_id: str = Field(..., description="Event identifier")
+    timestamp: str = Field(..., description="Event timestamp")
+    contamination_type: str = Field(..., description="Type of contamination")
+    severity: str = Field(..., description="Severity level")
+    location: str = Field(..., description="Event location")
+    description: str = Field(..., description="Event description")
+
+
+class QualityTrendData(BaseModel):
+    """Quality trend data."""
+    
+    parameter: str = Field(..., description="Parameter name")
+    trend_direction: str = Field(..., description="Trend direction")
+    change_rate: float = Field(..., description="Change rate")
+    confidence: float = Field(..., description="Confidence level")
+
+
+class SensorCalibration(BaseModel):
+    """Sensor calibration data."""
+    
+    sensor_id: str = Field(..., description="Sensor identifier")
+    calibration_date: str = Field(..., description="Calibration date")
+    needs_calibration: bool = Field(..., description="Whether sensor needs calibration")
+    calibration_status: str = Field(..., description="Calibration status")
+    accuracy: float = Field(..., description="Sensor accuracy")
+
+
 class WaterQualityMetrics(BaseModel):
     """Water quality metrics for a time period."""
     

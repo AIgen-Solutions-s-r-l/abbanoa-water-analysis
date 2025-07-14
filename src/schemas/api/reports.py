@@ -10,6 +10,68 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class ReportGeneration(BaseModel):
+    """Report generation data."""
+    
+    report_id: str = Field(..., description="Report identifier")
+    download_url: str = Field(..., description="Download URL")
+    report_format: str = Field(..., description="Report format")
+    status: str = Field(..., description="Generation status")
+
+
+class ReportTemplate(BaseModel):
+    """Report template data."""
+    
+    template_id: str = Field(..., description="Template identifier")
+    name: str = Field(..., description="Template name")
+    sections: List[str] = Field(default_factory=list, description="Template sections")
+    format: str = Field(..., description="Template format")
+
+
+class ReportSchedule(BaseModel):
+    """Report schedule data."""
+    
+    schedule_id: str = Field(..., description="Schedule identifier")
+    frequency: str = Field(..., description="Schedule frequency")
+    next_run_date: str = Field(..., description="Next run date")
+    enabled: bool = Field(..., description="Schedule enabled")
+
+
+class ReportAnalytics(BaseModel):
+    """Report analytics data."""
+    
+    generation_count: int = Field(..., description="Number of reports generated")
+    download_count: int = Field(..., description="Number of downloads")
+    popular_formats: List[str] = Field(default_factory=list, description="Popular formats")
+    usage_statistics: Dict[str, Any] = Field(default_factory=dict, description="Usage statistics")
+
+
+class ReportConfiguration(BaseModel):
+    """Report configuration data."""
+    
+    config_id: str = Field(..., description="Configuration identifier")
+    report_type: str = Field(..., description="Report type")
+    parameters: Dict[str, Any] = Field(default_factory=dict, description="Configuration parameters")
+    schedule: Optional[str] = Field(None, description="Schedule configuration")
+
+
+class ReportData(BaseModel):
+    """Report data."""
+    
+    data_type: str = Field(..., description="Type of data")
+    data: Dict[str, Any] = Field(default_factory=dict, description="Report data")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Report metadata")
+
+
+class CustomReport(BaseModel):
+    """Custom report data."""
+    
+    report_id: str = Field(..., description="Report identifier")
+    custom_config: Dict[str, Any] = Field(default_factory=dict, description="Custom configuration")
+    sections: List[str] = Field(default_factory=list, description="Report sections")
+    parameters: Dict[str, Any] = Field(default_factory=dict, description="Report parameters")
+
+
 class ReportMetadata(BaseModel):
     """Report metadata information."""
     
@@ -183,18 +245,6 @@ class ComprehensiveReport(BaseModel):
     trend_analysis: TrendAnalysis = Field(..., description="Trend analysis")
     recommendations: ReportRecommendations = Field(..., description="Recommendations")
     appendix: ReportAppendix = Field(..., description="Report appendix")
-
-
-class ReportTemplate(BaseModel):
-    """Report template configuration."""
-    
-    template_id: str = Field(..., description="Template identifier")
-    template_name: str = Field(..., description="Template name")
-    description: str = Field(..., description="Template description")
-    report_type: str = Field(..., description="Report type")
-    sections: List[str] = Field(..., description="Report sections")
-    default_parameters: Dict[str, Any] = Field(..., description="Default parameters")
-    customizable_fields: List[str] = Field(..., description="Customizable fields")
 
 
 class ReportGeneration(BaseModel):

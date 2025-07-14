@@ -28,6 +28,23 @@ class FilterOperator(str, Enum):
     IS_NULL = "is_null"
     IS_NOT_NULL = "is_not_null"
     BETWEEN = "between"
+    
+    # Add lowercase aliases for backward compatibility
+    equals = "eq"
+    not_equals = "ne"
+    greater_than = "gt"
+    greater_than_or_equal = "gte"
+    less_than = "lt"
+    less_than_or_equal = "lte"
+    contains = "contains"
+    not_contains = "not_contains"
+    starts_with = "starts_with"
+    ends_with = "ends_with"
+    in_list = "in"
+    not_in_list = "not_in"
+    is_null = "is_null"
+    is_not_null = "is_not_null"
+    between = "between"
 
 
 class LogicalOperator(str, Enum):

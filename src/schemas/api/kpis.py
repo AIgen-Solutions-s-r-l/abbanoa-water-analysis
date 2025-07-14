@@ -1,13 +1,62 @@
 """
-Pydantic models for KPI (Key Performance Indicators) API responses.
+Pydantic models for KPIs API responses.
 
-These models define the structure of JSON responses returned by the KPI
+These models define the structure of JSON responses returned by the KPIs
 endpoints, providing type validation and automatic API documentation.
 """
 
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
+from enum import Enum
+
+
+class AlertLevel(str, Enum):
+    """Alert severity levels."""
+    
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
+
+class ReportFormat(str, Enum):
+    """Report format options."""
+    
+    json = "json"
+    pdf = "pdf"
+    excel = "excel"
+    csv = "csv"
+    html = "html"
+
+
+class BenchmarkType(str, Enum):
+    """Benchmark type values."""
+    
+    industry = "industry"
+    internal = "internal"
+    historical = "historical"
+    target = "target"
+    best_practice = "best_practice"
+
+
+class GoalStatus(str, Enum):
+    """Goal status values."""
+    
+    not_started = "not_started"
+    in_progress = "in_progress"
+    achieved = "achieved"
+    failed = "failed"
+    paused = "paused"
+
+
+class TrendDirection(str, Enum):
+    """Trend direction values."""
+    
+    increasing = "increasing"
+    decreasing = "decreasing"
+    stable = "stable"
+    volatile = "volatile"
 
 
 class KPIMetric(BaseModel):

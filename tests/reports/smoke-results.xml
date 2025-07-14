@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="6" failures="0" skipped="0" tests="6" time="0.376" timestamp="2025-07-13T16:18:16.131611+02:00" hostname="s01"><testcase classname="" name="tests.unit.test_consumption_service" time="0.000"><error message="collection failure">ImportError while importing test module '/home/alessio/Customers/Abbanoa/tests/unit/test_consumption_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_consumption_service.py:14: in &lt;module&gt;
+    from src.schemas.api.consumption import (
+E   ImportError: cannot import name 'AnomalyDetection' from 'src.schemas.api.consumption' (/home/alessio/Customers/Abbanoa/src/schemas/api/consumption.py)</error></testcase><testcase classname="" name="tests.unit.test_water_quality_service" time="0.000"><error message="collection failure">ImportError while importing test module '/home/alessio/Customers/Abbanoa/tests/unit/test_water_quality_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_water_quality_service.py:14: in &lt;module&gt;
+    from src.schemas.api.water_quality import (
+E   ImportError: cannot import name 'SensorCalibration' from 'src.schemas.api.water_quality' (/home/alessio/Customers/Abbanoa/src/schemas/api/water_quality.py)</error></testcase><testcase classname="" name="tests.unit.test_forecasting_service" time="0.000"><error message="collection failure">ImportError while importing test module '/home/alessio/Customers/Abbanoa/tests/unit/test_forecasting_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_forecasting_service.py:14: in &lt;module&gt;
+    from src.schemas.api.forecasting import (
+E   ImportError: cannot import name 'ForecastAnalysis' from 'src.schemas.api.forecasting' (/home/alessio/Customers/Abbanoa/src/schemas/api/forecasting.py)</error></testcase><testcase classname="" name="tests.unit.test_reports_service" time="0.000"><error message="collection failure">ImportError while importing test module '/home/alessio/Customers/Abbanoa/tests/unit/test_reports_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_reports_service.py:14: in &lt;module&gt;
+    from src.schemas.api.reports import (
+E   ImportError: cannot import name 'CustomReport' from 'src.schemas.api.reports' (/home/alessio/Customers/Abbanoa/src/schemas/api/reports.py)</error></testcase><testcase classname="" name="tests.unit.test_kpis_service" time="0.000"><error message="collection failure">ImportError while importing test module '/home/alessio/Customers/Abbanoa/tests/unit/test_kpis_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_kpis_service.py:13: in &lt;module&gt;
+    from src.api.services.kpis.system_performance_service import SystemPerformanceService
+src/api/services/kpis/system_performance_service.py:14: in &lt;module&gt;
+    from .kpi_utils import calculate_performance_score, create_kpi_alert, create_kpi_goal
+src/api/services/kpis/kpi_utils.py:12: in &lt;module&gt;
+    from src.schemas.api.kpis import (
+E   ImportError: cannot import name 'TrendDirection' from 'src.schemas.api.kpis' (/home/alessio/Customers/Abbanoa/src/schemas/api/kpis.py)</error></testcase><testcase classname="" name="tests.unit.test_filters_service" time="0.000"><error message="collection failure">tests/unit/test_filters_service.py:23: in &lt;module&gt;
+    class TestAdvancedFilteringService:
+tests/unit/test_filters_service.py:501: in TestAdvancedFilteringService
+    FilterOperator.equals,
+    ^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'FilterOperator' has no attribute 'equals'</error></testcase></testsuite></testsuites>

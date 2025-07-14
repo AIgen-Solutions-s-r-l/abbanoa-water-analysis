@@ -1,5 +1,5 @@
 """
-Pydantic models for Advanced Forecasting API responses.
+Pydantic models for Forecasting API responses.
 
 These models define the structure of JSON responses returned by the forecasting
 endpoints, providing type validation and automatic API documentation.
@@ -8,6 +8,62 @@ endpoints, providing type validation and automatic API documentation.
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
+
+
+class ConsumptionForecast(BaseModel):
+    """Consumption forecast data."""
+    
+    node_id: str = Field(..., description="Node identifier")
+    timestamp: str = Field(..., description="Forecast timestamp")
+    predicted_consumption: float = Field(..., description="Predicted consumption")
+    confidence_interval: List[float] = Field(..., description="Confidence interval")
+    forecast_date: str = Field(..., description="Forecast date")
+
+
+class ModelTraining(BaseModel):
+    """Model training data."""
+    
+    model_id: str = Field(..., description="Model identifier")
+    training_accuracy: float = Field(..., description="Training accuracy")
+    validation_accuracy: float = Field(..., description="Validation accuracy")
+    model_type: str = Field(..., description="Model type")
+
+
+class AccuracyReport(BaseModel):
+    """Accuracy report data."""
+    
+    accuracy_metrics: Dict[str, float] = Field(default_factory=dict, description="Accuracy metrics")
+    error_statistics: Dict[str, Any] = Field(default_factory=dict, description="Error statistics")
+    model_performance: float = Field(..., description="Model performance score")
+
+
+class ForecastModel(BaseModel):
+    """Forecast model data."""
+    
+    model_type: str = Field(..., description="Model type")
+    model_id: str = Field(..., description="Model identifier")
+    training_data_size: int = Field(..., description="Training data size")
+    accuracy_score: float = Field(..., description="Accuracy score")
+
+
+class ModelComparison(BaseModel):
+    """Model comparison data."""
+    
+    model_a: str = Field(..., description="First model identifier")
+    model_b: str = Field(..., description="Second model identifier")
+    comparison_metrics: Dict[str, float] = Field(default_factory=dict, description="Comparison metrics")
+    better_model: str = Field(..., description="Better performing model")
+    confidence: float = Field(..., description="Confidence in comparison")
+
+
+class ForecastAnalysis(BaseModel):
+    """Forecast analysis data."""
+    
+    analysis_id: str = Field(..., description="Analysis identifier")
+    forecast_accuracy: float = Field(..., description="Forecast accuracy")
+    model_performance: Dict[str, float] = Field(default_factory=dict, description="Model performance metrics")
+    trend_analysis: Dict[str, Any] = Field(default_factory=dict, description="Trend analysis")
+    seasonal_patterns: List[str] = Field(default_factory=list, description="Seasonal patterns")
 
 
 class ForecastPoint(BaseModel):
@@ -29,17 +85,6 @@ class SeasonalPattern(BaseModel):
     phase: float = Field(..., description="Pattern phase")
     strength: float = Field(..., description="Pattern strength (0-1)")
     significance: float = Field(..., description="Statistical significance")
-
-
-class ForecastModel(BaseModel):
-    """Forecast model information."""
-    
-    model_name: str = Field(..., description="Model name")
-    model_type: str = Field(..., description="Model type (ARIMA/LSTM/Prophet/etc)")
-    training_period: str = Field(..., description="Training period")
-    accuracy_metrics: Dict[str, float] = Field(..., description="Model accuracy metrics")
-    parameters: Dict[str, Any] = Field(..., description="Model parameters")
-    last_updated: str = Field(..., description="Last model update timestamp")
 
 
 class ForecastScenario(BaseModel):

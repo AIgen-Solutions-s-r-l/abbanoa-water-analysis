@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="10" skipped="0" tests="22" time="0.477" timestamp="2025-07-13T16:21:30.254778+02:00" hostname="s01"><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_get_model_forecast_success" time="0.031"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c3164f80&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c13e65c0&gt;
+mock_bigquery_response =                   timestamp  forecast_value  lower_bound  upper_bound  confidence_level
+0 2025-07-05 00:00:00+00:00   ...        109.1              0.95
+6 2025-07-11 00:00:00+00:00           101.7         95.5        107.9              0.95
+
+    @pytest.mark.asyncio
+    async def test_get_model_forecast_success(
+        self, async_bigquery_client, mock_bigquery_response
+    ):
+        """Test successful forecast retrieval from BigQuery."""
+        # Mock the execute_query method
+&gt;       async_bigquery_client.execute_query = AsyncMock(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            return_value=mock_bigquery_response
+        )
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:72: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_get_model_forecast_model_not_found" time="0.002"><failure message="AssertionError: assert 'DIST' == 'DIST_999'&#10;  &#10;  #x1B[0m#x1B[91m- DIST_999#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[92m+ DIST#x1B[39;49;00m#x1B[90m#x1B[39;49;00m">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a2120&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c13e66b0&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_model_forecast_model_not_found(self, async_bigquery_client):
+        """Test error when model doesn't exist."""
+        # Create repository
+        repo = BigQueryForecastRepository(
+            client=async_bigquery_client, ml_dataset_id="ml_models"
+        )
+    
+        # Mock model existence check to return False
+        repo.check_model_exists = AsyncMock(return_value=False)
+    
+        # Act &amp; Assert
+        with pytest.raises(ForecastNotFoundException) as exc_info:
+            await repo.get_model_forecast(
+                model_name="arima_dist999_flow_rate",
+                district_metric_id="DIST_999_flow_rate",
+                horizon=7,
+            )
+    
+&gt;       assert exc_info.value.district_id == "DIST_999"
+E       AssertionError: assert 'DIST' == 'DIST_999'
+E         
+E         #x1B[0m#x1B[91m- DIST_999#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
+E         #x1B[92m+ DIST#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:128: AssertionError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_get_model_forecast_empty_result" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a24b0&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c13e6980&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_model_forecast_empty_result(self, async_bigquery_client):
+        """Test error when forecast query returns empty result."""
+        # Mock empty response
+&gt;       async_bigquery_client.execute_query = AsyncMock(return_value=pd.DataFrame())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:136: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_check_model_exists_true" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a2600&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c13e74c0&gt;
+
+    @pytest.mark.asyncio
+    async def test_check_model_exists_true(self, async_bigquery_client):
+        """Test model existence check when model exists."""
+        # Mock response with one row
+&gt;       async_bigquery_client.execute_query = AsyncMock(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            return_value=pd.DataFrame({"exists": [1]})
+        )
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:160: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_check_model_exists_false" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a2810&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c13e76a0&gt;
+
+    @pytest.mark.asyncio
+    async def test_check_model_exists_false(self, async_bigquery_client):
+        """Test model existence check when model doesn't exist."""
+        # Mock empty response
+&gt;       async_bigquery_client.execute_query = AsyncMock(return_value=pd.DataFrame())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:185: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_check_model_exists_error_handling" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a2960&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c1280040&gt;
+
+    @pytest.mark.asyncio
+    async def test_check_model_exists_error_handling(self, async_bigquery_client):
+        """Test model existence check handles errors gracefully."""
+        # Mock query error
+&gt;       async_bigquery_client.execute_query = AsyncMock(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            side_effect=Exception("BigQuery error")
+        )
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:202: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_get_model_metadata_success" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a2ab0&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c12805e0&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_model_metadata_success(self, async_bigquery_client):
+        """Test successful model metadata retrieval."""
+        # Mock metadata response
+        metadata_df = pd.DataFrame(
+            [
+                {
+                    "model_name": "arima_dist001_flow_rate",
+                    "model_type": "ARIMA_PLUS",
+                    "created_at": datetime.now(timezone.utc),
+                    "last_updated": datetime.now(timezone.utc),
+                    "training_options": {"horizon": 7},
+                }
+            ]
+        )
+    
+        # Mock performance response
+        perf_df = pd.DataFrame([{"mape": 0.134, "mae": 13.4, "rmse": 18.9}])
+    
+        # Set up mock responses
+&gt;       async_bigquery_client.execute_query = AsyncMock(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            side_effect=[metadata_df, perf_df]
+        )
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:237: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_get_model_metadata_not_found" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a21b0&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c1280a90&gt;
+
+    @pytest.mark.asyncio
+    async def test_get_model_metadata_not_found(self, async_bigquery_client):
+        """Test error when model metadata not found."""
+        # Mock empty response
+&gt;       async_bigquery_client.execute_query = AsyncMock(return_value=pd.DataFrame())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:259: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_timezone_handling" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a27b0&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c1280e50&gt;
+
+    @pytest.mark.asyncio
+    async def test_timezone_handling(self, async_bigquery_client):
+        """Test proper timezone handling for forecast timestamps."""
+        # Create response without timezone
+        data = {
+            "timestamp": pd.date_range("2025-07-05", periods=3, freq="D"),
+            "forecast_value": [100.0, 101.0, 102.0],
+            "lower_bound": [95.0, 96.0, 97.0],
+            "upper_bound": [105.0, 106.0, 107.0],
+            "confidence_level": [0.95] * 3,
+        }
+        df_no_tz = pd.DataFrame(data)
+    
+&gt;       async_bigquery_client.execute_query = AsyncMock(return_value=df_no_tz)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:283: AttributeError</failure></testcase><testcase classname="tests.integration.infrastructure.test_bigquery_forecast_repository.TestBigQueryForecastRepository" name="test_missing_confidence_level_handling" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'execute_query'">self = &lt;test_bigquery_forecast_repository.TestBigQueryForecastRepository object at 0x79d4c31a2c00&gt;
+async_bigquery_client = &lt;async_generator object async_bigquery_client at 0x79d4c13e7790&gt;
+
+    @pytest.mark.asyncio
+    async def test_missing_confidence_level_handling(self, async_bigquery_client):
+        """Test handling of missing confidence level column."""
+        # Create response without confidence_level
+        data = {
+            "timestamp": pd.date_range("2025-07-05", periods=3, freq="D", tz="UTC"),
+            "forecast_value": [100.0, 101.0, 102.0],
+            "lower_bound": [95.0, 96.0, 97.0],
+            "upper_bound": [105.0, 106.0, 107.0],
+        }
+        df_no_confidence = pd.DataFrame(data)
+    
+&gt;       async_bigquery_client.execute_query = AsyncMock(return_value=df_no_confidence)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'async_generator' object has no attribute 'execute_query'
+
+tests/integration/infrastructure/test_bigquery_forecast_repository.py:315: AttributeError</failure></testcase><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_get_consumption_data_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_get_consumption_analytics_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_get_node_consumption_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_get_consumption_trends_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_detect_consumption_anomalies_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_get_consumption_forecast_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_get_optimization_suggestions_endpoint" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_consumption_api_error_handling" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_consumption_api_pagination" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_consumption_api_filtering" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_consumption_api_performance" time="0.001" /><testcase classname="tests.integration.test_consumption_api.TestConsumptionAPIIntegration" name="test_consumption_api_data_validation" time="0.001" /></testsuite></testsuites>
