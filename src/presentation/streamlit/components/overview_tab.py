@@ -96,7 +96,7 @@ class OverviewTab:
         st.subheader("Real-time Flow Monitoring")
         
         # Get real flow data
-        flow_data = self._get_real_flow_data(selected_nodes)
+        flow_data = self._get_real_flow_data(selected_nodes, time_range)
         
         # Create the plot
         fig = self._create_flow_chart(flow_data, selected_nodes)
@@ -384,11 +384,11 @@ class OverviewTab:
             st.error(f"Error fetching efficiency data: {str(e)}")
             return None
 
-    def _get_real_flow_data(self, selected_nodes: List[str]) -> pd.DataFrame:
+    def _get_real_flow_data(self, selected_nodes: List[str], time_range: str) -> pd.DataFrame:
         """Get real flow data with optimization."""
         # This method would be similar to _get_efficiency_data
         # but focused on flow data for the selected nodes
-        return self._get_efficiency_data("Last 24 Hours")  # Default to 24 hours for real-time view
+        return self._get_efficiency_data(time_range)  # Use the actual selected time range
 
     def _get_latest_node_data(self) -> Dict[str, Any]:
         """Get latest node data with optimization."""

@@ -83,7 +83,7 @@ class OverviewTab:
         
         # Real-time monitoring chart
         st.subheader("Real-time Flow Monitoring")
-        flow_chart = self._create_flow_chart(selected_nodes)
+        flow_chart = self._create_flow_chart(selected_nodes, time_range)
         st.plotly_chart(flow_chart, use_container_width=True)
         
         # Node status
@@ -94,7 +94,7 @@ class OverviewTab:
         st.subheader("System Alerts")
         self._render_system_alerts()
     
-    def _create_flow_chart(self, selected_nodes: List[str]) -> go.Figure:
+    def _create_flow_chart(self, selected_nodes: List[str], time_range: str) -> go.Figure:
         """Create flow monitoring chart from cached time series data."""
         fig = go.Figure()
         
@@ -104,23 +104,53 @@ class OverviewTab:
         
         if not node_ids:
             return fig
+            
+        # Calculate time filter based on selected range
+        from datetime import datetime, timedelta
+        
+        # Convert time range to hours for filtering
+        time_range_hours = {
+            "Last 6 Hours": 6,
+            "Last 24 Hours": 24,
+            "Last 3 Days": 72,
+            "Last Week": 168,
+            "Last Month": 720,
+            "Last Year": 8760,
+        }.get(time_range, 24)
+        
+        cutoff_time = datetime.now() - timedelta(hours=time_range_hours)
         
         # Get time series data for each node
         for node_id in node_ids[:10]:  # Limit to 10 nodes for performance
             time_series = self.cache_manager.get_time_series(node_id)
             
             if time_series and time_series.get("timestamps"):
-                display_name = get_node_display_name(node_id)
+                # Filter data based on time range
+                timestamps = time_series["timestamps"]
+                flow_rates = time_series["flow_rates"]
                 
-                fig.add_trace(
-                    go.Scatter(
-                        x=time_series["timestamps"],
-                        y=time_series["flow_rates"],
-                        mode="lines",
-                        name=display_name,
-                        line=dict(width=2),
+                # Convert string timestamps to datetime objects for filtering
+                import pandas as pd
+                if isinstance(timestamps[0], str):
+                    timestamps = pd.to_datetime(timestamps)
+                
+                # Filter data to selected time range
+                mask = [t >= cutoff_time for t in timestamps]
+                filtered_timestamps = [t for i, t in enumerate(timestamps) if mask[i]]
+                filtered_flow_rates = [f for i, f in enumerate(flow_rates) if mask[i]]
+                
+                if filtered_timestamps:  # Only add trace if we have data in the time range
+                    display_name = get_node_display_name(node_id)
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=filtered_timestamps,
+                            y=filtered_flow_rates,
+                            mode="lines",
+                            name=display_name,
+                            line=dict(width=2),
+                        )
                     )
-                )
         
         fig.update_layout(
             title="Flow Rate Trends (L/s)",
