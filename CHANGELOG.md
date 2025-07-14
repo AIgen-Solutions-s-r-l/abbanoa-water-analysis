@@ -3,6 +3,11 @@
 
 
 
+
+## [v1.2.7.0] - 2025-07-14
+
+- ✨ feat: add Next.js frontend with authentication and mock backend
+
 ## [v1.2.6.0] - 2025-07-14
 
 - ✨ feat: implement comprehensive API testing framework with 126 tests
