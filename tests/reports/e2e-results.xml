@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="8" skipped="0" tests="10" time="0.481" timestamp="2025-07-13T16:22:22.377963+02:00" hostname="s01"><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_daily_monitoring_workflow" time="0.034"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fceff0&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b2148fcd1c0&gt;, 'filtering': &lt;src....ct at 0x7b2148fcd310&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b2148f6e0f0&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382880055952'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b214869b2c0&gt;
+
+    @pytest.mark.asyncio
+    async def test_daily_monitoring_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test complete daily monitoring workflow."""
+        start_time = datetime.now() - timedelta(days=1)
+        end_time = datetime.now()
+    
+        # Step 1: Get consumption data
+        consumption_data = await all_services["consumption"].get_consumption_data(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+&gt;       assert len(consumption_data) &gt; 0
+E       assert 0 &gt; 0
+E        +  where 0 = len([])
+
+tests/e2e/test_complete_workflows.py:103: AssertionError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_incident_response_workflow" time="0.020"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fce6f0&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b214866b6e0&gt;, 'filtering': &lt;src....ct at 0x7b214866b980&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b214866b680&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382878829216'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b214864be90&gt;
+
+    @pytest.mark.asyncio
+    async def test_incident_response_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test complete incident response workflow."""
+        start_time = datetime.now() - timedelta(hours=6)
+        end_time = datetime.now()
+    
+        # Step 1: Detect water quality incident
+        contamination_events = await all_services["quality"].detect_contamination_events(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+        assert isinstance(contamination_events, list)
+    
+        # Step 2: Analyze consumption patterns during incident
+        consumption_analytics = await all_services["consumption"].get_consumption_analytics(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+        assert consumption_analytics.total_consumption &gt; 0
+    
+        # Step 3: Generate KPI alerts
+        kpi_alerts = await all_services["kpis"].generate_kpi_alerts(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+        assert isinstance(kpi_alerts, list)
+    
+        # Step 4: Get affected nodes using filtering
+        from src.schemas.api.filters import (
+            AdvancedFilterRequest, FieldFilter, FilterOperator, EntityType
+        )
+    
+        # Filter for high consumption nodes
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="consumption_value",
+                    operator=FilterOperator.greater_than,
+                    value=200.0
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/e2e/test_complete_workflows.py:168: AttributeError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_predictive_maintenance_workflow" time="0.004"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fce8a0&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b2148668dd0&gt;, 'filtering': &lt;src....ct at 0x7b2148669670&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b21486697c0&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382878820048'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b2148799370&gt;
+
+    @pytest.mark.asyncio
+    async def test_predictive_maintenance_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test complete predictive maintenance workflow."""
+        # Historical period for analysis
+        historical_start = datetime.now() - timedelta(days=30)
+        historical_end = datetime.now()
+    
+        # Step 1: Analyze historical consumption patterns
+        consumption_trends = await all_services["consumption"].get_consumption_trends(
+            mock_hybrid_service_comprehensive, historical_start, historical_end
+        )
+&gt;       assert len(consumption_trends) &gt; 0
+E       assert 0 &gt; 0
+E        +  where 0 = len([])
+
+tests/e2e/test_complete_workflows.py:207: AssertionError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_regulatory_compliance_workflow" time="0.004"><failure message="AttributeError: type object 'EntityType' has no attribute 'water_quality'">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fcdcd0&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b214879aa80&gt;, 'filtering': &lt;src....ct at 0x7b214879ab40&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b214879ac00&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382880075696'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b2148833170&gt;
+
+    @pytest.mark.asyncio
+    async def test_regulatory_compliance_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test complete regulatory compliance workflow."""
+        # Compliance period (last quarter)
+        compliance_start = datetime.now() - timedelta(days=90)
+        compliance_end = datetime.now()
+    
+        # Step 1: Generate compliance report
+        compliance_report = await all_services["quality"].get_compliance_report(
+            mock_hybrid_service_comprehensive, compliance_start, compliance_end
+        )
+        assert compliance_report.compliance_percentage &gt;= 0
+    
+        # Step 2: Analyze compliance trends
+        quality_trends = await all_services["quality"].get_quality_trends(
+            mock_hybrid_service_comprehensive, compliance_start, compliance_end
+        )
+        assert isinstance(quality_trends, list)
+    
+        # Step 3: Generate compliance KPIs
+        compliance_kpis = await all_services["kpis"].generate_kpi_dashboard(
+            mock_hybrid_service_comprehensive, compliance_start, compliance_end
+        )
+        assert compliance_kpis.quality_metrics is not None
+    
+        # Step 4: Filter non-compliant events
+        from src.schemas.api.filters import (
+            AdvancedFilterRequest, FieldFilter, FilterOperator, EntityType
+        )
+    
+        non_compliant_filter = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.water_quality,
+                        ^^^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="compliance_status",
+                    operator=FilterOperator.equals,
+                    value="non_compliant"
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'water_quality'
+
+tests/e2e/test_complete_workflows.py:290: AttributeError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_executive_dashboard_workflow" time="0.004" /><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_data_integration_workflow" time="0.005"><failure message="AttributeError: type object 'EntityType' has no attribute 'water_quality'">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fce0f0&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b2148833a10&gt;, 'filtering': &lt;src....ct at 0x7b21484e0200&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b21484e0260&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382880694640'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b214879b110&gt;
+
+    @pytest.mark.asyncio
+    async def test_data_integration_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test complete data integration workflow."""
+        start_time = datetime.now() - timedelta(days=7)
+        end_time = datetime.now()
+    
+        # Step 1: Validate data integrity across services
+        consumption_data = await all_services["consumption"].get_consumption_data(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+        quality_data = await all_services["quality"].get_quality_readings(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+    
+        # Step 2: Cross-reference consumption and quality data
+        # Filter consumption data for nodes with quality issues
+        from src.schemas.api.filters import (
+            AdvancedFilterRequest, FieldFilter, FilterOperator, EntityType
+        )
+    
+        # Get nodes with quality issues
+        quality_issues_filter = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.water_quality,
+                        ^^^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="compliance_status",
+                    operator=FilterOperator.equals,
+                    value="non_compliant"
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'water_quality'
+
+tests/e2e/test_complete_workflows.py:399: AttributeError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_performance_under_workflow_load" time="0.004" /><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_error_recovery_workflow" time="0.005"><failure message="AssertionError: assert 'Service unavailable' in 'Should have raised exception\nassert False'&#10; +  where 'Should have raised exception\nassert False' = str(AssertionError('Should have raised exception\nassert False'))">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fce510&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b21486b79e0&gt;, 'filtering': &lt;src....ct at 0x7b214880b560&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b214880b5c0&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382876925792'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b2148808ce0&gt;
+
+    @pytest.mark.asyncio
+    async def test_error_recovery_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test error recovery in complete workflows."""
+        start_time = datetime.now() - timedelta(days=7)
+        end_time = datetime.now()
+    
+        # Simulate service failure
+        mock_hybrid_service_comprehensive.get_consumption_data.side_effect = Exception("Service unavailable")
+    
+        # Test graceful degradation
+        try:
+            consumption_data = await all_services["consumption"].get_consumption_data(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            )
+&gt;           assert False, "Should have raised exception"
+E           AssertionError: Should have raised exception
+E           assert False
+
+tests/e2e/test_complete_workflows.py:495: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fce510&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b21486b79e0&gt;, 'filtering': &lt;src....ct at 0x7b214880b560&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b214880b5c0&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382876925792'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b2148808ce0&gt;
+
+    @pytest.mark.asyncio
+    async def test_error_recovery_workflow(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test error recovery in complete workflows."""
+        start_time = datetime.now() - timedelta(days=7)
+        end_time = datetime.now()
+    
+        # Simulate service failure
+        mock_hybrid_service_comprehensive.get_consumption_data.side_effect = Exception("Service unavailable")
+    
+        # Test graceful degradation
+        try:
+            consumption_data = await all_services["consumption"].get_consumption_data(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            )
+            assert False, "Should have raised exception"
+        except Exception as e:
+&gt;           assert "Service unavailable" in str(e)
+E           AssertionError: assert 'Service unavailable' in 'Should have raised exception\nassert False'
+E            +  where 'Should have raised exception\nassert False' = str(AssertionError('Should have raised exception\nassert False'))
+
+tests/e2e/test_complete_workflows.py:497: AssertionError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_workflow_data_consistency" time="0.005"><failure message="assert 1500.0 &lt; 10.0&#10; +  where 1500.0 = abs((0 - 1500.0))">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fcd760&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b21487e7f20&gt;, 'filtering': &lt;src....ct at 0x7b2148834050&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b21488340b0&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382880386944'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b21484c0470&gt;
+
+    @pytest.mark.asyncio
+    async def test_workflow_data_consistency(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test data consistency across workflow steps."""
+        start_time = datetime.now() - timedelta(days=7)
+        end_time = datetime.now()
+    
+        # Step 1: Get base consumption data
+        consumption_data = await all_services["consumption"].get_consumption_data(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+    
+        # Step 2: Get analytics from same data
+        consumption_analytics = await all_services["consumption"].get_consumption_analytics(
+            mock_hybrid_service_comprehensive, start_time, end_time
+        )
+    
+        # Step 3: Verify consistency
+        # Total consumption should match across calls
+        total_from_data = sum(item.consumption_value for item in consumption_data)
+        total_from_analytics = consumption_analytics.total_consumption
+    
+        # Allow for small calculation differences
+&gt;       assert abs(total_from_data - total_from_analytics) &lt; 10.0
+E       assert 1500.0 &lt; 10.0
+E        +  where 1500.0 = abs((0 - 1500.0))
+
+tests/e2e/test_complete_workflows.py:540: AssertionError</failure></testcase><testcase classname="tests.e2e.test_complete_workflows.TestCompleteWorkflows" name="test_complete_api_integration" time="0.005"><failure message="AttributeError: type object 'EntityType' has no attribute 'consumption'">self = &lt;test_complete_workflows.TestCompleteWorkflows object at 0x7b2148fcd9a0&gt;
+all_services = {'consumption': &lt;src.api.services.consumption_service.ConsumptionService object at 0x7b21484ecad0&gt;, 'filtering': &lt;src....ct at 0x7b21484eeab0&gt;, 'kpis': &lt;src.api.services.kpis.kpis_orchestrator.KPIOrchestrator object at 0x7b21484ee990&gt;, ...}
+mock_hybrid_service_comprehensive = &lt;AsyncMock id='135382877259920'&gt;
+mock_comprehensive_data = {'consumption_data': [{'consumption_value': 100.0, 'node_id': 'NODE_000', 'region': 'Region_0', 'timestamp': '2025-06-....4, ...}, {'compliance_status': 'compliant', 'conductivity': 455, 'dissolved_oxygen': 8.5, 'ph_level': 6.5, ...}, ...]}
+api_test_utils = &lt;conftest.APITestUtils object at 0x7b214838d070&gt;
+
+    @pytest.mark.asyncio
+    async def test_complete_api_integration(
+        self, all_services, mock_hybrid_service_comprehensive,
+        mock_comprehensive_data, api_test_utils
+    ):
+        """Test complete integration of all 77 API endpoints."""
+        start_time = datetime.now() - timedelta(days=30)
+        end_time = datetime.now()
+    
+        # Test all major API groups
+        api_results = {}
+    
+        # Consumption APIs (8 endpoints)
+        api_results["consumption"] = {
+            "data": await all_services["consumption"].get_consumption_data(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "analytics": await all_services["consumption"].get_consumption_analytics(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "trends": await all_services["consumption"].get_consumption_trends(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "anomalies": await all_services["consumption"].detect_consumption_anomalies(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "optimization": await all_services["consumption"].get_optimization_suggestions(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            )
+        }
+    
+        # Quality APIs (11 endpoints)
+        api_results["quality"] = {
+            "readings": await all_services["quality"].get_quality_readings(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "analytics": await all_services["quality"].get_quality_analytics(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "compliance": await all_services["quality"].get_compliance_report(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "contamination": await all_services["quality"].detect_contamination_events(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            )
+        }
+    
+        # Forecasting APIs (8 endpoints)
+        api_results["forecasting"] = {
+            "forecasts": await all_services["forecasting"].generate_consumption_forecast(
+                mock_hybrid_service_comprehensive, start_time, end_time, forecast_horizon=7
+            ),
+            "model_training": await all_services["forecasting"].train_forecasting_model(
+                mock_hybrid_service_comprehensive, start_time, end_time, model_type="arima"
+            ),
+            "accuracy": await all_services["forecasting"].evaluate_model_accuracy(
+                mock_hybrid_service_comprehensive, "MODEL_001", start_time, end_time
+            )
+        }
+    
+        # KPI APIs (14 endpoints)
+        api_results["kpis"] = {
+            "dashboard": await all_services["kpis"].generate_kpi_dashboard(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "cards": await all_services["kpis"].generate_kpi_cards(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "trends": await all_services["kpis"].generate_kpi_trends(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "alerts": await all_services["kpis"].generate_kpi_alerts(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            ),
+            "health": await all_services["kpis"].get_kpi_health(
+                mock_hybrid_service_comprehensive, start_time, end_time
+            )
+        }
+    
+        # Reports APIs (18 endpoints)
+        api_results["reports"] = {
+            "consumption_report": await all_services["reports"].generate_consumption_report(
+                mock_hybrid_service_comprehensive, start_time, end_time, report_format="json"
+            ),
+            "quality_report": await all_services["reports"].generate_quality_report(
+                mock_hybrid_service_comprehensive, start_time, end_time, report_format="json"
+            ),
+            "kpi_report": await all_services["reports"].generate_kpi_report(
+                mock_hybrid_service_comprehensive, start_time, end_time, report_format="json"
+            ),
+            "custom_report": await all_services["reports"].create_custom_report(
+                mock_hybrid_service_comprehensive, start_time, end_time,
+                {"title": "Integration Test Report", "sections": ["summary"], "format": "json"}
+            )
+        }
+    
+        # Filtering APIs (18 endpoints)
+        from src.schemas.api.filters import (
+            AdvancedFilterRequest, FieldFilter, FilterOperator, EntityType
+        )
+    
+        filter_request = AdvancedFilterRequest(
+&gt;           entity_type=EntityType.consumption,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+            filters=[
+                FieldFilter(
+                    field="consumption_value",
+                    operator=FilterOperator.greater_than,
+                    value=150.0
+                )
+            ]
+        )
+E       AttributeError: type object 'EntityType' has no attribute 'consumption'
+
+tests/e2e/test_complete_workflows.py:653: AttributeError</failure></testcase></testsuite></testsuites>
