@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: abbanoa-data
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: abbanoa-data
+data:
+  POSTGRES_DB: abbanoa_processing
+  POSTGRES_USER: abbanoa_user
+  PGDATA: /var/lib/postgresql/data/pgdata
+  # TimescaleDB tuning parameters
+  POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+  # PostgreSQL configuration
+  postgresql.conf: |
+    # Basic Settings
+    listen_addresses = '*'
+    max_connections = 200
+    shared_buffers = 1GB
+    effective_cache_size = 3GB
+    maintenance_work_mem = 256MB
+    work_mem = 16MB
+    
+    # TimescaleDB Settings
+    shared_preload_libraries = 'timescaledb,pg_stat_statements'
+    timescaledb.max_background_workers = 8
+    max_worker_processes = 12
+    max_parallel_workers_per_gather = 2
+    max_parallel_workers = 8
+    
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = 'pg_log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_line_prefix = '%m [%p] %q%u@%d '
+    log_timezone = 'UTC'
+    
+    # Monitoring
+    track_activities = on
+    track_counts = on
+    track_io_timing = on
+    track_functions = all
+    
+    # Checkpoints
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    
+    # Archiving (for backups)
+    archive_mode = on
+    archive_command = 'test ! -f /backup/archive/%f && cp %p /backup/archive/%f'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: abbanoa-data
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "abbanoa_secure_pass_gke_2025"  # Change this!
+  REPLICATION_PASSWORD: "repl_secure_pass_2025"     # Change this!

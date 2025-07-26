@@ -61,9 +61,30 @@ class EfficiencyTab:
     def _get_efficiency_data_from_api(self, time_range: str) -> Optional[Dict[str, Any]]:
         """Get efficiency data from API and format for KpiCard."""
         try:
+            # Convert time_range to datetime values for API call
+            end_time = datetime.now()
+            
+            # Calculate start_time based on time_range
+            if time_range == "Last 6 Hours":
+                start_time = end_time - timedelta(hours=6)
+            elif time_range == "Last 24 Hours":
+                start_time = end_time - timedelta(days=1)
+            elif time_range == "Last 3 Days":
+                start_time = end_time - timedelta(days=3)
+            elif time_range == "Last 7 Days" or time_range == "Last Week":
+                start_time = end_time - timedelta(days=7)
+            elif time_range == "Last 30 Days" or time_range == "Last Month":
+                start_time = end_time - timedelta(days=30)
+            else:
+                # Default to last 3 days to capture available data
+                start_time = end_time - timedelta(days=3)
+            
             # Get network metrics and efficiency data from API
             metrics = self.api_client.get_network_metrics(time_range)
-            efficiency_data = self.api_client.get_network_efficiency()
+            efficiency_data = self.api_client.get_network_efficiency(
+                start_time=start_time,
+                end_time=end_time
+            )
             
             if not efficiency_data:
                 return None

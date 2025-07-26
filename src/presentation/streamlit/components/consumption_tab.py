@@ -6,7 +6,7 @@ This component analyzes and displays water consumption patterns across the netwo
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 import numpy as np
@@ -26,6 +26,7 @@ class ConsumptionTab:
     def __init__(self):
         """Initialize the consumption tab."""
         self.hybrid_service = None
+        self.notifications = []  # Collect notifications to display at bottom
         # Node mapping for actual PostgreSQL node IDs (use numeric IDs that exist in processing database)
         self.node_mapping = {
             "Primary Station": "281492",
@@ -44,6 +45,73 @@ class ConsumptionTab:
             self.hybrid_service = await get_hybrid_data_service()
         return self.hybrid_service
 
+    def _add_notification(self, message: str, notification_type: str = "info"):
+        """Add a notification to be displayed at the bottom of the page."""
+        self.notifications.append({"message": message, "type": notification_type})
+
+    def _display_notifications(self):
+        """Display all collected notifications at the bottom of the page."""
+        if not self.notifications:
+            return
+            
+        st.subheader("📢 System Notifications")
+        
+        for notification in self.notifications:
+            message = notification["message"]
+            notification_type = notification["type"]
+            
+            if notification_type == "info":
+                st.info(message)
+            elif notification_type == "warning":
+                st.warning(message)
+            elif notification_type == "error":
+                st.error(message)
+            elif notification_type == "success":
+                st.success(message)
+
+    def _display_important_notifications(self):
+        """Display only important notifications, filtering out debug messages."""
+        if not self.notifications:
+            return
+            
+        # Filter out debug/system messages
+        important_notifications = []
+        for notification in self.notifications:
+            message = notification["message"]
+            # Skip debug messages and technical system info
+            skip_phrases = [
+                "Using Three-Tier Architecture",
+                "Querying", "nodes from",
+                "Got", "records from",
+                "Combined data:",
+                "Trying direct PostgreSQL",
+                "Fallback successful",
+                "Full traceback:",
+                "Error calculating"
+            ]
+            
+            should_skip = any(phrase in message for phrase in skip_phrases)
+            
+            # Only show errors and warnings that are user-relevant
+            if not should_skip and notification["type"] in ["error", "warning"]:
+                # Only show if it's a user-facing error
+                if "No data" in message and "available" in message:
+                    important_notifications.append(notification)
+                elif "failed" in message.lower() and "query" not in message.lower():
+                    important_notifications.append(notification)
+        
+        # Display important notifications if any
+        if important_notifications:
+            st.subheader("⚠️ Important Notices")
+            for notification in important_notifications:
+                message = notification["message"]
+                notification_type = notification["type"]
+                
+                if notification_type == "warning":
+                    st.warning(message)
+                elif notification_type == "error":
+                    st.error(message)
+
     def render(self, time_range: str, selected_nodes: List[str]) -> None:
         """
         Render the consumption patterns tab.
@@ -52,10 +120,10 @@ class ConsumptionTab:
             time_range: Selected time range
             selected_nodes: List of selected nodes
         """
-        st.header("📈 Consumption Patterns Analysis")
+        # Clear notifications from previous render
+        self.notifications = []
         
-        # Show architecture info
-        st.info("🚀 **Using Three-Tier Architecture**: Redis (hot) → PostgreSQL (warm) → BigQuery (cold)")
+        st.header("📈 Consumption Patterns Analysis")
         
         # Show optimization info for large time ranges
         if time_range in ["Last Month", "Last Year"]:
@@ -66,7 +134,7 @@ class ConsumptionTab:
             # The optimizer is removed, so this block is no longer relevant
             # recommendations = _self.optimizer.get_performance_recommendations(days, estimated_records)
             # if recommendations:
-            #     st.warning("⚡ **Performance Optimization**\n\n" + "\n".join(recommendations))
+            #     self._add_notification("⚡ **Performance Optimization**\n\n" + "\n".join(recommendations), "warning")
 
         # Get consumption data for metrics calculation
         consumption_data = self._get_consumption_data(time_range, selected_nodes)
@@ -114,7 +182,7 @@ class ConsumptionTab:
                 hourly_pattern = self._create_hourly_pattern_chart(consumption_data)
                 st.plotly_chart(hourly_pattern, use_container_width=True)
             else:
-                st.info("No data available for hourly patterns.")
+                self._add_notification("No data available for hourly patterns.", "info")
 
         with col2:
             # Daily consumption trend
@@ -122,7 +190,7 @@ class ConsumptionTab:
                 daily_trend = self._create_daily_trend_chart(consumption_data)
                 st.plotly_chart(daily_trend, use_container_width=True)
             else:
-                st.info("No data available for daily trends.")
+                self._add_notification("No data available for daily trends.", "info")
 
         # Consumption by node
         st.subheader("🌐 Consumption by Node")
@@ -131,7 +199,7 @@ class ConsumptionTab:
             node_comparison = self._create_node_comparison_chart(consumption_data)
             st.plotly_chart(node_comparison, use_container_width=True)
         else:
-            st.info("No data available for node comparison.")
+            self._add_notification("No data available for node comparison.", "info")
 
         # Efficiency metrics
         st.subheader("⚡ Efficiency Metrics")
@@ -168,7 +236,7 @@ class ConsumptionTab:
             heatmap = self._create_consumption_heatmap(consumption_data)
             st.plotly_chart(heatmap, use_container_width=True)
         else:
-            st.info("No data available for heatmap.")
+            self._add_notification("No data available for heatmap.", "info")
 
         # Performance insights
         st.subheader("📝 Performance Insights")
@@ -176,6 +244,9 @@ class ConsumptionTab:
         insights = self._generate_insights(consumption_data, consumption_metrics, efficiency_metrics)
         for insight in insights:
             st.write(f"• {insight}")
+
+        # Display only important notifications (filter out debug messages)
+        self._display_important_notifications()
 
     def _get_time_delta(self, time_range: str) -> timedelta:
         """Convert time range string to timedelta."""
@@ -221,8 +292,8 @@ class ConsumptionTab:
 
                 all_data = []
                 
-                # Show data range being queried
-                st.info(f"🔍 Querying {len(nodes_to_query)} nodes from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}")
+                # Add data range query info to notifications
+                _self._add_notification(f"🔍 Querying {len(nodes_to_query)} nodes from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}", "info")
                 
                 # Query each node using HybridDataService
                 for node_name in nodes_to_query:
@@ -253,26 +324,26 @@ class ConsumptionTab:
                                 df['consumption'] = df['flow_rate'] * df['timestamp'].dt.hour.map(_self._get_hourly_factor)
                             
                             all_data.append(df)
-                            st.success(f"✅ Got {len(df)} records from {node_name}")
+                            _self._add_notification(f"✅ Got {len(df)} records from {node_name}", "success")
                         else:
-                            st.warning(f"⚠️ No data from {node_name} ({node_id})")
+                            _self._add_notification(f"⚠️ No data from {node_name} ({node_id})", "warning")
                             
                     except Exception as node_error:
-                        st.error(f"❌ Error querying {node_name} ({node_id}): {str(node_error)}")
+                        _self._add_notification(f"❌ Error querying {node_name} ({node_id}): {str(node_error)}", "error")
                         continue
 
                 if all_data:
                     combined_df = pd.concat(all_data, ignore_index=True)
-                    st.success(f"🎉 Combined data: {len(combined_df)} total records from {len(all_data)} nodes")
+                    _self._add_notification(f"🎉 Combined data: {len(combined_df)} total records from {len(all_data)} nodes", "success")
                     return combined_df
                 else:
-                    st.error("❌ No data retrieved from any nodes")
+                    _self._add_notification("❌ No data retrieved from any nodes", "error")
                     
                     # Fallback: try direct PostgreSQL query
-                    st.info("🔄 Trying direct PostgreSQL fallback...")
+                    _self._add_notification("🔄 Trying direct PostgreSQL fallback...", "info")
                     fallback_data = _self._get_fallback_data(start_time, end_time, nodes_to_query)
                     if fallback_data is not None and not fallback_data.empty:
-                        st.success(f"✅ Fallback successful: {len(fallback_data)} records")
+                        _self._add_notification(f"✅ Fallback successful: {len(fallback_data)} records", "success")
                         return fallback_data
                     
                     return None
@@ -281,11 +352,11 @@ class ConsumptionTab:
                 loop.close()
                 
         except Exception as e:
-            st.error(f"❌ Critical error in data fetching: {str(e)}")
+            _self._add_notification(f"❌ Critical error in data fetching: {str(e)}", "error")
             
             # Show the full error for debugging
             import traceback
-            st.error(f"Full traceback: {traceback.format_exc()}")
+            _self._add_notification(f"Full traceback: {traceback.format_exc()}", "error")
             return None
 
     def _get_fallback_data(self, start_time: datetime, end_time: datetime, nodes_to_query: List[str]) -> Optional[pd.DataFrame]:
@@ -338,7 +409,7 @@ class ConsumptionTab:
             return df
             
         except Exception as e:
-            st.error(f"❌ Fallback query failed: {str(e)}")
+            _self._add_notification(f"❌ Fallback query failed: {str(e)}", "error")
             return None
 
     def _create_hourly_pattern_chart(self, consumption_data: pd.DataFrame) -> go.Figure:
@@ -372,7 +443,7 @@ class ConsumptionTab:
                             consumption[hour] = float(hourly_avg[hour])
                             
             except Exception as e:
-                st.warning(f"Error calculating hourly pattern: {str(e)}")
+                _self._add_notification(f"Error calculating hourly pattern: {str(e)}", "warning")
 
         fig = go.Figure()
         fig.add_trace(
@@ -449,7 +520,7 @@ class ConsumptionTab:
                                 consumption[i] = float(daily_relative[day])
                                 
             except Exception as e:
-                st.warning(f"Error calculating daily trend: {str(e)}")
+                _self._add_notification(f"Error calculating daily trend: {str(e)}", "warning")
 
         fig = go.Figure()
         fig.add_trace(
@@ -524,7 +595,7 @@ class ConsumptionTab:
                         )
                         
             except Exception as e:
-                st.warning(f"Error calculating node comparison: {str(e)}")
+                _self._add_notification(f"Error calculating node comparison: {str(e)}", "warning")
                 # Fallback to zeros if calculation fails
                 for node in nodes[:4]:
                     peak_data.append(
@@ -634,7 +705,7 @@ class ConsumptionTab:
                             z_data[day_idx][hour_idx] = consumption_val
 
             except Exception as e:
-                st.warning(f"Error calculating heatmap data: {str(e)}")
+                _self._add_notification(f"Error calculating heatmap data: {str(e)}", "warning")
 
         fig = go.Figure(
             data=go.Heatmap(
@@ -767,7 +838,7 @@ class ConsumptionTab:
             }
 
         except Exception as e:
-            st.warning(f"Error calculating consumption metrics: {str(e)}")
+            _self._add_notification(f"Error calculating consumption metrics: {str(e)}", "warning")
             return {
                 "total_consumption": 0.0,
                 "peak_hour": "--:--",
@@ -852,7 +923,7 @@ class ConsumptionTab:
             }
 
         except Exception as e:
-            st.warning(f"Error calculating efficiency metrics: {str(e)}")
+            _self._add_notification(f"Error calculating efficiency metrics: {str(e)}", "warning")
             return {
                 "non_revenue_water": 0.0,
                 "per_capita_consumption": 0.0,

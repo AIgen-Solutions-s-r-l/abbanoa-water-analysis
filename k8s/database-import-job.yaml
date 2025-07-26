@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-import-script
+  namespace: abbanoa-data
+data:
+  import.sh: |
+    #!/bin/bash
+    set -e
+    
+    echo "Starting database import process..."
+    
+    # Wait for PostgreSQL to be ready
+    until pg_isready -h postgres-service -p 5432 -U abbanoa_user; do
+      echo "Waiting for PostgreSQL to be ready..."
+      sleep 5
+    done
+    
+    echo "PostgreSQL is ready. Starting import..."
+    
+    # Download the SQL dump from GCS (you'll need to upload it first)
+    echo "Downloading SQL dump from GCS..."
+    gsutil cp gs://${GCS_BUCKET}/abbanoa_db_export_${EXPORT_TIMESTAMP}.sql /tmp/import.sql
+    
+    # Import the database
+    echo "Importing database..."
+    PGPASSWORD=${POSTGRES_PASSWORD} psql \
+      -h postgres-service \
+      -p 5432 \
+      -U ${POSTGRES_USER} \
+      -d ${POSTGRES_DB} \
+      -f /tmp/import.sql
+    
+    echo "Database import completed successfully!"
+    
+    # Verify import
+    echo "Verifying import..."
+    PGPASSWORD=${POSTGRES_PASSWORD} psql \
+      -h postgres-service \
+      -p 5432 \
+      -U ${POSTGRES_USER} \
+      -d ${POSTGRES_DB} \
+      -c "SELECT COUNT(*) FROM water_infrastructure.sensor_readings;"
+    
+    PGPASSWORD=${POSTGRES_PASSWORD} psql \
+      -h postgres-service \
+      -p 5432 \
+      -U ${POSTGRES_USER} \
+      -d ${POSTGRES_DB} \
+      -c "SELECT * FROM timescaledb_information.hypertables;"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-import
+  namespace: abbanoa-data
+spec:
+  template:
+    metadata:
+      name: database-import
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: import
+        image: google/cloud-sdk:latest
+        command: ["/bin/bash"]
+        args: ["/scripts/import.sh"]
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: GCS_BUCKET
+          value: "abbanoa-db-exports"  # Change this to your bucket
+        - name: EXPORT_TIMESTAMP
+          value: "20250718_100153"  # Change this to match your export
+        volumeMounts:
+        - name: import-script
+          mountPath: /scripts
+      volumes:
+      - name: import-script
+        configMap:
+          name: database-import-script
+          defaultMode: 0755

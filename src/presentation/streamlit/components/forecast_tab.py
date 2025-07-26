@@ -40,7 +40,7 @@ class ForecastTab:
         if "loading_forecast" not in st.session_state:
             st.session_state.loading_forecast = False
         if "district_id" not in st.session_state:
-            st.session_state.district_id = "selargius"  # Default district
+            st.session_state.district_id = "DIST_001"  # Default district
         if "metric" not in st.session_state:
             st.session_state.metric = "flow_rate"  # Default metric
         if "horizon" not in st.session_state:
@@ -67,8 +67,8 @@ class ForecastTab:
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            # District selector
-            district_options = ["selargius", "monserrato", "quartu"]  # Add more districts as needed
+            # District selector - use valid API district IDs
+            district_options = ["DIST_001", "DIST_002", "node-serbatoio", "node-seneca", "node-santanna"]
             district = st.selectbox(
                 "District",
                 options=district_options,

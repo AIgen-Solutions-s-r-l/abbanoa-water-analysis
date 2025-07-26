@@ -233,25 +233,9 @@ class ForecastCalculationService:
         z_score = self._get_z_score(confidence_level)
         
         query = f"""
-        WITH forecast_input AS (
-            SELECT
-                CONCAT(@district_id, '_', @metric) as district_metric_id,
-                DATE(timestamp) as date_utc,
-                AVG(CASE 
-                    WHEN @metric = 'flow_rate' THEN flow_rate
-                    WHEN @metric = 'pressure' THEN pressure
-                    WHEN @metric = 'temperature' THEN temperature
-                    ELSE flow_rate
-                END) as avg_value
-            FROM `{self.project_id}.{self.dataset_id}.v_sensor_readings_normalized`
-            WHERE node_id = @district_id
-                AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)
-                AND timestamp <= CURRENT_TIMESTAMP()
-            GROUP BY DATE(timestamp)
-        )
         SELECT
             forecast_timestamp as timestamp,
-            district_metric_id,
+            CONCAT(@district_id, '_', @metric) as district_metric_id,
             forecast_value,
             standard_error,
             confidence_level,
@@ -261,7 +245,6 @@ class ForecastCalculationService:
             @metric as metric
         FROM ML.FORECAST(
             MODEL `{self.project_id}.{self.ml_dataset_id}.{model_name}`,
-            (SELECT * FROM forecast_input),
             STRUCT(@horizon AS horizon, @confidence_level AS confidence_level)
         )
         WHERE forecast_timestamp > CURRENT_DATE()

@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-script
+  namespace: abbanoa-data
+data:
+  backup.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Set backup timestamp
+    BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_FILE="abbanoa_backup_${BACKUP_TIMESTAMP}.sql"
+    
+    echo "Starting backup at ${BACKUP_TIMESTAMP}"
+    
+    # Perform backup
+    PGPASSWORD=${POSTGRES_PASSWORD} pg_dump \
+      -h postgres-service \
+      -p 5432 \
+      -U ${POSTGRES_USER} \
+      -d ${POSTGRES_DB} \
+      --no-owner \
+      --no-acl \
+      --format=custom \
+      --verbose \
+      -f /backup/${BACKUP_FILE}
+    
+    # Compress backup
+    gzip /backup/${BACKUP_FILE}
+    
+    # Upload to GCS
+    echo "Uploading backup to GCS..."
+    gsutil cp /backup/${BACKUP_FILE}.gz gs://${GCS_BACKUP_BUCKET}/backups/
+    
+    # Clean up old local backups (keep last 7 days)
+    find /backup -name "abbanoa_backup_*.sql.gz" -mtime +7 -delete
+    
+    # List backups in GCS (keep last 30 days)
+    gsutil ls -l gs://${GCS_BACKUP_BUCKET}/backups/ | grep abbanoa_backup | sort -k2 -r | tail -n +31 | awk '{print $3}' | xargs -I {} gsutil rm {}
+    
+    echo "Backup completed successfully!"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: abbanoa-data
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: google/cloud-sdk:latest
+            command: ["/bin/bash"]
+            args: ["/scripts/backup.sh"]
+            env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: GCS_BACKUP_BUCKET
+              value: "abbanoa-db-backups"  # Change this
+            volumeMounts:
+            - name: backup-script
+              mountPath: /scripts
+            - name: backup-storage
+              mountPath: /backup
+          volumes:
+          - name: backup-script
+            configMap:
+              name: backup-script
+              defaultMode: 0755
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: postgres-backup-pvc

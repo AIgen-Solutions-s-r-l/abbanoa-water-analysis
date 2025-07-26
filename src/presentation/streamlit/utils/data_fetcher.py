@@ -61,7 +61,7 @@ class DataFetcher:
             }
             
             logger.info(f"Fetching forecast from API: {url}")
-            response = _self.session.get(url, params=params, timeout=10)
+            response = _self.session.get(url, params=params, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()

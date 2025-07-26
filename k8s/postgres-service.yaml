@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: abbanoa-data
+  labels:
+    app: postgres-timescaledb
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: postgres-timescaledb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-external
+  namespace: abbanoa-data
+  labels:
+    app: postgres-timescaledb
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: postgres-timescaledb
+  # Optional: restrict access to specific IP ranges
+  # loadBalancerSourceRanges:
+  # - 10.0.0.0/8
+  # - 192.168.0.0/16

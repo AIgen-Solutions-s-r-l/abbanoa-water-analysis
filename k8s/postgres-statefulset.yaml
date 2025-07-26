@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-timescaledb
+  namespace: abbanoa-data
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-timescaledb
+  template:
+    metadata:
+      labels:
+        app: postgres-timescaledb
+    spec:
+      containers:
+      - name: postgres
+        image: timescale/timescaledb:latest-pg16
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: PGDATA
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: PGDATA
+        - name: POSTGRES_INITDB_ARGS
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_INITDB_ARGS
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-config-volume
+          mountPath: /etc/postgresql
+        - name: postgres-backup
+          mountPath: /backup
+        - name: init-sql
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - abbanoa_user
+            - -d
+            - abbanoa_processing
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - abbanoa_user
+            - -d
+            - abbanoa_processing
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data-pvc
+      - name: postgres-backup
+        persistentVolumeClaim:
+          claimName: postgres-backup-pvc
+      - name: postgres-config-volume
+        configMap:
+          name: postgres-config
+          items:
+          - key: postgresql.conf
+            path: postgresql.conf
+      - name: init-sql
+        configMap:
+          name: postgres-init-sql
+          optional: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-sql
+  namespace: abbanoa-data
+data:
+  01-init-extensions.sql: |
+    -- Enable required extensions
+    CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+    CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+    
+    -- Create schema
+    CREATE SCHEMA IF NOT EXISTS water_infrastructure;
+    
+    -- Grant permissions
+    GRANT ALL ON SCHEMA water_infrastructure TO abbanoa_user;
+    GRANT ALL ON ALL TABLES IN SCHEMA water_infrastructure TO abbanoa_user;
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA water_infrastructure TO abbanoa_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA water_infrastructure GRANT ALL ON TABLES TO abbanoa_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA water_infrastructure GRANT ALL ON SEQUENCES TO abbanoa_user;
