@@ -4,6 +4,8 @@
 
 The Abbanoa Water Infrastructure system is a comprehensive water monitoring and analytics platform designed for the Sardinian water utility company. The architecture follows a microservices pattern with multiple specialized components working together to provide real-time monitoring, anomaly detection, forecasting, and data visualization capabilities.
 
+The system features a modern Next.js frontend with multi-tenant support, connected to a FastAPI backend that interfaces with PostgreSQL/TimescaleDB for operational data, Redis for caching, and Google BigQuery for data warehousing and machine learning models.
+
 ## Architecture Components
 
 ### 1. Data Layer
@@ -65,34 +67,79 @@ The Abbanoa Water Infrastructure system is a comprehensive water monitoring and 
 
 ### 3. Application Layer
 
-#### 3.1 Streamlit Dashboard
-- **Container**: `abbanoa-dashboard`
-- **Port**: 8501
-- **Purpose**: Main user interface for data visualization and monitoring
-- **Features**:
-  - **Enhanced Overview**: Comprehensive system metrics and KPIs
-  - **Forecast Tab**: ML-powered predictions using BigQuery ARIMA_PLUS models
-  - **KPI Dashboard**: Key performance indicators visualization
-  - **Water Quality Monitoring**: Quality metrics and compliance tracking
-  - **Anomaly Detection**: Real-time anomaly visualization and alerts
-  - **Consumption Patterns**: Historical consumption analysis
-  - **Network Efficiency**: Distribution network performance metrics
-  - **Reports**: Automated report generation
-  - **Performance Monitor**: System performance tracking
-- **Data Access Modes**:
-  - API Mode: Uses Processing Services API when available
-  - Hybrid Mode: Direct access to PostgreSQL + Redis cache
-  - Fallback Mode: Direct BigQuery access for demo/development
+#### 3.1 Next.js Frontend Application
+- **Framework**: Next.js 15.3.5 with React 19
+- **Port**: 3001 (development)
+- **Purpose**: Modern, multi-tenant frontend dashboard
+- **Architecture**:
+  - **App Router**: Next.js App Router with server and client components
+  - **TypeScript**: Full type safety across the application
+  - **Tailwind CSS v4**: Utility-first CSS framework
+  - **Authentication**: Multi-tenant authentication with JWT tokens
+  - **State Management**: React hooks and context providers
 
-#### 3.2 FastAPI Processing Service
+##### Frontend Routes:
+- `/` - Main dashboard with water metrics
+- `/enhanced-overview` - Enhanced system overview
+- `/anomalies` - Anomaly detection and monitoring
+- `/monitoring` - Real-time system monitoring
+- `/auth/login` - Multi-tenant login
+- `/auth/register` - User registration
+- `/test` - Testing and debugging
+
+##### Key Components:
+- **Water Components**:
+  - `WaterKPIRibbon`: Key performance indicators display
+  - `FlowAnalyticsChart`: Flow rate analytics with Recharts
+  - `NetworkPerformanceAnalytics`: Network efficiency metrics
+  - `SystemHealthGauges`: System health indicators
+- **Layout Components**:
+  - `LayoutWrapper`: Main layout with sidebar navigation
+  - `Header`: Top navigation with tenant switcher
+  - `Sidebar`: Navigation menu
+  - `TenantSwitcher`: Multi-tenant context switching
+- **Feature Components**:
+  - `MetricsGrid`: Dashboard metrics display
+  - `RecentAnomalies`: Real-time anomaly alerts
+  - `ProtectedRoute`: Route protection for authenticated users
+
+##### API Integration:
+- **API Client** (`/lib/api/client.ts`):
+  - Centralized API client with automatic token management
+  - Request/response interceptors
+  - Automatic token refresh on 401
+  - Multi-tenant headers (`X-Tenant-ID`)
+- **Proxy Route** (`/api/proxy/[...path]`):
+  - Next.js API routes for backend proxying
+  - Handles CORS and mixed content issues
+  - Forwards all requests to backend API
+- **Services Layer**:
+  - `auth.service.ts`: Authentication operations
+  - `dashboard.service.ts`: Dashboard data fetching
+  - `anomaly.service.ts`: Anomaly management
+
+#### 3.2 FastAPI Backend Service
 - **Path**: `/src/presentation/api/app_postgres.py`
-- **Purpose**: RESTful API for programmatic access
-- **Endpoints**:
-  - `/api/v1/nodes` - List monitoring nodes
-  - `/api/v1/dashboard/summary` - Dashboard metrics
-  - `/api/v1/anomalies` - Recent anomalies
-  - `/api/v1/nodes/{node_id}/readings` - Node-specific readings
-  - Authentication endpoints for multi-tenant support
+- **Port**: 8000 (default)
+- **Purpose**: RESTful API backend
+- **Features**:
+  - PostgreSQL-based data access
+  - CORS support for frontend integration
+  - Async request handling with asyncpg
+  - Connection pooling for performance
+
+##### API Endpoints:
+- **Dashboard**:
+  - `GET /api/v1/dashboard/summary` - System-wide metrics
+  - `GET /api/v1/nodes` - List all monitoring nodes
+  - `GET /api/v1/nodes/{node_id}/readings` - Node sensor readings
+- **Anomalies**:
+  - `GET /api/v1/anomalies` - Recent anomaly list
+- **Authentication**:
+  - `POST /api/v1/auth/login` - User login
+  - `GET /api/v1/auth/me` - Current user info
+  - `GET /api/v1/auth/tenants` - User's tenants
+  - `GET /api/v1/tenants/current` - Current tenant info
 
 ### 4. Infrastructure Layer
 
@@ -148,7 +195,9 @@ Persistent storage for stateful services:
 ```
 BigQuery (Source) → ETL Pipeline → PostgreSQL → Redis Cache
                                        ↓
-                                   Streamlit UI
+                                   API Layer
+                                       ↓
+                                 Next.js Frontend
 ```
 
 ### 2. Real-time Processing Flow
@@ -157,14 +206,25 @@ Sensor Data → BigQuery → ETL Scheduler (5 min) → PostgreSQL
                               ↓
                         Anomaly Detection
                               ↓
-                        Notifications
+                        Notifications → Frontend Updates
 ```
 
 ### 3. User Request Flow
 ```
-User → Nginx → Streamlit Dashboard → API/Cache Layer → PostgreSQL/Redis
-                                            ↓
-                                        BigQuery (ML)
+User Browser → Next.js Frontend → API Proxy → FastAPI Backend
+                     ↓                              ↓
+                Local Storage               PostgreSQL/Redis
+                (JWT Tokens)                        ↓
+                                             BigQuery (ML)
+```
+
+### 4. Authentication Flow
+```
+User Login → Next.js → API Proxy → FastAPI Auth
+                ↓                        ↓
+          Store JWT/Tenant          Validate Credentials
+                ↓                        ↓
+          Protected Routes          Return JWT + Tenant
 ```
 
 ## Security Architecture
@@ -190,10 +250,11 @@ User → Nginx → Streamlit Dashboard → API/Cache Layer → PostgreSQL/Redis
 ## Scalability & Performance
 
 ### Horizontal Scaling
-- Stateless application services (Streamlit, API)
+- Stateless application services (Next.js, FastAPI)
 - Load balancing through Nginx
 - Redis cluster support ready
 - PostgreSQL read replicas support
+- Next.js Edge Runtime compatibility
 
 ### Performance Optimization
 - TimescaleDB continuous aggregates
@@ -221,6 +282,11 @@ User → Nginx → Streamlit Dashboard → API/Cache Layer → PostgreSQL/Redis
 - Separate credential management
 - Configurable ports and resources
 - Feature flags for functionality toggles
+- Next.js configuration:
+  - CORS headers for API integration
+  - Proxy configuration for backend communication
+  - Environment-specific builds
+  - Turbopack for faster development
 
 ## Monitoring & Observability
 
@@ -246,9 +312,10 @@ User → Nginx → Streamlit Dashboard → API/Cache Layer → PostgreSQL/Redis
 
 ### Adding New Features
 1. New data sources: Extend ETL pipeline
-2. New visualizations: Add Streamlit components
+2. New visualizations: Add React components to Next.js
 3. New APIs: Extend FastAPI service
 4. New models: Deploy to BigQuery ML
+5. New routes: Add pages in Next.js app directory
 
 ### Integration Points
 - REST API for external systems
@@ -266,3 +333,6 @@ User → Nginx → Streamlit Dashboard → API/Cache Layer → PostgreSQL/Redis
 5. Multi-region deployment support
 6. Enhanced caching strategies
 7. Event-driven architecture components
+8. WebSocket support for real-time updates
+9. Server-Sent Events (SSE) for live data streaming
+10. Progressive Web App (PWA) capabilities
