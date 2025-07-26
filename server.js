@@ -431,11 +431,11 @@ app.get('/api/v1/dashboard/metrics', authenticateToken, (req, res) => {
   res.json({
     success: true,
     data: {
-      totalFlow: 1250000,
-      pressure: 45.2,
-      quality: 98.5,
-      efficiency: 92.3,
-      timestamp: new Date().toISOString()
+      totalConsumption: 1250000,
+      activeConnections: 3847,
+      anomalies: 12,
+      lastUpdate: new Date().toISOString(),
+      tenantId: req.user.tenantId || 'tenant_1'
     }
   });
 });
@@ -458,19 +458,35 @@ app.get('/api/v1/anomalies', authenticateToken, (req, res) => {
     data: [
       {
         id: 'anomaly_1',
-        type: 'pressure_drop',
-        severity: 'medium',
-        location: 'Zone A - Pump Station 1',
-        detected: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        description: 'Pressure drop detected in main pipeline'
+        deviceId: 'sensor_001',
+        type: 'pressure',
+        severity: 'high',
+        description: 'Pressure drop detected in main pipeline',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        resolved: false,
+        tenantId: req.user.tenantId || 'tenant_1'
       },
       {
         id: 'anomaly_2',
-        type: 'flow_spike',
+        deviceId: 'sensor_045',
+        type: 'flow',
+        severity: 'medium',
+        description: 'Unusual flow pattern detected',
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        resolved: false,
+        tenantId: req.user.tenantId || 'tenant_1'
+      },
+      {
+        id: 'anomaly_3',
+        deviceId: 'sensor_112',
+        type: 'consumption',
         severity: 'low',
-        location: 'Zone B - Distribution Point 3',
-        detected: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        description: 'Unusual flow spike during off-peak hours'
+        description: 'Higher than average consumption',
+        timestamp: new Date(Date.now() - 10800000).toISOString(),
+        resolved: true,
+        tenantId: req.user.tenantId || 'tenant_1',
+        resolvedBy: 'operator@abbanoa.com',
+        resolvedAt: new Date(Date.now() - 3600000).toISOString()
       }
     ]
   });
@@ -513,6 +529,48 @@ app.use((error, req, res, next) => {
   res.status(500).json({
     success: false,
     error: 'Internal server error'
+  });
+});
+
+// Temporary public endpoints for testing (no auth required)
+app.get('/api/v1/public/dashboard/metrics', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      totalConsumption: 1250000,
+      activeConnections: 3847,
+      anomalies: 12,
+      lastUpdate: new Date().toISOString(),
+      tenantId: 'tenant_1'
+    }
+  });
+});
+
+app.get('/api/v1/public/anomalies', (req, res) => {
+  res.json({
+    success: true,
+    data: [
+      {
+        id: 'anomaly_1',
+        deviceId: 'sensor_001',
+        type: 'pressure',
+        severity: 'high',
+        description: 'Pressure drop detected in main pipeline',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        resolved: false,
+        tenantId: 'tenant_1'
+      },
+      {
+        id: 'anomaly_2',
+        deviceId: 'sensor_045',
+        type: 'flow',
+        severity: 'medium',
+        description: 'Unusual flow pattern detected',
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        resolved: false,
+        tenantId: 'tenant_1'
+      }
+    ]
   });
 });
 

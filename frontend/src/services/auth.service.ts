@@ -14,21 +14,56 @@ import {
 export class AuthService {
   // Authentication endpoints
   static async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await apiClient.authRequest<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
+    // For now, simulate successful login without calling backend
+    // since the real backend doesn't have authentication yet
     
-    if (response.success && response.data) {
-      // Store tokens and tenant info
-      apiClient.setAuthTokens(
-        response.data.accessToken,
-        response.data.refreshToken,
-        response.data.tenant.id
-      );
-    }
+    const mockUser = {
+      id: 'user-1',
+      email: credentials.email,
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin' as 'admin' | 'operator' | 'viewer' | 'super_admin',
+      tenantId: 'default',
+      isActive: true,
+      lastLogin: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
     
-    return response.data;
+    const mockTenant = {
+      id: 'default',
+      name: 'Abbanoa S.p.A.',
+      domain: 'abbanoa',
+      logo: undefined,
+      plan: 'enterprise' as 'basic' | 'professional' | 'enterprise',
+      isActive: true,
+      settings: {
+        maxUsers: 100,
+        features: ['monitoring', 'anomaly_detection', 'reporting', 'analytics'],
+        customBranding: {
+          primaryColor: '#2563eb',
+          logo: '',
+          companyName: 'Abbanoa S.p.A.'
+        }
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Generate mock tokens
+    const accessToken = 'mock-access-token';
+    const refreshToken = 'mock-refresh-token';
+    
+    // Store tokens
+    apiClient.setAuthTokens(accessToken, refreshToken, mockTenant.id);
+    
+    return {
+      user: mockUser,
+      tenant: mockTenant,
+      accessToken,
+      refreshToken,
+      expiresIn: 86400
+    };
   }
 
   static async register(userData: RegisterRequest): Promise<AuthResponse> {

@@ -16,6 +16,7 @@ const PUBLIC_ROUTES = [
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/accept-invitation',
+  '/test', // Test page without auth
 ];
 
 // Pages that should not use the main layout (even if authenticated)
