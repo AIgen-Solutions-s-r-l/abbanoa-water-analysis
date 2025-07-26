@@ -1,4 +1,3 @@
-import { apiClient } from '@/lib/api/client';
 import { DashboardMetrics } from '@/lib/types';
 
 interface ForecastData {
@@ -19,12 +18,15 @@ interface NetworkStatus {
 
 export class DashboardService {
   static async getMetrics(): Promise<DashboardMetrics> {
-    // Get data from real backend's /dashboard/summary endpoint
-    const response = await apiClient.get<any>('/dashboard/summary');
+    // Use the working proxy endpoint directly
+    const response = await fetch('/api/proxy/v1/dashboard/summary');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch dashboard data: ${response.status}`);
+    }
     
-    // Transform the data to match frontend's expected format
-    const data = response.data;
+    const data = await response.json();
     
+    // Transform the real data to match frontend's expected format
     return {
       totalConsumption: data.network.total_volume_m3 || 0,
       activeConnections: data.network.active_nodes || 0,
@@ -55,9 +57,13 @@ export class DashboardService {
   }
 
   static async getNetworkStatus(): Promise<NetworkStatus> {
-    // Get data from real backend
-    const response = await apiClient.get<any>('/dashboard/summary');
-    const data = response.data;
+    // Use the working proxy endpoint directly
+    const response = await fetch('/api/proxy/v1/dashboard/summary');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch dashboard data: ${response.status}`);
+    }
+    
+    const data = await response.json();
     
     return {
       operationalPercentage: 95, // Calculate based on active nodes

@@ -1,0 +1,138 @@
+version: '3.8'
+
+# Hybrid Development Setup
+# - Production PostgreSQL/TimescaleDB + ETL services in Docker
+# - Local FastAPI backend (port 8000) + Next.js frontend (port 8502)
+# - Nginx proxy for unified access
+
+services:
+  # Production TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: abbanoa-postgres-dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-abbanoa_processing}
+      POSTGRES_USER: ${POSTGRES_USER:-abbanoa_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abbanoa_secure_pass}
+    ports:
+      - "5434:5432"  # Map to 5434 to avoid conflicts with local postgres
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./src/infrastructure/database/postgres_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - abbanoa-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-abbanoa_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: abbanoa-redis-dev
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 4gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - abbanoa-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ETL Scheduler - runs BigQuery sync jobs
+  etl-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-etl-scheduler-dev
+    command: python -m src.infrastructure.etl.etl_scheduler
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa_processing}
+      - POSTGRES_USER=${POSTGRES_USER:-abbanoa_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-abbanoa_secure_pass}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./credentials:/app/credentials:ro
+      - ./logs:/app/logs
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ETL Initialization - one-time data sync and cache setup
+  etl-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-etl-init-dev
+    command: >
+      sh -c "
+        echo 'Starting ETL initialization...' &&
+        python -m src.infrastructure.etl.bigquery_to_postgres_etl &&
+        echo 'ETL completed, initializing Redis cache...' &&
+        python init_redis_cache.py --force --stats &&
+        echo 'Initialization complete!'
+      "
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa_processing}
+      - POSTGRES_USER=${POSTGRES_USER:-abbanoa_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-abbanoa_secure_pass}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"  # Run once
+
+  # Nginx reverse proxy for local development
+  nginx-dev:
+    image: nginx:alpine
+    container_name: abbanoa-nginx-dev
+    ports:
+      - "8080:80"  # Use port 8080 to avoid conflicts
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - abbanoa-dev-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres-dev-data:
+  redis-dev-data:
+
+networks:
+  abbanoa-dev-network:
+    driver: bridge 

@@ -97,18 +97,15 @@ services:
       redis:
         condition: service_healthy
 
-  streamlit:
+  # FastAPI Backend
+  api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: abbanoa-dashboard
+    container_name: abbanoa-api
     ports:
-      - "${STREAMLIT_PORT:-8501}:8501"
+      - "${API_PORT:-8000}:8000"
     environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
-      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
-      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
-      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=${POSTGRES_DB:-abbanoa}
@@ -116,8 +113,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    volumes:
-      - ./credentials:/app/credentials:ro
     networks:
       - abbanoa-network
     depends_on:
@@ -128,9 +123,32 @@ services:
       etl-scheduler:
         condition: service_started
     restart: unless-stopped
-    command: streamlit run src/presentation/streamlit/app.py --server.port=8501 --server.address=0.0.0.0
+    command: uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/dashboard/summary"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend (replacing Streamlit)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: abbanoa-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://api:8000
+      - BACKEND_URL=http://api:8000
+    networks:
+      - abbanoa-network
+    depends_on:
+      - api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -147,7 +165,8 @@ services:
     networks:
       - abbanoa-network
     depends_on:
-      - streamlit
+      - frontend
+      - api
     restart: unless-stopped
 
   prometheus:

@@ -2,7 +2,7 @@
 
 import os
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import asyncpg
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -87,21 +87,25 @@ async def list_nodes():
     try:
         async with pool.acquire() as conn:
             rows = await conn.fetch("""
-                SELECT node_id, name, node_type, is_active, location, metadata, created_at
+                SELECT node_id, node_name, node_type, is_active, 
+                       latitude, longitude, metadata, created_at
                 FROM water_infrastructure.nodes
                 WHERE is_active = true
-                ORDER BY name
+                ORDER BY node_name
             """)
             
             nodes = []
             for row in rows:
                 nodes.append({
                     "id": row["node_id"],
-                    "name": row["name"],
+                    "name": row["node_name"],
                     "location": {
-                        "site_name": row["name"].split()[0],  # Extract area from name
+                        "site_name": row["node_name"].split()[0] if row["node_name"] else "Unknown",
                         "area": "Sardinia",
-                        "coordinates": row["location"] if row["location"] else {}
+                        "coordinates": {
+                            "latitude": float(row["latitude"]) if row["latitude"] else 0,
+                            "longitude": float(row["longitude"]) if row["longitude"] else 0
+                        }
                     },
                     "node_type": row["node_type"],
                     "status": "active" if row["is_active"] else "inactive",
@@ -125,7 +129,7 @@ async def get_dashboard_summary():
             
             # Get latest readings
             latest_readings = await conn.fetch("""
-                SELECT n.node_id, n.name, sr.flow_rate, sr.pressure, sr.temperature
+                SELECT n.node_id, n.node_name, sr.flow_rate, sr.pressure, sr.temperature
                 FROM water_infrastructure.nodes n
                 LEFT JOIN LATERAL (
                     SELECT flow_rate, pressure, temperature
@@ -154,7 +158,7 @@ async def get_dashboard_summary():
             for row in latest_readings:
                 node_data = {
                     "node_id": row["node_id"],
-                    "node_name": row["name"],
+                    "node_name": row["node_name"],
                     "flow_rate": float(row["flow_rate"]) if row["flow_rate"] else 0.0,
                     "pressure": float(row["pressure"]) if row["pressure"] else 0.0,
                     "anomaly_count": 0,
@@ -195,15 +199,15 @@ async def get_anomalies():
                 SELECT 
                     a.anomaly_id,
                     a.node_id,
-                    n.name as node_name,
+                    n.node_name,
                     a.timestamp,
                     a.anomaly_type,
                     a.severity,
                     a.measurement_type,
                     a.actual_value,
-                    a.expected_range,
+                    a.expected_value,
                     a.deviation_percentage,
-                    a.description,
+                    a.detection_method,
                     a.resolved_at
                 FROM water_infrastructure.anomalies a
                 JOIN water_infrastructure.nodes n ON a.node_id = n.node_id
@@ -214,6 +218,15 @@ async def get_anomalies():
             
             anomalies = []
             for row in rows:
+                # Create description based on anomaly type
+                description = f"{row['anomaly_type'].replace('_', ' ').title()} detected"
+                if row['measurement_type']:
+                    description += f" in {row['measurement_type']}"
+                
+                # Build expected range from expected_value
+                expected_val = float(row["expected_value"]) if row["expected_value"] else 0
+                expected_range = [expected_val * 0.9, expected_val * 1.1]  # ±10% range
+                
                 anomalies.append({
                     "id": f"anomaly_{row['anomaly_id']}",
                     "node_id": row["node_id"],
@@ -223,9 +236,9 @@ async def get_anomalies():
                     "severity": row["severity"],
                     "measurement_type": row["measurement_type"],
                     "actual_value": float(row["actual_value"]) if row["actual_value"] else None,
-                    "expected_range": row["expected_range"],
+                    "expected_range": expected_range,
                     "deviation_percentage": float(row["deviation_percentage"]) if row["deviation_percentage"] else None,
-                    "description": row["description"],
+                    "description": description,
                     "resolved_at": row["resolved_at"].isoformat() if row["resolved_at"] else None
                 })
             
@@ -254,18 +267,51 @@ async def get_anomalies():
 @app.get("/api/v1/nodes/{node_id}/readings")
 async def get_node_readings(
     node_id: str,
-    limit: int = Query(100, description="Maximum number of readings to return")
+    limit: int = Query(100, description="Maximum number of readings to return"),
+    start_time: Optional[str] = Query(None, description="Start time for readings (ISO format)"),
+    end_time: Optional[str] = Query(None, description="End time for readings (ISO format)")
 ):
-    """Get sensor readings for a specific node."""
+    """Get sensor readings for a specific node with optional date range filtering."""
     try:
         async with pool.acquire() as conn:
-            rows = await conn.fetch("""
-                SELECT timestamp, flow_rate, pressure, temperature, volume
+            # Build query with optional date filtering
+            query = """
+                SELECT timestamp, flow_rate, pressure, temperature
                 FROM water_infrastructure.sensor_readings
                 WHERE node_id = $1
-                ORDER BY timestamp DESC
-                LIMIT $2
-            """, node_id, limit)
+            """
+            params = [node_id]
+            param_count = 1
+            
+            # Add date range filters if provided
+            if start_time:
+                try:
+                    # Parse ISO datetime string
+                    start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    param_count += 1
+                    query += f" AND timestamp >= ${param_count}"
+                    params.append(start_dt)
+                except ValueError as e:
+                    raise HTTPException(status_code=400, detail=f"Invalid start_time format: {e}")
+                
+            if end_time:
+                try:
+                    # Parse ISO datetime string
+                    end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+                    param_count += 1
+                    query += f" AND timestamp <= ${param_count}"
+                    params.append(end_dt)
+                except ValueError as e:
+                    raise HTTPException(status_code=400, detail=f"Invalid end_time format: {e}")
+            
+            query += " ORDER BY timestamp DESC"
+            
+            # Add limit
+            param_count += 1
+            query += f" LIMIT ${param_count}"
+            params.append(limit)
+            
+            rows = await conn.fetch(query, *params)
             
             readings = []
             for row in rows:
@@ -274,12 +320,122 @@ async def get_node_readings(
                     "flow_rate": float(row["flow_rate"]) if row["flow_rate"] else None,
                     "pressure": float(row["pressure"]) if row["pressure"] else None,
                     "temperature": float(row["temperature"]) if row["temperature"] else None,
-                    "volume": float(row["volume"]) if row["volume"] else None
                 })
             
             return readings
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/auth/me")
+async def get_current_user():
+    """Mock endpoint to get current user."""
+    return {
+        "success": True,
+        "data": {
+            "id": "user-1",
+            "email": "admin@abbanoa.com",
+            "firstName": "Admin",
+            "lastName": "User",
+            "role": "admin",
+            "tenantId": "default",
+            "isActive": True,
+            "lastLogin": datetime.now().isoformat(),
+            "createdAt": datetime.now().isoformat(),
+            "updatedAt": datetime.now().isoformat()
+        }
+    }
+
+
+@app.get("/api/v1/tenants/current")
+async def get_current_tenant():
+    """Mock endpoint to get current tenant."""
+    return {
+        "success": True,
+        "data": {
+            "id": "default",
+            "name": "Abbanoa S.p.A.",
+            "domain": "abbanoa",
+            "logo": None,
+            "plan": "enterprise",
+            "isActive": True,
+            "settings": {
+                "maxUsers": 100,
+                "features": ["monitoring", "anomaly_detection", "reporting", "analytics"],
+                "customBranding": {
+                    "primaryColor": "#2563eb",
+                    "logo": "",
+                    "companyName": "Abbanoa S.p.A."
+                }
+            },
+            "createdAt": datetime.now().isoformat(),
+            "updatedAt": datetime.now().isoformat()
+        }
+    }
+
+
+@app.post("/api/v1/auth/login")
+async def login():
+    """Mock login endpoint."""
+    return {
+        "success": True,
+        "data": {
+            "user": {
+                "id": "user-1",
+                "email": "admin@abbanoa.com",
+                "firstName": "Admin",
+                "lastName": "User",
+                "role": "admin",
+                "tenantId": "default",
+                "isActive": True,
+                "lastLogin": datetime.now().isoformat(),
+                "createdAt": datetime.now().isoformat(),
+                "updatedAt": datetime.now().isoformat()
+            },
+            "tenant": {
+                "id": "default",
+                "name": "Abbanoa S.p.A.",
+                "domain": "abbanoa",
+                "logo": None,
+                "plan": "enterprise",
+                "isActive": True,
+                "settings": {
+                    "maxUsers": 100,
+                    "features": ["monitoring", "anomaly_detection", "reporting", "analytics"],
+                    "customBranding": {
+                        "primaryColor": "#2563eb",
+                        "logo": "",
+                        "companyName": "Abbanoa S.p.A."
+                    }
+                },
+                "createdAt": datetime.now().isoformat(),
+                "updatedAt": datetime.now().isoformat()
+            },
+            "accessToken": "mock-access-token",
+            "refreshToken": "mock-refresh-token",
+            "expiresIn": 86400
+        }
+    }
+
+
+@app.get("/api/v1/auth/tenants")
+async def get_user_tenants():
+    """Mock endpoint to get user tenants."""
+    return {
+        "success": True,
+        "data": [{
+            "id": "default",
+            "name": "Abbanoa S.p.A.",
+            "domain": "abbanoa",
+            "logo": None,
+            "plan": "enterprise",
+            "isActive": True,
+            "userRole": "admin",
+            "joinedAt": datetime.now().isoformat()
+        }]
+    }
 
 
 if __name__ == "__main__":

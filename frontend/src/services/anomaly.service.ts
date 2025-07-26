@@ -1,4 +1,3 @@
-import { apiClient } from '@/lib/api/client';
 import { Anomaly } from '@/lib/types';
 
 interface AnomalyStats {
@@ -14,10 +13,16 @@ interface AnomalyStats {
 
 export class AnomalyService {
   static async getAnomalies(): Promise<Anomaly[]> {
-    const response = await apiClient.get<any[]>('/anomalies');
+    // Use the working proxy endpoint directly
+    const response = await fetch('/api/proxy/v1/anomalies');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch anomalies: ${response.status}`);
+    }
+    
+    const data = await response.json();
     
     // Transform backend data to match frontend Anomaly type
-    return response.data.map(item => ({
+    return data.map((item: any) => ({
       id: item.id,
       deviceId: item.node_id,
       type: item.anomaly_type,
@@ -46,7 +51,7 @@ export class AnomalyService {
     // This endpoint might not exist in the real backend yet
     // For now, we'll just simulate it
     console.log('Resolving anomaly:', id);
-    // await apiClient.put(`/anomalies/${id}/resolve`);
+    // await fetch(`/api/proxy/v1/anomalies/${id}/resolve`, { method: 'PUT' });
   }
 
   static async getStats(): Promise<AnomalyStats> {

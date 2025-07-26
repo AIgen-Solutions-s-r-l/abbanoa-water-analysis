@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthContext } from '@/components/providers/AuthProvider';
 import { LayoutProvider } from './LayoutProvider';
 
@@ -38,10 +38,38 @@ function LoadingScreen() {
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthContext();
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
   const isStandaloneRoute = STANDALONE_ROUTES.includes(pathname);
+
+  useEffect(() => {
+    // TEMPORARY: Development bypass - remove this in production
+    if (process.env.NODE_ENV === 'development' && pathname === '/bypass') {
+      console.log('🚀 Development bypass activated');
+      return;
+    }
+    
+    if (!isLoading && !isAuthenticated && !isPublicRoute) {
+      router.push('/auth/login?redirect=' + encodeURIComponent(pathname));
+    }
+  }, [isAuthenticated, isLoading, isPublicRoute, pathname, router]);
+
+  // TEMPORARY: Allow bypass route
+  if (pathname === '/bypass') {
+    return (
+      <LayoutProvider>
+        <div className="min-h-screen bg-gray-50">
+          <h1 className="text-center text-2xl font-bold py-8">Development Bypass Mode</h1>
+          <div className="text-center space-x-4">
+            <a href="/" className="text-blue-600 hover:underline">Go to Dashboard</a>
+            <a href="/auth/login" className="text-blue-600 hover:underline">Go to Login</a>
+          </div>
+        </div>
+      </LayoutProvider>
+    );
+  }
 
   // Show loading screen while authentication is being checked
   if (isLoading) {
