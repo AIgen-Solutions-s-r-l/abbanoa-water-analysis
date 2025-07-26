@@ -46,15 +46,46 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
         const readings = await response.json();
         
         // Convert readings to chart format
-        return readings.map((reading: any) => ({
-          timestamp: new Date(reading.timestamp).toISOString().slice(11, 16), // HH:MM format
-          fullTimestamp: reading.timestamp, // Keep full timestamp for sorting
-          flowRate: reading.flow_rate || 0,
-          targetFlow: node.flow_rate || 0, // Current reading as target
-          pressure: reading.pressure || 0,
-          nodeId: node.node_id,
-          nodeName: node.node_name,
-        }));
+        return readings.map((reading: any) => {
+          const readingDate = new Date(reading.timestamp);
+          
+          // Determine time range to choose appropriate timestamp format
+          const timeRangeDays = startDate && endDate ? 
+            (endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000) : 1;
+          
+          let displayTimestamp: string;
+          
+          if (timeRangeDays > 7) {
+            // Daily aggregation: show date only (e.g., "Mar 1", "Mar 15")
+            displayTimestamp = readingDate.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric' 
+            });
+          } else if (timeRangeDays > 1) {
+            // Hourly aggregation: show date + time (e.g., "Mar 1 14:00")
+            displayTimestamp = readingDate.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric' 
+            }) + ' ' + readingDate.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false 
+            });
+          } else {
+            // Raw data: show time only (e.g., "14:30")
+            displayTimestamp = readingDate.toISOString().slice(11, 16);
+          }
+          
+          return {
+            timestamp: displayTimestamp,
+            fullTimestamp: reading.timestamp, // Keep full timestamp for sorting
+            flowRate: reading.flow_rate || 0,
+            targetFlow: node.flow_rate || 0, // Current reading as target
+            pressure: reading.pressure || 0,
+            nodeId: node.node_id,
+            nodeName: node.node_name,
+          };
+        });
       } catch (error) {
         console.error(`Error fetching data for node ${node.node_id}:`, error);
         return [];

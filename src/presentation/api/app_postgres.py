@@ -267,49 +267,72 @@ async def get_anomalies():
 @app.get("/api/v1/nodes/{node_id}/readings")
 async def get_node_readings(
     node_id: str,
-    limit: int = Query(100, description="Maximum number of readings to return"),
     start_time: Optional[str] = Query(None, description="Start time for readings (ISO format)"),
-    end_time: Optional[str] = Query(None, description="End time for readings (ISO format)")
+    end_time: Optional[str] = Query(None, description="End time for readings (ISO format)"),
+    max_points: int = Query(500, description="Maximum number of data points to return")
 ):
-    """Get sensor readings for a specific node with optional date range filtering."""
+    """Get sensor readings for a specific node with intelligent data aggregation based on time range."""
     try:
         async with pool.acquire() as conn:
-            # Build query with optional date filtering
-            query = """
-                SELECT timestamp, flow_rate, pressure, temperature
-                FROM water_infrastructure.sensor_readings
-                WHERE node_id = $1
-            """
-            params = [node_id]
-            param_count = 1
-            
-            # Add date range filters if provided
-            if start_time:
+            # Default to last 24 hours if no time range provided
+            if not start_time or not end_time:
+                end_dt = datetime.now()
+                start_dt = end_dt - timedelta(hours=24)
+            else:
                 try:
-                    # Parse ISO datetime string
                     start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-                    param_count += 1
-                    query += f" AND timestamp >= ${param_count}"
-                    params.append(start_dt)
-                except ValueError as e:
-                    raise HTTPException(status_code=400, detail=f"Invalid start_time format: {e}")
-                
-            if end_time:
-                try:
-                    # Parse ISO datetime string
                     end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
-                    param_count += 1
-                    query += f" AND timestamp <= ${param_count}"
-                    params.append(end_dt)
                 except ValueError as e:
-                    raise HTTPException(status_code=400, detail=f"Invalid end_time format: {e}")
+                    raise HTTPException(status_code=400, detail=f"Invalid datetime format: {e}")
             
-            query += " ORDER BY timestamp DESC"
+            # Calculate time range in days
+            time_range_days = (end_dt - start_dt).total_seconds() / (24 * 3600)
             
-            # Add limit
-            param_count += 1
-            query += f" LIMIT ${param_count}"
-            params.append(limit)
+            # Choose aggregation strategy based on time range
+            if time_range_days <= 1:
+                # Raw data for <= 1 day (limit to max_points most recent)
+                query = """
+                    SELECT timestamp, flow_rate, pressure, temperature
+                    FROM water_infrastructure.sensor_readings
+                    WHERE node_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                    ORDER BY timestamp ASC
+                    LIMIT $4
+                """
+                params = [node_id, start_dt, end_dt, max_points]
+                
+            elif time_range_days <= 7:
+                # Hourly averages for 1-7 days
+                query = """
+                    SELECT 
+                        date_trunc('hour', timestamp) as timestamp,
+                        AVG(flow_rate) as flow_rate,
+                        AVG(pressure) as pressure,
+                        AVG(temperature) as temperature
+                    FROM water_infrastructure.sensor_readings
+                    WHERE node_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                        AND (flow_rate IS NOT NULL OR pressure IS NOT NULL OR temperature IS NOT NULL)
+                    GROUP BY date_trunc('hour', timestamp)
+                    ORDER BY timestamp ASC
+                    LIMIT $4
+                """
+                params = [node_id, start_dt, end_dt, max_points]
+                
+            else:
+                # Daily averages for > 7 days
+                query = """
+                    SELECT 
+                        date_trunc('day', timestamp) as timestamp,
+                        AVG(flow_rate) as flow_rate,
+                        AVG(pressure) as pressure,
+                        AVG(temperature) as temperature
+                    FROM water_infrastructure.sensor_readings
+                    WHERE node_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                        AND (flow_rate IS NOT NULL OR pressure IS NOT NULL OR temperature IS NOT NULL)
+                    GROUP BY date_trunc('day', timestamp)
+                    ORDER BY timestamp ASC
+                    LIMIT $4
+                """
+                params = [node_id, start_dt, end_dt, max_points]
             
             rows = await conn.fetch(query, *params)
             
