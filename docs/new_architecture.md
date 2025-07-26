@@ -6,6 +6,79 @@ The Abbanoa Water Infrastructure system is a comprehensive water monitoring and 
 
 The system features a modern Next.js frontend with multi-tenant support, connected to a FastAPI backend that interfaces with PostgreSQL/TimescaleDB for operational data, Redis for caching, and Google BigQuery for data warehousing and machine learning models.
 
+## System Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        A[Next.js Frontend<br/>Port: 3001] 
+        A1[React Components]
+        A2[API Proxy Routes]
+        A3[Auth Provider]
+        A --> A1
+        A --> A2
+        A --> A3
+    end
+    
+    subgraph "API Gateway"
+        B[Nginx Reverse Proxy<br/>Ports: 80/443]
+    end
+    
+    subgraph "Application Layer"
+        C[FastAPI Backend<br/>Port: 8000]
+        C1[Auth Endpoints]
+        C2[Dashboard API]
+        C3[Anomaly API]
+        C --> C1
+        C --> C2
+        C --> C3
+    end
+    
+    subgraph "Data Layer"
+        D[(PostgreSQL/TimescaleDB<br/>Port: 5434)]
+        E[(Redis Cache<br/>Port: 6379)]
+        F[(Google BigQuery)]
+    end
+    
+    subgraph "Processing Layer"
+        G[ETL Scheduler]
+        H[ETL Init]
+        I[Anomaly Detection]
+    end
+    
+    subgraph "Monitoring"
+        J[Prometheus<br/>Port: 9090]
+        K[Grafana<br/>Port: 3000]
+    end
+    
+    A2 --> B
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+    G --> D
+    G --> E
+    G --> F
+    H --> D
+    I --> D
+    J --> C
+    J --> D
+    J --> E
+    K --> J
+    
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef database fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef processing fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef monitoring fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class A,A1,A2,A3 frontend
+    class B,C,C1,C2,C3 backend
+    class D,E,F database
+    class G,H,I processing
+    class J,K monitoring
+```
+
 ## Architecture Components
 
 ### 1. Data Layer
@@ -56,6 +129,29 @@ The system features a modern Next.js frontend with multi-tenant support, connect
   5. **Data Quality Check** (6 AM daily): Validates data integrity and completeness
   6. **Network Efficiency ETL** (every 5 min): Collects meter efficiency data
   7. **Weekly Cleanup** (Sunday 3 AM): Removes old data per retention policies
+
+```mermaid
+gantt
+    title ETL Scheduler Daily Timeline
+    dateFormat HH:mm
+    axisFormat %H:%M
+    
+    section Continuous
+    Real-time Sync (5min)     :active, rt1, 00:00, 5m
+    Real-time Sync            :active, rt2, after rt1, 5m
+    Network Efficiency (5min)  :ne1, 00:00, 5m
+    Network Efficiency        :ne2, after ne1, 5m
+    Anomaly Detection (15min)  :crit, ad1, 00:00, 15m
+    Anomaly Detection         :crit, ad2, after ad1, 15m
+    
+    section Hourly
+    Cache Refresh             :done, cr1, 01:00, 10m
+    Cache Refresh             :done, cr2, 02:00, 10m
+    
+    section Daily
+    Daily Sync                :milestone, ds, 02:00, 0m
+    Data Quality Check        :milestone, dq, 06:00, 0m
+```
 
 #### 2.2 ETL Init Service
 - **Container**: `abbanoa-etl-init`
@@ -181,6 +277,72 @@ The system features a modern Next.js frontend with multi-tenant support, connect
 - **Purpose**: Isolated network for all services
 - **Security**: Internal communication only, external access via Nginx
 
+```mermaid
+graph TB
+    subgraph "External Network"
+        USER[Users<br/>HTTPS:443]
+        ADMIN[Admins<br/>HTTPS:443]
+    end
+    
+    subgraph "DMZ"
+        NGINX[Nginx<br/>80/443]
+    end
+    
+    subgraph "abbanoa-network (Docker Bridge)"
+        subgraph "Frontend Tier"
+            NEXT[Next.js<br/>:3001]
+        end
+        
+        subgraph "API Tier"
+            API[FastAPI<br/>:8000]
+        end
+        
+        subgraph "Data Tier"
+            PG[(PostgreSQL<br/>:5434)]
+            REDIS[(Redis<br/>:6379)]
+        end
+        
+        subgraph "Processing Tier"
+            ETL[ETL Services]
+        end
+        
+        subgraph "Monitoring Tier"
+            PROM[Prometheus<br/>:9090]
+            GRAF[Grafana<br/>:3000]
+        end
+    end
+    
+    subgraph "External Services"
+        BQ[(Google BigQuery)]
+    end
+    
+    USER --> NGINX
+    ADMIN --> NGINX
+    NGINX --> NEXT
+    NEXT --> API
+    API --> PG
+    API --> REDIS
+    ETL --> PG
+    ETL --> REDIS
+    ETL --> BQ
+    PROM --> API
+    PROM --> PG
+    PROM --> REDIS
+    GRAF --> PROM
+    
+    classDef external fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px
+    classDef dmz fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef internal fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    classDef data fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef cloud fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    
+    class USER,ADMIN external
+    class NGINX dmz
+    class NEXT,API,ETL,PROM,GRAF internal
+    class PG,REDIS data
+    class BQ cloud
+```
+
 ### 6. Data Volumes
 
 Persistent storage for stateful services:
@@ -192,39 +354,124 @@ Persistent storage for stateful services:
 ## Data Flow Architecture
 
 ### 1. Data Ingestion Flow
-```
-BigQuery (Source) → ETL Pipeline → PostgreSQL → Redis Cache
-                                       ↓
-                                   API Layer
-                                       ↓
-                                 Next.js Frontend
+
+```mermaid
+flowchart LR
+    A[Sensor Data] --> B[Google BigQuery]
+    B --> C[ETL Pipeline]
+    C --> D[(PostgreSQL/TimescaleDB)]
+    D --> E[(Redis Cache)]
+    E --> F[FastAPI Backend]
+    F --> G[Next.js Frontend]
+    
+    style A fill:#ffeb3b,stroke:#f57f17,stroke-width:2px
+    style B fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style C fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style D fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style E fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    style F fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style G fill:#e1f5fe,stroke:#01579b,stroke-width:2px
 ```
 
 ### 2. Real-time Processing Flow
-```
-Sensor Data → BigQuery → ETL Scheduler (5 min) → PostgreSQL
-                              ↓
-                        Anomaly Detection
-                              ↓
-                        Notifications → Frontend Updates
+
+```mermaid
+sequenceDiagram
+    participant S as Sensor
+    participant BQ as BigQuery
+    participant ETL as ETL Scheduler
+    participant PG as PostgreSQL
+    participant AD as Anomaly Detection
+    participant R as Redis
+    participant API as FastAPI
+    participant UI as Next.js Frontend
+    
+    S->>BQ: Send readings
+    Note over ETL: Every 5 minutes
+    ETL->>BQ: Fetch recent data
+    ETL->>PG: Store in TimescaleDB
+    ETL->>AD: Trigger analysis
+    AD->>PG: Check patterns
+    AD-->>PG: Store anomalies
+    AD->>R: Cache alerts
+    UI->>API: Poll updates
+    API->>R: Get cached alerts
+    API-->>UI: Return anomalies
+    UI->>UI: Update dashboard
 ```
 
 ### 3. User Request Flow
-```
-User Browser → Next.js Frontend → API Proxy → FastAPI Backend
-                     ↓                              ↓
-                Local Storage               PostgreSQL/Redis
-                (JWT Tokens)                        ↓
-                                             BigQuery (ML)
+
+```mermaid
+flowchart TB
+    subgraph Browser
+        U[User] --> F[Next.js Frontend]
+        F --> LS[Local Storage<br/>JWT Tokens]
+    end
+    
+    subgraph "Next.js Server"
+        F --> P[API Proxy Routes]
+    end
+    
+    subgraph Backend
+        P --> API[FastAPI Backend]
+        API --> AUTH{Auth Check}
+        AUTH -->|Valid| Q[Query Handler]
+        AUTH -->|Invalid| E[401 Error]
+        Q --> PG[(PostgreSQL)]
+        Q --> R[(Redis)]
+        Q --> BQ[(BigQuery ML)]
+    end
+    
+    PG --> Q
+    R --> Q
+    BQ --> Q
+    Q --> API
+    API --> P
+    P --> F
+    
+    style U fill:#fff59d,stroke:#f9a825,stroke-width:2px
+    style F fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style API fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style PG fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style R fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    style BQ fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
 ```
 
 ### 4. Authentication Flow
-```
-User Login → Next.js → API Proxy → FastAPI Auth
-                ↓                        ↓
-          Store JWT/Tenant          Validate Credentials
-                ↓                        ↓
-          Protected Routes          Return JWT + Tenant
+
+```mermaid
+stateDiagram-v2
+    [*] --> LoginPage
+    LoginPage --> SendCredentials
+    SendCredentials --> APIProxy
+    APIProxy --> FastAPIAuth
+    
+    FastAPIAuth --> ValidateUser
+    ValidateUser --> CheckTenant
+    
+    CheckTenant --> Success: Valid
+    CheckTenant --> Failure: Invalid
+    
+    Success --> GenerateJWT
+    GenerateJWT --> ReturnTokens
+    ReturnTokens --> StoreInBrowser
+    StoreInBrowser --> ProtectedRoutes
+    ProtectedRoutes --> [*]
+    
+    Failure --> LoginPage
+    
+    note right of StoreInBrowser
+        - Access Token
+        - Refresh Token
+        - Tenant ID
+    end note
+    
+    note right of ProtectedRoutes
+        All requests include:
+        - Authorization header
+        - X-Tenant-ID header
+    end note
 ```
 
 ## Security Architecture
@@ -322,6 +569,55 @@ User Login → Next.js → API Proxy → FastAPI Auth
 - Redis pub/sub for real-time events
 - PostgreSQL for custom queries
 - BigQuery for advanced analytics
+
+### Component Interaction Diagram
+
+```mermaid
+C4Context
+    title Component Interaction Overview
+    
+    Person(user, "Water System Operator", "Monitors and manages water infrastructure")
+    Person(admin, "System Administrator", "Manages system configuration and users")
+    
+    System_Boundary(frontend, "Frontend System") {
+        System(nextjs, "Next.js Application", "React-based web application with multi-tenant support")
+    }
+    
+    System_Boundary(backend, "Backend System") {
+        System(api, "FastAPI Service", "RESTful API for data access")
+        SystemDb(postgres, "PostgreSQL/TimescaleDB", "Operational time-series database")
+        SystemDb(redis, "Redis Cache", "High-performance caching layer")
+    }
+    
+    System_Boundary(processing, "Processing System") {
+        System(etl, "ETL Services", "Data synchronization and processing")
+        System(anomaly, "Anomaly Detection", "Real-time anomaly analysis")
+    }
+    
+    System_Boundary(monitoring, "Monitoring System") {
+        System(prometheus, "Prometheus", "Metrics collection")
+        System(grafana, "Grafana", "Visualization and alerting")
+    }
+    
+    System_Ext(bigquery, "Google BigQuery", "Data warehouse and ML platform")
+    System_Ext(sensors, "IoT Sensors", "Water infrastructure sensors")
+    
+    Rel(user, nextjs, "Uses", "HTTPS")
+    Rel(admin, grafana, "Monitors", "HTTPS")
+    Rel(nextjs, api, "Calls", "REST/JSON")
+    Rel(api, postgres, "Queries", "SQL")
+    Rel(api, redis, "Caches", "Redis Protocol")
+    Rel(etl, postgres, "Writes", "SQL")
+    Rel(etl, redis, "Updates", "Redis Protocol")
+    Rel(etl, bigquery, "Syncs", "BigQuery API")
+    Rel(anomaly, postgres, "Analyzes", "SQL")
+    Rel(prometheus, api, "Scrapes", "HTTP")
+    Rel(prometheus, postgres, "Monitors", "SQL")
+    Rel(grafana, prometheus, "Queries", "PromQL")
+    Rel(sensors, bigquery, "Streams", "Cloud IoT")
+    
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")
+```
 
 ## Future Architecture Enhancements
 
