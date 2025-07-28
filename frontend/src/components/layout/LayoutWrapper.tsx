@@ -92,7 +92,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   // For protected routes, redirect to login if not authenticated
   if (!isAuthenticated) {
     // TEMPORARY: MVP Demo bypass - show layout for demo routes
-    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies', '/consumption'];
+    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies', '/consumption', '/about'];
     if (process.env.NODE_ENV === 'development' && mvpDemoRoutes.includes(pathname)) {
       return (
         <LayoutProvider>
