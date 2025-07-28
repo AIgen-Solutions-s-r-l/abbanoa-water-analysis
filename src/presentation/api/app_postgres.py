@@ -7,6 +7,7 @@ import asyncpg
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import random
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -661,6 +662,268 @@ async def get_pressure_zones(
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/api/v1/consumption/analytics")
+async def get_consumption_analytics():
+    """Get comprehensive consumption analytics data."""
+    try:
+        # Simulate aggregated consumption data from synthetic dataset
+        # In production, this would query the consumption database
+        
+        # District mapping between consumption data and nodes
+        district_mapping = {
+            'Cagliari_Centro': ['NODE_001', 'NODE_002'],
+            'Quartu_SantElena': ['NODE_003', 'NODE_004'],
+            'Assemini_Industrial': ['NODE_005'],
+            'Monserrato_Residential': ['NODE_006', 'NODE_007'],
+            'Selargius_Distribution': ['DIST_001', 'NODE_008', 'NODE_009']
+        }
+        
+        # Current date for simulation
+        current_date = datetime.now()
+        
+        # Generate district consumption summary
+        district_consumption = []
+        total_consumption = 0
+        
+        districts = [
+            {'id': 'Cagliari_Centro', 'name': 'Cagliari Centro', 'users': 12500, 'type': 'mixed'},
+            {'id': 'Quartu_SantElena', 'name': 'Quartu Sant\'Elena', 'users': 10000, 'type': 'residential'},
+            {'id': 'Assemini_Industrial', 'name': 'Assemini Industrial', 'users': 2500, 'type': 'industrial'},
+            {'id': 'Monserrato_Residential', 'name': 'Monserrato', 'users': 15000, 'type': 'residential'},
+            {'id': 'Selargius_Distribution', 'name': 'Selargius Distribution', 'users': 10000, 'type': 'mixed'}
+        ]
+        
+        for district in districts:
+            # Simulate daily consumption based on district type and season
+            base_consumption = {
+                'residential': 250,  # liters per user per day
+                'industrial': 5000,
+                'mixed': 400
+            }
+            
+            # Summer factor (higher consumption)
+            season_factor = 1.3 if current_date.month in [6, 7, 8] else 1.0
+            
+            # Calculate district consumption
+            daily_consumption = district['users'] * base_consumption[district['type']] * season_factor
+            monthly_consumption = daily_consumption * 30
+            
+            # Add some realistic variation
+            daily_variation = random.uniform(0.9, 1.1)
+            daily_consumption *= daily_variation
+            
+            total_consumption += daily_consumption
+            
+            district_consumption.append({
+                'district_id': district['id'],
+                'district_name': district['name'],
+                'total_users': district['users'],
+                'daily_consumption_liters': round(daily_consumption),
+                'monthly_consumption_liters': round(monthly_consumption),
+                'avg_per_user_daily': round(daily_consumption / district['users'], 2),
+                'peak_hour': random.randint(7, 9) if district['type'] == 'residential' else random.randint(10, 14),
+                'efficiency_score': round(random.uniform(0.85, 0.95), 2)
+            })
+        
+        # Generate time series data for last 24 hours
+        consumption_timeline = []
+        for hour in range(24):
+            timestamp = current_date.replace(hour=hour, minute=0, second=0, microsecond=0)
+            
+            # Typical daily consumption pattern
+            hour_factors = {
+                0: 0.3, 1: 0.2, 2: 0.2, 3: 0.2, 4: 0.3, 5: 0.5,
+                6: 0.8, 7: 1.2, 8: 1.1, 9: 0.9, 10: 0.8, 11: 0.7,
+                12: 0.9, 13: 1.0, 14: 0.8, 15: 0.7, 16: 0.8, 17: 0.9,
+                18: 1.1, 19: 1.2, 20: 1.0, 21: 0.8, 22: 0.6, 23: 0.4
+            }
+            
+            hourly_consumption = (total_consumption / 24) * hour_factors.get(hour, 0.5)
+            
+            consumption_timeline.append({
+                'timestamp': timestamp.isoformat(),
+                'consumption_liters': round(hourly_consumption),
+                'forecast_consumption': round(hourly_consumption * random.uniform(0.95, 1.05))
+            })
+        
+        # User segmentation
+        user_segments = [
+            {
+                'segment': 'Residential',
+                'user_count': 37500,
+                'percentage': 75,
+                'avg_daily_consumption': 250,
+                'trend': 'stable'
+            },
+            {
+                'segment': 'Commercial',
+                'user_count': 10000,
+                'percentage': 20,
+                'avg_daily_consumption': 800,
+                'trend': 'increasing'
+            },
+            {
+                'segment': 'Industrial',
+                'user_count': 2500,
+                'percentage': 5,
+                'avg_daily_consumption': 5000,
+                'trend': 'decreasing'
+            }
+        ]
+        
+        # Peak demand analysis
+        peak_demand = {
+            'daily_peak_time': '08:00',
+            'daily_peak_consumption': round(total_consumption * 0.05),  # 5% of daily in peak hour
+            'weekly_peak_day': 'Monday',
+            'monthly_peak_date': f"{current_date.year}-{current_date.month:02d}-15",
+            'seasonal_peak_month': 'August'
+        }
+        
+        # Conservation opportunities
+        conservation_opportunities = [
+            {
+                'opportunity': 'Leak Detection Program',
+                'potential_savings_liters_daily': round(total_consumption * 0.02),
+                'potential_savings_percentage': 2,
+                'implementation_cost': 'Medium',
+                'roi_months': 12
+            },
+            {
+                'opportunity': 'Smart Meter Deployment',
+                'potential_savings_liters_daily': round(total_consumption * 0.05),
+                'potential_savings_percentage': 5,
+                'implementation_cost': 'High',
+                'roi_months': 24
+            },
+            {
+                'opportunity': 'User Education Campaign',
+                'potential_savings_liters_daily': round(total_consumption * 0.03),
+                'potential_savings_percentage': 3,
+                'implementation_cost': 'Low',
+                'roi_months': 6
+            }
+        ]
+        
+        return {
+            'summary': {
+                'total_daily_consumption': round(total_consumption),
+                'total_monthly_consumption': round(total_consumption * 30),
+                'total_users': 50000,
+                'avg_consumption_per_user': round(total_consumption / 50000, 2),
+                'system_efficiency': 0.92,
+                'water_loss_percentage': 8
+            },
+            'district_consumption': district_consumption,
+            'consumption_timeline': consumption_timeline,
+            'user_segments': user_segments,
+            'peak_demand': peak_demand,
+            'conservation_opportunities': conservation_opportunities
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/consumption/forecast/{district_id}")
+async def get_consumption_forecast(district_id: str):
+    """Get consumption forecast for a specific district."""
+    try:
+        # Generate 7-day forecast
+        forecast_data = []
+        base_consumption = {
+            'Cagliari_Centro': 5000000,
+            'Quartu_SantElena': 2500000,
+            'Assemini_Industrial': 12500000,
+            'Monserrato_Residential': 3750000,
+            'Selargius_Distribution': 4000000
+        }
+        
+        base = base_consumption.get(district_id, 3000000)
+        current_date = datetime.now()
+        
+        for day in range(7):
+            forecast_date = current_date + timedelta(days=day)
+            
+            # Add weekly pattern
+            weekday_factor = 1.0 if forecast_date.weekday() < 5 else 0.85
+            
+            # Add some randomness
+            random_factor = random.uniform(0.95, 1.05)
+            
+            daily_forecast = base * weekday_factor * random_factor
+            
+            forecast_data.append({
+                'date': forecast_date.strftime('%Y-%m-%d'),
+                'forecast_consumption': round(daily_forecast),
+                'confidence_lower': round(daily_forecast * 0.9),
+                'confidence_upper': round(daily_forecast * 1.1)
+            })
+        
+        return {
+            'district_id': district_id,
+            'forecast_horizon_days': 7,
+            'forecast_data': forecast_data,
+            'model_accuracy': 0.92,
+            'last_updated': current_date.isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/consumption/anomalies")
+async def get_consumption_anomalies():
+    """Get consumption anomalies and unusual patterns."""
+    try:
+        # Simulate consumption anomalies
+        anomalies = [
+            {
+                'anomaly_id': 'CA001',
+                'type': 'excessive_consumption',
+                'severity': 'high',
+                'district': 'Quartu_SantElena',
+                'user_id': 'USER_012345',
+                'detected_at': (datetime.now() - timedelta(hours=2)).isoformat(),
+                'consumption_spike': 450,  # percentage
+                'normal_range': '200-300 L/day',
+                'actual_consumption': '1350 L/day',
+                'potential_cause': 'Possible leak or irrigation system malfunction'
+            },
+            {
+                'anomaly_id': 'CA002',
+                'type': 'zero_consumption',
+                'severity': 'medium',
+                'district': 'Monserrato_Residential',
+                'user_id': 'USER_023456',
+                'detected_at': (datetime.now() - timedelta(hours=5)).isoformat(),
+                'days_zero_consumption': 3,
+                'potential_cause': 'Meter malfunction or property vacancy'
+            },
+            {
+                'anomaly_id': 'CA003',
+                'type': 'unusual_pattern',
+                'severity': 'low',
+                'district': 'Assemini_Industrial',
+                'user_id': 'USER_034567',
+                'detected_at': (datetime.now() - timedelta(hours=8)).isoformat(),
+                'pattern_description': 'Night-time consumption spike',
+                'potential_cause': 'Industrial process change or equipment issue'
+            }
+        ]
+        
+        return {
+            'total_anomalies': len(anomalies),
+            'anomalies': anomalies,
+            'detection_rate': 0.98,
+            'false_positive_rate': 0.02,
+            'last_scan': datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
