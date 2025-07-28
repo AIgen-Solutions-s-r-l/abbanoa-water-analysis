@@ -50,6 +50,15 @@ async def startup_event():
     """Initialize database connection pool on startup."""
     global pool
     pool = await asyncpg.create_pool(**POSTGRES_CONFIG)
+    app.state.pool = pool  # Store pool in app state for dependency injection
+    
+    # Include user routes
+    try:
+        from .user_routes import router as user_router
+        app.include_router(user_router)
+        logger.info("User routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"User routes module not found: {e}")
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 
 
