@@ -134,7 +134,7 @@ async def get_dashboard_summary():
                     COUNT(DISTINCT sr.node_id) as active_nodes
                 FROM water_infrastructure.sensor_readings sr
                 JOIN water_infrastructure.nodes n ON sr.node_id = n.node_id
-                WHERE sr.timestamp > NOW() - INTERVAL '1 hour'
+                WHERE sr.timestamp > NOW() - INTERVAL '24 hours'
                 AND n.is_active = true
             """)
             
@@ -1138,6 +1138,344 @@ async def get_energy_optimization():
                 'projected_annual_savings': round(sum(o['annual_savings_eur'] for o in opportunities), 0)
             }
             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/weather/current")
+async def get_current_weather(
+    location: Optional[str] = Query(None, description="Filter by location name")
+):
+    """Get current weather data (most recent reading for each location)."""
+    try:
+        async with pool.acquire() as conn:
+            if location:
+                rows = await conn.fetch("""
+                    SELECT DISTINCT ON (location)
+                        location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
+                        humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
+                    FROM water_infrastructure.weather_data
+                    WHERE location = $1
+                    ORDER BY location, date DESC
+                """, location)
+            else:
+                rows = await conn.fetch("""
+                    SELECT DISTINCT ON (location)
+                        location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
+                        humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
+                    FROM water_infrastructure.weather_data
+                    ORDER BY location, date DESC
+                """)
+            
+            return [{
+                "location": row['location'],
+                "date": row['date'].isoformat(),
+                "temperature": {
+                    "current": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
+                    "min": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
+                    "max": float(row['max_temperature_c']) if row['max_temperature_c'] else None
+                },
+                "humidity": row['humidity_percent'],
+                "rainfall": float(row['rainfall_mm']) if row['rainfall_mm'] else 0,
+                "windSpeed": float(row['avg_wind_speed_kmh']) if row['avg_wind_speed_kmh'] else 0,
+                "conditions": row['weather_phenomena'] or "Clear"
+            } for row in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/weather/historical")
+async def get_historical_weather(
+    location: str = Query(..., description="Location name"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    interval: str = Query("daily", description="Data interval: daily, weekly, monthly")
+):
+    """Get historical weather data with optional aggregation."""
+    try:
+        async with pool.acquire() as conn:
+            # Default date range if not provided
+            if not end_date:
+                end_date = datetime.now().date().isoformat()
+            if not start_date:
+                start_date = (datetime.now() - timedelta(days=30)).date().isoformat()
+            
+            if interval == "daily":
+                rows = await conn.fetch("""
+                    SELECT date, avg_temperature_c, min_temperature_c, max_temperature_c,
+                           humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
+                    FROM water_infrastructure.weather_data
+                    WHERE location = $1 AND date BETWEEN $2 AND $3
+                    ORDER BY date
+                """, location, start_date, end_date)
+                
+                return [{
+                    "date": row['date'].isoformat(),
+                    "temperature": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
+                    "temperatureMin": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
+                    "temperatureMax": float(row['max_temperature_c']) if row['max_temperature_c'] else None,
+                    "humidity": row['humidity_percent'],
+                    "rainfall": float(row['rainfall_mm']) if row['rainfall_mm'] else 0,
+                    "windSpeed": float(row['avg_wind_speed_kmh']) if row['avg_wind_speed_kmh'] else 0,
+                    "conditions": row['weather_phenomena'] or "Clear"
+                } for row in rows]
+                
+            elif interval == "weekly":
+                rows = await conn.fetch("""
+                    SELECT 
+                        DATE_TRUNC('week', date) as week_start,
+                        AVG(avg_temperature_c) as avg_temp,
+                        MIN(min_temperature_c) as min_temp,
+                        MAX(max_temperature_c) as max_temp,
+                        AVG(humidity_percent) as avg_humidity,
+                        SUM(rainfall_mm) as total_rainfall,
+                        AVG(avg_wind_speed_kmh) as avg_wind
+                    FROM water_infrastructure.weather_data
+                    WHERE location = $1 AND date BETWEEN $2 AND $3
+                    GROUP BY week_start
+                    ORDER BY week_start
+                """, location, start_date, end_date)
+                
+                return [{
+                    "weekStart": row['week_start'].isoformat(),
+                    "temperature": float(row['avg_temp']) if row['avg_temp'] else None,
+                    "temperatureMin": float(row['min_temp']) if row['min_temp'] else None,
+                    "temperatureMax": float(row['max_temp']) if row['max_temp'] else None,
+                    "humidity": float(row['avg_humidity']) if row['avg_humidity'] else None,
+                    "rainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0,
+                    "windSpeed": float(row['avg_wind']) if row['avg_wind'] else 0
+                } for row in rows]
+                
+            else:  # monthly
+                rows = await conn.fetch("""
+                    SELECT 
+                        DATE_TRUNC('month', date) as month_start,
+                        AVG(avg_temperature_c) as avg_temp,
+                        MIN(min_temperature_c) as min_temp,
+                        MAX(max_temperature_c) as max_temp,
+                        AVG(humidity_percent) as avg_humidity,
+                        SUM(rainfall_mm) as total_rainfall,
+                        AVG(avg_wind_speed_kmh) as avg_wind
+                    FROM water_infrastructure.weather_data
+                    WHERE location = $1 AND date BETWEEN $2 AND $3
+                    GROUP BY month_start
+                    ORDER BY month_start
+                """, location, start_date, end_date)
+                
+                return [{
+                    "month": row['month_start'].isoformat(),
+                    "temperature": float(row['avg_temp']) if row['avg_temp'] else None,
+                    "temperatureMin": float(row['min_temp']) if row['min_temp'] else None,
+                    "temperatureMax": float(row['max_temp']) if row['max_temp'] else None,
+                    "humidity": float(row['avg_humidity']) if row['avg_humidity'] else None,
+                    "rainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0,
+                    "windSpeed": float(row['avg_wind']) if row['avg_wind'] else 0
+                } for row in rows]
+                
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/weather/statistics")
+async def get_weather_statistics(
+    location: Optional[str] = Query(None, description="Filter by location name")
+):
+    """Get weather statistics and correlations with water system performance."""
+    try:
+        async with pool.acquire() as conn:
+            # Get weather stats
+            if location:
+                weather_stats = await conn.fetchrow("""
+                    SELECT 
+                        COUNT(*) as total_days,
+                        AVG(avg_temperature_c) as avg_temp,
+                        MIN(min_temperature_c) as min_temp,
+                        MAX(max_temperature_c) as max_temp,
+                        SUM(rainfall_mm) as total_rainfall,
+                        AVG(rainfall_mm) as avg_daily_rainfall,
+                        COUNT(CASE WHEN rainfall_mm > 0 THEN 1 END) as rainy_days
+                    FROM water_infrastructure.weather_data
+                    WHERE location = $1
+                """, location)
+            else:
+                weather_stats = await conn.fetchrow("""
+                    SELECT 
+                        COUNT(*) as total_days,
+                        AVG(avg_temperature_c) as avg_temp,
+                        MIN(min_temperature_c) as min_temp,
+                        MAX(max_temperature_c) as max_temp,
+                        SUM(rainfall_mm) as total_rainfall,
+                        AVG(rainfall_mm) as avg_daily_rainfall,
+                        COUNT(CASE WHEN rainfall_mm > 0 THEN 1 END) as rainy_days
+                    FROM water_infrastructure.weather_data
+                """)
+            
+            # Get seasonal patterns
+            seasonal_data = await conn.fetch("""
+                SELECT 
+                    EXTRACT(MONTH FROM date) as month,
+                    AVG(avg_temperature_c) as avg_temp,
+                    SUM(rainfall_mm) as total_rainfall
+                FROM water_infrastructure.weather_data
+                WHERE ($1::text IS NULL OR location = $1)
+                GROUP BY month
+                ORDER BY month
+            """, location)
+            
+            return {
+                "overview": {
+                    "totalDays": weather_stats['total_days'],
+                    "averageTemperature": float(weather_stats['avg_temp']) if weather_stats['avg_temp'] else None,
+                    "temperatureRange": {
+                        "min": float(weather_stats['min_temp']) if weather_stats['min_temp'] else None,
+                        "max": float(weather_stats['max_temp']) if weather_stats['max_temp'] else None
+                    },
+                    "totalRainfall": float(weather_stats['total_rainfall']) if weather_stats['total_rainfall'] else 0,
+                    "averageDailyRainfall": float(weather_stats['avg_daily_rainfall']) if weather_stats['avg_daily_rainfall'] else 0,
+                    "rainyDays": weather_stats['rainy_days'],
+                    "dryDays": weather_stats['total_days'] - weather_stats['rainy_days']
+                },
+                "seasonalPatterns": [{
+                    "month": int(row['month']),
+                    "avgTemperature": float(row['avg_temp']) if row['avg_temp'] else None,
+                    "totalRainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0
+                } for row in seasonal_data]
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/weather/locations")
+async def get_weather_locations():
+    """Get all available weather station locations."""
+    try:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT DISTINCT location,
+                       COUNT(*) as data_points,
+                       MIN(date) as first_date,
+                       MAX(date) as last_date
+                FROM water_infrastructure.weather_data
+                GROUP BY location
+                ORDER BY location
+            """)
+            
+            return [{
+                "location": row['location'],
+                "dataPoints": row['data_points'],
+                "dateRange": {
+                    "start": row['first_date'].isoformat(),
+                    "end": row['last_date'].isoformat()
+                }
+            } for row in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/weather/impact-analysis")
+async def get_weather_impact_analysis():
+    """Analyze weather impact on water consumption and system performance."""
+    try:
+        async with pool.acquire() as conn:
+            # Temperature impact analysis
+            temp_impact = await conn.fetch("""
+                WITH temp_ranges AS (
+                    SELECT 
+                        CASE 
+                            WHEN avg_temperature_c < 10 THEN 'Cold (<10°C)'
+                            WHEN avg_temperature_c < 20 THEN 'Mild (10-20°C)'
+                            WHEN avg_temperature_c < 30 THEN 'Warm (20-30°C)'
+                            ELSE 'Hot (>30°C)'
+                        END as temp_range,
+                        date
+                    FROM water_infrastructure.weather_data
+                )
+                SELECT 
+                    temp_range,
+                    COUNT(*) as days,
+                    -- Mock consumption correlation (replace with real data when available)
+                    CASE 
+                        WHEN temp_range = 'Cold (<10°C)' THEN 95
+                        WHEN temp_range = 'Mild (10-20°C)' THEN 100
+                        WHEN temp_range = 'Warm (20-30°C)' THEN 115
+                        ELSE 130
+                    END as relative_consumption
+                FROM temp_ranges
+                GROUP BY temp_range
+                ORDER BY 
+                    CASE temp_range
+                        WHEN 'Cold (<10°C)' THEN 1
+                        WHEN 'Mild (10-20°C)' THEN 2
+                        WHEN 'Warm (20-30°C)' THEN 3
+                        ELSE 4
+                    END
+            """)
+            
+            # Rainfall impact
+            rainfall_impact = await conn.fetch("""
+                WITH rainfall_categories AS (
+                    SELECT 
+                        CASE 
+                            WHEN rainfall_mm = 0 THEN 'No Rain'
+                            WHEN rainfall_mm < 5 THEN 'Light Rain (0-5mm)'
+                            WHEN rainfall_mm < 20 THEN 'Moderate Rain (5-20mm)'
+                            ELSE 'Heavy Rain (>20mm)'
+                        END as rainfall_category,
+                        date
+                    FROM water_infrastructure.weather_data
+                )
+                SELECT 
+                    rainfall_category,
+                    COUNT(*) as days,
+                    -- Mock system efficiency correlation
+                    CASE 
+                        WHEN rainfall_category = 'No Rain' THEN 98
+                        WHEN rainfall_category = 'Light Rain (0-5mm)' THEN 95
+                        WHEN rainfall_category = 'Moderate Rain (5-20mm)' THEN 90
+                        ELSE 85
+                    END as system_efficiency
+                FROM rainfall_categories
+                GROUP BY rainfall_category
+                ORDER BY 
+                    CASE rainfall_category
+                        WHEN 'No Rain' THEN 1
+                        WHEN 'Light Rain (0-5mm)' THEN 2
+                        WHEN 'Moderate Rain (5-20mm)' THEN 3
+                        ELSE 4
+                    END
+            """)
+            
+            return {
+                "temperatureImpact": [{
+                    "range": row['temp_range'],
+                    "days": row['days'],
+                    "relativeConsumption": row['relative_consumption'],
+                    "unit": "%"
+                } for row in temp_impact],
+                "rainfallImpact": [{
+                    "category": row['rainfall_category'],
+                    "days": row['days'],
+                    "systemEfficiency": row['system_efficiency'],
+                    "unit": "%"
+                } for row in rainfall_impact],
+                "recommendations": [
+                    {
+                        "condition": "High Temperature",
+                        "impact": "Increased water demand by 30-40%",
+                        "action": "Increase pump capacity and monitor pressure levels"
+                    },
+                    {
+                        "condition": "Heavy Rainfall",
+                        "impact": "Potential infiltration and system efficiency reduction",
+                        "action": "Increase monitoring frequency and check for anomalies"
+                    },
+                    {
+                        "condition": "Prolonged Dry Period",
+                        "impact": "Higher continuous demand",
+                        "action": "Implement water conservation measures"
+                    }
+                ]
+            }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

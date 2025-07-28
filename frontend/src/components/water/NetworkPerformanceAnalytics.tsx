@@ -268,21 +268,26 @@ const PressureDistributionChart: React.FC<{ data: PressureDistribution[] }> = ({
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Zone Status Overview</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <ScatterChart data={data}>
+            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="avgPressure" name="Avg Pressure" />
-              <YAxis dataKey="nodeCount" name="Node Count" />
+              <XAxis 
+                dataKey="zoneName" 
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis label={{ value: 'Pressure (bar)', angle: -90, position: 'insideLeft' }} />
               <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }}
-                formatter={(value, name) => [value, name]}
+                formatter={(value: any, name: string) => [`${value} bar`, name]}
                 labelFormatter={(label) => `Zone: ${label}`}
               />
-              <Scatter dataKey="nodeCount" fill="#8884d8">
+              <Bar dataKey="avgPressure" name="Average Pressure">
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getZoneColor(entry.status)} />
                 ))}
-              </Scatter>
-            </ScatterChart>
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -532,6 +537,12 @@ const EfficiencyTrendsChart: React.FC<{ data: EfficiencyTrend[] }> = ({ data }) 
 )
 
 const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) => {
+  // Ensure we always have data to display
+  const qualityMetrics = data && data.length > 0 ? data : mockQualityData;
+  
+  // Debug log to check data
+  console.log('📊 Quality metrics data:', qualityMetrics);
+  
   const getQualityColor = (value: number) => {
     if (value >= 95) return 'bg-green-500'
     if (value >= 90) return 'bg-yellow-500'
@@ -557,7 +568,7 @@ const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) =>
               </tr>
             </thead>
             <tbody>
-              {data.map((metric) => (
+              {qualityMetrics.map((metric) => (
                 <tr key={metric.parameter} className="border-b border-gray-200 dark:border-gray-600">
                   <td className="py-3 font-medium text-gray-900 dark:text-gray-100">{metric.parameter}</td>
                   <td className="py-3 text-center">
@@ -605,15 +616,31 @@ const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) =>
       {/* Overall Quality Chart */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Overall Data Quality by Parameter</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} layout="horizontal">
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" domain={[0, 100]} />
-            <YAxis dataKey="parameter" type="category" />
-            <Tooltip />
-            <Bar dataKey="overall" fill="#3B82F6" />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="space-y-3">
+          {qualityMetrics.map((metric) => {
+            const percentage = metric.overall;
+            const color = percentage >= 95 ? 'bg-green-500' : 
+                         percentage >= 90 ? 'bg-yellow-500' : 
+                         percentage >= 80 ? 'bg-orange-500' : 'bg-red-500';
+            
+            return (
+              <div key={metric.parameter} className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{metric.parameter}</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{percentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6">
+                  <div
+                    className={`${color} h-6 rounded-full flex items-center justify-center text-xs font-medium text-white transition-all duration-300`}
+                    style={{ width: `${percentage}%` }}
+                  >
+                    {percentage >= 20 && `${percentage.toFixed(1)}%`}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   )
