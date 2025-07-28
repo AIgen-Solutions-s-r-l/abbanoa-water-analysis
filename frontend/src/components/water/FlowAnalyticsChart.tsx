@@ -62,6 +62,8 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
     });
   });
   const uniqueNodes = Array.from(uniqueNodesSet);
+  console.log('🔍 FlowAnalyticsChart - Unique nodes found:', uniqueNodes);
+  console.log('📊 FlowAnalyticsChart - Total unique nodes:', uniqueNodes.length);
   const colors = [
     '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
     '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
@@ -232,8 +234,8 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
         </LineChart>
       </ResponsiveContainer>
       
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-        {uniqueNodes.slice(0, 4).map((nodeId, index) => {
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+        {uniqueNodes.map((nodeId, index) => {
           // Calculate average flow for this node from the new data structure
           const flowRates = data
             .map(d => (d as any)[`node${nodeId}`])

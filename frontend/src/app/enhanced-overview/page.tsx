@@ -11,9 +11,12 @@ import { WaterCoreMetrics, FlowAnalyticsData, WaterSystemAlert } from '@/lib/typ
 // Fetch real data from API
 const fetchDashboardData = async () => {
   try {
-    const response = await fetch('/api/proxy/v1/dashboard/summary');
+    const timestamp = new Date().getTime();
+    const response = await fetch(`/api/proxy/v1/dashboard/summary?t=${timestamp}`);
     if (!response.ok) throw new Error('Failed to fetch dashboard data');
-    return await response.json();
+    const data = await response.json();
+    console.log('🚀 Full dashboard data:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     return null;
@@ -26,11 +29,12 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
   
   // Include all nodes with valid IDs (even if flow/pressure is zero)
   const activeNodes = nodes?.filter(node => 
-    node.node_id && node.node_name
+    node.id && node.name  // Changed from node_id to id, node_name to name
   ) || [];
   
   console.log('📊 Total nodes available:', activeNodes.length);
   console.log('💧 Nodes with data:', activeNodes.filter(n => n.flow_rate > 0 || n.pressure > 0).length);
+  console.log('🔍 Active nodes:', activeNodes.map(n => ({ id: n.id, name: n.name, flow: n.flow_rate })));
   
   if (activeNodes.length === 0) {
     console.log('⚠️ No nodes found, generating fallback data');
@@ -56,6 +60,7 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
       
       // Add data for each active node
       activeNodes.forEach((node, nodeIndex) => {
+        console.log(`📍 Processing node ${nodeIndex + 1}/${activeNodes.length}: ${node.id}`);
         // Use real data if available, otherwise generate realistic baseline
         let baseFlow, basePressure;
         
@@ -63,10 +68,10 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
           // Node has real data - validate and cap values
           baseFlow = Math.min(Math.max(node.flow_rate || 0, 0), 100); // Cap at 100 L/s
           basePressure = Math.min(Math.max(node.pressure || 0, 0), 10); // Cap at 10 bar
-          console.log(`💧 Node ${node.node_id} has real data: ${baseFlow} L/s, ${basePressure} bar`);
+          console.log(`💧 Node ${node.id} has real data: ${baseFlow} L/s, ${basePressure} bar`);
         } else {
           // Node has no data, generate realistic baseline based on node type
-          if (node.node_id.includes('DIST')) {
+          if (node.id.includes('DIST')) {
             // District nodes - higher capacity
             baseFlow = 25 + Math.random() * 30; // 25-55 L/s
             basePressure = 3.0 + Math.random() * 1.0; // 3.0-4.0 bar
@@ -75,16 +80,16 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
             baseFlow = 10 + Math.random() * 20; // 10-30 L/s
             basePressure = 2.5 + Math.random() * 1.0; // 2.5-3.5 bar
           }
-          console.log(`🔧 Node ${node.node_id} using generated baseline: ${baseFlow.toFixed(1)} L/s, ${basePressure.toFixed(1)} bar`);
+          console.log(`🔧 Node ${node.id} using generated baseline: ${baseFlow.toFixed(1)} L/s, ${basePressure.toFixed(1)} bar`);
         }
         
         // Validate base values before calculations
         if (!isFinite(baseFlow) || baseFlow < 0 || baseFlow > 200) {
-          console.warn(`⚠️ Invalid baseFlow for node ${node.node_id}: ${baseFlow}, resetting to 15`);
+          console.warn(`⚠️ Invalid baseFlow for node ${node.id}: ${baseFlow}, resetting to 15`);
           baseFlow = 15; // Safe fallback
         }
         if (!isFinite(basePressure) || basePressure < 0 || basePressure > 15) {
-          console.warn(`⚠️ Invalid basePressure for node ${node.node_id}: ${basePressure}, resetting to 3`);
+          console.warn(`⚠️ Invalid basePressure for node ${node.id}: ${basePressure}, resetting to 3`);
           basePressure = 3; // Safe fallback
         }
         
@@ -104,40 +109,45 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
         
         // Additional validation
         if (!isFinite(calculatedFlow)) {
-          console.error(`❌ Invalid calculatedFlow for node ${node.node_id}, using fallback`);
+          console.error(`❌ Invalid calculatedFlow for node ${node.id}, using fallback`);
           calculatedFlow = 15 + Math.random() * 10; // 15-25 L/s fallback
         }
         if (!isFinite(calculatedPressure)) {
-          console.error(`❌ Invalid calculatedPressure for node ${node.node_id}, using fallback`);
+          console.error(`❌ Invalid calculatedPressure for node ${node.id}, using fallback`);
           calculatedPressure = 2.5 + Math.random() * 1; // 2.5-3.5 bar fallback
         }
         
         // Validate node data before assignment
-        const nodeKey = `node${node.node_id}`;
-        const pressureKey = `${node.node_id}_pressure`;
-        const nameKey = `${node.node_id}_name`;
+        const nodeKey = `node${node.id}`;
+        const pressureKey = `${node.id}_pressure`;
+        const nameKey = `${node.id}_name`;
         
         // Final validation before assignment
         const finalFlow = Number(calculatedFlow.toFixed(2));
         const finalPressure = Number(calculatedPressure.toFixed(2));
         
         if (!isFinite(finalFlow) || finalFlow < 0 || finalFlow > 200) {
-          console.error(`❌ Final validation failed for flow in node ${node.node_id}: ${finalFlow}`);
-          return; // Skip this node entirely
+          console.error(`❌ Final validation failed for flow in node ${node.id}: ${finalFlow}`);
+          // Don't skip, use a default value instead
+          timeEntry[nodeKey] = 15.0;
+          timeEntry[pressureKey] = 3.0;
+          timeEntry[nameKey] = node.name || `Node ${node.id}`;
+          return; // Exit this iteration but continue with other nodes
         }
         
         // Add node data to this timestamp
         timeEntry[nodeKey] = finalFlow;
         timeEntry[pressureKey] = finalPressure;
-        timeEntry[nameKey] = node.node_name || `Node ${node.node_id}`;
+        timeEntry[nameKey] = node.name || `Node ${node.id}`;
         
         // For compatibility (only set once per timestamp, not per node)
         if (!timeEntry.nodeId) {
-          timeEntry.nodeId = node.node_id;
+          timeEntry.nodeId = node.id;
           timeEntry.flowRate = finalFlow;
         }
         
-        console.log(`✅ Node ${node.node_id}: ${finalFlow} L/s, ${finalPressure} bar`);
+        console.log(`✅ Node ${node.id}: ${finalFlow} L/s, ${finalPressure} bar`);
+        console.log(`   Keys added: ${nodeKey}, ${pressureKey}, ${nameKey}`);
       });
       
       timeSeriesData.push(timeEntry);
@@ -169,6 +179,8 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
       const firstEntry: any = validatedData[0];
       const flowKeys = Object.keys(firstEntry).filter(k => k.startsWith('node') && !k.includes('_'));
       console.log('📈 Flow values in first entry:', flowKeys.map(k => `${k}: ${firstEntry[k]}`));
+      console.log('🎯 All node IDs in data:', flowKeys.map(k => k.replace('node', '')));
+      console.log('📊 Total unique nodes in chart data:', flowKeys.length);
     }
     
     return validatedData;
@@ -219,7 +231,7 @@ const generateFallbackTimeSeriesData = (): FlowAnalyticsData[] => {
 
 // Convert dashboard data to WaterCoreMetrics format
 const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
-  if (!dashboardData || !dashboardData.network) {
+  if (!dashboardData || !dashboardData.kpis) {
     return {
       activeNodes: 0,
       totalNodes: 0,
@@ -228,20 +240,31 @@ const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
       dataQuality: 0,
       systemUptime: 0,
       energyEfficiency: 0,
+      currentPowerKw: 0,
+      dailyCostEur: 0,
+      costPerCubicMeter: 0,
     };
   }
 
-  const { network, nodes } = dashboardData;
+  const { kpis, nodes, energy_analysis } = dashboardData;
   const activeNodes = nodes?.filter((n: any) => n.flow_rate > 0 || n.pressure > 0).length || 0;
   
+  // Extract energy metrics
+  const energyData = kpis?.energy_consumption || {};
+  console.log('🔋 Energy data from API:', energyData);
+  
   return {
-    activeNodes: network.active_nodes || activeNodes,
-    totalNodes: nodes?.length || network.active_nodes || 0,
-    totalFlowRate: network.total_flow || 0,
-    averagePressure: network.avg_pressure || 0,
-    dataQuality: 95.0, // Default high quality for real data
+    activeNodes: activeNodes,
+    totalNodes: nodes?.length || 0,
+    totalFlowRate: kpis?.total_flow || 0,
+    averagePressure: kpis?.average_pressure || 0,
+    dataQuality: kpis?.water_quality_index || 95.0,
     systemUptime: 99.2, // Default high uptime for real system
-    energyEfficiency: 0.7, // Default efficiency
+    energyEfficiency: energyData.pump_efficiency_percent || 70,
+    // Add new energy metrics
+    currentPowerKw: energyData.current_power_kw || 0,
+    dailyCostEur: energyData.daily_cost_eur || 0,
+    costPerCubicMeter: energyData.cost_per_cubic_meter || 0,
   };
 };
 
@@ -302,11 +325,13 @@ export default function EnhancedOverviewPage() {
       if (dashboardData) {
         const realMetrics = convertToWaterMetrics(dashboardData);
         console.log('📊 Converted metrics:', realMetrics);
+        console.log('🎯 Dashboard KPIs:', dashboardData.kpis);
         setMetrics(realMetrics);
         
         // Generate flow analytics from real nodes with date range
         if (dashboardData.nodes && dashboardData.nodes.length > 0) {
           console.log('🏭 Processing nodes for flow data:', dashboardData.nodes.length);
+          console.log('📝 First 3 nodes structure:', dashboardData.nodes.slice(0, 3));
           const startDate = customDateRange?.startDate || dateRange?.startDate;
           const endDate = customDateRange?.endDate || dateRange?.endDate;
           const realFlowData = await generateFlowDataFromNodes(dashboardData.nodes, startDate, endDate);
@@ -576,7 +601,7 @@ export default function EnhancedOverviewPage() {
               </div>
             </div>
 
-            {/* Energy Efficiency */}
+            {/* Pump Efficiency */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
@@ -589,10 +614,64 @@ export default function EnhancedOverviewPage() {
                     <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{metrics.energyEfficiency.toFixed(1)}</span>
                     <span className="text-xs text-green-500 dark:text-green-400 ml-1">+3.2%</span>
                   </div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Energy Efficiency</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">kWh/m³</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pump Efficiency</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">%</p>
                 </div>
               </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Energy Consumption Metrics */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">⚡ Energy Consumption Analysis</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Current Power Consumption */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                  <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-400">Current Power</h3>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{metrics.currentPowerKw?.toFixed(1) || '0.0'} kW</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Live consumption</div>
+              <div className="mt-2 text-xs text-gray-400">Formula: Flow × Pressure × 2.75 / 100</div>
+            </div>
+
+            {/* Daily Energy Cost */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-400">Daily Energy Cost</h3>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">€{metrics.dailyCostEur?.toFixed(2) || '0.00'}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Projected 24h cost</div>
+              <div className="mt-2 text-xs text-gray-400">Rate: €0.20/kWh average</div>
+            </div>
+
+            {/* Cost per Cubic Meter */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                </div>
+                <h3 className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-400">Energy Cost per m³</h3>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">€{metrics.costPerCubicMeter?.toFixed(3) || '0.000'}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Per m³ delivered</div>
+              <div className="mt-2 text-xs text-gray-400">Pumping cost only</div>
             </div>
 
           </div>
