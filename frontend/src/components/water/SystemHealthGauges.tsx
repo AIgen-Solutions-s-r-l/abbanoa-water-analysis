@@ -102,11 +102,11 @@ const mockGauges: HealthGauge[] = [
 
 const getStatusColor = (status: HealthGauge['status']) => {
   switch (status) {
-    case 'excellent': return { color: '#10B981', bg: 'bg-green-50', text: 'text-green-700' }
-    case 'good': return { color: '#3B82F6', bg: 'bg-blue-50', text: 'text-blue-700' }
-    case 'warning': return { color: '#F59E0B', bg: 'bg-yellow-50', text: 'text-yellow-700' }
-    case 'critical': return { color: '#EF4444', bg: 'bg-red-50', text: 'text-red-700' }
-    default: return { color: '#6B7280', bg: 'bg-gray-50', text: 'text-gray-700' }
+    case 'excellent': return { color: '#10B981', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-400' }
+    case 'good': return { color: '#3B82F6', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-400' }
+    case 'warning': return { color: '#F59E0B', bg: 'bg-yellow-50 dark:bg-yellow-900/20', text: 'text-yellow-700 dark:text-yellow-400' }
+    case 'critical': return { color: '#EF4444', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-400' }
+    default: return { color: '#6B7280', bg: 'bg-gray-50 dark:bg-gray-800', text: 'text-gray-700 dark:text-gray-300' }
   }
 }
 
@@ -143,11 +143,11 @@ const CircularGauge: React.FC<{ gauge: HealthGauge }> = ({ gauge }) => {
   ]
 
   return (
-    <div className={`bg-white p-6 rounded-lg border hover:shadow-md transition-shadow ${statusConfig.bg}`}>
+    <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg transition-shadow ${statusConfig.bg}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <gauge.icon className={`w-5 h-5 ${statusConfig.text}`} />
-          <h3 className="font-semibold text-gray-800">{gauge.name}</h3>
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200">{gauge.name}</h3>
         </div>
         <StatusIcon className={`w-5 h-5 ${statusConfig.text}`} />
       </div>
@@ -185,10 +185,10 @@ const CircularGauge: React.FC<{ gauge: HealthGauge }> = ({ gauge }) => {
         {/* Center value display */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">
               {gauge.value}{gauge.unit}
             </div>
-            <div className="text-sm text-gray-500 capitalize">
+            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
               {gauge.status}
             </div>
           </div>
@@ -196,8 +196,8 @@ const CircularGauge: React.FC<{ gauge: HealthGauge }> = ({ gauge }) => {
       </div>
       
       <div className="mt-4 space-y-2">
-        <p className="text-sm text-gray-600">{gauge.description}</p>
-        <p className="text-xs text-gray-500">Updated {gauge.lastUpdated}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{gauge.description}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-500">Updated {gauge.lastUpdated}</p>
       </div>
     </div>
   )
@@ -221,22 +221,22 @@ const OverallHealthSummary: React.FC<{ gauges: HealthGauge[] }> = ({ gauges }) =
   ].filter(item => item.value > 0)
 
   return (
-    <div className="bg-white p-6 rounded-lg border">
-      <h3 className="text-lg font-semibold mb-4">System Health Summary</h3>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">System Health Summary</h3>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Overall Health Score */}
         <div className="text-center">
-          <div className="text-4xl font-bold text-gray-800 mb-2">
+          <div className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-2">
             {averageHealth}%
           </div>
-          <div className="text-lg text-gray-600 mb-4">Overall Health Score</div>
+          <div className="text-lg text-gray-600 dark:text-gray-400 mb-4">Overall Health Score</div>
           
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-            averageHealth >= 90 ? 'bg-green-100 text-green-800' :
-            averageHealth >= 75 ? 'bg-blue-100 text-blue-800' :
-            averageHealth >= 60 ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
+            averageHealth >= 90 ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+            averageHealth >= 75 ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400' :
+            averageHealth >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400' :
+            'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400'
           }`}>
             {averageHealth >= 90 ? <CheckCircle className="w-4 h-4" /> :
              averageHealth >= 60 ? <AlertTriangle className="w-4 h-4" /> :
@@ -252,7 +252,7 @@ const OverallHealthSummary: React.FC<{ gauges: HealthGauge[] }> = ({ gauges }) =
 
         {/* Status Distribution */}
         <div>
-          <h4 className="font-medium mb-3">Component Status Distribution</h4>
+          <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">Component Status Distribution</h4>
           <ResponsiveContainer width="100%" height={150}>
             <PieChart>
               <Pie
@@ -276,16 +276,16 @@ const OverallHealthSummary: React.FC<{ gauges: HealthGauge[] }> = ({ gauges }) =
       {/* Component Count Summary */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { status: 'excellent', label: 'Excellent', count: healthCounts.excellent || 0, color: 'text-green-600' },
-          { status: 'good', label: 'Good', count: healthCounts.good || 0, color: 'text-blue-600' },
-          { status: 'warning', label: 'Warning', count: healthCounts.warning || 0, color: 'text-yellow-600' },
-          { status: 'critical', label: 'Critical', count: healthCounts.critical || 0, color: 'text-red-600' }
+          { status: 'excellent', label: 'Excellent', count: healthCounts.excellent || 0, color: 'text-green-600 dark:text-green-400' },
+          { status: 'good', label: 'Good', count: healthCounts.good || 0, color: 'text-blue-600 dark:text-blue-400' },
+          { status: 'warning', label: 'Warning', count: healthCounts.warning || 0, color: 'text-yellow-600 dark:text-yellow-400' },
+          { status: 'critical', label: 'Critical', count: healthCounts.critical || 0, color: 'text-red-600 dark:text-red-400' }
         ].map((item) => (
           <div key={item.status} className="text-center">
             <div className={`text-2xl font-bold ${item.color}`}>
               {item.count}
             </div>
-            <div className="text-sm text-gray-600">{item.label}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{item.label}</div>
           </div>
         ))}
       </div>
@@ -296,15 +296,15 @@ const OverallHealthSummary: React.FC<{ gauges: HealthGauge[] }> = ({ gauges }) =
 const LoadingSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {[...Array(6)].map((_, index) => (
-      <div key={index} className="bg-white p-6 rounded-lg border animate-pulse">
+      <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 animate-pulse">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-5 h-5 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
+          <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-32"></div>
         </div>
-        <div className="w-full h-48 bg-gray-200 rounded mb-4"></div>
+        <div className="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded mb-4"></div>
         <div className="space-y-2">
-          <div className="h-3 bg-gray-200 rounded w-full"></div>
-          <div className="h-3 bg-gray-200 rounded w-24"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-24"></div>
         </div>
       </div>
     ))}

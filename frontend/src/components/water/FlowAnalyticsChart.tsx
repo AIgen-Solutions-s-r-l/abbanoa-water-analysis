@@ -33,8 +33,8 @@ const TabButton: React.FC<TabButtonProps> = ({ isActive, onClick, children }) =>
     onClick={onClick}
     className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
       isActive
-        ? 'text-blue-600 border-blue-600 bg-blue-50'
-        : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+        ? 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-400'
+        : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
     }`}
   >
     {children}
@@ -52,8 +52,16 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'timeseries' | 'distribution' | 'correlation'>('timeseries');
 
-  // Get unique nodes for color assignment
-  const uniqueNodes = Array.from(new Set(data.map(d => d.nodeId)));
+  // Get unique nodes for color assignment from property names
+  const uniqueNodesSet = new Set<string>();
+  data.forEach(entry => {
+    Object.keys(entry).forEach(key => {
+      if (key.startsWith('node') && !key.includes('_')) {
+        uniqueNodesSet.add(key.replace('node', ''));
+      }
+    });
+  });
+  const uniqueNodes = Array.from(uniqueNodesSet);
   const colors = [
     '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
     '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
@@ -63,8 +71,8 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="text-sm font-medium text-gray-900">{`Time: ${label}`}</p>
+        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{`Time: ${label}`}</p>
           {payload.map((entry: any, index: number) => (
             <p
               key={index}
@@ -83,8 +91,10 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
   // Prepare data for distribution analysis (box plot simulation with bars)
   const getDistributionData = () => {
     const distributionData = uniqueNodes.map(nodeId => {
-      const nodeData = data.filter(d => d.nodeId === nodeId);
-      const flowRates = nodeData.map(d => d.flowRate);
+      // Extract flow rates for this node from all timestamps
+      const flowRates = data
+        .map(d => (d as any)[`node${nodeId}`])
+        .filter(rate => rate !== undefined && rate !== null);
       
       if (flowRates.length === 0) return null;
       
@@ -96,9 +106,12 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
       const max = Math.max(...flowRates);
       const avg = flowRates.reduce((a, b) => a + b, 0) / flowRates.length;
       
+      // Get node name from any timestamp that has it
+      const nodeName = (data.find(d => (d as any)[`${nodeId}_name`]) as any)?.[`${nodeId}_name`] || `Node ${nodeId}`;
+      
       return {
         nodeId,
-        nodeName: nodeData[0]?.nodeName || `Node ${nodeId}`,
+        nodeName,
         min,
         q1,
         median,
@@ -199,20 +212,20 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
           <Legend />
           
           {uniqueNodes.map((nodeId, index) => {
-            const nodeData = data.filter(d => d.nodeId === nodeId);
-            const nodeName = nodeData[0]?.nodeName || `Node ${nodeId}`;
+            // Get node name from the first entry that has this node's name
+            const nodeName = (data.find(d => (d as any)[`${nodeId}_name`]) as any)?.[`${nodeId}_name`] || `Node ${nodeId}`;
             
             return (
               <Line
                 key={nodeId}
                 type="monotone"
-                dataKey="flowRate"
-                data={nodeData}
+                dataKey={`node${nodeId}`}
                 stroke={colors[index % colors.length]}
                 strokeWidth={2}
                 name={nodeName}
                 dot={{ fill: colors[index % colors.length], strokeWidth: 0, r: 3 }}
                 activeDot={{ r: 5, stroke: colors[index % colors.length], strokeWidth: 2 }}
+                connectNulls={false}
               />
             );
           })}
@@ -221,20 +234,30 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
       
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         {uniqueNodes.slice(0, 4).map((nodeId, index) => {
-          const nodeData = data.filter(d => d.nodeId === nodeId);
-          const avgFlow = nodeData.reduce((sum, d) => sum + d.flowRate, 0) / nodeData.length;
-          const nodeName = nodeData[0]?.nodeName || `Node ${nodeId}`;
+          // Calculate average flow for this node from the new data structure
+          const flowRates = data
+            .map(d => (d as any)[`node${nodeId}`])
+            .filter(rate => rate !== undefined && rate !== null && !isNaN(rate));
+          
+          const avgFlow = flowRates.length > 0 
+            ? flowRates.reduce((sum, rate) => sum + rate, 0) / flowRates.length 
+            : 0;
+          
+          // Get node name from the data structure
+          const nodeName = (data.find(d => (d as any)[`${nodeId}_name`]) as any)?.[`${nodeId}_name`] || `Node ${nodeId}`;
           
           return (
-            <div key={nodeId} className="bg-gray-50 p-3 rounded-lg">
+            <div key={nodeId} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
               <div className="flex items-center mb-1">
                 <div 
                   className="w-3 h-3 rounded-full mr-2" 
                   style={{ backgroundColor: colors[index % colors.length] }}
                 />
-                <span className="font-medium text-gray-700">{nodeName}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{nodeName}</span>
               </div>
-              <div className="text-gray-600">Avg: {avgFlow.toFixed(1)} L/s</div>
+              <div className="text-gray-600 dark:text-gray-400">
+                Avg: {flowRates.length > 0 ? avgFlow.toFixed(1) : '0.0'} L/s
+              </div>
             </div>
           );
         })}
@@ -283,7 +306,7 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
           </BarChart>
         </ResponsiveContainer>
         
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
           <p><strong>Distribution Analysis:</strong> Shows flow rate statistics for each node including average, maximum, and minimum values.</p>
         </div>
       </div>
@@ -296,7 +319,7 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
     if (uniqueNodes.length < 2) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-gray-500 dark:text-gray-400">
             <p className="text-lg font-medium">Correlation Analysis Unavailable</p>
             <p>Need multiple nodes for correlation analysis</p>
           </div>
@@ -307,8 +330,8 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
     return (
       <div className="h-full">
         <div className="mb-4">
-          <h4 className="text-lg font-medium text-gray-900 mb-2">Node Flow Correlation Matrix</h4>
-          <p className="text-sm text-gray-600">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Node Flow Correlation Matrix</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Correlation coefficients between flow rates of different nodes. 
             Values closer to 1 indicate strong positive correlation, closer to -1 indicate negative correlation.
           </p>
@@ -316,21 +339,21 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
         
         {/* Simple correlation table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Node</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Node</th>
                 {uniqueNodes.map(nodeId => (
-                  <th key={nodeId} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th key={nodeId} className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     {nodeId.slice(-4)}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-600">
               {uniqueNodes.map((nodeA, i) => (
                 <tr key={nodeA}>
-                  <td className="px-4 py-2 text-sm font-medium text-gray-900">{nodeA.slice(-4)}</td>
+                  <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">{nodeA.slice(-4)}</td>
                   {uniqueNodes.map((nodeB, j) => {
                     const corr = correlationData.find(c => c.nodeA === nodeA && c.nodeB === nodeB);
                     const correlation = corr?.correlation || 0;
@@ -352,22 +375,22 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
           </table>
         </div>
         
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex space-x-4">
             <span className="flex items-center">
-              <div className="w-3 h-3 bg-green-100 rounded mr-1"></div>
+              <div className="w-3 h-3 bg-green-100 dark:bg-green-800 rounded mr-1"></div>
               Strong Positive (&gt;0.7)
             </span>
             <span className="flex items-center">
-              <div className="w-3 h-3 bg-blue-100 rounded mr-1"></div>
+              <div className="w-3 h-3 bg-blue-100 dark:bg-blue-800 rounded mr-1"></div>
               Moderate (0.3-0.7)
             </span>
             <span className="flex items-center">
-              <div className="w-3 h-3 bg-gray-100 rounded mr-1"></div>
+              <div className="w-3 h-3 bg-gray-100 dark:bg-gray-700 rounded mr-1"></div>
               Weak (-0.3-0.3)
             </span>
             <span className="flex items-center">
-              <div className="w-3 h-3 bg-red-100 rounded mr-1"></div>
+              <div className="w-3 h-3 bg-red-100 dark:bg-red-800 rounded mr-1"></div>
               Negative (&lt;-0.3)
             </span>
           </div>
@@ -379,8 +402,8 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
   return (
     <div className={`w-full ${className}`}>
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Real-time Flow Analytics</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Real-time Flow Analytics</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Advanced flow monitoring with time series analysis, distribution statistics, and correlation insights
         </p>
       </div>
@@ -410,7 +433,7 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
       </div>
       
       {/* Tab Content */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         {activeTab === 'timeseries' && renderTimeSeriesTab()}
         {activeTab === 'distribution' && renderDistributionTab()}
         {activeTab === 'correlation' && renderCorrelationTab()}

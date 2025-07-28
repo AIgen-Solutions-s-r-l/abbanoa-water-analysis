@@ -17,6 +17,7 @@ const PUBLIC_ROUTES = [
   '/auth/reset-password',
   '/auth/accept-invitation',
   '/test', // Test page without auth
+  '/bypass', // Development bypass route
 ];
 
 // Pages that should not use the main layout (even if authenticated)
@@ -48,6 +49,13 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
     // TEMPORARY: Development bypass - remove this in production
     if (process.env.NODE_ENV === 'development' && pathname === '/bypass') {
       console.log('🚀 Development bypass activated');
+      return;
+    }
+    
+    // TEMPORARY: MVP Demo bypass - allow specific routes without auth but WITH layout
+    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies'];
+    if (process.env.NODE_ENV === 'development' && mvpDemoRoutes.includes(pathname)) {
+      console.log('🎯 MVP Demo mode - bypassing auth for:', pathname);
       return;
     }
     
@@ -83,6 +91,16 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   // For protected routes, redirect to login if not authenticated
   if (!isAuthenticated) {
+    // TEMPORARY: MVP Demo bypass - show layout for demo routes
+    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies'];
+    if (process.env.NODE_ENV === 'development' && mvpDemoRoutes.includes(pathname)) {
+      return (
+        <LayoutProvider>
+          {children}
+        </LayoutProvider>
+      );
+    }
+    
     // This will be handled by the ProtectedRoute component
     // But we provide a fallback loading screen
     return <LoadingScreen />;

@@ -89,6 +89,11 @@ function DashboardContent() {
 }
 
 export default function DashboardPage() {
+  // TEMPORARY: MVP Demo mode - bypass ProtectedRoute in development
+  if (process.env.NODE_ENV === 'development') {
+    return <DashboardContent />;
+  }
+  
   return (
     <ProtectedRoute>
       <DashboardContent />

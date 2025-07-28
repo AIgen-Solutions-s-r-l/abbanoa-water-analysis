@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface DateRange {
   startDate: Date;
@@ -9,7 +9,8 @@ interface DateRange {
 }
 
 interface DateRangeSelectorProps {
-  onDateRangeChange: (dateRange: DateRange) => void;
+  onDateRangeChange: (dateRange: DateRange & { selectedValue?: string }) => void;
+  selectedValue?: string;
   className?: string;
 }
 
@@ -28,12 +29,20 @@ const ClockIcon = () => (
 
 const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   onDateRangeChange,
+  selectedValue,
   className = ''
 }) => {
-  const [selectedRange, setSelectedRange] = useState<string>('march_2025');  // Initialize with March 2025 (most recent data)
+  const [selectedRange, setSelectedRange] = useState<string>(selectedValue || 'march_2025');  // Initialize with March 2025 (most recent data)
   const [isCustomRange, setIsCustomRange] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+
+  // Sync with parent selectedValue prop
+  useEffect(() => {
+    if (selectedValue && selectedValue !== selectedRange) {
+      setSelectedRange(selectedValue);
+    }
+  }, [selectedValue, selectedRange]);
 
   // Predefined time ranges
   const presets = [
@@ -96,7 +105,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
       onDateRangeChange({
         startDate: range.startDate,
         endDate: range.endDate,
-        label: range.label
+        label: range.label,
+        selectedValue: rangeKey
       });
     }
   };
@@ -120,10 +130,10 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   // Parent component will handle initial setup to avoid duplicate loads
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 ${className}`}>
       <div className="flex items-center gap-2 mb-3">
         <CalendarIcon />
-        <h3 className="text-sm font-medium text-gray-900">Time Range</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Time Range</h3>
       </div>
       
       {/* Preset Range Buttons */}
@@ -135,8 +145,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             className={`
               px-3 py-2 text-xs font-medium rounded-md transition-colors
               ${selectedRange === range.value
-                ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
               }
             `}
           >
@@ -147,10 +157,10 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
 
       {/* Custom Date Range Inputs */}
       {isCustomRange && (
-        <div className="border-t border-gray-200 pt-4">
+        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Start Date
               </label>
               <input
@@ -158,11 +168,11 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
                 onBlur={handleCustomDateChange}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 End Date
               </label>
               <input
@@ -170,7 +180,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
                 onBlur={handleCustomDateChange}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
@@ -187,8 +197,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
       )}
       
       {/* Current Selection Display */}
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-2 text-xs text-gray-600">
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
+        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
           <ClockIcon />
           <span>
             Selected: {presets.find(r => r.value === selectedRange)?.label || 'Custom Range'}

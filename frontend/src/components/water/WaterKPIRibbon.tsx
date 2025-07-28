@@ -86,19 +86,19 @@ const defaultKPIs: WaterKPI[] = [
 const getStatusColor = (status: WaterKPI['status']) => {
   switch (status) {
     case 'good':
-      return 'text-green-600 bg-green-50 border-green-200'
+      return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
     case 'warning':
-      return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+      return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
     case 'critical':
-      return 'text-red-600 bg-red-50 border-red-200'
+      return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
     default:
-      return 'text-gray-600 bg-gray-50 border-gray-200'
+      return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
   }
 }
 
 const getTrendColor = (trend?: number) => {
-  if (!trend) return 'text-gray-500'
-  return trend > 0 ? 'text-green-600' : 'text-red-600'
+  if (!trend) return 'text-gray-500 dark:text-gray-400'
+  return trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
 }
 
 const formatValue = (value: number | string, unit: string) => {
@@ -119,9 +119,9 @@ const formatValue = (value: number | string, unit: string) => {
 
 const LoadingSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-6 bg-gray-200 rounded w-24 mb-2"></div>
-    <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-    <div className="h-4 bg-gray-200 rounded w-20"></div>
+    <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-24 mb-2"></div>
+    <div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-16 mb-1"></div>
+    <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-20"></div>
   </div>
 )
 
@@ -130,7 +130,7 @@ const KPICard: React.FC<{ kpi: WaterKPI; isLoading?: boolean }> = ({ kpi, isLoad
   
   if (isLoading) {
     return (
-      <div className="bg-white p-4 rounded-lg border border-gray-200 min-w-0">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 min-w-0">
         <LoadingSkeleton />
       </div>
     )
@@ -138,7 +138,7 @@ const KPICard: React.FC<{ kpi: WaterKPI; isLoading?: boolean }> = ({ kpi, isLoad
 
   return (
     <div 
-      className={`bg-white p-4 rounded-lg border transition-all duration-200 hover:shadow-md min-w-0 ${getStatusColor(kpi.status)}`}
+      className={`bg-white dark:bg-gray-800 p-4 rounded-lg border transition-all duration-200 hover:shadow-md dark:hover:shadow-lg min-w-0 ${getStatusColor(kpi.status)}`}
       title={kpi.description}
     >
       <div className="flex items-center justify-between mb-2">
@@ -151,11 +151,11 @@ const KPICard: React.FC<{ kpi: WaterKPI; isLoading?: boolean }> = ({ kpi, isLoad
       </div>
       
       <div className="space-y-1">
-        <div className="text-2xl font-bold tracking-tight">
+        <div className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           {formatValue(kpi.value, kpi.unit)}
-          {kpi.unit && <span className="text-sm font-normal ml-1">{kpi.unit}</span>}
+          {kpi.unit && <span className="text-sm font-normal ml-1 text-gray-600 dark:text-gray-400">{kpi.unit}</span>}
         </div>
-        <div className="text-sm font-medium truncate">
+        <div className="text-sm font-medium truncate text-gray-700 dark:text-gray-300">
           {kpi.label}
         </div>
       </div>
