@@ -90,6 +90,7 @@ const WeatherAnalyticsPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [dateRange, setDateRange] = useState('month');
+  const [interval, setInterval] = useState('daily');
   const [locations, setLocations] = useState<WeatherLocation[]>([]);
   const [currentWeather, setCurrentWeather] = useState<CurrentWeather[]>([]);
   const [historicalData, setHistoricalData] = useState<any[]>([]);
@@ -98,32 +99,27 @@ const WeatherAnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchWeatherData();
-    const interval = setInterval(fetchWeatherData, 300000); // Refresh every 5 minutes
-    return () => clearInterval(interval);
-  }, [selectedLocation, dateRange]);
+    const fetchWeatherData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch locations
+        const locationsRes = await fetch('/api/proxy/v1/weather/locations');
+        const locationsData = await locationsRes.json();
+        setLocations(locationsData);
 
-  const fetchWeatherData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch locations
-      const locationsRes = await fetch('/api/proxy/v1/weather/locations');
-      const locationsData = await locationsRes.json();
-      setLocations(locationsData);
+        // Fetch current weather
+        const currentUrl = selectedLocation === 'all' 
+          ? '/api/proxy/v1/weather/current'
+          : `/api/proxy/v1/weather/current?location=${selectedLocation}`;
+        const currentRes = await fetch(currentUrl);
+        const currentData = await currentRes.json();
+        setCurrentWeather(currentData);
 
-      // Fetch current weather
-      const currentUrl = selectedLocation === 'all' 
-        ? '/api/proxy/v1/weather/current'
-        : `/api/proxy/v1/weather/current?location=${selectedLocation}`;
-      const currentRes = await fetch(currentUrl);
-      const currentData = await currentRes.json();
-      setCurrentWeather(currentData);
-
-      // Fetch historical data
-      if (selectedLocation !== 'all') {
-        const endDate = new Date().toISOString().split('T')[0];
-        const startDate = new Date();
+        // Fetch historical data
+        // Use June 2025 as the end date since that's when our data ends
+        const endDate = new Date('2025-06-30');
+        const startDate = new Date('2025-06-30');
         if (dateRange === 'week') {
           startDate.setDate(startDate.getDate() - 7);
         } else if (dateRange === 'month') {
@@ -132,32 +128,51 @@ const WeatherAnalyticsPage = () => {
           startDate.setFullYear(startDate.getFullYear() - 1);
         }
         
-        const historicalRes = await fetch(
-          `/api/proxy/v1/weather/historical?location=${selectedLocation}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate}&interval=daily`
-        );
+        // Build the URL with optional location parameter
+        let historicalUrl = `/api/proxy/v1/weather/historical?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}&interval=${interval}`;
+        if (selectedLocation !== 'all') {
+          historicalUrl += `&location=${selectedLocation}`;
+        }
+        
+        const historicalRes = await fetch(historicalUrl);
         const historicalData = await historicalRes.json();
-        setHistoricalData(historicalData);
+        console.log('📊 Historical weather data:', historicalData);
+        
+        // Transform the data to ensure it has the right structure
+        const transformedData = Array.isArray(historicalData) ? historicalData.map((item: any) => ({
+          date: item.date || item.weekStart || item.month,
+          temperature: item.avg_temperature_c || item.temperature || 0,
+          temperatureMin: item.min_temperature_c || item.temperatureMin || 0,
+          temperatureMax: item.max_temperature_c || item.temperatureMax || 0,
+          humidity: item.humidity_percent || item.humidity || 0,
+          rainfall: item.rainfall_mm || item.rainfall || 0,
+          windSpeed: item.avg_wind_speed_kmh || item.windSpeed || 0
+        })) : [];
+        
+        setHistoricalData(transformedData);
+
+        // Fetch statistics
+        const statsUrl = selectedLocation === 'all'
+          ? '/api/proxy/v1/weather/statistics'
+          : `/api/proxy/v1/weather/statistics?location=${selectedLocation}`;
+        const statsRes = await fetch(statsUrl);
+        const statsData = await statsRes.json();
+        setStatistics(statsData);
+
+        // Fetch impact analysis
+        const impactRes = await fetch('/api/proxy/v1/weather/impact-analysis');
+        const impactData = await impactRes.json();
+        setImpactAnalysis(impactData);
+
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Fetch statistics
-      const statsUrl = selectedLocation === 'all'
-        ? '/api/proxy/v1/weather/statistics'
-        : `/api/proxy/v1/weather/statistics?location=${selectedLocation}`;
-      const statsRes = await fetch(statsUrl);
-      const statsData = await statsRes.json();
-      setStatistics(statsData);
-
-      // Fetch impact analysis
-      const impactRes = await fetch('/api/proxy/v1/weather/impact-analysis');
-      const impactData = await impactRes.json();
-      setImpactAnalysis(impactData);
-
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchWeatherData();
+  }, [selectedLocation, dateRange, interval]);
 
   const getWeatherIcon = (conditions: string) => {
     if (conditions.toLowerCase().includes('rain')) {
@@ -348,8 +363,23 @@ const WeatherAnalyticsPage = () => {
         </div>
       )}
 
-      {activeTab === 'trends' && historicalData.length > 0 && (
+      {activeTab === 'trends' && (
         <div className="space-y-6">
+          {/* Controls for trends */}
+          <div className="flex justify-end gap-4 mb-4">
+            <select
+              value={interval}
+              onChange={(e) => setInterval(e.target.value)}
+              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          
+          {historicalData.length > 0 ? (
+            <>
           {/* Temperature Trend */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Temperature Trends</h2>
@@ -420,6 +450,12 @@ const WeatherAnalyticsPage = () => {
               </LineChart>
             </ResponsiveContainer>
           </Card>
+            </>
+          ) : (
+            <Card className="p-6">
+              <p className="text-center text-gray-500">No historical data available. Select a location and date range to view trends.</p>
+            </Card>
+          )}
         </div>
       )}
 
@@ -468,15 +504,15 @@ const WeatherAnalyticsPage = () => {
               </ResponsiveContainer>
               <div className="space-y-3">
                 {impactAnalysis.rainfallImpact.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                       <div 
                         className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: COLORS[idx % COLORS.length] }}
                       />
-                      <span className="font-medium">{item.category}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.category}</span>
                     </div>
-                    <span className="text-lg font-semibold">{item.systemEfficiency}%</span>
+                    <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.systemEfficiency}%</span>
                   </div>
                 ))}
               </div>
@@ -539,24 +575,24 @@ const WeatherAnalyticsPage = () => {
               <div>
                 <h3 className="text-lg font-medium mb-3">Rainfall vs System Efficiency</h3>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-blue-200 dark:border-gray-600">
                     <div className="flex items-center gap-3">
                       <SunIcon className="h-6 w-6 text-yellow-500" />
-                      <span className="font-medium">Dry Conditions</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">Dry Conditions</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-green-600">98%</p>
-                      <p className="text-sm text-gray-600">Efficiency</p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">98%</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Efficiency</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center gap-3">
                       <CloudRainIcon className="h-6 w-6 text-blue-500" />
-                      <span className="font-medium">Rainy Conditions</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">Rainy Conditions</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-amber-600">85%</p>
-                      <p className="text-sm text-gray-600">Efficiency</p>
+                      <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">85%</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Efficiency</p>
                     </div>
                   </div>
                 </div>
@@ -568,24 +604,24 @@ const WeatherAnalyticsPage = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Key Weather Insights</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <ThermometerIcon className="h-8 w-8 text-blue-600 mb-2" />
-                <h3 className="font-semibold mb-1">Temperature Effect</h3>
-                <p className="text-sm text-gray-700">
+              <div className="bg-blue-50 dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-gray-700">
+                <ThermometerIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
+                <h3 className="font-semibold mb-1 text-gray-900 dark:text-gray-100">Temperature Effect</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   Every 10°C increase in temperature correlates with a 15-20% increase in water demand
                 </p>
               </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <ActivityIcon className="h-8 w-8 text-green-600 mb-2" />
-                <h3 className="font-semibold mb-1">Seasonal Patterns</h3>
-                <p className="text-sm text-gray-700">
+              <div className="bg-green-50 dark:bg-gray-800 p-4 rounded-lg border border-green-200 dark:border-gray-700">
+                <ActivityIcon className="h-8 w-8 text-green-600 dark:text-green-400 mb-2" />
+                <h3 className="font-semibold mb-1 text-gray-900 dark:text-gray-100">Seasonal Patterns</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   Summer months show 40% higher consumption compared to winter baseline
                 </p>
               </div>
-              <div className="bg-amber-50 p-4 rounded-lg">
-                <CloudRainIcon className="h-8 w-8 text-amber-600 mb-2" />
-                <h3 className="font-semibold mb-1">Rain Impact</h3>
-                <p className="text-sm text-gray-700">
+              <div className="bg-amber-50 dark:bg-gray-800 p-4 rounded-lg border border-amber-200 dark:border-gray-700">
+                <CloudRainIcon className="h-8 w-8 text-amber-600 dark:text-amber-400 mb-2" />
+                <h3 className="font-semibold mb-1 text-gray-900 dark:text-gray-100">Rain Impact</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   Heavy rainfall events can reduce system efficiency by up to 15% due to infiltration
                 </p>
               </div>

@@ -1186,7 +1186,7 @@ async def get_current_weather(
 
 @app.get("/api/v1/weather/historical")
 async def get_historical_weather(
-    location: str = Query(..., description="Location name"),
+    location: Optional[str] = Query(None, description="Location name (optional, returns all locations if not specified)"),
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     interval: str = Query("daily", description="Data interval: daily, weekly, monthly")
@@ -1196,20 +1196,35 @@ async def get_historical_weather(
         async with pool.acquire() as conn:
             # Default date range if not provided
             if not end_date:
-                end_date = datetime.now().date().isoformat()
+                end_date = datetime.now().date()
+            else:
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+                
             if not start_date:
-                start_date = (datetime.now() - timedelta(days=30)).date().isoformat()
+                start_date = (datetime.now() - timedelta(days=30)).date()
+            else:
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
             
             if interval == "daily":
-                rows = await conn.fetch("""
-                    SELECT date, avg_temperature_c, min_temperature_c, max_temperature_c,
-                           humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
-                    FROM water_infrastructure.weather_data
-                    WHERE location = $1 AND date BETWEEN $2 AND $3
-                    ORDER BY date
-                """, location, start_date, end_date)
+                if location:
+                    rows = await conn.fetch("""
+                        SELECT location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
+                               humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
+                        FROM water_infrastructure.weather_data
+                        WHERE location = $1 AND date BETWEEN $2 AND $3
+                        ORDER BY date
+                    """, location, start_date, end_date)
+                else:
+                    rows = await conn.fetch("""
+                        SELECT location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
+                               humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
+                        FROM water_infrastructure.weather_data
+                        WHERE date BETWEEN $1 AND $2
+                        ORDER BY location, date
+                    """, start_date, end_date)
                 
                 return [{
+                    "location": row['location'],
                     "date": row['date'].isoformat(),
                     "temperature": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
                     "temperatureMin": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
