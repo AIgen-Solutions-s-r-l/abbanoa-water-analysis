@@ -53,8 +53,8 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
     }
     
     // TEMPORARY: MVP Demo bypass - allow specific routes without auth but WITH layout
-    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies', '/weather', '/ml-analytics', '/energy-optimization', '/profile', '/settings', '/admin'];
-    if (process.env.NODE_ENV === 'development' && mvpDemoRoutes.includes(pathname)) {
+          const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies', '/weather', '/ml-analytics', '/energy-optimization', '/infrastructure-map', '/profile', '/settings', '/admin'];
+      if (process.env.NODE_ENV === 'development' && mvpDemoRoutes.includes(pathname)) {
       console.log('🎯 MVP Demo mode - bypassing auth for:', pathname);
       return;
     }
@@ -92,7 +92,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   // For protected routes, redirect to login if not authenticated
   if (!isAuthenticated) {
     // TEMPORARY: MVP Demo bypass - show layout for demo routes
-    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies', '/consumption', '/about', '/weather', '/ml-analytics', '/energy-optimization', '/profile', '/settings', '/admin'];
+    const mvpDemoRoutes = ['/', '/enhanced-overview', '/monitoring', '/anomalies', '/consumption', '/about', '/weather', '/ml-analytics', '/energy-optimization', '/infrastructure-map', '/profile', '/settings', '/admin'];
     if (process.env.NODE_ENV === 'development' && mvpDemoRoutes.includes(pathname)) {
       return (
         <LayoutProvider>

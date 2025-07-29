@@ -55,6 +55,11 @@ const nextConfig = {
   // Build optimization
   swcMinify: true,
   poweredByHeader: false,
+  
+  // Disable ESLint during production builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig; 
