@@ -140,12 +140,6 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
         timeEntry[pressureKey] = finalPressure;
         timeEntry[nameKey] = node.name || `Node ${node.id}`;
         
-        // For compatibility (only set once per timestamp, not per node)
-        if (!timeEntry.nodeId) {
-          timeEntry.nodeId = node.id;
-          timeEntry.flowRate = finalFlow;
-        }
-        
         console.log(`✅ Node ${node.id}: ${finalFlow} L/s, ${finalPressure} bar`);
         console.log(`   Keys added: ${nodeKey}, ${pressureKey}, ${nameKey}`);
       });

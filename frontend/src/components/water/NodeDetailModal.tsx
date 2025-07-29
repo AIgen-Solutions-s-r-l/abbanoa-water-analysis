@@ -57,43 +57,55 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
     try {
       setLoading(true);
       
-      // Fetch historical data
-      const histResponse = await fetch(`/api/proxy/v1/nodes/${node.node_id}/readings?limit=48`);
+      // Fetch historical data - get last 48 hours of available data
+      const histResponse = await fetch(`/api/proxy/v1/nodes/${node.node_id}/readings?limit=1000`);
       if (histResponse.ok) {
         const data = await histResponse.json();
         
-        // If we have real data, use it; otherwise generate synthetic data based on current values
+        // If we have real data, use it
         if (data && data.length > 0) {
-          setHistoricalData(data.map((d: any, i: number) => ({
-            time: new Date(Date.now() - (48 - i) * 3600000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-            flow: d.flow_rate || node.current_flow,
-            pressure: d.pressure || node.current_pressure,
-            temperature: d.temperature || 18
+          // Sort by timestamp to ensure chronological order
+          const sortedData = data.sort((a: any, b: any) => 
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+          
+          // Take up to 48 most recent readings
+          const recentData = sortedData.slice(-48);
+          
+          setHistoricalData(recentData.map((d: any, i: number) => ({
+            time: new Date(d.timestamp).toLocaleTimeString('it-IT', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              day: '2-digit',
+              month: '2-digit'
+            }),
+            flow: d.flow_rate || 0,
+            pressure: d.pressure || 0,
+            temperature: d.temperature || 18,
+            timestamp: d.timestamp
           })));
         } else {
-          // Generate synthetic historical data based on current values
-          const syntheticData = Array.from({ length: 48 }, (_, i) => {
-            const hourOfDay = (new Date().getHours() - 48 + i + 24) % 24;
-            const dayVariation = hourOfDay >= 6 && hourOfDay <= 22 ? 1.1 : 0.85; // Higher during day
-            const randomVariation = 0.95 + Math.random() * 0.1; // ±5% variation
-            
-            return {
-              time: new Date(Date.now() - (48 - i) * 3600000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-              flow: node.current_flow * dayVariation * randomVariation,
-              pressure: node.current_pressure * (0.98 + Math.random() * 0.04), // ±2% variation
-              temperature: 18 + Math.sin((hourOfDay - 6) * Math.PI / 12) * 2 // Temperature curve
-            };
-          });
-          setHistoricalData(syntheticData);
+          // If no data at all, show current value as a single point
+          setHistoricalData([{
+            time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+            flow: node.current_flow || 0,
+            pressure: node.current_pressure || 0,
+            temperature: 18,
+            timestamp: new Date().toISOString()
+          }]);
         }
       }
 
-      // Generate predictions (in real system, this would come from ML API)
+      // Generate predictions based on last known value
+      const lastKnownFlow = historicalData.length > 0 
+        ? historicalData[historicalData.length - 1].flow 
+        : node.current_flow;
+      
       const predData = Array.from({ length: 24 }, (_, i) => ({
         time: new Date(Date.now() + i * 3600000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-        predicted_flow: node.current_flow + (Math.random() - 0.5) * 5,
-        confidence_min: node.current_flow - 3,
-        confidence_max: node.current_flow + 3
+        predicted_flow: lastKnownFlow + (Math.random() - 0.5) * 5,
+        confidence_min: lastKnownFlow - 3,
+        confidence_max: lastKnownFlow + 3
       }));
       setPredictions(predData);
 
@@ -286,13 +298,13 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
                          <Card className="p-6 lg:col-span-2">
                            <div className="flex justify-between items-start mb-4">
                              <div>
-                               <h3 className="text-lg font-semibold">Recent Performance (48h)</h3>
+                               <h3 className="text-lg font-semibold">Recent Performance (Last 48 readings)</h3>
                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                 Data shown represents the most recent measurements available for this node
+                                 Showing the most recent {historicalData.length} measurements available in the database
                                </p>
                              </div>
-                             <div className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 text-xs rounded-full">
-                               Live Data
+                             <div className="px-2 py-1 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 text-xs rounded-full">
+                               Historical Data
                              </div>
                            </div>
                            <ResponsiveContainer width="100%" height={300}>
