@@ -27,17 +27,39 @@ NEW_NODES = {
     "Monitoring 287156": "287156",
 }
 
+# Volume-based renamed nodes
+RENAMED_NODES_MAPPING = {
+    "TANK01": "CENTRO_SUD",
+    "NODE01": "CENTRO_EST", 
+    "MONITOR01": "CENTRO_OVEST",
+    "MONITOR02": "CENTRO_NORD",
+    "INTERCON01": "FIORI",
+    "INTERCON02": "Q_GALLUS",
+    "INTERCON03": "Q_MATTEOTTI",
+    "INTERCON04": "Q_MONSERRATO",
+    "INTERCON05": "Q_NENNI_SUD",
+    "INTERCON06": "Q_SANTANNA",
+    "INTERCON07": "Q_SARDEGNA",
+    "INTERCON08": "Q_TRIESTE",
+    "ZONE01": "LIBERTA",
+    "ZONE02": "STADIO"
+}
+
 # Combined mapping for all nodes
 ALL_NODE_MAPPINGS = {
     **{k: str(v) for k, v in ORIGINAL_NODES.items()},
-    **NEW_NODES
+    **NEW_NODES,
+    **RENAMED_NODES_MAPPING
 }
 
 # Node type categorization
 NODE_CATEGORIES = {
     "Original Nodes": ["Sant'Anna", "Seneca", "Selargius Tank", "External Supply"],
-    "Distribution Nodes": ["Distribution 215542", "Distribution 215600", "Distribution 273933"],
-    "Monitoring Nodes": ["Monitoring 281492", "Monitoring 288399", "Monitoring 288400", "Monitoring 211514", "Monitoring 287156"],
+    "Distribution Nodes": ["Distribution 215542", "Distribution 215600", "Distribution 273933", "NODE01"],
+    "Monitoring Nodes": ["Monitoring 281492", "Monitoring 288399", "Monitoring 288400", "Monitoring 211514", "Monitoring 287156", "MONITOR01", "MONITOR02"],
+    "Storage Tanks": ["TANK01"],
+    "Interconnection Points": ["INTERCON01", "INTERCON02", "INTERCON03", "INTERCON04", "INTERCON05", "INTERCON06", "INTERCON07", "INTERCON08"],
+    "Zone Meters": ["ZONE01", "ZONE02"]
 }
 
 def get_node_id(display_name: str) -> str:
