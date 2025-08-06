@@ -56,7 +56,7 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
   const uniqueNodesSet = new Set<string>();
   data.forEach(entry => {
     Object.keys(entry).forEach(key => {
-      if (key.startsWith('node') && !key.includes('_')) {
+      if (key.startsWith('node') && !key.endsWith('_name') && !key.endsWith('_pressure')) {
         uniqueNodesSet.add(key.replace('node', ''));
       }
     });

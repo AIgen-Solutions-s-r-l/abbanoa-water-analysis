@@ -60,7 +60,7 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
       
       // Add data for each active node
       activeNodes.forEach((node, nodeIndex) => {
-        console.log(`📍 Processing node ${nodeIndex + 1}/${activeNodes.length}: ${node.id}`);
+        console.log(`📍 Processing node ${nodeIndex + 1}/${activeNodes.length}: ${node.id} (${node.name})`);
         // Use real data if available, otherwise generate realistic baseline
         let baseFlow, basePressure;
         
@@ -132,13 +132,12 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
           timeEntry[nodeKey] = 15.0;
           timeEntry[pressureKey] = 3.0;
           timeEntry[nameKey] = node.name || `Node ${node.id}`;
-          return; // Exit this iteration but continue with other nodes
+        } else {
+          // Add node data to this timestamp
+          timeEntry[nodeKey] = finalFlow;
+          timeEntry[pressureKey] = finalPressure;
+          timeEntry[nameKey] = node.name || `Node ${node.id}`;
         }
-        
-        // Add node data to this timestamp
-        timeEntry[nodeKey] = finalFlow;
-        timeEntry[pressureKey] = finalPressure;
-        timeEntry[nameKey] = node.name || `Node ${node.id}`;
         
         console.log(`✅ Node ${node.id}: ${finalFlow} L/s, ${finalPressure} bar`);
         console.log(`   Keys added: ${nodeKey}, ${pressureKey}, ${nameKey}`);
@@ -175,6 +174,10 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
       console.log('📈 Flow values in first entry:', flowKeys.map(k => `${k}: ${firstEntry[k]}`));
       console.log('🎯 All node IDs in data:', flowKeys.map(k => k.replace('node', '')));
       console.log('📊 Total unique nodes in chart data:', flowKeys.length);
+      console.log('🔍 All keys in first entry:', Object.keys(firstEntry));
+      
+      // Also log which nodes we started with
+      console.log('🌊 Original active nodes:', activeNodes.map(n => `${n.id} (${n.name})`));
     }
     
     return validatedData;
