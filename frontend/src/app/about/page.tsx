@@ -33,7 +33,7 @@ export default function AboutPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            About Abbanoa Water Management System
+            About Roccavina Water Management System
           </h1>
           <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
             Understanding the calculations and methodologies behind our analytics
@@ -74,7 +74,7 @@ export default function AboutPage() {
               <Card className="p-6">
                 <h2 className="text-2xl font-semibold mb-4">System Overview</h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  The Abbanoa Water Management System is a comprehensive platform designed to monitor, analyze, and optimize 
+                  The Roccavina Water Management System is a comprehensive platform designed to monitor, analyze, and optimize 
                   water distribution networks. It combines real-time sensor data with advanced analytics to provide actionable 
                   insights for operational efficiency.
                 </p>
@@ -426,7 +426,7 @@ export default function AboutPage() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
           <p className="text-center text-gray-500 dark:text-gray-400">
-            Abbanoa Water Management System - Version 2.0 | Last updated: December 2024
+            Roccavina Water Management System - Version 2.0 | Last updated: December 2024
           </p>
         </div>
 

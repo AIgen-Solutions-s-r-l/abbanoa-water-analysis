@@ -38,19 +38,58 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
   
   if (activeNodes.length === 0) {
     console.log('⚠️ No nodes found, generating fallback data');
-    return generateFallbackTimeSeriesData();
+    return generateFallbackTimeSeriesData(startDate, endDate);
   }
   
   try {
     // Create realistic time series data based on current readings
     const timeSeriesData: FlowAnalyticsData[] = [];
-    const now = new Date();
-    const hoursToShow = 24;
     
-    // Generate time points (last 24 hours)
-    for (let i = hoursToShow - 1; i >= 0; i--) {
-      const timePoint = new Date(now.getTime() - (i * 60 * 60 * 1000));
-      const timestamp = timePoint.toISOString().slice(11, 16); // HH:MM format
+    // Use provided date range or default to last 24 hours
+    const end = endDate || new Date();
+    const start = startDate || new Date(end.getTime() - 24 * 60 * 60 * 1000);
+    
+    // Calculate time range duration
+    const durationMs = end.getTime() - start.getTime();
+    const durationHours = durationMs / (1000 * 60 * 60);
+    const durationDays = durationMs / (1000 * 60 * 60 * 24);
+    
+    // Determine appropriate interval based on duration
+    let intervalMs: number;
+    let dateFormatter: (date: Date) => string;
+    
+    if (durationDays > 7) {
+      // For ranges > 1 week, show daily points
+      intervalMs = 24 * 60 * 60 * 1000; // 1 day
+      dateFormatter = (date: Date) => {
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}/${day}`;
+      };
+    } else if (durationDays > 1) {
+      // For ranges 1-7 days, show points every 4 hours
+      intervalMs = 4 * 60 * 60 * 1000; // 4 hours
+      dateFormatter = (date: Date) => {
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hours = date.getHours().toString().padStart(2, '0');
+        return `${month}/${day} ${hours}:00`;
+      };
+    } else {
+      // For < 1 day, show hourly points
+      intervalMs = 60 * 60 * 1000; // 1 hour
+      dateFormatter = (date: Date) => {
+        return date.toTimeString().slice(0, 5); // HH:MM
+      };
+    }
+    
+    // Generate time points
+    const numPoints = Math.floor(durationMs / intervalMs) + 1;
+    for (let i = 0; i < numPoints; i++) {
+      const timePoint = new Date(start.getTime() + (i * intervalMs));
+      if (timePoint > end) break;
+      
+      const timestamp = dateFormatter(timePoint);
       
       // Create base entry for this timestamp
       const timeEntry: any = {
@@ -184,25 +223,66 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
     
   } catch (error) {
     console.error('❌ Error generating flow data:', error);
-    return generateFallbackTimeSeriesData();
+    return generateFallbackTimeSeriesData(startDate, endDate);
   }
 };
 
 // Fallback function for when no real data is available
-const generateFallbackTimeSeriesData = (): FlowAnalyticsData[] => {
+const generateFallbackTimeSeriesData = (startDate?: Date, endDate?: Date): FlowAnalyticsData[] => {
   console.log('📋 Generating fallback time series data');
   
   const fallbackData: FlowAnalyticsData[] = [];
-  const now = new Date();
+  
+  // Use provided date range or default to last 24 hours
+  const end = endDate || new Date();
+  const start = startDate || new Date(end.getTime() - 24 * 60 * 60 * 1000);
+  
   const mockNodes = [
     { id: 'DIST_001', name: 'District 001', baseFlow: 35.2, basePressure: 3.1 },
     { id: '211514', name: 'Node 211514', baseFlow: 28.7, basePressure: 2.8 },
     { id: '215542', name: 'Node 215542', baseFlow: 42.1, basePressure: 3.4 }
   ];
   
-  for (let i = 23; i >= 0; i--) {
-    const timePoint = new Date(now.getTime() - (i * 60 * 60 * 1000));
-    const timestamp = timePoint.toISOString().slice(11, 16);
+  // Calculate time range duration
+  const durationMs = end.getTime() - start.getTime();
+  const durationDays = durationMs / (1000 * 60 * 60 * 24);
+  
+  // Determine appropriate interval based on duration
+  let intervalMs: number;
+  let dateFormatter: (date: Date) => string;
+  
+  if (durationDays > 7) {
+    // For ranges > 1 week, show daily points
+    intervalMs = 24 * 60 * 60 * 1000; // 1 day
+    dateFormatter = (date: Date) => {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}/${day}`;
+    };
+  } else if (durationDays > 1) {
+    // For ranges 1-7 days, show points every 4 hours
+    intervalMs = 4 * 60 * 60 * 1000; // 4 hours
+    dateFormatter = (date: Date) => {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const hours = date.getHours().toString().padStart(2, '0');
+      return `${month}/${day} ${hours}:00`;
+    };
+  } else {
+    // For < 1 day, show hourly points
+    intervalMs = 60 * 60 * 1000; // 1 hour
+    dateFormatter = (date: Date) => {
+      return date.toTimeString().slice(0, 5); // HH:MM
+    };
+  }
+  
+  // Generate time points
+  const numPoints = Math.floor(durationMs / intervalMs) + 1;
+  for (let i = 0; i < numPoints; i++) {
+    const timePoint = new Date(start.getTime() + (i * intervalMs));
+    if (timePoint > end) break;
+    
+    const timestamp = dateFormatter(timePoint);
     
     const timeEntry: any = {
       timestamp,
@@ -336,12 +416,16 @@ export default function EnhancedOverviewPage() {
           setFlowData(realFlowData);
         } else {
           console.log('⚠️ No nodes in dashboard data, generating fallback flow data');
-          const fallbackFlowData = generateFallbackTimeSeriesData();
+          const start = customDateRange?.startDate || dateRange?.startDate;
+          const end = customDateRange?.endDate || dateRange?.endDate;
+          const fallbackFlowData = generateFallbackTimeSeriesData(start, end);
           setFlowData(fallbackFlowData);
         }
       } else {
         console.log('❌ No dashboard data received, using fallback');
-        const fallbackFlowData = generateFallbackTimeSeriesData();
+        const start = customDateRange?.startDate || dateRange?.startDate;
+        const end = customDateRange?.endDate || dateRange?.endDate;
+        const fallbackFlowData = generateFallbackTimeSeriesData(start, end);
         setFlowData(fallbackFlowData);
       }
       
@@ -355,7 +439,9 @@ export default function EnhancedOverviewPage() {
     } catch (error) {
       console.error('❌ Error loading real data:', error);
       // Fallback to mock data on error
-      const fallbackFlowData = generateFallbackTimeSeriesData();
+      const startDate = customDateRange?.startDate || dateRange?.startDate;
+      const endDate = customDateRange?.endDate || dateRange?.endDate;
+      const fallbackFlowData = generateFallbackTimeSeriesData(startDate, endDate);
       setFlowData(fallbackFlowData);
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-# PM2 Configuration for Abbanoa Water Analysis
+# PM2 Configuration for Roccavina Water Analysis
 
 This project includes PM2 configuration files to keep the backend and frontend services running reliably.
 
@@ -46,10 +46,10 @@ pm2 start ecosystem.config.js
 pm2 logs
 
 # Backend logs only
-pm2 logs abbanoa-backend
+pm2 logs roccavina-backend
 
 # Frontend logs only
-pm2 logs abbanoa-frontend
+pm2 logs roccavina-frontend
 
 # Follow logs in real-time
 pm2 logs --lines 100
@@ -62,16 +62,16 @@ pm2 status
 
 # Restart services
 pm2 restart all
-pm2 restart abbanoa-backend
-pm2 restart abbanoa-frontend
+pm2 restart roccavina-backend
+pm2 restart roccavina-frontend
 
 # Stop services
 pm2 stop all
-pm2 stop abbanoa-backend
+pm2 stop roccavina-backend
 
 # Remove from PM2
 pm2 delete all
-pm2 delete abbanoa-backend
+pm2 delete roccavina-backend
 ```
 
 ### Save PM2 configuration
@@ -108,7 +108,7 @@ For production, you can:
 ### Backend not starting
 - Check if poetry is installed and accessible
 - Ensure PostgreSQL is running
-- Check logs: `pm2 logs abbanoa-backend --lines 100`
+- Check logs: `pm2 logs roccavina-backend --lines 100`
 
 ### Port already in use
 - The start scripts automatically kill existing processes

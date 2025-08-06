@@ -1,6 +1,6 @@
-# Abbanoa Dashboard Frontend
+# Roccavina Dashboard Frontend
 
-A modern, responsive frontend for the Abbanoa water management system, built with Next.js, TypeScript, and Tailwind CSS.
+A modern, responsive frontend for the Roccavina water management system, built with Next.js, TypeScript, and Tailwind CSS.
 
 ## Features
 
@@ -85,7 +85,7 @@ frontend/
    ```env
    NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
    NEXT_PUBLIC_API_VERSION=v1
-   NEXT_PUBLIC_APP_NAME=Abbanoa Dashboard
+   NEXT_PUBLIC_APP_NAME=Roccavina Dashboard
    ```
 
 3. **Start the development server:**

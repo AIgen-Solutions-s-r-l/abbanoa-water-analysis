@@ -76,7 +76,7 @@ export default function RegisterPage() {
             Create your account
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Get started with Abbanoa Dashboard
+            Get started with Roccavina Dashboard
           </p>
         </CardHeader>
 

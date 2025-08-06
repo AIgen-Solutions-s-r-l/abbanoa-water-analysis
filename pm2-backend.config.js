@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'abbanoa-backend',
+      name: 'roccavina-backend',
       script: './run-backend.sh',
       cwd: '.',
       instances: 1,

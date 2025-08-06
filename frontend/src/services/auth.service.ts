@@ -32,8 +32,8 @@ export class AuthService {
     
     const mockTenant = {
       id: 'default',
-      name: 'Abbanoa S.p.A.',
-      domain: 'abbanoa',
+      name: 'Roccavina S.p.A.',
+      domain: 'roccavina',
       logo: undefined,
       plan: 'enterprise' as 'basic' | 'professional' | 'enterprise',
       isActive: true,
@@ -43,7 +43,7 @@ export class AuthService {
         customBranding: {
           primaryColor: '#2563eb',
           logo: '',
-          companyName: 'Abbanoa S.p.A.'
+          companyName: 'Roccavina S.p.A.'
         }
       },
       createdAt: new Date().toISOString(),
@@ -145,8 +145,13 @@ export class AuthService {
   }
 
   static async getUserTenants(): Promise<Tenant[]> {
-    const response = await apiClient.get<TenantSelectionResponse>('/auth/tenants');
-    return response.data.tenants;
+    try {
+      const response = await apiClient.get<TenantSelectionResponse>('/auth/tenants');
+      return response.data?.tenants || [];
+    } catch (error) {
+      console.error('Failed to fetch user tenants:', error);
+      return [];
+    }
   }
 
   static async switchTenant(tenantId: string): Promise<AuthResponse> {

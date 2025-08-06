@@ -622,7 +622,7 @@ async def get_current_user_profile(
             SELECT id, email, name, role, department, phone, location, bio,
                    status, two_factor_enabled, last_login, created_at
             FROM water_infrastructure.users
-            WHERE email = 'giovanni.rossi@abbanoa.it'
+            WHERE email = 'giovanni.rossi@roccavina.it'
         """)
         
         if user:
@@ -640,7 +640,7 @@ async def get_current_user_profile(
         # Fallback
         return {
             "id": "demo-user",
-            "email": "giovanni.rossi@abbanoa.it",
+            "email": "giovanni.rossi@roccavina.it",
             "name": "Giovanni Rossi",
             "role": "admin",
             "permissions": ["view_dashboard", "manage_sensors", "generate_reports", "control_pumps"]
@@ -666,7 +666,7 @@ async def get_current_user_settings(
     async with pool.acquire() as conn:
         user = await conn.fetchrow("""
             SELECT id FROM water_infrastructure.users
-            WHERE email = 'giovanni.rossi@abbanoa.it'
+            WHERE email = 'giovanni.rossi@roccavina.it'
         """)
         
         if user:

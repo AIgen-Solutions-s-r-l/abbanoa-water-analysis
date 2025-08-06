@@ -167,7 +167,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           <Link href="/" className="flex items-center ml-4 lg:ml-0">
             <div className="flex-shrink-0">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Abbanoa Dashboard
+                Roccavina Dashboard
               </h1>
             </div>
           </Link>

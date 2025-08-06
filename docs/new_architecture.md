@@ -1,8 +1,8 @@
-# Abbanoa Water Infrastructure Architecture
+# Roccavina Water Infrastructure Architecture
 
 ## Overview
 
-The Abbanoa Water Infrastructure system is a comprehensive water monitoring and analytics platform designed for the Sardinian water utility company. The architecture follows a microservices pattern with multiple specialized components working together to provide real-time monitoring, anomaly detection, forecasting, and data visualization capabilities.
+The Roccavina Water Infrastructure system is a comprehensive water monitoring and analytics platform designed for the Sardinian water utility company. The architecture follows a microservices pattern with multiple specialized components working together to provide real-time monitoring, anomaly detection, forecasting, and data visualization capabilities.
 
 The system features a modern Next.js frontend with multi-tenant support, connected to a FastAPI backend that interfaces with PostgreSQL/TimescaleDB for operational data, Redis for caching, and Google BigQuery for data warehousing and machine learning models.
 

@@ -1,6 +1,6 @@
 # 🚰 Synthetic Water Consumption Dataset Generator
 
-This directory contains scripts to generate realistic synthetic water consumption data for the Abbanoa Water Management System. The generated dataset simulates daily water usage patterns for 50,000 users across multiple districts in Sardinia, Italy.
+This directory contains scripts to generate realistic synthetic water consumption data for the Roccavina Water Management System. The generated dataset simulates daily water usage patterns for 50,000 users across multiple districts in Sardinia, Italy.
 
 ## 📁 Files Overview
 
@@ -192,7 +192,7 @@ pip install -r requirements.txt
 - **Summer Peak:** +20-40% (coastal districts)
 - **Holiday Effect:** +10% (residential), -60% (commercial/industrial)
 
-## 🎯 Integration with Abbanoa System
+## 🎯 Integration with Roccavina System
 
 ### **Database Import**
 The generated CSV files can be imported into PostgreSQL:

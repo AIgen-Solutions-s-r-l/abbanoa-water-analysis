@@ -1,9 +1,9 @@
 # 🚰 Consumption Data Integration Analysis
-## Deep Integration of Synthetic Data with Abbanoa Water Management System
+## Deep Integration of Synthetic Data with Roccavina Water Management System
 
 ### Executive Summary
 
-This document presents a comprehensive analysis of integrating consumption data into the Abbanoa Water Management System. The integration demonstrates how synthetic consumption data (50,000 users across 5 districts) can enhance real-time monitoring, enable predictive analytics, and provide actionable insights for water resource optimization.
+This document presents a comprehensive analysis of integrating consumption data into the Roccavina Water Management System. The integration demonstrates how synthetic consumption data (50,000 users across 5 districts) can enhance real-time monitoring, enable predictive analytics, and provide actionable insights for water resource optimization.
 
 ---
 
@@ -317,7 +317,7 @@ CREATE TABLE consumption_anomalies (
 
 ## 📊 Conclusion
 
-The integration of consumption data with the Abbanoa Water Management System transforms it from a reactive monitoring platform to a proactive, intelligent water resource management solution. The synthetic data demonstration showcases the potential for:
+The integration of consumption data with the Roccavina Water Management System transforms it from a reactive monitoring platform to a proactive, intelligent water resource management solution. The synthetic data demonstration showcases the potential for:
 
 1. **30% reduction in water losses** through early leak detection
 2. **15% improvement in energy efficiency** via optimized pumping

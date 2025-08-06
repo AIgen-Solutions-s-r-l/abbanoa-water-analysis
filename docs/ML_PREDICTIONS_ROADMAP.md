@@ -1,4 +1,4 @@
-# Machine Learning Predictions Roadmap for Abbanoa Water Infrastructure
+# Machine Learning Predictions Roadmap for Roccavina Water Infrastructure
 
 ## Executive Summary
 
@@ -180,4 +180,4 @@ Sensors → Kafka → Feature Store → ML Models → Predictions → Actions
 
 ## Conclusion
 
-The Abbanoa water infrastructure data provides a rich foundation for ML predictions that can deliver significant operational improvements and cost savings. Starting with quick wins in anomaly detection and demand forecasting will demonstrate value while building towards more sophisticated predictive capabilities. 
+The Roccavina water infrastructure data provides a rich foundation for ML predictions that can deliver significant operational improvements and cost savings. Starting with quick wins in anomaly detection and demand forecasting will demonstrate value while building towards more sophisticated predictive capabilities. 

@@ -56,7 +56,7 @@ For 100 m³/h at 4 bar:
 - **Storage tanks**: Enable off-peak pumping
 - **Smart pressure management**: Adjust based on demand
 
-### 5. Integration with Abbanoa System
+### 5. Integration with Roccavina System
 
 #### Consumption-Based Optimization
 With consumption data integration, we can:
@@ -99,7 +99,7 @@ def optimize_pump_operation(consumption_forecast, pressure_zones):
 4. **Monitor Actual vs Theoretical**: Track pump efficiency degradation
 5. **Consider Time-of-Use Rates**: Shift pumping to off-peak hours
 
-### 8. Enhanced Formula for Abbanoa
+### 8. Enhanced Formula for Roccavina
 
 ```
 Total Energy Cost = Σ(Q × P × t × η_pump × η_motor × €/kWh × ToU_factor)
@@ -120,4 +120,4 @@ Your formula of **2.5-3 kW per bar per 100 m³/h is:**
 - ✅ **Economically conservative** (good for budgeting)
 - ✅ **Practically useful** (accounts for real-world inefficiencies)
 
-This provides a solid foundation for energy optimization in the Abbanoa water management system! 
+This provides a solid foundation for energy optimization in the Roccavina water management system! 

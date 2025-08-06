@@ -112,7 +112,7 @@ class HydraulicBattery:
         return min(gravity_flow, required_flow)
 ```
 
-## 3. Implementazione nel Sistema Abbanoa
+## 3. Implementazione nel Sistema Roccavina
 
 ### 3.1 Nuovi Sensori Richiesti
 - Accelerometri per misurare vibrazioni/transitori

@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'abbanoa-frontend',
+    name: 'roccavina-frontend',
     script: 'npm',
     args: 'run dev:prod',
     cwd: './frontend',

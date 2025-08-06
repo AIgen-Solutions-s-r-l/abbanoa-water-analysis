@@ -9,7 +9,7 @@ services:
   # Production TimescaleDB
   postgres:
     image: timescale/timescaledb:latest-pg14
-    container_name: abbanoa-postgres-dev
+    container_name: roccavina-postgres-dev
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-abbanoa_processing}
       POSTGRES_USER: ${POSTGRES_USER:-abbanoa_user}
@@ -20,7 +20,7 @@ services:
       - postgres-dev-data:/var/lib/postgresql/data
       - ./src/infrastructure/database/postgres_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     networks:
-      - abbanoa-dev-network
+      - roccavina-dev-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-abbanoa_user}"]
@@ -31,14 +31,14 @@ services:
   # Redis for caching
   redis:
     image: redis:7-alpine
-    container_name: abbanoa-redis-dev
+    container_name: roccavina-redis-dev
     command: redis-server --appendonly yes --appendfsync everysec --maxmemory 4gb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
       - redis-dev-data:/data
     networks:
-      - abbanoa-dev-network
+      - roccavina-dev-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -51,11 +51,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: abbanoa-etl-scheduler-dev
+    container_name: roccavina-etl-scheduler-dev
     command: python -m src.infrastructure.etl.etl_scheduler
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
-      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-roccavina-464816}
       - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
       - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
       - POSTGRES_HOST=postgres
@@ -69,7 +69,7 @@ services:
       - ./credentials:/app/credentials:ro
       - ./logs:/app/logs
     networks:
-      - abbanoa-dev-network
+      - roccavina-dev-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,7 +82,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: abbanoa-etl-init-dev
+    container_name: roccavina-etl-init-dev
     command: >
       sh -c "
         echo 'Starting ETL initialization...' &&
@@ -93,7 +93,7 @@ services:
       "
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
-      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-roccavina-464816}
       - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
       - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
       - POSTGRES_HOST=postgres
@@ -106,7 +106,7 @@ services:
     volumes:
       - ./credentials:/app/credentials:ro
     networks:
-      - abbanoa-dev-network
+      - roccavina-dev-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -117,13 +117,13 @@ services:
   # Nginx reverse proxy for local development
   nginx-dev:
     image: nginx:alpine
-    container_name: abbanoa-nginx-dev
+    container_name: roccavina-nginx-dev
     ports:
       - "8080:80"  # Use port 8080 to avoid conflicts
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     networks:
-      - abbanoa-dev-network
+      - roccavina-dev-network
     restart: unless-stopped
     depends_on:
       - postgres
@@ -134,5 +134,5 @@ volumes:
   redis-dev-data:
 
 networks:
-  abbanoa-dev-network:
+  roccavina-dev-network:
     driver: bridge 

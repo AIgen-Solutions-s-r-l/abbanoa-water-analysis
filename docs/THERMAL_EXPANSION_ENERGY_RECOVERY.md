@@ -143,7 +143,7 @@ class ThermalAnomalyDetector:
         return {'anomaly': False}
 ```
 
-## 3. Implementazione nel Sistema Abbanoa
+## 3. Implementazione nel Sistema Roccavina
 
 ### 3.1 Dashboard "Thermal Dynamics"
 

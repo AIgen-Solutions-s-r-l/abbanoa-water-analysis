@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Abbanoa Dashboard",
-  description: "Water management system dashboard for Abbanoa",
+  title: "Roccavina Dashboard",
+  description: "Water management system dashboard for Roccavina",
 };
 
 export default function RootLayout({

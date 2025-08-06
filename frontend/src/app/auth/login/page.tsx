@@ -58,7 +58,7 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Access your Abbanoa Dashboard
+            Access your Roccavina Dashboard
           </p>
         </CardHeader>
 

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "abbanoa-water-infrastructure"
+name = "roccavina-water-infrastructure"
 version = "1.2.8.0"
 description = "Water infrastructure monitoring and analysis system using Domain-Driven Design"
 authors = ["Alessio Rocchi <rocchi.b.a@gmail.com>"]

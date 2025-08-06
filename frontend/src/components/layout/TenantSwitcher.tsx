@@ -109,7 +109,7 @@ export function TenantSwitcher() {
                 </div>
               ) : (
                 <>
-                  {tenants.filter(t => t.id !== tenant.id).length > 0 && (
+                  {tenants && tenants.filter(t => t.id !== tenant.id).length > 0 && (
                     <>
                       <div className="px-4 py-2">
                         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

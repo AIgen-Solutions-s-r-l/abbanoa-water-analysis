@@ -1,6 +1,6 @@
 # Authentication & Multi-Tenancy Implementation
 
-This document outlines the complete authentication and multi-tenancy system implemented in the Abbanoa Dashboard frontend.
+This document outlines the complete authentication and multi-tenancy system implemented in the Roccavina Dashboard frontend.
 
 ## 🔐 **Features Implemented**
 
@@ -297,7 +297,7 @@ interface AuthState {
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000    # Backend API URL
 NEXT_PUBLIC_API_VERSION=v1                        # API version
-NEXT_PUBLIC_APP_NAME=Abbanoa Dashboard           # Application name
+NEXT_PUBLIC_APP_NAME=Roccavina Dashboard           # Application name
 ```
 
 ### **Backend Requirements**

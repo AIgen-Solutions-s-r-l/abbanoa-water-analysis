@@ -192,7 +192,7 @@ INSERT INTO water_infrastructure.users (
     bio,
     status
 ) VALUES (
-    'admin@abbanoa.it',
+    'admin@roccavina.it',
     'System Administrator',
     -- This is a bcrypt hash of 'Admin123!' - CHANGE IN PRODUCTION
     '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO',
@@ -218,20 +218,20 @@ FROM water_infrastructure.users,
         ('view_audit_logs'),
         ('manage_backups')
     ) AS perms(permission)
-WHERE email = 'admin@abbanoa.it'
+WHERE email = 'admin@roccavina.it'
 ON CONFLICT (user_id, permission) DO NOTHING;
 
 -- Create default settings for admin user
 INSERT INTO water_infrastructure.user_settings (user_id)
-SELECT id FROM water_infrastructure.users WHERE email = 'admin@abbanoa.it'
+SELECT id FROM water_infrastructure.users WHERE email = 'admin@roccavina.it'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Add some sample users for demo
 INSERT INTO water_infrastructure.users (email, name, password_hash, role, department, phone, location, bio, status, last_login) VALUES
-    ('giovanni.rossi@abbanoa.it', 'Giovanni Rossi', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'admin', 'Operations & Maintenance', '+39 070 123 4567', 'Cagliari, Sardinia', 'Experienced water infrastructure engineer with over 10 years in the field.', 'active', '2024-01-15 10:30:00+01'),
-    ('maria.bianchi@abbanoa.it', 'Maria Bianchi', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'operator', 'Operations & Maintenance', '+39 070 123 4568', 'Sassari, Sardinia', 'Skilled operator specializing in pump station management.', 'active', '2024-01-15 09:45:00+01'),
-    ('luigi.verdi@abbanoa.it', 'Luigi Verdi', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'engineer', 'Engineering', '+39 070 123 4569', 'Nuoro, Sardinia', 'Water quality specialist focused on treatment optimization.', 'inactive', '2024-01-10 15:20:00+01'),
-    ('anna.russo@abbanoa.it', 'Anna Russo', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'viewer', 'Quality Control', '+39 070 123 4570', 'Oristano, Sardinia', 'Quality assurance analyst monitoring water standards.', 'active', '2024-01-15 11:00:00+01')
+    ('giovanni.rossi@roccavina.it', 'Giovanni Rossi', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'admin', 'Operations & Maintenance', '+39 070 123 4567', 'Cagliari, Sardinia', 'Experienced water infrastructure engineer with over 10 years in the field.', 'active', '2024-01-15 10:30:00+01'),
+    ('maria.bianchi@roccavina.it', 'Maria Bianchi', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'operator', 'Operations & Maintenance', '+39 070 123 4568', 'Sassari, Sardinia', 'Skilled operator specializing in pump station management.', 'active', '2024-01-15 09:45:00+01'),
+    ('luigi.verdi@roccavina.it', 'Luigi Verdi', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'engineer', 'Engineering', '+39 070 123 4569', 'Nuoro, Sardinia', 'Water quality specialist focused on treatment optimization.', 'inactive', '2024-01-10 15:20:00+01'),
+    ('anna.russo@roccavina.it', 'Anna Russo', '$2b$12$LQKVLgb5r.f3YG3Y9XZpCu.Vb7kH.fVxYYqP6Xt9ZMGVpF.hKcQNO', 'viewer', 'Quality Control', '+39 070 123 4570', 'Oristano, Sardinia', 'Quality assurance analyst monitoring water standards.', 'active', '2024-01-15 11:00:00+01')
 ON CONFLICT (email) DO NOTHING;
 
 -- Grant appropriate permissions to sample users
@@ -240,16 +240,16 @@ SELECT u.id, p.permission
 FROM water_infrastructure.users u
 CROSS JOIN (
     VALUES 
-        ('giovanni.rossi@abbanoa.it', 'view_dashboard'),
-        ('giovanni.rossi@abbanoa.it', 'manage_sensors'),
-        ('giovanni.rossi@abbanoa.it', 'generate_reports'),
-        ('giovanni.rossi@abbanoa.it', 'control_pumps'),
-        ('maria.bianchi@abbanoa.it', 'view_dashboard'),
-        ('maria.bianchi@abbanoa.it', 'control_pumps'),
-        ('luigi.verdi@abbanoa.it', 'view_dashboard'),
-        ('luigi.verdi@abbanoa.it', 'manage_sensors'),
-        ('luigi.verdi@abbanoa.it', 'generate_reports'),
-        ('anna.russo@abbanoa.it', 'view_dashboard')
+        ('giovanni.rossi@roccavina.it', 'view_dashboard'),
+        ('giovanni.rossi@roccavina.it', 'manage_sensors'),
+        ('giovanni.rossi@roccavina.it', 'generate_reports'),
+        ('giovanni.rossi@roccavina.it', 'control_pumps'),
+        ('maria.bianchi@roccavina.it', 'view_dashboard'),
+        ('maria.bianchi@roccavina.it', 'control_pumps'),
+        ('luigi.verdi@roccavina.it', 'view_dashboard'),
+        ('luigi.verdi@roccavina.it', 'manage_sensors'),
+        ('luigi.verdi@roccavina.it', 'generate_reports'),
+        ('anna.russo@roccavina.it', 'view_dashboard')
 ) AS p(email, permission)
 WHERE u.email = p.email
 ON CONFLICT (user_id, permission) DO NOTHING;
@@ -257,9 +257,9 @@ ON CONFLICT (user_id, permission) DO NOTHING;
 -- Create settings for all sample users
 INSERT INTO water_infrastructure.user_settings (user_id)
 SELECT id FROM water_infrastructure.users WHERE email IN (
-    'giovanni.rossi@abbanoa.it',
-    'maria.bianchi@abbanoa.it', 
-    'luigi.verdi@abbanoa.it',
-    'anna.russo@abbanoa.it'
+    'giovanni.rossi@roccavina.it',
+    'maria.bianchi@roccavina.it', 
+    'luigi.verdi@roccavina.it',
+    'anna.russo@roccavina.it'
 )
 ON CONFLICT (user_id) DO NOTHING; 
