@@ -135,3 +135,6 @@ venv*
 venv_test/bin/py.test
 venv_test/bin/pytest
 node_modules/
+
+# Database backups
+backups/

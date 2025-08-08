@@ -379,10 +379,11 @@ export default function EnhancedOverviewPage() {
   });
   const [flowData, setFlowData] = useState<FlowAnalyticsData[]>([]);
   const [alerts, setAlerts] = useState<WaterSystemAlert[]>([]);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('Last 24 Hours');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('last_7_days');
   const [dateRange, setDateRange] = useState<{startDate: Date; endDate: Date; label: string} | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Use ref to store current dateRange for interval callback
   const dateRangeRef = React.useRef(dateRange);
@@ -390,10 +391,15 @@ export default function EnhancedOverviewPage() {
     dateRangeRef.current = dateRange;
   }, [dateRange]);
 
-  const loadRealData = async (customDateRange?: {startDate: Date; endDate: Date}) => {
+  const loadRealData = async (customDateRange?: {startDate: Date; endDate: Date}, isInitialLoad: boolean = false) => {
     try {
       console.log('🔄 Loading real data for Enhanced Overview...');
-      setLoading(true);
+      // Only show loading screen on initial load, not on refreshes
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
       
       // Fetch dashboard data
       const dashboardData = await fetchDashboardData();
@@ -444,7 +450,12 @@ export default function EnhancedOverviewPage() {
       const fallbackFlowData = generateFallbackTimeSeriesData(startDate, endDate);
       setFlowData(fallbackFlowData);
     } finally {
-      setLoading(false);
+      // Only set loading to false if it was set to true
+      if (isInitialLoad) {
+        setLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -456,7 +467,7 @@ export default function EnhancedOverviewPage() {
     loadRealData({
       startDate: newDateRange.startDate,
       endDate: newDateRange.endDate
-    });
+    }, false);
   };
 
   useEffect(() => {
@@ -476,7 +487,7 @@ export default function EnhancedOverviewPage() {
     loadRealData({
       startDate: defaultRange.startDate,
       endDate: defaultRange.endDate
-    });
+    }, true);
     
     // Set up auto-refresh for real-time updates
     const interval = setInterval(() => {
@@ -486,9 +497,9 @@ export default function EnhancedOverviewPage() {
         loadRealData({
           startDate: currentRange.startDate,
           endDate: currentRange.endDate
-        });
+        }, false);
       }
-    }, 30000); // Refresh every 30 seconds
+    }, 120000); // Refresh every 2 minutes
     
     return () => {
       clearInterval(interval);
@@ -531,7 +542,15 @@ export default function EnhancedOverviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 relative">
+      {/* Subtle refresh indicator */}
+      {isRefreshing && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-800 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+          <span className="text-sm text-gray-300">Updating...</span>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
