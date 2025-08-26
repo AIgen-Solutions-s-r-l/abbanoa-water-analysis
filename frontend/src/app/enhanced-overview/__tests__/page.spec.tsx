@@ -81,7 +81,7 @@ describe('EnhancedOverviewPage', () => {
     ];
 
     global.fetch = jest.fn((url: string) => {
-      console.log('Mock fetch called with URL:', url);
+
       if (typeof url === 'string' && url.includes('/api/proxy/v1/dashboard/summary')) {
         return Promise.resolve({
           ok: true,
