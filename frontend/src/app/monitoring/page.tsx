@@ -95,16 +95,16 @@ const fetchRealMonitoringData = async () => {
 // Helper functions
 const generateLocation = (nodeName: string) => {
   const locations = [
-    'Cagliari Centro', 'Quartu Sant\'Elena', 'Assemini Industrial',
-    'Monserrato Residential', 'Selargius Distribution', 'Decimomannu',
-    'Capoterra Marina', 'Elmas Airport', 'Sestu Commercial'
+    'Central Business District', 'Residential North', 'Industrial South',
+    'Suburban East', 'Coastal West', 'Distribution Hub',
+    'Northern Sector', 'Eastern Sector', 'Commercial Zone'
   ];
   
-  if (nodeName.toLowerCase().includes('cagliari')) return 'Cagliari Centro';
-  if (nodeName.toLowerCase().includes('quartu')) return 'Quartu Sant\'Elena';
-  if (nodeName.toLowerCase().includes('assemini')) return 'Assemini Industrial';
-  if (nodeName.toLowerCase().includes('monserrato')) return 'Monserrato Residential';
-  if (nodeName.toLowerCase().includes('selargius')) return 'Selargius Distribution';
+  if (nodeName.toLowerCase().includes('central')) return 'Central Business District';
+  if (nodeName.toLowerCase().includes('north')) return 'Residential North';
+  if (nodeName.toLowerCase().includes('industrial')) return 'Industrial South';
+  if (nodeName.toLowerCase().includes('east')) return 'Suburban East';
+  if (nodeName.toLowerCase().includes('west')) return 'Coastal West';
   
   return locations[Math.floor(Math.random() * locations.length)];
 };

@@ -139,11 +139,11 @@ export default function AnalyticsPage() {
         status: zone.status
       }))
     : [
-        { zone: 'Cagliari Centro', efficiency: 92.4, throughput: 145.2, uptime: 99.2, status: 'optimal' },
-        { zone: 'Quartu Sant\'Elena', efficiency: 88.7, throughput: 89.6, uptime: 98.8, status: 'good' },
-        { zone: 'Assemini Industrial', efficiency: 85.3, throughput: 267.8, uptime: 97.5, status: 'warning' },
-        { zone: 'Monserrato Residential', efficiency: 90.1, throughput: 67.4, uptime: 99.5, status: 'optimal' },
-        { zone: 'Selargius Distribution', efficiency: 87.9, throughput: 112.3, uptime: 98.1, status: 'good' }
+        { zone: 'Central Business District', efficiency: 92.4, throughput: 145.2, uptime: 99.2, status: 'optimal' },
+        { zone: 'Residential North', efficiency: 88.7, throughput: 89.6, uptime: 98.8, status: 'good' },
+        { zone: 'Industrial South', efficiency: 85.3, throughput: 267.8, uptime: 97.5, status: 'warning' },
+        { zone: 'Suburban East', efficiency: 90.1, throughput: 67.4, uptime: 99.5, status: 'optimal' },
+        { zone: 'Coastal West', efficiency: 87.9, throughput: 112.3, uptime: 98.1, status: 'good' }
       ];
 
   if (loading) {

@@ -302,7 +302,7 @@ async def get_anomalies():
                 anomalies = [{
                     "id": "anomaly_mock_001",
                     "node_id": "node-001",
-                    "node_name": "Selargius Monitoring Station",
+                    "node_name": "Central District Monitoring",
                     "timestamp": (datetime.now() - timedelta(hours=1)).isoformat(),
                     "anomaly_type": "pressure_drop",
                     "severity": "warning",
@@ -727,11 +727,11 @@ async def get_consumption_analytics():
         
         # District mapping between consumption data and nodes
         district_mapping = {
-            'Cagliari_Centro': ['NODE_001', 'NODE_002'],
-            'Quartu_SantElena': ['NODE_003', 'NODE_004'],
-            'Assemini_Industrial': ['NODE_005'],
-            'Monserrato_Residential': ['NODE_006', 'NODE_007'],
-            'Selargius_Distribution': ['DIST_001', 'NODE_008', 'NODE_009']
+            'DIST_001': ['DIST_001', 'NODE_008', 'NODE_009'],  # Central Business District
+            'DIST_002': ['NODE_001', 'NODE_002'],              # Residential North
+            'DIST_003': ['NODE_003', 'NODE_004'],              # Industrial South
+            'DIST_004': ['NODE_006', 'NODE_007'],              # Suburban East
+            'DIST_005': ['NODE_005']                           # Coastal West
         }
         
         # Current date for simulation
@@ -742,11 +742,11 @@ async def get_consumption_analytics():
         total_consumption = 0
         
         districts = [
-            {'id': 'Cagliari_Centro', 'name': 'Cagliari Centro', 'users': 12500, 'type': 'mixed'},
-            {'id': 'Quartu_SantElena', 'name': 'Quartu Sant\'Elena', 'users': 10000, 'type': 'residential'},
-            {'id': 'Assemini_Industrial', 'name': 'Assemini Industrial', 'users': 2500, 'type': 'industrial'},
-            {'id': 'Monserrato_Residential', 'name': 'Monserrato', 'users': 15000, 'type': 'residential'},
-            {'id': 'Selargius_Distribution', 'name': 'Selargius Distribution', 'users': 10000, 'type': 'mixed'}
+            {'id': 'DIST_001', 'name': 'Central Business District', 'users': 10000, 'type': 'mixed'},
+            {'id': 'DIST_002', 'name': 'Residential North', 'users': 12500, 'type': 'mixed'},
+            {'id': 'DIST_003', 'name': 'Industrial South', 'users': 10000, 'type': 'industrial'},
+            {'id': 'DIST_004', 'name': 'Suburban East', 'users': 15000, 'type': 'residential'},
+            {'id': 'DIST_005', 'name': 'Coastal West', 'users': 2500, 'type': 'mixed'}
         ]
         
         for district in districts:
@@ -902,11 +902,11 @@ async def get_consumption_forecast(district_id: str):
             # Enhanced forecasting with patterns
             forecast_data = []
             base_consumption = {
-                'Cagliari_Centro': 5000000,
-                'Quartu_SantElena': 2500000,
-                'Assemini_Industrial': 12500000,
-                'Monserrato_Residential': 3750000,
-                'Selargius_Distribution': 4000000,
+                'DIST_001': 4000000,   # Central Business District
+                'DIST_002': 5000000,   # Residential North
+                'DIST_003': 12500000,  # Industrial South
+                'DIST_004': 3750000,   # Suburban East
+                'DIST_005': 2500000,   # Coastal West
                 'all': 27750000
             }
             
@@ -1002,7 +1002,7 @@ async def get_consumption_anomalies():
                 'anomaly_id': 'CA001',
                 'type': 'excessive_consumption',
                 'severity': 'high',
-                'district': 'Quartu_SantElena',
+                'district': 'DIST_003',  # Industrial South
                 'user_id': 'USER_012345',
                 'detected_at': (datetime.now() - timedelta(hours=2)).isoformat(),
                 'consumption_spike': 450,  # percentage
@@ -1014,7 +1014,7 @@ async def get_consumption_anomalies():
                 'anomaly_id': 'CA002',
                 'type': 'zero_consumption',
                 'severity': 'medium',
-                'district': 'Monserrato_Residential',
+                'district': 'DIST_004',  # Suburban East
                 'user_id': 'USER_023456',
                 'detected_at': (datetime.now() - timedelta(hours=5)).isoformat(),
                 'days_zero_consumption': 3,
@@ -1024,7 +1024,7 @@ async def get_consumption_anomalies():
                 'anomaly_id': 'CA003',
                 'type': 'unusual_pattern',
                 'severity': 'low',
-                'district': 'Assemini_Industrial',
+                'district': 'DIST_005',  # Coastal West
                 'user_id': 'USER_034567',
                 'detected_at': (datetime.now() - timedelta(hours=8)).isoformat(),
                 'pattern_description': 'Night-time consumption spike',

@@ -67,11 +67,11 @@ const calculateImpact = (severity: string) => {
 
 const generateCoordinates = (nodeName: string) => {
   const locations: { [key: string]: string } = {
-    'Selargius': '39.2438, 9.1638',
-    'Cagliari': '39.2238, 9.1217',
-    'Quartu': '39.2431, 9.1839',
-    'Assemini': '39.2889, 9.0014',
-    'Monserrato': '39.2547, 9.1658'
+    'Central': '39.2438, 9.1638',
+    'North': '39.2238, 9.1217',
+    'South': '39.2431, 9.1839',
+    'West': '39.2889, 9.0014',
+    'East': '39.2547, 9.1658'
   };
   
   const location = Object.keys(locations).find(loc => nodeName?.includes(loc));
@@ -81,11 +81,11 @@ const generateCoordinates = (nodeName: string) => {
 const generateRealisticAnomalies = (count: number) => {
   const types = ['Pressure Drop', 'Flow Anomaly', 'Quality Alert', 'Potential Leak', 'System Failure'];
   const locations = [
-    'Cagliari Centro Distribution',
-    'Quartu Sant\'Elena Marina', 
-    'Assemini Industrial Zone',
-    'Monserrato Residential',
-    'Selargius Monitoring Station'
+    'Central Business District Hub',
+    'Residential North Distribution', 
+    'Industrial South Zone',
+    'Suburban East Network',
+    'Coastal West Monitoring'
   ];
   const severities = ['critical', 'high', 'medium', 'low'];
 
