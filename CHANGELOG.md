@@ -5,6 +5,35 @@
 
 
 
+
+## [v2.0.0.0] - 2025-08-26
+
+- 💥 BREAKING: BREAKING CHANGE: remove Streamlit dashboard in favor of Next.js frontend
+- 🔧 chore: Update .gitignore and enhance frontend components
+- ♻️ refactor: Remove analyze_node_volumes.py script and update node configurations
+- ♻️ refactor: Rename project from Abbanoa to Roccavina and update configurations
+- 🐛 fix: Enhance logging and data handling in Enhanced Overview and Flow Analytics Chart
+- 🐛 fix: Improve Infrastructure Map NodeDetailModal data display and Enhanced Overview chart
+- ✨ feat: Add Interactive Infrastructure Map with enhanced NodeDetailModal
+- ✨ feat: Add comprehensive user management system with backend integration
+- ✨ feat: Add comprehensive Energy Optimization Center with real-time monitoring
+- ✨ feat: Add comprehensive ML Analytics & Predictions page with web interface
+- ✨ feat: Add PM2 configuration for process management
+- 🐛 fix: Resolve weather page data loading and UI contrast issues
+- ✨ feat: Add comprehensive weather system and fix data quality visualization
+- 🐛 fix: Correct UI component imports and Button variants
+- ✨ feat: Add synthetic water consumption dataset generator
+- ✨ feat: Complete real data integration across all dashboards
+- ✨ feat: enhance data aggregation and timestamp formatting in readings API and frontend
+- ✨ feat: refactor docker-compose and enhance frontend with new API integration
+- 📚 docs: enhance architecture with comprehensive Mermaid diagrams
+- 📚 docs: update architecture to reflect Next.js frontend
+- 📚 docs: add comprehensive architecture documentation
+- ✨ feat: enhance anomaly and dashboard services with new metrics and public endpoints
+- ♻️ refactor: streamline forecast calculation and enhance notification system
+- 🐛 fix: Real-time Flow Analytics now properly scales with time range selection
+- 🐛 fix: Real-time Flow Monitoring chart now scales with selected time range
+
 ## [v1.2.8.0] - 2025-07-14
 
 - 🐛 fix: add psycopg2-binary dependency for PostgreSQL fallback functionality
