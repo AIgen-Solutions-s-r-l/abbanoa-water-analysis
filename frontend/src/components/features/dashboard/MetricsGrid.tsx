@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { useDashboardMetrics } from '@/lib/hooks/useDashboard';
+import { useDashboard } from '@/lib/hooks/useDashboard';
 
 interface MetricCardProps {
   title: string;
@@ -59,7 +59,7 @@ const MetricCard = ({ title, value, change, changeType = 'neutral', icon, loadin
 };
 
 const MetricsGrid = () => {
-  const { metrics, loading, error } = useDashboardMetrics();
+  const { metrics, loading, error } = useDashboard();
 
   if (error) {
     return (
@@ -76,8 +76,8 @@ const MetricsGrid = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <MetricCard
-        title="Total Consumption"
-        value={loading ? '...' : `${metrics?.totalConsumption?.toLocaleString() || 0} L`}
+        title="Total Flow Rate"
+        value={loading ? '...' : `${metrics?.totalFlow?.toLocaleString() || 0} L/s`}
         change="+12%"
         changeType="positive"
         loading={loading}
@@ -89,8 +89,8 @@ const MetricsGrid = () => {
       />
       
       <MetricCard
-        title="Active Connections"
-        value={loading ? '...' : metrics?.activeConnections?.toLocaleString() || 0}
+        title="Active Alerts"
+        value={loading ? '...' : metrics?.activeAlerts?.toLocaleString() || 0}
         change="-2%"
         changeType="negative"
         loading={loading}
@@ -102,8 +102,8 @@ const MetricsGrid = () => {
       />
       
       <MetricCard
-        title="Anomalies Detected"
-        value={loading ? '...' : metrics?.anomalies || 0}
+        title="Network Efficiency"
+        value={loading ? '...' : `${metrics?.networkEfficiency || 0}%`}
         change="0"
         changeType="neutral"
         loading={loading}

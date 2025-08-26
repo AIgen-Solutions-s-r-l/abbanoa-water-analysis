@@ -1,8 +1,8 @@
 module.exports = {
   apps: [{
-    name: 'roccavina-frontend',
+    name: 'abbanoa-frontend',
     script: 'npm',
-    args: 'run dev:prod',
+    args: 'run dev',
     cwd: './frontend',
     instances: 1,
     exec_mode: 'fork',
@@ -11,8 +11,9 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'development',
-      PORT: '8502',
-      BACKEND_URL: 'http://localhost:8000'
+      PORT: '3000',
+      BACKEND_URL: 'http://localhost:8000',
+      NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8000'
     },
     error_file: './logs/frontend-error.log',
     out_file: './logs/frontend-out.log',

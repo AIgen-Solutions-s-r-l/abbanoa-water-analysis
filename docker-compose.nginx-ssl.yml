@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  nginx-ssl:
+    image: nginx:alpine
+    container_name: abbanoa-nginx-ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-ssl.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/log/nginx:/var/log/nginx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - check-services
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Helper service to ensure other services are running
+  check-services:
+    image: busybox
+    command: echo "Services check complete"
+    restart: "no"

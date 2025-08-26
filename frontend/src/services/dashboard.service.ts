@@ -28,11 +28,12 @@ export class DashboardService {
     
     // Transform the real data to match frontend's expected format
     return {
-      totalConsumption: data.network.total_volume_m3 || 0,
-      activeConnections: data.network.active_nodes || 0,
-      anomalies: data.network.anomaly_count || 0,
-      lastUpdate: data.last_updated || new Date().toISOString(),
-      tenantId: 'default'
+      totalFlow: data.network.total_flow_rate || 0,
+      averagePressure: data.network.avg_pressure || 0,
+      networkEfficiency: data.network.efficiency || 0,
+      activeAlerts: data.network.anomaly_count || 0,
+      energyConsumption: data.energy?.consumption || 0,
+      waterQuality: data.quality?.score || 0,
     };
   }
 

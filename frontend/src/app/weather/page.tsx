@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { 
-  LineChart, Line, BarChart, Bar, AreaChart, Area,
+  LineChart, Line, BarChart, Bar, AreaChart, Area, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   RadialBarChart, RadialBar, Cell, PieChart, Pie
 } from 'recharts';
@@ -20,7 +20,8 @@ import {
   MapPinIcon,
   ThermometerIcon,
   DropletIcon,
-  ActivityIcon
+  ActivityIcon,
+  RefreshCw as RefreshCwIcon
 } from 'lucide-react';
 
 interface WeatherLocation {
@@ -105,16 +106,27 @@ const WeatherAnalyticsPage = () => {
         
         // Fetch locations
         const locationsRes = await fetch('/api/proxy/v1/weather/locations');
-        const locationsData = await locationsRes.json();
-        setLocations(locationsData);
+        if (locationsRes.ok) {
+          const locationsData = await locationsRes.json();
+          // Ensure locationsData is an array
+          setLocations(Array.isArray(locationsData) ? locationsData : []);
+        } else {
+          console.error('Failed to fetch locations:', locationsRes.status);
+          setLocations([]);
+        }
 
         // Fetch current weather
         const currentUrl = selectedLocation === 'all' 
           ? '/api/proxy/v1/weather/current'
           : `/api/proxy/v1/weather/current?location=${selectedLocation}`;
         const currentRes = await fetch(currentUrl);
-        const currentData = await currentRes.json();
-        setCurrentWeather(currentData);
+        if (currentRes.ok) {
+          const currentData = await currentRes.json();
+          setCurrentWeather(Array.isArray(currentData) ? currentData : []);
+        } else {
+          console.error('Failed to fetch current weather:', currentRes.status);
+          setCurrentWeather([]);
+        }
 
         // Fetch historical data
         // Use June 2025 as the end date since that's when our data ends
@@ -135,34 +147,53 @@ const WeatherAnalyticsPage = () => {
         }
         
         const historicalRes = await fetch(historicalUrl);
-        const historicalData = await historicalRes.json();
-        console.log('📊 Historical weather data:', historicalData);
-        
-        // Transform the data to ensure it has the right structure
-        const transformedData = Array.isArray(historicalData) ? historicalData.map((item: any) => ({
-          date: item.date || item.weekStart || item.month,
-          temperature: item.avg_temperature_c || item.temperature || 0,
-          temperatureMin: item.min_temperature_c || item.temperatureMin || 0,
-          temperatureMax: item.max_temperature_c || item.temperatureMax || 0,
-          humidity: item.humidity_percent || item.humidity || 0,
-          rainfall: item.rainfall_mm || item.rainfall || 0,
-          windSpeed: item.avg_wind_speed_kmh || item.windSpeed || 0
-        })) : [];
-        
-        setHistoricalData(transformedData);
+        if (historicalRes.ok) {
+          const historicalData = await historicalRes.json();
+          console.log('📊 Historical weather data:', historicalData);
+          
+          // Transform the data to ensure it has the right structure
+          const transformedData = Array.isArray(historicalData) ? historicalData.map((item: any) => ({
+            date: item.date || item.weekStart || item.month,
+            temperature: item.avg_temperature_c || item.temperature || 0,
+            temperatureMin: item.min_temperature_c || item.temperatureMin || 0,
+            temperatureMax: item.max_temperature_c || item.temperatureMax || 0,
+            humidity: item.humidity_percent || item.humidity || 0,
+            rainfall: item.rainfall_mm || item.rainfall || 0,
+            windSpeed: item.avg_wind_speed_kmh || item.windSpeed || 0
+          })) : [];
+          
+          setHistoricalData(transformedData);
+        } else {
+          console.error('Failed to fetch historical data:', historicalRes.status);
+          setHistoricalData([]);
+        }
 
         // Fetch statistics
         const statsUrl = selectedLocation === 'all'
           ? '/api/proxy/v1/weather/statistics'
           : `/api/proxy/v1/weather/statistics?location=${selectedLocation}`;
         const statsRes = await fetch(statsUrl);
-        const statsData = await statsRes.json();
-        setStatistics(statsData);
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStatistics(statsData);
+        } else if (statsRes.status === 204) {
+          setStatistics(null);
+        } else {
+          console.error('Failed to fetch statistics:', statsRes.status);
+          setStatistics(null);
+        }
 
         // Fetch impact analysis
         const impactRes = await fetch('/api/proxy/v1/weather/impact-analysis');
-        const impactData = await impactRes.json();
-        setImpactAnalysis(impactData);
+        if (impactRes.ok) {
+          const impactData = await impactRes.json();
+          setImpactAnalysis(impactData);
+        } else if (impactRes.status === 204) {
+          setImpactAnalysis(null);
+        } else {
+          console.error('Failed to fetch impact analysis:', impactRes.status);
+          setImpactAnalysis(null);
+        }
 
       } catch (error) {
         console.error('Error fetching weather data:', error);
@@ -203,6 +234,39 @@ const WeatherAnalyticsPage = () => {
     );
   }
 
+  // Check if we have no data at all
+  if (!loading && locations.length === 0 && currentWeather.length === 0) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="max-w-2xl mx-auto">
+          <Card className="p-8">
+            <div className="flex flex-col items-center justify-center text-center space-y-4">
+              <div className="rounded-full bg-blue-100 p-6">
+                <CloudIcon className="w-12 h-12 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-900">
+                Weather Data Not Available
+              </h2>
+              <p className="text-gray-600 max-w-md">
+                The weather monitoring data is currently not available. This could be because the weather stations are offline or the data collection system is being maintained.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+              >
+                <RefreshCwIcon className="w-4 h-4" />
+                Refresh Page
+              </button>
+              <div className="text-sm text-gray-500 mt-4">
+                Please contact your system administrator if this issue persists.
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -218,7 +282,7 @@ const WeatherAnalyticsPage = () => {
             className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Locations</option>
-            {locations.map(loc => (
+            {locations && locations.length > 0 && locations.map(loc => (
               <option key={loc.location} value={loc.location}>
                 {loc.location}
               </option>
@@ -339,7 +403,7 @@ const WeatherAnalyticsPage = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Seasonal Patterns</h2>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={statistics.seasonalPatterns}>
+              <ComposedChart data={statistics.seasonalPatterns}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="month" 
@@ -357,7 +421,7 @@ const WeatherAnalyticsPage = () => {
                 <Legend />
                 <Bar yAxisId="rain" dataKey="totalRainfall" name="Rainfall (mm)" fill="#3B82F6" />
                 <Line yAxisId="temp" type="monotone" dataKey="avgTemperature" name="Avg Temp (°C)" stroke="#EF4444" />
-              </BarChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </Card>
         </div>
@@ -425,7 +489,7 @@ const WeatherAnalyticsPage = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Rainfall & Humidity</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={historicalData}>
+              <ComposedChart data={historicalData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tickFormatter={formatDate} />
                 <YAxis yAxisId="rain" orientation="left" />
@@ -447,7 +511,7 @@ const WeatherAnalyticsPage = () => {
                   stroke="#10B981" 
                   strokeWidth={2}
                 />
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </Card>
             </>

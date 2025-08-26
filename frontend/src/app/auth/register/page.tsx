@@ -6,16 +6,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { RegisterRequest } from '@/lib/types';
+import { RegisterRequest } from '@/lib/types/auth';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterRequest>({
     email: '',
     password: '',
-    firstName: '',
-    lastName: '',
+    name: '',
     tenantName: '',
-    tenantDomain: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +31,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+    if (!formData.email || !formData.password || !formData.name) {
       return;
     }
 
@@ -41,7 +39,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (isCreatingTenant && (!formData.tenantName || !formData.tenantDomain)) {
+    if (isCreatingTenant && !formData.tenantName) {
       return;
     }
 
@@ -49,7 +47,6 @@ export default function RegisterPage() {
       const submitData = { ...formData };
       if (!isCreatingTenant) {
         delete submitData.tenantName;
-        delete submitData.tenantDomain;
       }
 
       await register(submitData);
@@ -60,8 +57,8 @@ export default function RegisterPage() {
   };
 
   const passwordsMatch = formData.password === confirmPassword;
-  const isFormValid = formData.email && formData.password && formData.firstName && formData.lastName && 
-                     passwordsMatch && (!isCreatingTenant || (formData.tenantName && formData.tenantDomain));
+  const isFormValid = formData.email && formData.password && formData.name && 
+                     passwordsMatch && (!isCreatingTenant || formData.tenantName);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -76,7 +73,7 @@ export default function RegisterPage() {
             Create your account
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Get started with Roccavina Dashboard
+            Get started with Abbanoa Dashboard
           </p>
         </CardHeader>
 
@@ -115,58 +112,23 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="tenantDomain" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Organization Domain
-                  </label>
-                  <input
-                    id="tenantDomain"
-                    name="tenantDomain"
-                    type="text"
-                    required={isCreatingTenant}
-                    placeholder="your-organization"
-                    value={formData.tenantDomain}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Used for organization identification (letters, numbers, hyphens only)
-                  </p>
-                </div>
               </>
             )}
 
             {/* Personal Information */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Full Name
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              />
             </div>
 
             {/* Email */}

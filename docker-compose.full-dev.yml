@@ -1,0 +1,272 @@
+version: '3.8'
+
+# Complete Development Setup - Everything runs in Docker
+# No local dependencies required except Docker itself
+
+services:
+  # PostgreSQL with TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: abbanoa-postgres-dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-abbanoa_processing}
+      POSTGRES_USER: ${POSTGRES_USER:-abbanoa_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abbanoa_dev_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./src/infrastructure/database/postgres_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - abbanoa-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-abbanoa_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: abbanoa-redis-dev
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 1gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - abbanoa-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api.simple
+      args:
+        - ENVIRONMENT=development
+    container_name: abbanoa-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      # Database
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa_processing}
+      - POSTGRES_USER=${POSTGRES_USER:-abbanoa_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-abbanoa_dev_pass}
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # BigQuery (optional - comment out if not using)
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      # Development settings
+      - DEBUG=true
+      - RELOAD=true
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./src:/app/src:ro  # Mount source code for hot reload
+      - ./credentials:/app/credentials:ro  # Optional: GCP credentials
+      - ./logs:/app/logs
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/dashboard/summary"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+    container_name: abbanoa-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+      - BACKEND_URL=http://api:8000
+      - WATCHPACK_POLLING=true  # Enable hot reload in Docker
+    volumes:
+      - ./frontend/src:/app/src:rw  # Mount source for hot reload
+      - ./frontend/public:/app/public:ro
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      - api
+    restart: unless-stopped
+    command: npm run dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Mock Authentication Backend (for frontend testing)
+  mock-backend:
+    build:
+      context: ./mock-backend
+      dockerfile: Dockerfile.dev
+    container_name: abbanoa-mock-backend-dev
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+    volumes:
+      - ./mock-backend:/app:ro
+      - /app/node_modules
+    networks:
+      - abbanoa-dev-network
+    restart: unless-stopped
+    command: node server.js
+
+  # ETL Scheduler (Optional - for BigQuery sync)
+  etl-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-etl-scheduler-dev
+    command: python -m src.infrastructure.etl.etl_scheduler
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+      - BIGQUERY_PROJECT_ID=${BIGQUERY_PROJECT_ID:-abbanoa-464816}
+      - BIGQUERY_DATASET_ID=${BIGQUERY_DATASET_ID:-water_infrastructure}
+      - BIGQUERY_LOCATION=${BIGQUERY_LOCATION:-EU}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa_processing}
+      - POSTGRES_USER=${POSTGRES_USER:-abbanoa_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-abbanoa_dev_pass}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SCHEDULE_ENABLED=false  # Disable automatic scheduling in dev
+    volumes:
+      - ./credentials:/app/credentials:ro
+      - ./logs:/app/logs
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - with-etl  # Only start if explicitly requested
+
+  # Data initialization (run once)
+  data-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abbanoa-data-init-dev
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 10 &&
+        echo 'Loading sample data...' &&
+        python scripts/generate_consumption_dataset.py --days 30 &&
+        echo 'Initializing cache...' &&
+        python init_redis_cache.py --force &&
+        echo 'Data initialization complete!'
+      "
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa_processing}
+      - POSTGRES_USER=${POSTGRES_USER:-abbanoa_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-abbanoa_dev_pass}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-key.json
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - init  # Only run when explicitly requested
+
+  # Nginx reverse proxy (optional - for production-like setup)
+  nginx:
+    image: nginx:alpine
+    container_name: abbanoa-nginx-dev
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      - frontend
+      - api
+    restart: unless-stopped
+    profiles:
+      - with-nginx  # Only start if explicitly requested
+
+  # Development tools container (optional)
+  dev-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev-tools
+    container_name: abbanoa-dev-tools
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-abbanoa_processing}
+      - POSTGRES_USER=${POSTGRES_USER:-abbanoa_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-abbanoa_dev_pass}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./:/app:rw
+      - ./credentials:/app/credentials:ro
+    networks:
+      - abbanoa-dev-network
+    depends_on:
+      - postgres
+      - redis
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    profiles:
+      - tools  # Only start if explicitly requested
+
+volumes:
+  postgres-dev-data:
+    driver: local
+  redis-dev-data:
+    driver: local
+
+networks:
+  abbanoa-dev-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

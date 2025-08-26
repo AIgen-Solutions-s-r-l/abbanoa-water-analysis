@@ -6,13 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { LoginRequest } from '@/lib/types';
+import { LoginRequest } from '@/lib/types/auth';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginRequest>({
     email: '',
     password: '',
-    tenantDomain: '',
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -58,30 +57,12 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Access your Roccavina Dashboard
+            Access your Abbanoa Dashboard
           </p>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Tenant Domain */}
-            <div>
-              <label htmlFor="tenantDomain" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Organization Domain (Optional)
-              </label>
-              <input
-                id="tenantDomain"
-                name="tenantDomain"
-                type="text"
-                placeholder="your-organization"
-                value={formData.tenantDomain}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Leave empty if you're not sure
-              </p>
-            </div>
 
             {/* Email */}
             <div>

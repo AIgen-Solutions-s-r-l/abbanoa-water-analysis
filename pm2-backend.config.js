@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'roccavina-backend',
+      name: 'abbanoa-backend',
       script: './run-backend.sh',
       cwd: '.',
       instances: 1,
@@ -11,7 +11,12 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         PYTHONUNBUFFERED: '1',
-        PYTHONDONTWRITEBYTECODE: '1'
+        PYTHONDONTWRITEBYTECODE: '1',
+        POSTGRES_HOST: 'localhost',
+        POSTGRES_PORT: '5432',
+        POSTGRES_DB: 'abbanoa_processing',
+        POSTGRES_USER: 'abbanoa_user',
+        POSTGRES_PASSWORD: 'abbanoa_dev_pass'
       },
       error_file: './logs/pm2-backend-error.log',
       out_file: './logs/pm2-backend-out.log',

@@ -376,6 +376,9 @@ export default function EnhancedOverviewPage() {
     dataQuality: 0,
     systemUptime: 0,
     energyEfficiency: 0,
+    currentPowerKw: 0,
+    dailyCostEur: 0,
+    costPerCubicMeter: 0,
   });
   const [flowData, setFlowData] = useState<FlowAnalyticsData[]>([]);
   const [alerts, setAlerts] = useState<WaterSystemAlert[]>([]);

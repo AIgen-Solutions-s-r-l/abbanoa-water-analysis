@@ -34,11 +34,6 @@ chmod +x docker-run-api.sh
 - Health checks included
 - Auto-restart on failure
 
-### Dashboard Image (`Dockerfile.dashboard`)
-- Base: Python 3.12-slim  
-- Includes Streamlit configuration
-- Can connect to API container
-
 ## Environment Variables
 
 ### Required

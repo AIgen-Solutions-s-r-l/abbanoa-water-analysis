@@ -66,14 +66,17 @@ poetry run streamlit run src/presentation/streamlit/app_api.py
 
 - `GET /health` - System health check
 - `GET /api/v1/nodes` - List all nodes
+- `GET /api/v1/nodes/{node_id}` - Get details of a specific node
 - `GET /api/v1/nodes/{node_id}/metrics` - Node metrics
-- `GET /api/v1/nodes/{node_id}/history` - Historical data
+- `GET /api/v1/nodes/{node_id}/readings` - Get sensor readings for a specific node
+- `GET /api/v1/networks` - List water networks
 - `GET /api/v1/network/metrics` - Network-wide metrics
-- `GET /api/v1/network/efficiency` - Efficiency calculations
 - `GET /api/v1/predictions/{node_id}` - ML predictions
 - `GET /api/v1/anomalies` - Detected anomalies
+- `POST /api/v1/anomalies/detect` - Detect anomalies in sensor readings
+- `POST /api/v1/consumption/analyze` - Analyze water consumption patterns
+- `POST /api/v1/efficiency/calculate` - Calculate network efficiency metrics
 - `GET /api/v1/dashboard/summary` - Dashboard summary
-- `GET /api/v1/status` - System status
 
 ## Features
 

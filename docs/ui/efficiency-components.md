@@ -1,3 +1,6 @@
+>
+> **Note:** This documentation is based on an outdated version of the API. The UI components described here are not compatible with the current backend implementation. This file needs to be reviewed and updated to reflect the correct API.
+
 # Efficiency Components Documentation
 
 ## Overview

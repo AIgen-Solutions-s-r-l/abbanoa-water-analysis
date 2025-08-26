@@ -86,7 +86,7 @@ const RecentAnomalies = () => {
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {anomaly.description}
               </p>
-              {!anomaly.resolved && (
+              {anomaly.status !== 'resolved' && (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -103,7 +103,7 @@ const RecentAnomalies = () => {
               <span>{anomaly.type}</span>
               <span>•</span>
               <span>{formatTimestamp(anomaly.timestamp)}</span>
-              {anomaly.resolved && (
+              {anomaly.status === 'resolved' && (
                 <>
                   <span>•</span>
                   <span className="text-green-600 dark:text-green-400">Resolved</span>

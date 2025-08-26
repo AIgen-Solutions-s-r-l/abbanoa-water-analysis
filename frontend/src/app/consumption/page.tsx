@@ -15,7 +15,8 @@ import {
   BarChart3Icon,
   LineChartIcon,
   PieChartIcon,
-  ActivityIcon
+  ActivityIcon,
+  RefreshCw
 } from 'lucide-react';
 import {
   LineChart,
@@ -128,7 +129,10 @@ export default function ConsumptionAnalyticsPage() {
   const fetchForecastData = async () => {
     try {
       const response = await fetch(`/api/proxy/v1/consumption/forecast/${selectedDistrict}`);
-      if (response.ok) {
+      if (response.status === 204) {
+        console.log('No forecast data available in the database');
+        setForecastData(null);
+      } else if (response.ok) {
         const data = await response.json();
         setForecastData(data);
       }
@@ -137,17 +141,48 @@ export default function ConsumptionAnalyticsPage() {
     }
   };
 
+  const isValidAnalytics = (data: any): data is ConsumptionAnalytics => {
+    try {
+      return (
+        data &&
+        typeof data === 'object' &&
+        Object.keys(data).length > 0 && // Check if object is not empty
+        data.summary &&
+        typeof data.summary === 'object' &&
+        typeof data.summary.total_daily_consumption === 'number' &&
+        typeof data.summary.total_users === 'number'
+      );
+    } catch {
+      return false;
+    }
+  };
+
   const fetchConsumptionData = async () => {
     try {
       // Fetch consumption analytics
       const analyticsResponse = await fetch('/api/proxy/v1/consumption/analytics');
-      const analyticsJson = await analyticsResponse.json();
-      setAnalyticsData(analyticsJson);
+      
+      // Check if we got a 204 No Content response (no data available)
+      if (analyticsResponse.status === 204) {
+        console.log('No consumption data available in the database');
+        setAnalyticsData(null);
+      } else if (analyticsResponse.ok) {
+        const analyticsJson = await analyticsResponse.json();
+        if (isValidAnalytics(analyticsJson)) {
+          setAnalyticsData(analyticsJson);
+        } else {
+          console.error('Invalid analytics response', analyticsJson);
+          setAnalyticsData(null);
+        }
+      } else {
+        console.error('Analytics response error:', analyticsResponse.status);
+        setAnalyticsData(null);
+      }
 
       // Fetch consumption anomalies
       const anomaliesResponse = await fetch('/api/proxy/v1/consumption/anomalies');
       const anomaliesJson = await anomaliesResponse.json();
-      setAnomalies(anomaliesJson.anomalies || []);
+      setAnomalies(Array.isArray(anomaliesJson) ? anomaliesJson : anomaliesJson?.anomalies || []);
 
       setLoading(false);
     } catch (error) {
@@ -175,8 +210,47 @@ export default function ConsumptionAnalyticsPage() {
     );
   }
 
-  if (!analyticsData) {
-    return <div>Error loading consumption data</div>;
+  if (!analyticsData || !(analyticsData as any).summary) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Consumption Analytics
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Comprehensive water consumption insights and demand forecasting
+          </p>
+        </div>
+        
+        <Card className="p-8">
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="rounded-full bg-blue-100 dark:bg-blue-900/20 p-6">
+              <DropletIcon className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              Consumption Data Not Available
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-md">
+              The consumption analytics data is currently not available in the database. 
+              This could be because the data hasn't been loaded yet or the consumption 
+              tracking system is being set up.
+            </p>
+            <div className="pt-4">
+              <Button 
+                variant="primary" 
+                onClick={() => window.location.reload()}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Page
+              </Button>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-500 mt-4">
+              Please contact your system administrator if this issue persists.
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -230,7 +304,7 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Daily Consumption</p>
               <p className="text-2xl font-bold mt-1">
-                {formatNumber(analyticsData.summary.total_daily_consumption)} L
+                {formatNumber(analyticsData?.summary?.total_daily_consumption ?? 0)} L
               </p>
               <p className="text-xs text-green-600 mt-1">
                 ↑ 3.2% vs yesterday
@@ -245,10 +319,10 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
               <p className="text-2xl font-bold mt-1">
-                {formatNumber(analyticsData.summary.total_users)}
+                {formatNumber(analyticsData?.summary?.total_users ?? 0)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {analyticsData.summary.avg_consumption_per_user} L/user/day
+                {(analyticsData?.summary?.avg_consumption_per_user ?? 0)} L/user/day
               </p>
             </div>
             <UsersIcon className="w-10 h-10 text-green-500" />
@@ -260,10 +334,10 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">System Efficiency</p>
               <p className="text-2xl font-bold mt-1">
-                {(analyticsData.summary.system_efficiency * 100).toFixed(1)}%
+                {((analyticsData?.summary?.system_efficiency ?? 0) * 100).toFixed(1)}%
               </p>
               <p className="text-xs text-yellow-600 mt-1">
-                {analyticsData.summary.water_loss_percentage}% water loss
+                {(analyticsData?.summary?.water_loss_percentage ?? 0)}% water loss
               </p>
             </div>
             <TargetIcon className="w-10 h-10 text-yellow-500" />
@@ -275,10 +349,10 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Peak Demand</p>
               <p className="text-2xl font-bold mt-1">
-                {analyticsData.peak_demand.daily_peak_time}
+                {analyticsData?.peak_demand?.daily_peak_time || 'N/A'}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {formatNumber(analyticsData.peak_demand.daily_peak_consumption)} L/hr
+                {formatNumber(analyticsData?.peak_demand?.daily_peak_consumption ?? 0)} L/hr
               </p>
             </div>
             <ActivityIcon className="w-10 h-10 text-red-500" />
@@ -304,7 +378,7 @@ export default function ConsumptionAnalyticsPage() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analyticsData.consumption_timeline}>
+              <AreaChart data={analyticsData?.consumption_timeline || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="timestamp" 
@@ -343,7 +417,7 @@ export default function ConsumptionAnalyticsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={analyticsData.user_segments}
+                    data={analyticsData?.user_segments || []}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -352,7 +426,7 @@ export default function ConsumptionAnalyticsPage() {
                     fill="#8884d8"
                     dataKey="user_count"
                   >
-                    {analyticsData.user_segments.map((entry, index) => (
+                    {(analyticsData?.user_segments || []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -360,7 +434,7 @@ export default function ConsumptionAnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-4 space-y-2">
-                {analyticsData.user_segments.map((segment, index) => (
+                {(analyticsData?.user_segments || []).map((segment, index) => (
                   <div key={segment.segment} className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <div 
@@ -389,7 +463,7 @@ export default function ConsumptionAnalyticsPage() {
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Conservation Opportunities</h2>
               <div className="space-y-4">
-                {analyticsData.conservation_opportunities.map((opp, index) => (
+                {(analyticsData?.conservation_opportunities || []).map((opp, index) => (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -427,7 +501,7 @@ export default function ConsumptionAnalyticsPage() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">District-wise Consumption Analysis</h2>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={analyticsData.district_consumption}>
+              <BarChart data={analyticsData?.district_consumption || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="district_name" angle={-45} textAnchor="end" height={80} />
                 <YAxis tickFormatter={(value) => formatNumber(value)} />
@@ -442,7 +516,7 @@ export default function ConsumptionAnalyticsPage() {
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">District Efficiency Scores</h2>
               <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={analyticsData.district_consumption}>
+                <RadarChart data={analyticsData?.district_consumption || []}>
                   <PolarGrid />
                   <PolarAngleAxis dataKey="district_name" />
                   <PolarRadiusAxis angle={90} domain={[0, 1]} />
@@ -471,7 +545,7 @@ export default function ConsumptionAnalyticsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {analyticsData.district_consumption.map((district) => (
+                    {(analyticsData?.district_consumption || []).map((district) => (
                       <tr key={district.district_id} className="border-b">
                         <td className="py-2">{district.district_name}</td>
                         <td className="text-right">{formatNumber(district.total_users)}</td>
@@ -501,7 +575,7 @@ export default function ConsumptionAnalyticsPage() {
                     className="text-sm border rounded px-3 py-1"
                   >
                     <option value="all">All Districts</option>
-                    {analyticsData.district_consumption.map((district) => (
+                    {(analyticsData?.district_consumption || []).map((district) => (
                       <option key={district.district_id} value={district.district_id}>
                         {district.district_name}
                       </option>

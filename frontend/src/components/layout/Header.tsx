@@ -21,7 +21,7 @@ function UserMenu() {
     setIsOpen(false);
   };
 
-  const initials = `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
+  const initials = user.name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || 'U';
 
   return (
     <div className="relative">
@@ -38,7 +38,7 @@ function UserMenu() {
         </div>
         <div className="hidden sm:block text-left">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {user.firstName} {user.lastName}
+            {user.name}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
             {user.role.replace('_', ' ')}
@@ -76,7 +76,7 @@ function UserMenu() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {user.firstName} {user.lastName}
+                      {user.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {user.email}
@@ -167,7 +167,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           <Link href="/" className="flex items-center ml-4 lg:ml-0">
             <div className="flex-shrink-0">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Roccavina Dashboard
+                Abbanoa Dashboard
               </h1>
             </div>
           </Link>

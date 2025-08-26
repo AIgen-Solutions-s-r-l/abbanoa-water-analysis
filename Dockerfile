@@ -50,11 +50,11 @@ RUN mkdir -p /app/logs /app/credentials && \
 # Switch to non-root user
 USER abbanoa
 
-# Expose Streamlit port
-EXPOSE 8501
+# Expose API port
+EXPOSE 8000
 
 # Health check
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+HEALTHCHECK CMD curl --fail http://localhost:8000/health
 
 # Default command (can be overridden)
-CMD ["streamlit", "run", "src/presentation/streamlit/app.py", "--server.port=8501", "--server.address=0.0.0.0"] 
+CMD ["uvicorn", "src.presentation.api.app_postgres:app", "--host", "0.0.0.0", "--port", "8000"] 

@@ -1,68 +1,86 @@
-# 🔐 Mock Authentication Backend
+# Abbanoa Water Infrastructure (abbanoa-water-infrastructure)
 
-This is a simple Express.js server that provides mock authentication for testing the Abbanoa Dashboard frontend.
+**Version:** 1.2.8.0
 
-## 🚀 Quick Start
-
-```bash
-npm install
-npm start
-```
-
-The server will run on `http://localhost:8000`
-
-## 📋 Test Credentials
-
-| Email | Password | Role | Description |
-|-------|----------|------|-------------|
-| `admin@abbanoa.com` | `admin123` | `admin` | Full administrative access |
-| `operator@abbanoa.com` | `operator123` | `operator` | Water system operator |
-| `super@abbanoa.com` | `super123` | `super_admin` | Super administrator |
-
-## 🏢 Organizations
-
-| Name | Domain | Plan | Features |
-|------|--------|------|----------|
-| Abbanoa S.p.A. | `abbanoa` | Enterprise | All features enabled |
-| Test Organization | `test-org` | Professional | Basic features |
-
-## 🛠️ Available Endpoints
-
-### Authentication
-- `POST /api/v1/auth/login` - Login with email/password
-- `POST /api/v1/auth/register` - Register new user (returns info about test credentials)
-- `POST /api/v1/auth/refresh` - Refresh JWT token
-- `POST /api/v1/auth/logout` - Logout
-- `GET /api/v1/auth/me` - Get current user info
-
-### Tenants
-- `GET /api/v1/tenants/current` - Get current tenant
-- `GET /api/v1/auth/tenants` - Get available tenants
-
-### Dashboard Data
-- `GET /api/v1/dashboard/metrics` - Get system metrics
-- `GET /api/v1/monitoring/status` - Get monitoring status
-- `GET /api/v1/anomalies` - Get anomaly data
-
-### Validation
-- `GET /api/v1/auth/validate-domain` - Check domain availability
-- `GET /api/v1/auth/check-email` - Check email existence
-
-## 🧪 Testing the Frontend
-
-1. Make sure this backend is running on port 8001
-2. Start the frontend on port 3001
-3. Visit `http://localhost:3001`
-4. Use any of the test credentials to login
-5. Explore the dashboard features
-
-## 🔧 Configuration
-
-- **Port**: 8000
-- **JWT Secret**: `mock-jwt-secret-key-for-testing`
-- **Token Expiry**: 24 hours
-- **CORS**: Enabled for all origins
+> Water infrastructure monitoring and analysis system using Domain-Driven Design
 
 ---
 
-**Note**: This is a mock server for development/testing only. Do not use in production!
+## Project Overview
+
+This project is a comprehensive water infrastructure monitoring and analysis system for Abbanoa S.p.A. It is designed to collect, process, and visualize data from various sources to provide insights into water consumption, detect anomalies, and monitor the overall health of the water network.
+
+The system is built with a service-oriented architecture and leverages a modern technology stack:
+
+*   **Backend:** The backend is developed in Python, using FastAPI for the API and a separate service for data processing. It utilizes Poetry for dependency management and follows Domain-Driven Design (DDD) principles.
+*   **Frontend:** The user-facing dashboard is a Next.js (React) application, providing an interactive interface for data visualization and analysis.
+*   **Database:** The primary database is PostgreSQL, likely with the TimescaleDB extension for handling time-series data. Redis is used for caching to improve performance.
+*   **Infrastructure:** The entire system is containerized using Docker, with separate configurations for development, production, and individual services. It is designed for deployment on the Google Cloud Platform (GCP), with support for Google Kubernetes Engine (GKE) and BigQuery for large-scale data analysis.
+
+## Building and Running
+
+### Prerequisites
+
+*   Docker
+*   Docker Compose
+*   Python 3.12+
+*   Node.js (for frontend development)
+*   Poetry (for Python dependency management)
+
+### Backend
+
+**Running the API:**
+
+```bash
+# Start the API using Docker Compose
+docker-compose -f docker-compose.api-only.yml up -d
+```
+
+**Running the Processing Service:**
+
+```bash
+# Start the processing service using Docker Compose
+docker-compose -f docker-compose.processing.yml up -d
+```
+
+### Frontend
+
+**Running the Dashboard:**
+
+```bash
+# Start the dashboard using Docker Compose
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+Or, for local development:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Testing
+
+### Running Backend Tests
+
+```bash
+# Run the backend tests using poetry
+poetry run pytest
+```
+
+### Running Frontend Tests
+
+```bash
+cd frontend
+npm test
+```
+
+## Development Conventions
+
+*   **Code Style:** The Python code follows the Black code style, with isort for import sorting.
+*   **Type Checking:** Mypy is used for static type checking in the Python codebase.
+*   **Linting:** Pylint and flake8 are used for linting the Python code.
+*   **Pre-commit Hooks:** The project uses pre-commit hooks to enforce code quality standards before committing code.
+*   **API Documentation:** The API is documented using the OpenAPI standard, and the documentation can be accessed at `/docs` when the API is running.
+*   **Contribution Guidelines:** (TODO: Add information on contribution guidelines if available)

@@ -3,11 +3,8 @@ const nextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
   
-  // Experimental features
-  experimental: {
-    // Enable server components
-    serverComponentsExternalPackages: [],
-  },
+  // Server external packages (moved from experimental)
+  serverExternalPackages: [],
   
   // Environment variables that should be available on the client side
   env: {
@@ -15,14 +12,15 @@ const nextConfig = {
   },
   
   // API routes configuration
-  async rewrites() {
-    return [
-      {
-        source: '/api/proxy/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/:path*`,
-      },
-    ];
-  },
+  // Commented out because we're using a custom API route handler
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/api/proxy/:path*',
+  //       destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/:path*`,
+  //     },
+  //   ];
+  // },
   
   // Security headers
   async headers() {
@@ -49,11 +47,15 @@ const nextConfig = {
   
   // Optimize images
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
   },
   
-  // Build optimization
-  swcMinify: true,
+  // Build optimization (swcMinify is now default and deprecated)
   poweredByHeader: false,
   
   // Disable ESLint during production builds

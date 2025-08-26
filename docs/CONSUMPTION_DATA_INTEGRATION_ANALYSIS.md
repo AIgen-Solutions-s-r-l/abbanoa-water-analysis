@@ -213,10 +213,10 @@ Annual Revenue Recovery Potential:
 
 ```typescript
 // Consumption Analytics API
-GET /api/v1/consumption/analytics
-- Real-time consumption by district
-- User segmentation
-- Conservation opportunities
+POST /api/v1/consumption/analyze
+- Analyze water consumption patterns for a specific node
+- Supports hourly, daily, weekly, and monthly patterns
+- Identifies peak and off-peak periods
 
 GET /api/v1/consumption/forecast/{district_id}
 - 7-day demand forecast

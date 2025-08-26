@@ -112,11 +112,13 @@ echo "===================="
 # Check services
 redis_running=false
 postgres_running=false
-dashboard_running=false
+api_running=false
+frontend_running=false
 
 check_service "redis" 6379 "Redis" && redis_running=true
 check_service "postgres" 5432 "PostgreSQL" && postgres_running=true
-check_service "streamlit" 8501 "Dashboard" && dashboard_running=true
+check_service "api" 8000 "FastAPI" && api_running=true
+check_service "frontend" 3000 "Next.js Frontend" && frontend_running=true
 
 # Detailed tests if services are running
 if $redis_running; then
@@ -171,9 +173,14 @@ fi
 if $all_good; then
     echo -e "\n${GREEN}✅ Core services are running!${NC}"
     
-    if ! $dashboard_running; then
-        echo -e "\n${YELLOW}To start the dashboard:${NC}"
-        echo "   poetry run streamlit run src/presentation/streamlit/app.py"
+    if ! $api_running; then
+        echo -e "\n${YELLOW}To start the API:${NC}"
+        echo "   poetry run uvicorn src.presentation.api.app_postgres:app --reload"
+    fi
+    
+    if ! $frontend_running; then
+        echo -e "\n${YELLOW}To start the frontend:${NC}"
+        echo "   cd frontend && npm run dev"
     fi
     
     echo -e "\n${YELLOW}To run comprehensive tests:${NC}"

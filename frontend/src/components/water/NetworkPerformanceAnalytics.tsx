@@ -6,7 +6,10 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   ScatterChart, Scatter, Cell
 } from 'recharts'
-import { TrendingUp, Activity, BarChart3, Grid3X3 } from 'lucide-react'
+import { 
+  TrendingUp, Activity, BarChart3, Grid3X3, 
+  AlertCircle, RefreshCw, Database, WifiOff 
+} from 'lucide-react'
 
 // Types
 interface PressureDistribution {
@@ -44,6 +47,43 @@ interface NetworkPerformanceAnalyticsProps {
   className?: string
 }
 
+// Error State Component
+const DataUnavailableCard: React.FC<{ 
+  title: string, 
+  message: string, 
+  onRetry?: () => void,
+  icon?: React.ReactNode
+}> = ({ title, message, onRetry, icon }) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col items-center justify-center text-center space-y-4">
+        <div className="rounded-full bg-blue-100 dark:bg-blue-900/20 p-6">
+          {icon || <Database className="w-12 h-12 text-blue-600 dark:text-blue-400" />}
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          {title}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 max-w-md">
+          {message}
+        </p>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
+                     transition-colors duration-200 flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        )}
+        <div className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+          Please contact your system administrator if this issue persists.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Function to fetch real pressure zone data
 const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
   try {
@@ -53,7 +93,10 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     const [pressureResponse, nodesResponse] = await Promise.all([
       fetch('/api/proxy/v1/pressure/zones'),
       fetch('/api/proxy/v1/nodes')
-    ]);
+    ]).catch(error => {
+      console.error('Network error fetching data:', error);
+      throw new Error('Network connection failed. Please check your internet connection.');
+    });
     
     if (!pressureResponse.ok || !nodesResponse.ok) {
       throw new Error('Failed to fetch pressure zones or nodes data');
@@ -80,32 +123,62 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     if (nodesData && nodesData.length > realZones.length) {
       console.log('🔧 Generating additional zones from node data...');
       
+      // First, create a set to track assigned nodes
+      const assignedNodes = new Set<any>();
+      
       // Group nodes by geographic/functional areas
       const nodeGroups = [
         { 
           name: 'Cagliari Centro', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('211') || n.node_name?.toLowerCase().includes('cagliari')),
-          baseStatus: 'optimal' 
+          nodes: nodesData.filter((n: any) => {
+            if (n.node_id?.includes('211') || n.node_name?.toLowerCase().includes('cagliari')) {
+              assignedNodes.add(n);
+              return true;
+            }
+            return false;
+          }),
+          baseStatus: 'optimal' as const
         },
         { 
           name: 'Quartu Sant\'Elena', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('215') || n.node_name?.toLowerCase().includes('quartu')),
-          baseStatus: 'warning' 
+          nodes: nodesData.filter((n: any) => {
+            if (!assignedNodes.has(n) && (n.node_id?.includes('215') || n.node_name?.toLowerCase().includes('quartu'))) {
+              assignedNodes.add(n);
+              return true;
+            }
+            return false;
+          }),
+          baseStatus: 'warning' as const
         },
         { 
           name: 'Industrial District', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('273') || n.node_id?.includes('281')),
-          baseStatus: 'optimal' 
+          nodes: nodesData.filter((n: any) => {
+            if (!assignedNodes.has(n) && (n.node_id?.includes('273') || n.node_id?.includes('281'))) {
+              assignedNodes.add(n);
+              return true;
+            }
+            return false;
+          }),
+          baseStatus: 'optimal' as const
         },
         { 
           name: 'Residential Area', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('287') || n.node_id?.includes('288')),
-          baseStatus: 'critical' 
+          nodes: nodesData.filter((n: any) => {
+            if (!assignedNodes.has(n) && (n.node_id?.includes('287') || n.node_id?.includes('288'))) {
+              assignedNodes.add(n);
+              return true;
+            }
+            return false;
+          }),
+          baseStatus: 'critical' as const
         },
         { 
           name: 'Distribution Network', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('DIST') || !nodeGroups.some(g => g.nodes.includes(n))),
-          baseStatus: 'optimal' 
+          nodes: nodesData.filter((n: any) => {
+            // Include DIST nodes or any unassigned nodes
+            return n.node_id?.includes('DIST') || !assignedNodes.has(n);
+          }),
+          baseStatus: 'optimal' as const
         }
       ];
       
@@ -658,34 +731,46 @@ export const NetworkPerformanceAnalytics: React.FC<NetworkPerformanceAnalyticsPr
   const [realPressureData, setRealPressureData] = useState<PressureDistribution[]>([])
   const [efficiencyLoading, setEfficiencyLoading] = useState(false)
   const [pressureLoading, setPressureLoading] = useState(false)
+  const [pressureError, setPressureError] = useState<string | null>(null)
+  const [efficiencyError, setEfficiencyError] = useState<string | null>(null)
 
   // Load real pressure data when the pressure tab is selected
   useEffect(() => {
-    if (activeTab === 'pressure' && realPressureData.length === 0) {
+    if (activeTab === 'pressure' && realPressureData.length === 0 && !pressureError) {
       setPressureLoading(true)
+      setPressureError(null)
       fetchPressureZonesData()
         .then(data => {
           setRealPressureData(data)
+        })
+        .catch(error => {
+          console.error('Error fetching pressure data:', error)
+          setPressureError(error.message || 'Failed to load pressure data')
         })
         .finally(() => {
           setPressureLoading(false)
         })
     }
-  }, [activeTab, realPressureData.length])
+  }, [activeTab, realPressureData.length, pressureError])
 
   // Load real efficiency data when the efficiency tab is selected
   useEffect(() => {
-    if (activeTab === 'efficiency' && realEfficiencyData.length === 0) {
+    if (activeTab === 'efficiency' && realEfficiencyData.length === 0 && !efficiencyError) {
       setEfficiencyLoading(true)
+      setEfficiencyError(null)
       fetchEfficiencyData()
         .then(data => {
           setRealEfficiencyData(data)
+        })
+        .catch(error => {
+          console.error('Error fetching efficiency data:', error)
+          setEfficiencyError(error.message || 'Failed to load efficiency data')
         })
         .finally(() => {
           setEfficiencyLoading(false)
         })
     }
-  }, [activeTab, realEfficiencyData.length])
+  }, [activeTab, realEfficiencyData.length, efficiencyError])
 
   // Use real data if available, otherwise fall back to prop data or empty array
   const currentPressureData = realPressureData.length > 0 ? realPressureData : (pressureData || [])
@@ -734,6 +819,26 @@ export const NetworkPerformanceAnalytics: React.FC<NetworkPerformanceAnalyticsPr
               <div className="h-64 bg-gray-200 dark:bg-gray-600 rounded"></div>
             </div>
           </div>
+        ) : pressureError ? (
+          <DataUnavailableCard
+            title="Error Loading Pressure Data"
+            message={pressureError}
+            onRetry={() => {
+              setPressureError(null)
+              setRealPressureData([])
+            }}
+            icon={<AlertCircle className="w-12 h-12 text-red-600 dark:text-red-400" />}
+          />
+        ) : currentPressureData.length === 0 ? (
+          <DataUnavailableCard
+            title="Pressure Data Not Available"
+            message="The pressure distribution data is currently not available. This could be because the sensors are offline or the data collection system is being maintained."
+            onRetry={() => {
+              setPressureError(null)
+              setRealPressureData([])
+            }}
+            icon={<BarChart3 className="w-12 h-12 text-blue-600 dark:text-blue-400" />}
+          />
         ) : (
           <PressureDistributionChart data={currentPressureData} />
         )
@@ -746,6 +851,26 @@ export const NetworkPerformanceAnalytics: React.FC<NetworkPerformanceAnalyticsPr
               <div className="h-64 bg-gray-200 dark:bg-gray-600 rounded"></div>
             </div>
           </div>
+        ) : efficiencyError ? (
+          <DataUnavailableCard
+            title="Error Loading Efficiency Data"
+            message={efficiencyError}
+            onRetry={() => {
+              setEfficiencyError(null)
+              setRealEfficiencyData([])
+            }}
+            icon={<AlertCircle className="w-12 h-12 text-red-600 dark:text-red-400" />}
+          />
+        ) : currentEfficiencyData.length === 0 ? (
+          <DataUnavailableCard
+            title="Efficiency Data Not Available"
+            message="The efficiency trends data is currently not available. The system may be collecting baseline metrics or undergoing maintenance."
+            onRetry={() => {
+              setEfficiencyError(null)
+              setRealEfficiencyData([])
+            }}
+            icon={<TrendingUp className="w-12 h-12 text-blue-600 dark:text-blue-400" />}
+          />
         ) : (
           <EfficiencyTrendsChart data={currentEfficiencyData} />
         )

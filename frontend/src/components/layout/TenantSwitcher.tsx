@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { useTenants } from '@/lib/hooks/useAuth';
+import { useTenants } from '@/lib/hooks/useTenants';
 import { Button } from '@/components/ui/Button';
 
 export function TenantSwitcher() {
@@ -90,7 +90,7 @@ export function TenantSwitcher() {
                       {tenant.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {tenant.domain} • {tenant.plan}
+                      {tenant.slug}
                     </p>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ export function TenantSwitcher() {
                                 {availableTenant.name}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {availableTenant.domain} • {availableTenant.plan}
+                                {availableTenant.slug}
                               </p>
                             </div>
                           </button>

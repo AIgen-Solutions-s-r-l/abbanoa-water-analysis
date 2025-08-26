@@ -1,4 +1,4 @@
-.PHONY: help install test lint format type-check security clean run-dashboard docs pre-commit setup-dev
+.PHONY: help install test lint format type-check security clean run-api run-frontend docs pre-commit setup-dev
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -61,8 +61,11 @@ clean:  ## Clean up generated files
 	rm -rf build
 	rm -rf *.egg-info
 
-run-dashboard:  ## Run Streamlit dashboard
-	poetry run streamlit run src/presentation/web/dashboard.py
+run-api:  ## Run FastAPI backend
+	poetry run uvicorn src.presentation.api.app_postgres:app --reload --host 0.0.0.0 --port 8000
+
+run-frontend:  ## Run Next.js frontend
+	cd frontend && npm run dev
 
 docs:  ## Generate documentation
 	poetry run sphinx-build -b html docs docs/_build/html
@@ -86,7 +89,7 @@ docker-build:  ## Build Docker image
 	docker build -t abbanoa-water-infrastructure:latest .
 
 docker-run:  ## Run Docker container
-	docker run -p 8501:8501 abbanoa-water-infrastructure:latest
+	docker-compose -f docker-compose.full-dev.yml up -d
 
 quality: format lint type-check security test  ## Run all quality checks
 

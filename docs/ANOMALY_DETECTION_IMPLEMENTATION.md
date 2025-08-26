@@ -1,5 +1,7 @@
 # Anomaly Detection Implementation
 
+> **Note:** This document describes a fallback mechanism for anomaly detection that is used when the main system is unavailable. For information about the main anomaly detection system, please see the [Detect Network Anomalies Use Case](./use_cases/DETECT_NETWORK_ANOMALIES.md) documentation.
+
 ## Overview
 
 The anomaly detection system has been completely rebuilt to provide working anomaly detection capabilities when the original BigQuery-based system fails. The new implementation uses a hybrid approach that tries real data sources first, then falls back to realistic synthetic anomalies for demonstration purposes.

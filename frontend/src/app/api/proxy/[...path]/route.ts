@@ -39,10 +39,12 @@ async function proxyRequest(
   pathSegments: string[],
   method: string
 ) {
+  console.log('Proxy request:', { pathSegments, method, BACKEND_URL });
   try {
     // Reconstruct the path
     const path = pathSegments.join('/');
     const url = `${BACKEND_URL}/api/${path}`;
+    console.log('Proxying to:', url);
     
     // Get headers from the original request
     const headers: Record<string, string> = {};
@@ -72,6 +74,14 @@ async function proxyRequest(
 
     // Make the request to the backend
     const response = await fetch(url, options);
+    
+    // Handle 204 No Content responses
+    if (response.status === 204) {
+      return new Response(null, {
+        status: 204,
+        headers: response.headers,
+      });
+    }
     
     // Get the response body
     const responseData = await response.json();

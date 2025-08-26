@@ -42,7 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           console.log('🔧 Development auto-login...');
           await auth.login({ 
-            email: 'admin@roccavina.com', 
+            email: 'admin@abbanoa.com', 
             password: 'admin123' 
           });
         } catch (error) {

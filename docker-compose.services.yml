@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend (simplified without volume mounts for now)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api.simple
+    container_name: abbanoa-api
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=abbanoa_processing
+      - POSTGRES_USER=abbanoa_user
+      - POSTGRES_PASSWORD=abbanoa_dev_pass
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - DEBUG=true
+      - LOG_LEVEL=INFO
+    network_mode: host
+    restart: unless-stopped
+    command: uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 --reload
+
+  # Next.js Frontend (simplified)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: abbanoa-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+    network_mode: host
+    restart: unless-stopped
+    command: npm run dev
+
+  # Mock Backend (simplified)
+  mock-backend:
+    build:
+      context: ./mock-backend
+      dockerfile: Dockerfile.dev
+    container_name: abbanoa-mock-backend
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+    network_mode: host
+    restart: unless-stopped
+    command: node server.js

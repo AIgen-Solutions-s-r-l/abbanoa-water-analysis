@@ -58,11 +58,11 @@ export class AnomalyService {
     const anomalies = await this.getAnomalies();
     
     const total = anomalies.length;
-    const resolved = anomalies.filter(a => a.resolved).length;
-    const critical = anomalies.filter(a => a.severity === 'critical' && !a.resolved).length;
-    const high = anomalies.filter(a => a.severity === 'high' && !a.resolved).length;
-    const medium = anomalies.filter(a => a.severity === 'medium' && !a.resolved).length;
-    const low = anomalies.filter(a => a.severity === 'low' && !a.resolved).length;
+    const resolved = anomalies.filter(a => a.status === 'resolved').length;
+    const critical = anomalies.filter(a => a.severity === 'critical' && a.status !== 'resolved').length;
+    const high = anomalies.filter(a => a.severity === 'high' && a.status !== 'resolved').length;
+    const medium = anomalies.filter(a => a.severity === 'medium' && a.status !== 'resolved').length;
+    const low = anomalies.filter(a => a.severity === 'low' && a.status !== 'resolved').length;
     
     return {
       total,
