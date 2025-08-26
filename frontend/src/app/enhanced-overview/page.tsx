@@ -376,6 +376,9 @@ export default function EnhancedOverviewPage() {
     dataQuality: 0,
     systemUptime: 0,
     energyEfficiency: 0,
+    currentPowerKw: 0,
+    dailyCostEur: 0,
+    costPerCubicMeter: 0,
   });
   const [flowData, setFlowData] = useState<FlowAnalyticsData[]>([]);
   const [alerts, setAlerts] = useState<WaterSystemAlert[]>([]);
@@ -459,14 +462,15 @@ export default function EnhancedOverviewPage() {
     }
   };
 
-  const handleDateRangeChange = (newDateRange: {startDate: Date; endDate: Date; label: string}) => {
+  const handleDateRangeChange = (startDate: Date, endDate: Date, label: string) => {
+    const newDateRange = { startDate, endDate, label };
     setDateRange(newDateRange);
-    setSelectedTimeRange(newDateRange.label);
+    setSelectedTimeRange(label);
     
     // Reload data with new date range
     loadRealData({
-      startDate: newDateRange.startDate,
-      endDate: newDateRange.endDate
+      startDate,
+      endDate
     }, false);
   };
 

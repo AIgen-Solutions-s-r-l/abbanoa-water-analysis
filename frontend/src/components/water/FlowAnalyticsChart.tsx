@@ -136,7 +136,9 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
       if (!acc[curr.timestamp]) {
         acc[curr.timestamp] = {};
       }
-      acc[curr.timestamp][curr.nodeId] = curr.flowRate;
+      if (curr.nodeId && curr.flowRate !== undefined) {
+        acc[curr.timestamp][curr.nodeId] = curr.flowRate;
+      }
       return acc;
     }, {} as Record<string, Record<string, number>>);
     

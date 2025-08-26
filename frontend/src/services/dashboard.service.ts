@@ -28,6 +28,12 @@ export class DashboardService {
     
     // Transform the real data to match frontend's expected format
     return {
+      totalFlow: data.network.total_flow_lps || 0,
+      averagePressure: data.network.average_pressure_bar || 0,
+      networkEfficiency: data.network.efficiency_percentage || 0,
+      activeAlerts: data.network.alert_count || 0,
+      energyConsumption: data.network.energy_consumption_kwh || 0,
+      waterQuality: data.network.water_quality_index || 0,
       totalConsumption: data.network.total_volume_m3 || 0,
       activeConnections: data.network.active_nodes || 0,
       anomalies: data.network.anomaly_count || 0,

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { RegisterRequest } from '@/lib/types';
+import { RegisterRequest } from '@/lib/types/auth';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterRequest>({

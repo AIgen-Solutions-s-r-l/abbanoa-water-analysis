@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { useDashboardMetrics } from '@/lib/hooks/useDashboard';
+import { useDashboard } from '@/lib/hooks/useDashboard';
 
 interface MetricCardProps {
   title: string;
@@ -59,7 +59,7 @@ const MetricCard = ({ title, value, change, changeType = 'neutral', icon, loadin
 };
 
 const MetricsGrid = () => {
-  const { metrics, loading, error } = useDashboardMetrics();
+  const { metrics, loading, error } = useDashboard();
 
   if (error) {
     return (

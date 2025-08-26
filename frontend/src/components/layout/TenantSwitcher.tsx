@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { useTenants } from '@/lib/hooks/useAuth';
+import { useTenants } from '@/lib/hooks/useTenants';
 import { Button } from '@/components/ui/Button';
 
 export function TenantSwitcher() {

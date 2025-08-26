@@ -3,13 +3,13 @@ import {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  ChangePasswordRequest,
   RefreshTokenRequest,
   ResetPasswordRequest,
-  ChangePasswordRequest,
   TenantSelectionResponse,
   User,
   Tenant,
-} from '@/lib/types';
+} from '@/lib/types/auth';
 
 export class AuthService {
   // Authentication endpoints
@@ -20,6 +20,7 @@ export class AuthService {
     const mockUser = {
       id: 'user-1',
       email: credentials.email,
+      name: 'Admin User',
       firstName: 'Admin',
       lastName: 'User',
       role: 'admin' as 'admin' | 'operator' | 'viewer' | 'super_admin',
@@ -33,6 +34,7 @@ export class AuthService {
     const mockTenant = {
       id: 'default',
       name: 'Roccavina S.p.A.',
+      slug: 'roccavina',
       domain: 'roccavina',
       logo: undefined,
       plan: 'enterprise' as 'basic' | 'professional' | 'enterprise',
@@ -55,33 +57,38 @@ export class AuthService {
     const refreshToken = 'mock-refresh-token';
     
     // Store tokens
-    apiClient.setAuthTokens(accessToken, refreshToken, mockTenant.id);
+    // TODO: Implement proper token storage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('authToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('tenantId', mockTenant.id);
+    }
     
     return {
+      success: true,
+      token: accessToken,
       user: mockUser,
-      tenant: mockTenant,
-      accessToken,
-      refreshToken,
-      expiresIn: 86400
+      tenant: mockTenant
     };
   }
 
   static async register(userData: RegisterRequest): Promise<AuthResponse> {
-    const response = await apiClient.authRequest<AuthResponse>('/auth/register', {
+    const response = await apiClient.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
     
-    if (response.success && response.data) {
+    if (response.success) {
       // Store tokens and tenant info
-      apiClient.setAuthTokens(
-        response.data.accessToken,
-        response.data.refreshToken,
-        response.data.tenant.id
-      );
+      // TODO: Implement proper token storage
+      /*apiClient.setAuthTokens(
+        response.token,
+        response.refreshToken,
+        response.tenant?.id
+      );*/
     }
     
-    return response.data;
+    return response;
   }
 
   static async logout(): Promise<void> {
@@ -91,63 +98,69 @@ export class AuthService {
       console.warn('Logout request failed:', error);
     } finally {
       // Always clear local tokens
-      apiClient.clearAuthTokens();
+      // TODO: Implement proper token clearing
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('tenantId');
+      }
     }
   }
 
   static async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    const response = await apiClient.authRequest<AuthResponse>('/auth/refresh', {
+    const response = await apiClient.request<AuthResponse>('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     });
     
-    if (response.success && response.data) {
+    if (response.success) {
       // Update stored tokens
-      apiClient.setAuthTokens(
-        response.data.accessToken,
-        response.data.refreshToken,
-        response.data.tenant.id
-      );
+      // TODO: Implement proper token storage
+      /*apiClient.setAuthTokens(
+        response.token,
+        response.refreshToken,
+        response.tenant?.id
+      );*/
     }
     
-    return response.data;
+    return response;
   }
 
   static async resetPassword(data: ResetPasswordRequest): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.authRequest<{ success: boolean; message: string }>('/auth/reset-password', {
+    const response = await apiClient.request<{ success: boolean; message: string }>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify(data),
     });
     
-    return response.data;
+    return response;
   }
 
   static async changePassword(data: ChangePasswordRequest): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.put<{ success: boolean; message: string }>('/auth/change-password', data);
-    return response.data;
+    return response;
   }
 
   // User profile endpoints
   static async getCurrentUser(): Promise<User> {
     const response = await apiClient.get<User>('/auth/me');
-    return response.data;
+    return response;
   }
 
   static async updateProfile(userData: Partial<User>): Promise<User> {
     const response = await apiClient.put<User>('/auth/profile', userData);
-    return response.data;
+    return response;
   }
 
   // Tenant management endpoints
   static async getCurrentTenant(): Promise<Tenant> {
     const response = await apiClient.get<Tenant>('/tenants/current');
-    return response.data;
+    return response;
   }
 
   static async getUserTenants(): Promise<Tenant[]> {
     try {
       const response = await apiClient.get<TenantSelectionResponse>('/auth/tenants');
-      return response.data?.tenants || [];
+      return response?.tenants || [];
     } catch (error) {
       console.error('Failed to fetch user tenants:', error);
       return [];
@@ -157,16 +170,17 @@ export class AuthService {
   static async switchTenant(tenantId: string): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/switch-tenant', { tenantId });
     
-    if (response.success && response.data) {
+    if (response.success) {
       // Update stored tokens and tenant
-      apiClient.setAuthTokens(
-        response.data.accessToken,
-        response.data.refreshToken,
-        response.data.tenant.id
-      );
+      // TODO: Implement proper token storage
+      /*apiClient.setAuthTokens(
+        response.token,
+        response.refreshToken,
+        response.tenant?.id
+      );*/
     }
     
-    return response.data;
+    return response;
   }
 
   static async createTenant(tenantData: {
@@ -175,12 +189,12 @@ export class AuthService {
     plan: string;
   }): Promise<Tenant> {
     const response = await apiClient.post<Tenant>('/tenants', tenantData);
-    return response.data;
+    return response;
   }
 
   static async updateTenant(tenantId: string, tenantData: Partial<Tenant>): Promise<Tenant> {
     const response = await apiClient.put<Tenant>(`/tenants/${tenantId}`, tenantData);
-    return response.data;
+    return response;
   }
 
   // Invitation endpoints
@@ -191,7 +205,7 @@ export class AuthService {
     role: string;
   }): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.post<{ success: boolean; message: string }>('/auth/invite', userData);
-    return response.data;
+    return response;
   }
 
   static async acceptInvitation(token: string, userData: {
@@ -199,45 +213,57 @@ export class AuthService {
     firstName?: string;
     lastName?: string;
   }): Promise<AuthResponse> {
-    const response = await apiClient.authRequest<AuthResponse>('/auth/accept-invitation', {
+    const response = await apiClient.request<AuthResponse>('/auth/accept-invitation', {
       method: 'POST',
       body: JSON.stringify({ token, ...userData }),
     });
     
-    if (response.success && response.data) {
+    if (response.success) {
       // Store tokens and tenant info
-      apiClient.setAuthTokens(
-        response.data.accessToken,
-        response.data.refreshToken,
-        response.data.tenant.id
-      );
+      // TODO: Implement proper token storage
+      /*apiClient.setAuthTokens(
+        response.token,
+        response.refreshToken,
+        response.tenant?.id
+      );*/
     }
     
-    return response.data;
+    return response;
   }
 
   // Validation endpoints
   static async validateTenantDomain(domain: string): Promise<{ available: boolean; suggestions?: string[] }> {
-    const response = await apiClient.authRequest<{ available: boolean; suggestions?: string[] }>(`/auth/validate-domain?domain=${domain}`);
-    return response.data;
+    const response = await apiClient.request<{ available: boolean; suggestions?: string[] }>(`/auth/validate-domain?domain=${domain}`);
+    return response;
   }
 
   static async checkEmailExists(email: string): Promise<{ exists: boolean }> {
-    const response = await apiClient.authRequest<{ exists: boolean }>(`/auth/check-email?email=${email}`);
-    return response.data;
+    const response = await apiClient.request<{ exists: boolean }>(`/auth/check-email?email=${email}`);
+    return response;
   }
 
   // Session management
   static getStoredTokens() {
-    return apiClient.getStoredTokens();
+    if (typeof window !== 'undefined') {
+      return {
+        accessToken: localStorage.getItem('authToken'),
+        refreshToken: localStorage.getItem('refreshToken'),
+        tenantId: localStorage.getItem('tenantId')
+      };
+    }
+    return null;
   }
 
   static isAuthenticated(): boolean {
-    const tokens = apiClient.getStoredTokens();
+    const tokens = AuthService.getStoredTokens();
     return !!(tokens?.accessToken && tokens?.tenantId);
   }
 
   static clearSession() {
-    apiClient.clearAuthTokens();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('tenantId');
+    }
   }
 } 

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { LoginRequest } from '@/lib/types';
+import { LoginRequest } from '@/lib/types/auth';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginRequest>({
