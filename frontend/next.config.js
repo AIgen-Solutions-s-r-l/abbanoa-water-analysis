@@ -3,11 +3,8 @@ const nextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
   
-  // Experimental features
-  experimental: {
-    // Enable server components
-    serverComponentsExternalPackages: [],
-  },
+  // External packages for server components
+  serverExternalPackages: [],
   
   // Environment variables that should be available on the client side
   env: {
@@ -53,7 +50,6 @@ const nextConfig = {
   },
   
   // Build optimization
-  swcMinify: true,
   poweredByHeader: false,
   
   // Disable ESLint during production builds
