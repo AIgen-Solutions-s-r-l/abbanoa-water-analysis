@@ -13,8 +13,33 @@ const fetchDashboardData = async () => {
   try {
     const timestamp = new Date().getTime();
     const response = await fetch(`/api/proxy/v1/dashboard/summary?t=${timestamp}`);
-    if (!response.ok) throw new Error('Failed to fetch dashboard data');
-    const data = await response.json();
+    
+    // Try to parse the response regardless of status
+    let data = null;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+      }
+    }
+    
+    // If response is not OK, log the issue but still try to use the data
+    if (!response.ok) {
+      console.warn(`Dashboard API returned status ${response.status}, but attempting to use data if available`);
+      
+      // If we have data despite the error status, use it
+      if (data) {
+        console.log('🚀 Full dashboard data (from error response):', data);
+        return data;
+      }
+      
+      // Otherwise return null to trigger fallback
+      return null;
+    }
+    
     console.log('🚀 Full dashboard data:', data);
     return data;
   } catch (error) {

@@ -34,15 +34,18 @@ jest.mock('@/components/common/DateRangeSelector', () => ({
 describe('EnhancedOverviewPage', () => {
   let originalFetch: typeof global.fetch;
   let consoleErrorSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     originalFetch = global.fetch;
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
     consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
     jest.clearAllMocks();
   });
 
@@ -78,19 +81,26 @@ describe('EnhancedOverviewPage', () => {
     ];
 
     global.fetch = jest.fn((url: string) => {
-      if (url.includes('/api/proxy/v1/dashboard/summary')) {
+      console.log('Mock fetch called with URL:', url);
+      if (typeof url === 'string' && url.includes('/api/proxy/v1/dashboard/summary')) {
         return Promise.resolve({
           ok: true,
           status: 200,
+          headers: {
+            get: (key: string) => key === 'content-type' ? 'application/json' : null,
+          },
           json: () => Promise.resolve(mockDashboardData),
-        } as Response);
+        } as unknown as Response);
       }
-      if (url.includes('/api/proxy/v1/anomalies')) {
+      if (typeof url === 'string' && url.includes('/api/proxy/v1/anomalies')) {
         return Promise.resolve({
           ok: true,
           status: 200,
+          headers: {
+            get: (key: string) => key === 'content-type' ? 'application/json' : null,
+          },
           json: () => Promise.resolve(mockAnomalies),
-        } as Response);
+        } as unknown as Response);
       }
       return Promise.reject(new Error('Unknown URL'));
     });
@@ -123,18 +133,24 @@ describe('EnhancedOverviewPage', () => {
 
     // Simulate a response with data but non-OK status (like 500)
     global.fetch = jest.fn((url: string) => {
-      if (url.includes('/api/proxy/v1/dashboard/summary')) {
+      if (typeof url === 'string' && url.includes('/api/proxy/v1/dashboard/summary')) {
         return Promise.resolve({
           ok: false,
           status: 500,
+          headers: {
+            get: (key: string) => key === 'content-type' ? 'application/json' : null,
+          },
           json: () => Promise.resolve(mockDashboardData),
-        } as Response);
+        } as unknown as Response);
       }
-      if (url.includes('/api/proxy/v1/anomalies')) {
+      if (typeof url === 'string' && url.includes('/api/proxy/v1/anomalies')) {
         return Promise.resolve({
           ok: true,
+          headers: {
+            get: (key: string) => key === 'content-type' ? 'application/json' : null,
+          },
           json: () => Promise.resolve([]),
-        } as Response);
+        } as unknown as Response);
       }
       return Promise.reject(new Error('Unknown URL'));
     });
@@ -145,13 +161,13 @@ describe('EnhancedOverviewPage', () => {
       expect(screen.queryByText('Loading real-time data...')).not.toBeInTheDocument();
     });
 
-    // Should still render but with fallback data
+    // Should still render with the data from the error response
     expect(screen.getByText('🚀 Enhanced System Overview')).toBeInTheDocument();
     
-    // Check that error was logged
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Error fetching dashboard data:',
-      expect.any(Error)
+    // Since we now handle error responses gracefully, no error is logged but a warning is
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Dashboard API returned status 500, but attempting to use data if available'
     );
   });
 
@@ -176,17 +192,23 @@ describe('EnhancedOverviewPage', () => {
 
   it('should handle null dashboard data gracefully', async () => {
     global.fetch = jest.fn((url: string) => {
-      if (url.includes('/api/proxy/v1/dashboard/summary')) {
+      if (typeof url === 'string' && url.includes('/api/proxy/v1/dashboard/summary')) {
         return Promise.resolve({
           ok: true,
+          headers: {
+            get: (key: string) => key === 'content-type' ? 'application/json' : null,
+          },
           json: () => Promise.resolve(null),
-        } as Response);
+        } as unknown as Response);
       }
-      if (url.includes('/api/proxy/v1/anomalies')) {
+      if (typeof url === 'string' && url.includes('/api/proxy/v1/anomalies')) {
         return Promise.resolve({
           ok: true,
+          headers: {
+            get: (key: string) => key === 'content-type' ? 'application/json' : null,
+          },
           json: () => Promise.resolve([]),
-        } as Response);
+        } as unknown as Response);
       }
       return Promise.reject(new Error('Unknown URL'));
     });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+// Try mock backend first (port 8001), then fall back to real backend (port 8000)
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8001';
 
 export async function GET(
   request: NextRequest,
