@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Update nodes with real Selargius topology based on actual network diagram
+Update nodes with real Roccavina topology based on actual network diagram
 """
 import asyncpg
 import asyncio
@@ -15,86 +15,86 @@ REAL_NODES = {
     # Main distribution centers
     'CENTRO_EST': {
         'name': 'CENTRO EST',
-        'lat': 39.2555, 'lon': 9.1680,
+        'lat': 44.1355, 'lon': 12.2510,
         'type': 'distribution_center',
         'current_flow': 11.50
     },
     'CENTRO_NORD': {
         'name': 'CENTRO NORD', 
-        'lat': 39.2600, 'lon': 9.1600,
+        'lat': 44.1400, 'lon': 12.2430,
         'type': 'distribution_center',
         'current_flow': 31.67
     },
     'CENTRO_SUD': {
         'name': 'CENTRO SUD',
-        'lat': 39.2520, 'lon': 9.1620,
+        'lat': 44.1310, 'lon': 12.2450,
         'type': 'distribution_center', 
         'current_flow': 33.33
     },
     'CENTRO_OVEST': {
         'name': 'CENTRO OVEST',
-        'lat': 39.2540, 'lon': 9.1480,
+        'lat': 44.1340, 'lon': 12.2350,
         'type': 'distribution_center',
         'current_flow': -19.46  # Negative indicates reverse flow
     },
     'LIBERTA': {
         'name': 'LIBERTÀ',
-        'lat': 39.2480, 'lon': 9.1550,
+        'lat': 44.1280, 'lon': 12.2390,
         'type': 'zone_meter',
         'current_flow': 12.82
     },
     'STADIO': {
         'name': 'STADIO',
-        'lat': 39.2510, 'lon': 9.1700,
+        'lat': 44.1310, 'lon': 12.2520,
         'type': 'zone_meter',
         'current_flow': 6.30
     },
     # Connection points to other districts
     'FIORI': {
         'name': 'FIORI',
-        'lat': 39.2620, 'lon': 9.1550,
+        'lat': 44.1420, 'lon': 12.2390,
         'type': 'interconnection',
         'current_flow': 0
     },
     'Q_SANTANNA': {
         'name': 'Q.SANT\'ANNA',
-        'lat': 39.2580, 'lon': 9.1450,
+        'lat': 44.1380, 'lon': 12.2350,
         'type': 'interconnection',
         'current_flow': 0
     },
     'Q_MONSERRATO': {
         'name': 'Q.MONSERRATO', 
-        'lat': 39.2480, 'lon': 9.1400,
+        'lat': 44.1280, 'lon': 12.2340,
         'type': 'interconnection',
         'current_flow': 0
     },
     'Q_SARDEGNA': {
         'name': 'Q.SARDEGNA',
-        'lat': 39.2590, 'lon': 9.1650,
+        'lat': 44.1390, 'lon': 12.2490,
         'type': 'interconnection', 
         'current_flow': 0
     },
     'Q_GALLUS': {
         'name': 'Q.GALLUS',
-        'lat': 39.2507, 'lon': 9.1520,  # Using actual SCADA coordinates
+        'lat': 44.1307, 'lon': 12.2380,  # Using actual SCADA coordinates
         'type': 'interconnection',
         'current_flow': 0
     },
     'Q_MATTEOTTI': {
         'name': 'Q.MATTEOTTI',
-        'lat': 39.2590, 'lon': 9.1631,  # Using actual SCADA coordinates
+        'lat': 44.1390, 'lon': 12.2470,  # Using actual SCADA coordinates
         'type': 'interconnection',
         'current_flow': 0
     },
     'Q_TRIESTE': {
         'name': 'Q.TRIESTE',
-        'lat': 39.2561, 'lon': 9.1702,  # Using actual SCADA coordinates
+        'lat': 44.1361, 'lon': 12.2520,  # Using actual SCADA coordinates
         'type': 'interconnection',
         'current_flow': 0
     },
     'Q_NENNI_SUD': {
         'name': 'Q.NENNI SUD',
-        'lat': 39.2470, 'lon': 9.1580,
+        'lat': 44.1270, 'lon': 12.2420,
         'type': 'interconnection',
         'current_flow': 0
     }
@@ -134,11 +134,11 @@ DB_CONFIG = {
 }
 
 async def update_topology():
-    """Update nodes and pipes with real Selargius topology"""
+    """Update nodes and pipes with real Roccavina topology"""
     conn = await asyncpg.connect(**DB_CONFIG)
     
     try:
-        logger.info("🔄 Updating to real Selargius topology...")
+        logger.info("🔄 Updating to real Roccavina topology...")
         
         # Clear existing data in correct order due to foreign keys
         await conn.execute("DELETE FROM water_infrastructure.anomalies")
@@ -153,7 +153,7 @@ async def update_topology():
                 (node_id, node_name, location_name, latitude, longitude, 
                  node_type, is_active, installation_date)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            """, node_id, node_data['name'], 'Selargius', 
+            """, node_id, node_data['name'], 'Roccavina', 
                 node_data['lat'], node_data['lon'],
                 node_data['type'], True, date(2010, 1, 1))
             

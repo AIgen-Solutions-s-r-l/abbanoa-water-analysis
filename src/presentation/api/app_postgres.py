@@ -14,6 +14,16 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 import logging
 
+from src.config.weather_location_mapping import (
+    get_display_name,
+    get_actual_location,
+    transform_weather_data
+)
+from src.utils.weather_date_helper import (
+    adjust_date_range_to_available,
+    get_default_date_range_for_interval
+)
+
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
@@ -1166,6 +1176,8 @@ async def get_current_weather(
     try:
         async with pool.acquire() as conn:
             if location:
+                # Transform display name to actual location for query
+                actual_location = get_actual_location(location)
                 rows = await conn.fetch("""
                     SELECT DISTINCT ON (location)
                         location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
@@ -1173,7 +1185,7 @@ async def get_current_weather(
                     FROM water_infrastructure.weather_data
                     WHERE location = $1
                     ORDER BY location, date DESC
-                """, location)
+                """, actual_location)
             else:
                 rows = await conn.fetch("""
                     SELECT DISTINCT ON (location)
@@ -1183,19 +1195,29 @@ async def get_current_weather(
                     ORDER BY location, date DESC
                 """)
             
-            return [{
-                "location": row['location'],
-                "date": row['date'].isoformat(),
-                "temperature": {
-                    "current": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
-                    "min": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
-                    "max": float(row['max_temperature_c']) if row['max_temperature_c'] else None
-                },
-                "humidity": row['humidity_percent'],
-                "rainfall": float(row['rainfall_mm']) if row['rainfall_mm'] else 0,
-                "windSpeed": float(row['avg_wind_speed_kmh']) if row['avg_wind_speed_kmh'] else 0,
-                "conditions": row['weather_phenomena'] or "Clear"
-            } for row in rows]
+            # Transform and filter the results
+            transformed_results = []
+            for row in rows:
+                weather_data = {
+                    "location": row['location'],
+                    "date": row['date'].isoformat(),
+                    "temperature": {
+                        "current": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
+                        "min": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
+                        "max": float(row['max_temperature_c']) if row['max_temperature_c'] else None
+                    },
+                    "humidity": row['humidity_percent'],
+                    "rainfall": float(row['rainfall_mm']) if row['rainfall_mm'] else 0,
+                    "windSpeed": float(row['avg_wind_speed_kmh']) if row['avg_wind_speed_kmh'] else 0,
+                    "conditions": row['weather_phenomena'] or "Clear"
+                }
+                
+                # Apply location transformation
+                transformed = transform_weather_data(weather_data)
+                if transformed:  # Only include if not filtered out
+                    transformed_results.append(transformed)
+            
+            return transformed_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1210,26 +1232,40 @@ async def get_historical_weather(
     """Get historical weather data with optional aggregation."""
     try:
         async with pool.acquire() as conn:
-            # Default date range if not provided
-            if not end_date:
-                end_date = datetime.now().date()
-            else:
+            # Parse dates if provided
+            if end_date:
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-                
-            if not start_date:
-                start_date = (datetime.now() - timedelta(days=30)).date()
-            else:
+            if start_date:
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
             
+            # If no dates provided, use intelligent defaults based on available data
+            if not start_date or not end_date:
+                # Get default range based on interval
+                default_start, default_end = get_default_date_range_for_interval(
+                    interval if interval in ['week', 'month', 'year'] else 'month'
+                )
+                if not start_date:
+                    start_date = default_start
+                if not end_date:
+                    end_date = default_end
+            
+            # Adjust dates to available data range
+            start_date, end_date = await adjust_date_range_to_available(
+                conn, start_date, end_date
+            )
+            
+            # Transform display name to actual location for query
+            actual_location = get_actual_location(location) if location else None
+            
             if interval == "daily":
-                if location:
+                if actual_location:
                     rows = await conn.fetch("""
                         SELECT location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
                                humidity_percent, rainfall_mm, avg_wind_speed_kmh, weather_phenomena
                         FROM water_infrastructure.weather_data
                         WHERE location = $1 AND date BETWEEN $2 AND $3
                         ORDER BY date
-                    """, location, start_date, end_date)
+                    """, actual_location, start_date, end_date)
                 else:
                     rows = await conn.fetch("""
                         SELECT location, date, avg_temperature_c, min_temperature_c, max_temperature_c,
@@ -1239,69 +1275,135 @@ async def get_historical_weather(
                         ORDER BY location, date
                     """, start_date, end_date)
                 
-                return [{
-                    "location": row['location'],
-                    "date": row['date'].isoformat(),
-                    "temperature": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
-                    "temperatureMin": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
-                    "temperatureMax": float(row['max_temperature_c']) if row['max_temperature_c'] else None,
-                    "humidity": row['humidity_percent'],
-                    "rainfall": float(row['rainfall_mm']) if row['rainfall_mm'] else 0,
-                    "windSpeed": float(row['avg_wind_speed_kmh']) if row['avg_wind_speed_kmh'] else 0,
-                    "conditions": row['weather_phenomena'] or "Clear"
-                } for row in rows]
+                # Transform and filter results
+                transformed_results = []
+                for row in rows:
+                    weather_data = {
+                        "location": row['location'],
+                        "date": row['date'].isoformat(),
+                        "temperature": float(row['avg_temperature_c']) if row['avg_temperature_c'] else None,
+                        "temperatureMin": float(row['min_temperature_c']) if row['min_temperature_c'] else None,
+                        "temperatureMax": float(row['max_temperature_c']) if row['max_temperature_c'] else None,
+                        "humidity": row['humidity_percent'],
+                        "rainfall": float(row['rainfall_mm']) if row['rainfall_mm'] else 0,
+                        "windSpeed": float(row['avg_wind_speed_kmh']) if row['avg_wind_speed_kmh'] else 0,
+                        "conditions": row['weather_phenomena'] or "Clear"
+                    }
+                    transformed = transform_weather_data(weather_data)
+                    if transformed:
+                        transformed_results.append(transformed)
+                
+                return transformed_results
                 
             elif interval == "weekly":
-                rows = await conn.fetch("""
-                    SELECT 
-                        DATE_TRUNC('week', date) as week_start,
-                        AVG(avg_temperature_c) as avg_temp,
-                        MIN(min_temperature_c) as min_temp,
-                        MAX(max_temperature_c) as max_temp,
-                        AVG(humidity_percent) as avg_humidity,
-                        SUM(rainfall_mm) as total_rainfall,
-                        AVG(avg_wind_speed_kmh) as avg_wind
-                    FROM water_infrastructure.weather_data
-                    WHERE location = $1 AND date BETWEEN $2 AND $3
-                    GROUP BY week_start
-                    ORDER BY week_start
-                """, location, start_date, end_date)
+                # For weekly, we need to handle location filtering differently
+                if actual_location:
+                    query = """
+                        SELECT 
+                            location,
+                            DATE_TRUNC('week', date) as week_start,
+                            AVG(avg_temperature_c) as avg_temp,
+                            MIN(min_temperature_c) as min_temp,
+                            MAX(max_temperature_c) as max_temp,
+                            AVG(humidity_percent) as avg_humidity,
+                            SUM(rainfall_mm) as total_rainfall,
+                            AVG(avg_wind_speed_kmh) as avg_wind
+                        FROM water_infrastructure.weather_data
+                        WHERE location = $1 AND date BETWEEN $2 AND $3
+                        GROUP BY location, week_start
+                        ORDER BY week_start
+                    """
+                    rows = await conn.fetch(query, actual_location, start_date, end_date)
+                else:
+                    query = """
+                        SELECT 
+                            location,
+                            DATE_TRUNC('week', date) as week_start,
+                            AVG(avg_temperature_c) as avg_temp,
+                            MIN(min_temperature_c) as min_temp,
+                            MAX(max_temperature_c) as max_temp,
+                            AVG(humidity_percent) as avg_humidity,
+                            SUM(rainfall_mm) as total_rainfall,
+                            AVG(avg_wind_speed_kmh) as avg_wind
+                        FROM water_infrastructure.weather_data
+                        WHERE date BETWEEN $1 AND $2
+                        GROUP BY location, week_start
+                        ORDER BY location, week_start
+                    """
+                    rows = await conn.fetch(query, start_date, end_date)
                 
-                return [{
-                    "weekStart": row['week_start'].isoformat(),
-                    "temperature": float(row['avg_temp']) if row['avg_temp'] else None,
-                    "temperatureMin": float(row['min_temp']) if row['min_temp'] else None,
-                    "temperatureMax": float(row['max_temp']) if row['max_temp'] else None,
-                    "humidity": float(row['avg_humidity']) if row['avg_humidity'] else None,
-                    "rainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0,
-                    "windSpeed": float(row['avg_wind']) if row['avg_wind'] else 0
-                } for row in rows]
+                # Transform and filter results
+                transformed_results = []
+                for row in rows:
+                    display_name = get_display_name(row['location'])
+                    if display_name:
+                        transformed_results.append({
+                            "location": display_name,
+                            "weekStart": row['week_start'].isoformat(),
+                            "temperature": float(row['avg_temp']) if row['avg_temp'] else None,
+                            "temperatureMin": float(row['min_temp']) if row['min_temp'] else None,
+                            "temperatureMax": float(row['max_temp']) if row['max_temp'] else None,
+                            "humidity": float(row['avg_humidity']) if row['avg_humidity'] else None,
+                            "rainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0,
+                            "windSpeed": float(row['avg_wind']) if row['avg_wind'] else 0
+                        })
+                
+                return transformed_results
                 
             else:  # monthly
-                rows = await conn.fetch("""
-                    SELECT 
-                        DATE_TRUNC('month', date) as month_start,
-                        AVG(avg_temperature_c) as avg_temp,
-                        MIN(min_temperature_c) as min_temp,
-                        MAX(max_temperature_c) as max_temp,
-                        AVG(humidity_percent) as avg_humidity,
-                        SUM(rainfall_mm) as total_rainfall,
-                        AVG(avg_wind_speed_kmh) as avg_wind
-                    FROM water_infrastructure.weather_data
-                    WHERE location = $1 AND date BETWEEN $2 AND $3
-                    GROUP BY month_start
-                    ORDER BY month_start
-                """, location, start_date, end_date)
+                # For monthly, similar to weekly
+                if actual_location:
+                    query = """
+                        SELECT 
+                            location,
+                            DATE_TRUNC('month', date) as month_start,
+                            AVG(avg_temperature_c) as avg_temp,
+                            MIN(min_temperature_c) as min_temp,
+                            MAX(max_temperature_c) as max_temp,
+                            AVG(humidity_percent) as avg_humidity,
+                            SUM(rainfall_mm) as total_rainfall,
+                            AVG(avg_wind_speed_kmh) as avg_wind
+                        FROM water_infrastructure.weather_data
+                        WHERE location = $1 AND date BETWEEN $2 AND $3
+                        GROUP BY location, month_start
+                        ORDER BY month_start
+                    """
+                    rows = await conn.fetch(query, actual_location, start_date, end_date)
+                else:
+                    query = """
+                        SELECT 
+                            location,
+                            DATE_TRUNC('month', date) as month_start,
+                            AVG(avg_temperature_c) as avg_temp,
+                            MIN(min_temperature_c) as min_temp,
+                            MAX(max_temperature_c) as max_temp,
+                            AVG(humidity_percent) as avg_humidity,
+                            SUM(rainfall_mm) as total_rainfall,
+                            AVG(avg_wind_speed_kmh) as avg_wind
+                        FROM water_infrastructure.weather_data
+                        WHERE date BETWEEN $1 AND $2
+                        GROUP BY location, month_start
+                        ORDER BY location, month_start
+                    """
+                    rows = await conn.fetch(query, start_date, end_date)
                 
-                return [{
-                    "month": row['month_start'].isoformat(),
-                    "temperature": float(row['avg_temp']) if row['avg_temp'] else None,
-                    "temperatureMin": float(row['min_temp']) if row['min_temp'] else None,
-                    "temperatureMax": float(row['max_temp']) if row['max_temp'] else None,
-                    "humidity": float(row['avg_humidity']) if row['avg_humidity'] else None,
-                    "rainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0,
-                    "windSpeed": float(row['avg_wind']) if row['avg_wind'] else 0
-                } for row in rows]
+                # Transform and filter results
+                transformed_results = []
+                for row in rows:
+                    display_name = get_display_name(row['location'])
+                    if display_name:
+                        transformed_results.append({
+                            "location": display_name,
+                            "month": row['month_start'].isoformat(),
+                            "temperature": float(row['avg_temp']) if row['avg_temp'] else None,
+                            "temperatureMin": float(row['min_temp']) if row['min_temp'] else None,
+                            "temperatureMax": float(row['max_temp']) if row['max_temp'] else None,
+                            "humidity": float(row['avg_humidity']) if row['avg_humidity'] else None,
+                            "rainfall": float(row['total_rainfall']) if row['total_rainfall'] else 0,
+                            "windSpeed": float(row['avg_wind']) if row['avg_wind'] else 0
+                        })
+                
+                return transformed_results
                 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1314,8 +1416,11 @@ async def get_weather_statistics(
     """Get weather statistics and correlations with water system performance."""
     try:
         async with pool.acquire() as conn:
+            # Transform display name to actual location for query
+            actual_location = get_actual_location(location) if location else None
+            
             # Get weather stats
-            if location:
+            if actual_location:
                 weather_stats = await conn.fetchrow("""
                     SELECT 
                         COUNT(*) as total_days,
@@ -1327,7 +1432,7 @@ async def get_weather_statistics(
                         COUNT(CASE WHEN rainfall_mm > 0 THEN 1 END) as rainy_days
                     FROM water_infrastructure.weather_data
                     WHERE location = $1
-                """, location)
+                """, actual_location)
             else:
                 weather_stats = await conn.fetchrow("""
                     SELECT 
@@ -1391,14 +1496,21 @@ async def get_weather_locations():
                 ORDER BY location
             """)
             
-            return [{
-                "location": row['location'],
-                "dataPoints": row['data_points'],
-                "dateRange": {
-                    "start": row['first_date'].isoformat(),
-                    "end": row['last_date'].isoformat()
-                }
-            } for row in rows]
+            # Transform and filter locations
+            transformed_results = []
+            for row in rows:
+                display_name = get_display_name(row['location'])
+                if display_name:  # Only include if not filtered out
+                    transformed_results.append({
+                        "location": display_name,
+                        "dataPoints": row['data_points'],
+                        "dateRange": {
+                            "start": row['first_date'].isoformat(),
+                            "end": row['last_date'].isoformat()
+                        }
+                    })
+            
+            return transformed_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
