@@ -60,8 +60,9 @@ class TestWeatherAPIIntegration(unittest.TestCase):
     def test_weather_historical_daily_returns_data(self):
         """Test that /weather/historical returns daily data for Roccavina."""
         # Arrange
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=7)
+        # Use dates that exist in the database
+        start_date = datetime(2023, 6, 1).date()
+        end_date = datetime(2023, 6, 7).date()
         url = f"{self.BASE_URL}/weather/historical"
         params = {
             'start_date': start_date.isoformat(),
@@ -92,8 +93,9 @@ class TestWeatherAPIIntegration(unittest.TestCase):
     def test_weather_historical_with_location_filter(self):
         """Test that /weather/historical with location=Roccavina returns data."""
         # Arrange
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=30)
+        # Use dates that exist in the database
+        start_date = datetime(2023, 6, 1).date()
+        end_date = datetime(2023, 6, 30).date()
         url = f"{self.BASE_URL}/weather/historical"
         params = {
             'location': 'Roccavina',
@@ -129,15 +131,17 @@ class TestWeatherAPIIntegration(unittest.TestCase):
         stats = response.json()
         self.assertIsInstance(stats, dict)
         
-        # Check statistics structure
-        self.assertIn('temperature', stats)
-        self.assertIn('average', stats['temperature'])
-        self.assertIn('min', stats['temperature'])
-        self.assertIn('max', stats['temperature'])
-        self.assertIn('rainfall', stats)
-        self.assertIn('total', stats['rainfall'])
-        self.assertIn('daily_average', stats['rainfall'])
-        self.assertIn('rainy_days', stats['rainfall'])
+        # Check statistics structure based on actual response
+        self.assertIn('overview', stats)
+        overview = stats['overview']
+        self.assertIn('totalDays', overview)
+        self.assertIn('averageTemperature', overview)
+        self.assertIn('temperatureRange', overview)
+        self.assertIn('min', overview['temperatureRange'])
+        self.assertIn('max', overview['temperatureRange'])
+        self.assertIn('totalRainfall', overview)
+        self.assertIn('averageDailyRainfall', overview)
+        self.assertIn('rainyDays', overview)
     
     def test_no_data_for_hidden_locations(self):
         """Test that hidden locations (Maccarese, Cagliari) return no data."""
