@@ -13,7 +13,12 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:coverage:watch": "jest --coverage --watch",
+    "test:coverage:ci": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+    "test:unit": "jest --testMatch='**/*.spec.{js,jsx,ts,tsx}'",
+    "test:int": "jest --testMatch='**/*.int.{js,jsx,ts,tsx}'",
+    "test:e2e": "jest --testMatch='**/*.e2e.{js,jsx,ts,tsx}'"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.20",

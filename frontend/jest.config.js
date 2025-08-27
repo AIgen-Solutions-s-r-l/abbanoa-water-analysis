@@ -15,14 +15,38 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: [
-    'src/components/**/*.{js,jsx,ts,tsx}',
-    '!src/components/**/*.d.ts',
-    '!src/components/**/*.stories.{js,jsx,ts,tsx}',
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
+    '!src/**/__tests__/**/*',
+    '!src/**/*.test.{js,jsx,ts,tsx}',
+    '!src/**/*.spec.{js,jsx,ts,tsx}',
+    '!src/**/*.int.{js,jsx,ts,tsx}',
+    '!src/**/*.e2e.{js,jsx,ts,tsx}',
+    '!src/**/types.{js,jsx,ts,tsx}',
+    '!src/**/index.{js,jsx,ts,tsx}',
+    '!src/middleware.ts',
+    '!src/**/layout.tsx',
+    '!src/**/loading.tsx',
+    '!src/**/error.tsx',
+    '!src/**/not-found.tsx',
   ],
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}',
+    '<rootDir>/src/**/*.(test|spec|int|e2e).{js,jsx,ts,tsx}',
   ],
+  coverageThreshold: {
+    global: {
+      // TODO: Gradually increase these thresholds as more tests are added
+      // Target: lines: 90, branches: 80, functions: 90, statements: 90
+      lines: 14,
+      branches: 9,
+      functions: 9,
+      statements: 13,
+    },
+  },
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
+  coverageDirectory: '<rootDir>/coverage',
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
