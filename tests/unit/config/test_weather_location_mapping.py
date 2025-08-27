@@ -20,10 +20,10 @@ from src.config.weather_location_mapping import (
 class TestWeatherLocationMapping(unittest.TestCase):
     """Test weather location name transformations."""
     
-    def test_get_display_name_for_cagliari(self):
-        """Test that Cagliari is displayed as Roccavina."""
+    def test_get_display_name_for_selargius(self):
+        """Test that Selargius is displayed as Roccavina."""
         # Arrange
-        actual_location = "Cagliari"
+        actual_location = "Selargius"
         
         # Act
         display_name = get_display_name(actual_location)
@@ -34,7 +34,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
     def test_get_display_name_for_hidden_locations(self):
         """Test that hidden locations return None."""
         # Arrange
-        hidden_locations = ["Maccarese", "Selargius"]
+        hidden_locations = ["Maccarese", "Cagliari"]
         
         # Act & Assert
         for location in hidden_locations:
@@ -60,7 +60,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
         actual_location = get_actual_location(display_name)
         
         # Assert
-        assert actual_location == "Cagliari"
+        assert actual_location == "Selargius"
     
     def test_get_actual_location_for_unknown_display_name(self):
         """Test that unknown display names return original value."""
@@ -73,11 +73,11 @@ class TestWeatherLocationMapping(unittest.TestCase):
         # Assert
         assert actual_location == "UnknownDisplay"
     
-    def test_transform_weather_data_for_cagliari(self):
-        """Test transforming weather data for Cagliari."""
+    def test_transform_weather_data_for_selargius(self):
+        """Test transforming weather data for Selargius."""
         # Arrange
         weather_data = {
-            "location": "Cagliari",
+            "location": "Selargius",
             "temperature": 25.5,
             "humidity": 65,
             "conditions": "Sunny"
@@ -101,15 +101,15 @@ class TestWeatherLocationMapping(unittest.TestCase):
             "temperature": 24.0,
             "humidity": 70
         }
-        weather_data_selargius = {
-            "location": "Selargius",
+        weather_data_cagliari = {
+            "location": "Cagliari",
             "temperature": 26.0,
             "humidity": 60
         }
         
         # Act & Assert
         assert transform_weather_data(weather_data_maccarese) is None
-        assert transform_weather_data(weather_data_selargius) is None
+        assert transform_weather_data(weather_data_cagliari) is None
     
     def test_transform_weather_data_with_none_input(self):
         """Test that None input returns None."""
@@ -123,7 +123,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
         """Test that transformation doesn't modify the original data."""
         # Arrange
         original_data = {
-            "location": "Cagliari",
+            "location": "Selargius",
             "temperature": 25.5,
             "humidity": 65
         }
@@ -132,15 +132,15 @@ class TestWeatherLocationMapping(unittest.TestCase):
         transformed = transform_weather_data(original_data)
         
         # Assert
-        assert original_data["location"] == "Cagliari"  # Original unchanged
+        assert original_data["location"] == "Selargius"  # Original unchanged
         assert transformed["location"] == "Roccavina"  # Transformed changed
     
     def test_hidden_locations_set(self):
         """Test that HIDDEN_LOCATIONS contains expected locations."""
         # Assert
         assert "Maccarese" in HIDDEN_LOCATIONS
-        assert "Selargius" in HIDDEN_LOCATIONS
-        assert "Cagliari" not in HIDDEN_LOCATIONS
+        assert "Cagliari" in HIDDEN_LOCATIONS
+        assert "Selargius" not in HIDDEN_LOCATIONS
 
 
 if __name__ == '__main__':
