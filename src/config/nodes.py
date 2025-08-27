@@ -33,33 +33,33 @@ ORIGINAL_NODES = {
         uuid="00000000-0000-0000-0000-000000000001",
         bigquery_id="node-santanna",
         display_name="Sant'Anna",
-        full_name="SELARGIUS NODO VIA SANT ANNA",
+        full_name="CESENA NODO VIA SANT ANNA",
         node_type="distribution",
-        district="Selargius",
-        latitude=39.2547,
-        longitude=9.1642
+        district="Cesena",
+        latitude=44.1385,
+        longitude=12.2486
     ),
     "seneca": NodeConfig(
         node_id="002",
         uuid="00000000-0000-0000-0000-000000000002",
         bigquery_id="node-seneca",
         display_name="Seneca",
-        full_name="SELARGIUS NODO VIA SENECA",
+        full_name="CESENA NODO VIA SENECA",
         node_type="distribution",
-        district="Selargius",
-        latitude=39.2456,
-        longitude=9.1523
+        district="Cesena",
+        latitude=44.1298,
+        longitude=12.2367
     ),
     "selargius_tank": NodeConfig(
         node_id="003",
         uuid="00000000-0000-0000-0000-000000000003",
         bigquery_id="node-serbatoio",
-        display_name="Selargius Tank",
-        full_name="SELARGIUS SERBATOIO",
+        display_name="Cesena Tank",
+        full_name="CESENA SERBATOIO",
         node_type="storage",
-        district="Selargius",
-        latitude=39.2501,
-        longitude=9.1589
+        district="Cesena",
+        latitude=44.1342,
+        longitude=12.2433
     )
 }
 
@@ -70,66 +70,66 @@ NEW_NODES = {
         uuid="00000000-0000-0000-0000-000000215542",
         bigquery_id="node-215542",
         display_name="Distribution 215542",
-        full_name="Selargius Distribution 215542",
+        full_name="Cesena Distribution 215542",
         node_type="distribution",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1278,
+        longitude=12.2315
     ),
     "node_215600": NodeConfig(
         node_id="215600",
         uuid="00000000-0000-0000-0000-000000215600",
         bigquery_id="node-215600",
         display_name="Distribution 215600",
-        full_name="Selargius Distribution 215600",
+        full_name="Cesena Distribution 215600",
         node_type="distribution",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1278,
+        longitude=12.2315
     ),
     "node_273933": NodeConfig(
         node_id="273933",
         uuid="00000000-0000-0000-0000-000000273933",
         bigquery_id="node-273933",
         display_name="Distribution 273933",
-        full_name="Selargius Distribution 273933",
+        full_name="Cesena Distribution 273933",
         node_type="distribution",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1278,
+        longitude=12.2315
     ),
     "node_281492": NodeConfig(
         node_id="281492",
         uuid="00000000-0000-0000-0000-000000281492",
         bigquery_id="node-281492",
         display_name="Monitoring 281492",
-        full_name="Selargius Monitoring 281492",
+        full_name="Cesena Monitoring 281492",
         node_type="monitoring",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1278,
+        longitude=12.2315
     ),
     "node_288399": NodeConfig(
         node_id="288399",
         uuid="00000000-0000-0000-0000-000000288399",
         bigquery_id="node-288399",
         display_name="Monitoring 288399",
-        full_name="Selargius Monitoring 288399",
+        full_name="Cesena Monitoring 288399",
         node_type="monitoring",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1278,
+        longitude=12.2315
     ),
     "node_288400": NodeConfig(
         node_id="288400",
         uuid="00000000-0000-0000-0000-000000288400",
         bigquery_id="node-288400",
         display_name="Monitoring 288400",
-        full_name="Selargius Monitoring 288400",
+        full_name="Cesena Monitoring 288400",
         node_type="monitoring",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1278,
+        longitude=12.2315
     ),
 }
 
@@ -142,9 +142,9 @@ RENAMED_NODES = {
         display_name="TANK01",
         full_name="Storage Tank 01 (11M m³)",
         node_type="storage",
-        district="Selargius",
-        latitude=39.2501,
-        longitude=9.1589
+        district="Cesena",
+        latitude=44.1310,
+        longitude=12.2450
     ),
     "node01": NodeConfig(
         node_id="CENTRO_EST",
@@ -153,9 +153,9 @@ RENAMED_NODES = {
         display_name="NODE01",
         full_name="Distribution Node 01 (1.9M m³)",
         node_type="distribution",
-        district="Selargius",
-        latitude=39.2547,
-        longitude=9.1642
+        district="Cesena",
+        latitude=44.1355,
+        longitude=12.2510
     ),
     "monitor01": NodeConfig(
         node_id="CENTRO_OVEST",
@@ -164,9 +164,9 @@ RENAMED_NODES = {
         display_name="MONITOR01",
         full_name="Monitoring Point 01 (5.2M m³)",
         node_type="monitoring",
-        district="Selargius",
-        latitude=39.2456,
-        longitude=9.1523
+        district="Cesena",
+        latitude=44.1340,
+        longitude=12.2350
     ),
     "monitor02": NodeConfig(
         node_id="CENTRO_NORD",
@@ -175,9 +175,9 @@ RENAMED_NODES = {
         display_name="MONITOR02",
         full_name="Monitoring Point 02 (165K m³)",
         node_type="monitoring",
-        district="Selargius",
-        latitude=39.2238,
-        longitude=9.1422
+        district="Cesena",
+        latitude=44.1400,
+        longitude=12.2430
     )
 }
 
@@ -190,9 +190,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON01",
         full_name="Interconnection Point 01 (Fiori)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2400,
-        longitude=9.1500
+        district="Cesena",
+        latitude=44.1420,
+        longitude=12.2390
     ),
     "intercon02": NodeConfig(
         node_id="Q_GALLUS",
@@ -201,9 +201,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON02",
         full_name="Interconnection Point 02 (Q.Gallus)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2410,
-        longitude=9.1510
+        district="Cesena",
+        latitude=44.1307,
+        longitude=12.2380
     ),
     "intercon03": NodeConfig(
         node_id="Q_MATTEOTTI",
@@ -212,9 +212,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON03",
         full_name="Interconnection Point 03 (Q.Matteotti)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2420,
-        longitude=9.1520
+        district="Cesena",
+        latitude=44.1390,
+        longitude=12.2470
     ),
     "intercon04": NodeConfig(
         node_id="Q_MONSERRATO",
@@ -223,9 +223,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON04",
         full_name="Interconnection Point 04 (Q.Monserrato)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2430,
-        longitude=9.1530
+        district="Cesena",
+        latitude=44.1280,
+        longitude=12.2340
     ),
     "intercon05": NodeConfig(
         node_id="Q_NENNI_SUD",
@@ -234,9 +234,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON05",
         full_name="Interconnection Point 05 (Q.Nenni Sud)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2440,
-        longitude=9.1540
+        district="Cesena",
+        latitude=44.1270,
+        longitude=12.2420
     ),
     "intercon06": NodeConfig(
         node_id="Q_SANTANNA",
@@ -245,9 +245,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON06",
         full_name="Interconnection Point 06 (Q.Sant'Anna)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2450,
-        longitude=9.1550
+        district="Cesena",
+        latitude=44.1380,
+        longitude=12.2350
     ),
     "intercon07": NodeConfig(
         node_id="Q_SARDEGNA",
@@ -256,9 +256,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON07",
         full_name="Interconnection Point 07 (Q.Sardegna)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2460,
-        longitude=9.1560
+        district="Cesena",
+        latitude=44.1390,
+        longitude=12.2490
     ),
     "intercon08": NodeConfig(
         node_id="Q_TRIESTE",
@@ -267,9 +267,9 @@ INTERCONNECTION_NODES = {
         display_name="INTERCON08",
         full_name="Interconnection Point 08 (Q.Trieste)",
         node_type="interconnection",
-        district="Selargius",
-        latitude=39.2470,
-        longitude=9.1570
+        district="Cesena",
+        latitude=44.1361,
+        longitude=12.2520
     )
 }
 
@@ -282,9 +282,9 @@ ZONE_METER_NODES = {
         display_name="ZONE01",
         full_name="Zone Meter 01 (Libertà)",
         node_type="zone_meter",
-        district="Selargius",
-        latitude=39.2480,
-        longitude=9.1580
+        district="Cesena",
+        latitude=44.1280,
+        longitude=12.2390
     ),
     "zone02": NodeConfig(
         node_id="STADIO",
@@ -293,9 +293,9 @@ ZONE_METER_NODES = {
         display_name="ZONE02",
         full_name="Zone Meter 02 (Stadio)",
         node_type="zone_meter",
-        district="Selargius",
-        latitude=39.2490,
-        longitude=9.1590
+        district="Cesena",
+        latitude=44.1310,
+        longitude=12.2520
     )
 }
 

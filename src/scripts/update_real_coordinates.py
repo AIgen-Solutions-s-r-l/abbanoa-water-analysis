@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Update nodes with real SCADA coordinates from Selargius
+Update nodes with real SCADA coordinates from Cesena
 """
 import asyncpg
 import asyncio
@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 
 # Real coordinates from SCADA system
 REAL_COORDINATES = {
-    'NODO VIA GALLUS': {'lat': 39.2507717, 'lon': 9.1519532, 'scada_id': 'ND_PC_00009'},
-    'NODO VIA MATTEOTTI': {'lat': 39.258977, 'lon': 9.1631273, 'scada_id': 'ND_PC_00006'},
-    'NODO VIA NENNI': {'lat': 39.2596188, 'lon': 9.1621939, 'scada_id': 'ND_PC_00007'},
-    'NODO VIA SARDEGNA': {'lat': 39.2577936, 'lon': 9.1653232, 'scada_id': 'ND_PC_00008'},
-    'NODO VIA TRIESTE': {'lat': 39.2561181, 'lon': 9.1701813, 'scada_id': 'ND_PC_00005'},
+    'NODO VIA GALLUS': {'lat': 44.1307717, 'lon': 12.2380532, 'scada_id': 'ND_PC_00009'},
+    'NODO VIA MATTEOTTI': {'lat': 44.138977, 'lon': 12.2470273, 'scada_id': 'ND_PC_00006'},
+    'NODO VIA NENNI': {'lat': 44.1396188, 'lon': 12.2460939, 'scada_id': 'ND_PC_00007'},
+    'NODO VIA SARDEGNA': {'lat': 44.1377936, 'lon': 12.2490232, 'scada_id': 'ND_PC_00008'},
+    'NODO VIA TRIESTE': {'lat': 44.1361181, 'lon': 12.2520813, 'scada_id': 'ND_PC_00005'},
 }
 
 # Database configuration
