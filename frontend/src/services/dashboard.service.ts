@@ -74,7 +74,7 @@ export class DashboardService {
     return {
       operationalPercentage: 95, // Calculate based on active nodes
       activeNodes: data.network.active_nodes || 0,
-      totalNodes: data.nodes.length || 0,
+      totalNodes: data.nodes?.length || 0,
       lastMaintenance: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       nextMaintenance: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       tenantId: 'default'
