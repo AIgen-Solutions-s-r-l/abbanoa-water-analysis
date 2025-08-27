@@ -21,7 +21,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 281492 - Primary Monitoring Station",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1278, longitude=12.2315),
                 ),
@@ -33,7 +33,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 211514 - Secondary Monitoring Station",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1285, longitude=12.2330),
                 ),
@@ -45,7 +45,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 288400 - Distribution Point A",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1290, longitude=12.2335),
                 ),
@@ -57,7 +57,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 288399 - Distribution Point B",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1295, longitude=12.2340),
                 ),
@@ -69,7 +69,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 215542 - Network Junction C",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1300, longitude=12.2345),
                 ),
@@ -81,7 +81,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 273933 - Supply Control Point",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1305, longitude=12.2350),
                 ),
@@ -93,7 +93,7 @@ class StaticMonitoringNodeRepository(IMonitoringNodeRepository):
                 name="NODE 215600 - Pressure Regulation Station",
                 node_type="SENSOR",
                 location=NodeLocation(
-                    site_name="Cesena",
+                    site_name="Roccavina",
                     area="Emilia-Romagna",
                     coordinates=Coordinates(latitude=44.1310, longitude=12.2355),
                 ),

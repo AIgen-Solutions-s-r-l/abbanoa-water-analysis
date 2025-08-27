@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Update nodes with real SCADA coordinates from Cesena
+Update nodes with real SCADA coordinates from Roccavina
 """
 import asyncpg
 import asyncio

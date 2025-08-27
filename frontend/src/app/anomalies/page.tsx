@@ -81,11 +81,11 @@ const generateCoordinates = (nodeName: string) => {
 const generateRealisticAnomalies = (count: number) => {
   const types = ['Pressure Drop', 'Flow Anomaly', 'Quality Alert', 'Potential Leak', 'System Failure'];
   const locations = [
-    'Cesena Centro Hub',
-    'Cesena Nord Distribution', 
-    'Cesena Sud Zone',
-    'Cesena Est Network',
-    'Cesena Ovest Monitoring'
+    'Roccavina Centro Hub',
+    'Roccavina Nord Distribution', 
+    'Roccavina Sud Zone',
+    'Roccavina Est Network',
+    'Roccavina Ovest Monitoring'
   ];
   const severities = ['critical', 'high', 'medium', 'low'];
 
