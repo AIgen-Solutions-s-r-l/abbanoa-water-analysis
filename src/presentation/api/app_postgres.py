@@ -19,6 +19,10 @@ from src.config.weather_location_mapping import (
     get_actual_location,
     transform_weather_data
 )
+from src.utils.weather_date_helper import (
+    adjust_date_range_to_available,
+    get_default_date_range_for_interval
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1228,16 +1232,27 @@ async def get_historical_weather(
     """Get historical weather data with optional aggregation."""
     try:
         async with pool.acquire() as conn:
-            # Default date range if not provided
-            if not end_date:
-                end_date = datetime.now().date()
-            else:
+            # Parse dates if provided
+            if end_date:
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-                
-            if not start_date:
-                start_date = (datetime.now() - timedelta(days=30)).date()
-            else:
+            if start_date:
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            
+            # If no dates provided, use intelligent defaults based on available data
+            if not start_date or not end_date:
+                # Get default range based on interval
+                default_start, default_end = get_default_date_range_for_interval(
+                    interval if interval in ['week', 'month', 'year'] else 'month'
+                )
+                if not start_date:
+                    start_date = default_start
+                if not end_date:
+                    end_date = default_end
+            
+            # Adjust dates to available data range
+            start_date, end_date = await adjust_date_range_to_available(
+                conn, start_date, end_date
+            )
             
             # Transform display name to actual location for query
             actual_location = get_actual_location(location) if location else None
