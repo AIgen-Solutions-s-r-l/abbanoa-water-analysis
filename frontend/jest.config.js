@@ -39,10 +39,11 @@ const customJestConfig = {
     global: {
       // TODO: Gradually increase these thresholds as more tests are added
       // Target: lines: 90, branches: 80, functions: 90, statements: 90
-      lines: 14,
-      branches: 9,
-      functions: 9,
-      statements: 13,
+      // Current: lines: 16.68%, branches: 12.99%, functions: 12.13%, statements: 16.16%
+      lines: 16,
+      branches: 12,
+      functions: 12,
+      statements: 16,
     },
   },
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],

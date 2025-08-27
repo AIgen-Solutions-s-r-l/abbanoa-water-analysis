@@ -78,10 +78,11 @@ jobs:
           
           # Check against thresholds (TODO: Gradually increase these)
           # Target thresholds: lines: 90, branches: 80, functions: 90, statements: 90
-          THRESHOLD_LINES=15
-          THRESHOLD_BRANCHES=10
-          THRESHOLD_FUNCTIONS=10
-          THRESHOLD_STATEMENTS=15
+          # Current coverage: lines: 16.68%, branches: 12.99%, functions: 12.13%, statements: 16.16%
+          THRESHOLD_LINES=16
+          THRESHOLD_BRANCHES=12
+          THRESHOLD_FUNCTIONS=12
+          THRESHOLD_STATEMENTS=16
           
           if (( $(echo "$LINES < $THRESHOLD_LINES" | bc -l) )); then
             echo "❌ Line coverage ($LINES%) is below threshold ($THRESHOLD_LINES%)"
@@ -127,16 +128,16 @@ jobs:
             
             | Type | Coverage | Current Threshold | Target Threshold |
             |------|----------|-------------------|------------------|
-            | Lines | ${coverage.total.lines.pct}% | 15% | 90% |
-            | Branches | ${coverage.total.branches.pct}% | 10% | 80% |
-            | Functions | ${coverage.total.functions.pct}% | 10% | 90% |
-            | Statements | ${coverage.total.statements.pct}% | 15% | 90% |
+            | Lines | ${coverage.total.lines.pct}% | 16% | 90% |
+            | Branches | ${coverage.total.branches.pct}% | 12% | 80% |
+            | Functions | ${coverage.total.functions.pct}% | 12% | 90% |
+            | Statements | ${coverage.total.statements.pct}% | 16% | 90% |
             
             ${
-              coverage.total.lines.pct >= 15 &&
-              coverage.total.branches.pct >= 10 &&
-              coverage.total.functions.pct >= 10 &&
-              coverage.total.statements.pct >= 15
+              coverage.total.lines.pct >= 16 &&
+              coverage.total.branches.pct >= 12 &&
+              coverage.total.functions.pct >= 12 &&
+              coverage.total.statements.pct >= 16
                 ? '✅ All current coverage thresholds met!'
                 : '❌ Some coverage thresholds not met!'
             }
