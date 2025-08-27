@@ -81,30 +81,48 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
       console.log('🔧 Generating additional zones from node data...');
       
       // Group nodes by geographic/functional areas
+      const centralBusinessNodes = nodesData.filter((n: any) => n.node_id?.includes('211') || n.node_name?.toLowerCase().includes('central'));
+      const residentialNorthNodes = nodesData.filter((n: any) => n.node_id?.includes('215') || n.node_name?.toLowerCase().includes('residential'));
+      const industrialNodes = nodesData.filter((n: any) => n.node_id?.includes('273') || n.node_id?.includes('281'));
+      const residentialAreaNodes = nodesData.filter((n: any) => n.node_id?.includes('287') || n.node_id?.includes('288'));
+      
+      // Get all nodes that are already assigned to other groups
+      const assignedNodes = new Set([
+        ...centralBusinessNodes,
+        ...residentialNorthNodes,
+        ...industrialNodes,
+        ...residentialAreaNodes
+      ]);
+      
+      // Distribution network gets remaining nodes
+      const distributionNodes = nodesData.filter((n: any) => 
+        n.node_id?.includes('DIST') || !assignedNodes.has(n)
+      );
+      
       const nodeGroups = [
         { 
           name: 'Central Business District', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('211') || n.node_name?.toLowerCase().includes('central')),
+          nodes: centralBusinessNodes,
           baseStatus: 'optimal' 
         },
         { 
           name: 'Residential North', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('215') || n.node_name?.toLowerCase().includes('residential')),
+          nodes: residentialNorthNodes,
           baseStatus: 'warning' 
         },
         { 
           name: 'Industrial District', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('273') || n.node_id?.includes('281')),
+          nodes: industrialNodes,
           baseStatus: 'optimal' 
         },
         { 
           name: 'Residential Area', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('287') || n.node_id?.includes('288')),
+          nodes: residentialAreaNodes,
           baseStatus: 'critical' 
         },
         { 
           name: 'Distribution Network', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('DIST') || !nodeGroups.some(g => g.nodes.includes(n))),
+          nodes: distributionNodes,
           baseStatus: 'optimal' 
         }
       ];
