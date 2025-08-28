@@ -4,8 +4,9 @@ SQLAlchemy models for the water infrastructure database.
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, String, Float, DateTime, Boolean, Integer, Text, JSON
+from sqlalchemy import Column, String, Float, DateTime, Boolean, Integer, Text
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.postgresql import JSONB
 
 Base = declarative_base()
 
@@ -24,7 +25,7 @@ class Node(Base):
     installation_date = Column(DateTime)
     last_maintenance_date = Column(DateTime)
     is_active = Column(Boolean, default=True)
-    node_metadata = Column(JSON)  # Using JSON instead of JSONB for compatibility
+    node_metadata = Column(JSONB)  # Using JSONB for PostgreSQL
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -42,7 +43,7 @@ class SensorReading(Base):
     total_flow = Column(Float)
     quality_score = Column(Float)
     is_interpolated = Column(Boolean, default=False)
-    raw_data = Column(JSON)  # Using JSON instead of JSONB for compatibility
+    raw_data = Column(JSONB)  # Using JSONB for PostgreSQL
 
 
 class Anomaly(Base):
@@ -62,5 +63,5 @@ class Anomaly(Base):
     detection_method = Column(String(50))
     is_confirmed = Column(Boolean, default=False)
     resolved_at = Column(DateTime)
-    anomaly_metadata = Column(JSON)  # Using JSON instead of JSONB for compatibility
+    anomaly_metadata = Column(JSONB)  # Using JSONB for PostgreSQL
     created_at = Column(DateTime, default=datetime.utcnow)

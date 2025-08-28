@@ -19,9 +19,9 @@ module.exports = {
       time: true
     },
     {
-      name: 'abbanoa-weather-api',
+      name: 'abbanoa-postgres-api',
       cwd: '/root/abbanoa-water-analysis',
-      script: 'test_weather_server.py',
+      script: 'sqlalchemy_server.py',
       interpreter: '/root/abbanoa-water-analysis/venv/bin/python',
       env: {
         PYTHONPATH: '/root/abbanoa-water-analysis',
@@ -31,9 +31,9 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      error_file: '/root/abbanoa-water-analysis/logs/weather-api-error.log',
-      out_file: '/root/abbanoa-water-analysis/logs/weather-api-out.log',
-      log_file: '/root/abbanoa-water-analysis/logs/weather-api-combined.log',
+      error_file: '/root/abbanoa-water-analysis/logs/postgres-api-error.log',
+      out_file: '/root/abbanoa-water-analysis/logs/postgres-api-out.log',
+      log_file: '/root/abbanoa-water-analysis/logs/postgres-api-combined.log',
       time: true
     }
   ]

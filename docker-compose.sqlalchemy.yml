@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  sqlalchemy-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.sqlalchemy
+    container_name: abbanoa-sqlalchemy-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    networks:
+      - abbanoa-water-analysis_abbanoa-dev-network
+
+    restart: unless-stopped
+
+networks:
+  abbanoa-water-analysis_abbanoa-dev-network:
+    external: true

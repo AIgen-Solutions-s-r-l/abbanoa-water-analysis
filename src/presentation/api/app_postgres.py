@@ -44,8 +44,8 @@ app.add_middleware(
 
 # PostgreSQL connection details from environment
 POSTGRES_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST", "localhost"),
-    "port": int(os.getenv("POSTGRES_PORT", 5434)),
+    "host": os.getenv("POSTGRES_HOST", "172.17.0.1"),  # Docker host IP
+    "port": int(os.getenv("POSTGRES_PORT", 5432)),
     "database": os.getenv("POSTGRES_DB", "abbanoa_processing"),
     "user": os.getenv("POSTGRES_USER", "abbanoa_user"),
     "password": os.getenv("POSTGRES_PASSWORD", "abbanoa_secure_pass"),
@@ -97,6 +97,16 @@ async def root():
         "version": "1.0.0-local",
         "database": "PostgreSQL"
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "src.presentation.api.app_postgres:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
 
 
 @app.get("/health")
@@ -744,7 +754,7 @@ async def get_consumption_analytics():
         from src.infrastructure.database.consumption_service import ConsumptionService, ConsumptionServiceError
         
         # Get database URL from environment or use default
-        database_url = "postgresql://abbanoa_user:abbanoa_secure_pass@localhost:5432/abbanoa_db"
+        database_url = "postgresql://abbanoa_user:abbanoa_secure_pass@localhost:5432/abbanoa_processing"
         consumption_service = ConsumptionService(database_url)
         
         return consumption_service.get_consumption_analytics()
