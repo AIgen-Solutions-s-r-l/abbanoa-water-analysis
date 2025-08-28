@@ -1,5 +1,47 @@
 # Changelog
 
+## [v2.5.0.0] - 2025-08-28
+
+### Added
+- 🏗️ feat(project): comprehensive project structure cleanup and organization
+  - Consolidate 5 separate requirements files into single requirements.txt
+  - Organize documentation into docs/ directory with releases/ subdirectory
+  - Move Docker configurations to docker/ directory
+  - Consolidate shell scripts into scripts/ directory
+  - Organize SQL files into sql/ directory
+  - Move server implementations to src/servers/
+  - Move utility scripts to src/utils/
+  - Move configuration files to config/ directory
+  - Move legacy code to docs/legacy/ for reference
+  - Move mock-backend to tests/ for testing purposes
+  - Create modular structure with src/presentation/api/modules/
+  - Add comprehensive project cleanup summary documentation
+
+### Changed
+- ♻️ refactor(project): comprehensive project structure cleanup and organization
+  - Reduce root directory files by 75% (from ~60 to ~15 files)
+  - Refactor app_postgres.py from 1853 to 132 lines (under 500 limit)
+  - Extract consumption routes to modular structure
+  - Update all file paths and references throughout the project
+  - Consolidate dependencies with deduplication and clear sections
+
+### Fixed
+- 🔧 fix(qa): resolve all critical QA blocking issues
+  - Fix CI/CD pipeline: update requirements references in .github/workflows/ci-efficiency.yml
+  - Fix Docker build: update requirements.sqlalchemy.txt to requirements.txt in docker/Dockerfile.sqlalchemy
+  - Fix script references: update file paths in config/ecosystem.config.js and scripts/setup_real_weather.sh
+  - Fix documentation: update requirements references in tests/README.md and docs/PROCESSING_SERVICES.md
+  - Fix protocol compliance: refactor app_postgres.py from 1853 to 132 lines (under 500 limit)
+  - Verify dependencies: confirm sqlalchemy and all requirements are properly included
+
+### Technical
+- ✨ feat: create modular architecture with src/presentation/api/modules/
+- ✨ feat: implement Single Responsibility Principle (SRP) across all modules
+- 🔧 chore: update all configuration files to reflect new structure
+- 📦 feat: consolidate requirements with clear sections and deduplication
+- 🧹 chore: remove temporary files and cache directories
+- 📚 docs: comprehensive project cleanup summary and migration guide
+
 ## [v2.4.0.0] - 2025-08-28
 
 ### Added
