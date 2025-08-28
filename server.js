@@ -440,6 +440,99 @@ app.get('/api/v1/dashboard/metrics', authenticateToken, (req, res) => {
   });
 });
 
+// Dashboard summary endpoint for enhanced overview
+app.get('/api/v1/dashboard/summary', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      overview: {
+        totalConsumption: 1250000,
+        activeConnections: 3847,
+        anomalies: 12,
+        efficiency: 87.5,
+        lastUpdate: new Date().toISOString()
+      },
+      metrics: {
+        flowRate: {
+          current: 245.8,
+          average: 238.2,
+          trend: 'stable'
+        },
+        pressure: {
+          current: 3.2,
+          average: 3.1,
+          trend: 'stable'
+        },
+        quality: {
+          ph: 7.2,
+          chlorine: 1.8,
+          turbidity: 0.5
+        }
+      },
+      alerts: [
+        {
+          id: 'alert_001',
+          type: 'pressure',
+          severity: 'warning',
+          message: 'Low pressure detected in Zone 2',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          resolved: false
+        },
+        {
+          id: 'alert_002',
+          type: 'flow',
+          severity: 'info',
+          message: 'Unusual flow pattern in Industrial District',
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          resolved: true
+        }
+      ],
+      zones: [
+        {
+          id: 'zone_001',
+          name: 'Central Business District',
+          status: 'optimal',
+          pressure: 3.2,
+          flowRate: 45.2,
+          nodeCount: 15
+        },
+        {
+          id: 'zone_002',
+          name: 'Residential North',
+          status: 'warning',
+          pressure: 2.8,
+          flowRate: 52.1,
+          nodeCount: 23
+        },
+        {
+          id: 'zone_003',
+          name: 'Industrial District',
+          status: 'optimal',
+          pressure: 3.5,
+          flowRate: 78.3,
+          nodeCount: 8
+        },
+        {
+          id: 'zone_004',
+          name: 'Residential Area',
+          status: 'critical',
+          pressure: 2.2,
+          flowRate: 41.2,
+          nodeCount: 31
+        },
+        {
+          id: 'zone_005',
+          name: 'Distribution Network',
+          status: 'optimal',
+          pressure: 3.0,
+          flowRate: 89.7,
+          nodeCount: 42
+        }
+      ]
+    }
+  });
+});
+
 // Mock pressure zones endpoint
 app.get('/api/v1/pressure/zones', (req, res) => {
   res.json({
