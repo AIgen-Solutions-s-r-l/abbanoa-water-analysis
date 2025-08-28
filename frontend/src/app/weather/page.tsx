@@ -106,7 +106,7 @@ const WeatherAnalyticsPage = () => {
         setError(null);
         
         // Fetch locations
-        const locationsRes = await fetch('http://localhost:8000/weather/locations');
+        const locationsRes = await fetch('/api/weather/locations');
         if (!locationsRes.ok) {
           throw new Error(`Failed to fetch locations: ${locationsRes.status}`);
         }
@@ -115,8 +115,8 @@ const WeatherAnalyticsPage = () => {
 
         // Fetch current weather
         const currentUrl = selectedLocation === 'all' 
-          ? 'http://localhost:8000/weather/current'
-          : `http://localhost:8000/weather/current?location=${selectedLocation}`;
+          ? '/api/weather/current'
+          : `/api/weather/current?location=${selectedLocation}`;
         const currentRes = await fetch(currentUrl);
         if (!currentRes.ok) {
           throw new Error(`Failed to fetch current weather: ${currentRes.status}`);
@@ -137,7 +137,7 @@ const WeatherAnalyticsPage = () => {
         }
         
         // Build the URL with optional location parameter
-        let historicalUrl = `http://localhost:8000/weather/historical?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}&interval=${interval}`;
+        let historicalUrl = `/api/weather/historical?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}&interval=${interval}`;
         if (selectedLocation !== 'all') {
           historicalUrl += `&location=${selectedLocation}`;
         }
@@ -164,8 +164,8 @@ const WeatherAnalyticsPage = () => {
 
         // Fetch statistics
         const statsUrl = selectedLocation === 'all'
-          ? 'http://localhost:8000/weather/statistics'
-          : `http://localhost:8000/weather/statistics?location=${selectedLocation}`;
+          ? '/api/weather/statistics'
+          : `/api/weather/statistics?location=${selectedLocation}`;
         const statsRes = await fetch(statsUrl);
         if (!statsRes.ok) {
           throw new Error(`Failed to fetch statistics: ${statsRes.status}`);
@@ -174,7 +174,7 @@ const WeatherAnalyticsPage = () => {
         setStatistics(statsData);
 
         // Fetch impact analysis
-        const impactRes = await fetch('/api/proxy/v1/weather/impact-analysis');
+        const impactRes = await fetch('/api/weather/impact-analysis');
         if (!impactRes.ok) {
           throw new Error(`Failed to fetch impact analysis: ${impactRes.status}`);
         }
