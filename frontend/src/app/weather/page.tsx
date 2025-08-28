@@ -106,7 +106,7 @@ const WeatherAnalyticsPage = () => {
         setError(null);
         
         // Fetch locations
-        const locationsRes = await fetch('/api/proxy/v1/weather/locations');
+        const locationsRes = await fetch('http://localhost:8000/weather/locations');
         if (!locationsRes.ok) {
           throw new Error(`Failed to fetch locations: ${locationsRes.status}`);
         }
@@ -115,8 +115,8 @@ const WeatherAnalyticsPage = () => {
 
         // Fetch current weather
         const currentUrl = selectedLocation === 'all' 
-          ? '/api/proxy/v1/weather/current'
-          : `/api/proxy/v1/weather/current?location=${selectedLocation}`;
+          ? 'http://localhost:8000/weather/current'
+          : `http://localhost:8000/weather/current?location=${selectedLocation}`;
         const currentRes = await fetch(currentUrl);
         if (!currentRes.ok) {
           throw new Error(`Failed to fetch current weather: ${currentRes.status}`);
@@ -137,7 +137,7 @@ const WeatherAnalyticsPage = () => {
         }
         
         // Build the URL with optional location parameter
-        let historicalUrl = `/api/proxy/v1/weather/historical?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}&interval=${interval}`;
+        let historicalUrl = `http://localhost:8000/weather/historical?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}&interval=${interval}`;
         if (selectedLocation !== 'all') {
           historicalUrl += `&location=${selectedLocation}`;
         }
@@ -164,8 +164,8 @@ const WeatherAnalyticsPage = () => {
 
         // Fetch statistics
         const statsUrl = selectedLocation === 'all'
-          ? '/api/proxy/v1/weather/statistics'
-          : `/api/proxy/v1/weather/statistics?location=${selectedLocation}`;
+          ? 'http://localhost:8000/weather/statistics'
+          : `http://localhost:8000/weather/statistics?location=${selectedLocation}`;
         const statsRes = await fetch(statsUrl);
         if (!statsRes.ok) {
           throw new Error(`Failed to fetch statistics: ${statsRes.status}`);

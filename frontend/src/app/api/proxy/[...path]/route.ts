@@ -42,7 +42,7 @@ async function proxyRequest(
   try {
     // Reconstruct the path
     const path = pathSegments.join('/');
-    const url = `${BACKEND_URL}/api/${path}`;
+    const url = `${BACKEND_URL}/${path}`;
     
     // Get headers from the original request
     const headers: Record<string, string> = {};
