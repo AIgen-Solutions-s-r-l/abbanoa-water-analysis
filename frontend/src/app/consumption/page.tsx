@@ -687,7 +687,7 @@ export default function ConsumptionAnalyticsPage() {
               </div>
             </div>
             <div className="space-y-4">
-              {anomalies.map((anomaly) => (
+              {(anomalies || []).map((anomaly) => (
                 <div
                   key={anomaly.anomaly_id}
                   className={`border rounded-lg p-4 ${
