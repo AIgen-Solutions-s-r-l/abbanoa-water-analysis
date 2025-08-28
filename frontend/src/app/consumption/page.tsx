@@ -15,7 +15,8 @@ import {
   BarChart3Icon,
   LineChartIcon,
   PieChartIcon,
-  ActivityIcon
+  ActivityIcon,
+  Clock
 } from 'lucide-react';
 import {
   LineChart,
@@ -230,7 +231,7 @@ export default function ConsumptionAnalyticsPage() {
       {analyticsData.data_metadata && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
           <div className="flex items-center">
-            <ClockIcon className="w-5 h-5 text-blue-600 mr-2" />
+            <Clock className="w-5 h-5 text-blue-600 mr-2" />
             <div>
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 Historical Data Source
