@@ -107,7 +107,7 @@ function hasRequiredRole(userRole: UserRole, requiredRole: UserRole): boolean {
 }
 
 // Helper function to check permissions (simplified)
-function hasRequiredPermissions(user: any, requiredPermissions: any[]): boolean {
+function hasRequiredPermissions(user: { children: React.ReactNode }, requiredPermissions: { children: React.ReactNode }[]): boolean {
   // This is a simplified implementation
   // In a real app, you'd check against actual user permissions
   
@@ -130,7 +130,7 @@ function hasRequiredPermissions(user: any, requiredPermissions: any[]): boolean 
 export function withAuth<T extends object>(
   Component: React.ComponentType<T>,
   requiredRole?: UserRole,
-  requiredPermissions?: any[]
+  requiredPermissions?: { children: React.ReactNode }[]
 ) {
   return function AuthenticatedComponent(props: T) {
     return (
@@ -159,7 +159,7 @@ export function usePermissions() {
     return hasRequiredPermissions(user, [{ resource, action }]);
   };
 
-  const canAccess = (requiredRole?: UserRole, requiredPermissions?: any[]) => {
+  const canAccess = (requiredRole?: UserRole, requiredPermissions?: { children: React.ReactNode }[]) => {
     if (!isAuthenticated || !user) return false;
     
     if (requiredRole && !hasRequiredRole(user.role, requiredRole)) {

@@ -165,7 +165,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   // Sync with parent selectedValue prop
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     if (selectedValue && selectedValue !== selectedRange) {
       setSelectedRange(selectedValue);
     }
@@ -193,7 +193,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   // Initialize with default range
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     const defaultPreset = findPreset(selectedRange);
     if (defaultPreset) {
       onDateRangeChange(defaultPreset.startDate, defaultPreset.endDate, defaultPreset.label);

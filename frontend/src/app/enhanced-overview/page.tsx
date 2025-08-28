@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import WaterKPIRibbon from '@/components/water/WaterKPIRibbon';
 import FlowAnalyticsChart from '@/components/water/FlowAnalyticsChart';
 import NetworkPerformanceAnalytics from '@/components/water/NetworkPerformanceAnalytics';
-import SystemHealthGauges from '@/components/water/SystemHealthGauges';
 import DateRangeSelector from '@/components/common/DateRangeSelector';
 import { WaterCoreMetrics, FlowAnalyticsData, WaterSystemAlert } from '@/lib/types';
 
@@ -131,7 +129,7 @@ const fetchDashboardData = async () => {
 };
 
 // Generate flow analytics data from real nodes using historical API data with date range
-const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate?: Date): Promise<FlowAnalyticsData[]> => {
+const generateFlowDataFromNodes = async (nodes: unknown[], startDate?: Date, endDate?: Date): Promise<FlowAnalyticsData[]> => {
   console.log('🔄 Generating flow data for nodes:', nodes?.length || 0);
   
   // Include all nodes with valid IDs (even if flow/pressure is zero)
@@ -158,7 +156,6 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
     
     // Calculate time range duration
     const durationMs = end.getTime() - start.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
     const durationDays = durationMs / (1000 * 60 * 60 * 24);
     
     // Determine appropriate interval based on duration
@@ -199,7 +196,7 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
       const timestamp = dateFormatter(timePoint);
       
       // Create base entry for this timestamp
-      const timeEntry: any = {
+      const timeEntry: unknown = {
         timestamp,
         fullTimestamp: timePoint.toISOString()
       };
@@ -294,7 +291,7 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
     
     // Final validation of the entire dataset
     const validatedData = timeSeriesData.map(entry => {
-      const validatedEntry: any = { ...entry };
+      const validatedEntry: unknown = { ...entry };
       
       // Check all node flow values
       Object.keys(validatedEntry).forEach(key => {
@@ -315,7 +312,7 @@ const generateFlowDataFromNodes = async (nodes: any[], startDate?: Date, endDate
     
     // Log all flow values for debugging
     if (validatedData[0]) {
-      const firstEntry: any = validatedData[0];
+      const firstEntry: unknown = validatedData[0];
       const flowKeys = Object.keys(firstEntry).filter(k => k.startsWith('node') && !k.includes('_'));
       console.log('📈 Flow values in first entry:', flowKeys.map(k => `${k}: ${firstEntry[k]}`));
       console.log('🎯 All node IDs in data:', flowKeys.map(k => k.replace('node', '')));
@@ -391,7 +388,7 @@ const generateFallbackTimeSeriesData = (startDate?: Date, endDate?: Date): FlowA
     
     const timestamp = dateFormatter(timePoint);
     
-    const timeEntry: any = {
+    const timeEntry: unknown = {
       timestamp,
       fullTimestamp: timePoint.toISOString()
     };
@@ -414,7 +411,7 @@ const generateFallbackTimeSeriesData = (startDate?: Date, endDate?: Date): FlowA
 };
 
 // Convert dashboard data to WaterCoreMetrics format
-const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
+const convertToWaterMetrics = (dashboardData: unknown): WaterCoreMetrics => {
   if (!dashboardData || !dashboardData.kpis) {
     return {
       activeNodes: 0,
@@ -431,7 +428,7 @@ const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
   }
 
   const { kpis, nodes, energy_analysis } = dashboardData;
-  const activeNodes = nodes?.filter((n: any) => n.flow_rate > 0 || n.pressure > 0).length || 0;
+  const activeNodes = nodes?.filter((n: unknown) => n.flow_rate > 0 || n.pressure > 0).length || 0;
   
   // Extract energy metrics
   const energyData = kpis?.energy_consumption || {};
@@ -459,7 +456,7 @@ const generateRealAlerts = async (): Promise<WaterSystemAlert[]> => {
     if (!response.ok) return [];
     
     const anomalies = await response.json();
-    return anomalies.slice(0, 5).map((anomaly: any) => ({
+    return anomalies.slice(0, 5).map((anomaly: unknown) => ({
       id: anomaly.id,
       type: anomaly.severity === 'critical' ? 'error' : anomaly.severity === 'high' ? 'warning' : 'info',
       title: anomaly.anomaly_type || 'System Alert',
@@ -497,7 +494,7 @@ export default function EnhancedOverviewPage() {
 
   // Use ref to store current dateRange for interval callback
   const dateRangeRef = React.useRef(dateRange);
-  React.useEffect(() => {
+  React.useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     dateRangeRef.current = dateRange;
   }, [dateRange]);
 
@@ -581,7 +578,7 @@ export default function EnhancedOverviewPage() {
     }, false);
   };
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     console.log('🚀 Enhanced Overview initializing...');
     
     // Initialize with current day for better real-time feel

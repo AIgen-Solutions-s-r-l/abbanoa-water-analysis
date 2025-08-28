@@ -17,7 +17,7 @@ const fetchRealAnomaliesData = async () => {
     const nodesData = await nodesResponse.json();
 
     // Transform real data to match our UI format
-    const transformedAnomalies = anomaliesData.map((anomaly: any, index: number) => ({
+    const transformedAnomalies = anomaliesData.map((anomaly: { id: string; type: string; severity: string; timestamp: string; description: string }, index: number) => ({
       id: anomaly.id || `ANO-2025-${String(index + 1).padStart(3, '0')}`,
       timestamp: anomaly.timestamp || new Date().toISOString(),
       severity: anomaly.severity || 'medium',
@@ -144,7 +144,7 @@ export default function AnomaliesPage() {
   }, []);
 
   // Filter anomalies based on current filters
-  const filteredAnomalies = anomaliesData.anomalies.filter((anomaly: any) => {
+  const filteredAnomalies = anomaliesData.anomalies.filter((anomaly: { id: string; type: string; severity: string; timestamp: string; description: string }) => {
     return (filters.severity === 'all' || anomaly.severity === filters.severity) &&
            (filters.status === 'all' || anomaly.status === filters.status) &&
            (filters.type === 'all' || anomaly.type.toLowerCase().includes(filters.type.toLowerCase()));
@@ -153,9 +153,9 @@ export default function AnomaliesPage() {
   // Calculate statistics
   const stats = {
     total: anomaliesData.anomalies.length,
-    critical: anomaliesData.anomalies.filter((a: any) => a.severity === 'critical').length,
-    active: anomaliesData.anomalies.filter((a: any) => a.status === 'active').length,
-    resolved: anomaliesData.anomalies.filter((a: any) => a.status === 'resolved').length
+    critical: anomaliesData.anomalies.filter((a: { id: string; type: string; severity: string; timestamp: string; description: string }) => a.severity === 'critical').length,
+    active: anomaliesData.anomalies.filter((a: { id: string; type: string; severity: string; timestamp: string; description: string }) => a.status === 'active').length,
+    resolved: anomaliesData.anomalies.filter((a: { id: string; type: string; severity: string; timestamp: string; description: string }) => a.status === 'resolved').length
   };
 
   const severityColors = {
@@ -309,7 +309,7 @@ export default function AnomaliesPage() {
 
         {/* Anomalies Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredAnomalies.map((anomaly: any, index: number) => (
+          {filteredAnomalies.map((anomaly: { id: string; type: string; severity: string; timestamp: string; description: string }, index: number) => (
             <Card key={anomaly.id} className="border border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

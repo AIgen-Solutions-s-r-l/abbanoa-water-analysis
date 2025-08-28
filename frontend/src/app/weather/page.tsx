@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { 
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -150,7 +149,7 @@ const WeatherAnalyticsPage = () => {
         console.log('📊 Historical weather data:', historicalData);
         
         // Transform the data to ensure it has the right structure
-        const transformedData = Array.isArray(historicalData) ? historicalData.map((item: any) => ({
+        const transformedData = Array.isArray(historicalData) ? historicalData.map((item: { location?: string }) => ({
           date: item.date || item.weekStart || item.month,
           temperature: item.avg_temperature_c || item.temperature || 0,
           temperatureMin: item.min_temperature_c || item.temperatureMin || 0,
@@ -373,7 +372,7 @@ const WeatherAnalyticsPage = () => {
                   <div>
                     <p className="text-sm text-gray-500">Total Rainfall</p>
                     <p className="text-2xl font-bold">
-                      {statistics.overview.totalRainfall.toFixed(1)}mm
+                      {statistics?.overview?.totalRainfall.toFixed(1)}mm
                     </p>
                   </div>
                   <div>
@@ -407,7 +406,7 @@ const WeatherAnalyticsPage = () => {
                   <YAxis yAxisId="rain" orientation="right" />
                   <Tooltip 
                     labelFormatter={(month) => monthNames[month - 1]}
-                    formatter={(value: any, name: string) => [
+                    formatter={(value: { location?: string }, name: string) => [
                       typeof value === 'number' ? value.toFixed(1) : value,
                       name
                     ]}
@@ -454,7 +453,7 @@ const WeatherAnalyticsPage = () => {
                 <YAxis />
                 <Tooltip 
                   labelFormatter={formatDate}
-                  formatter={(value: any) => `${value?.toFixed(1)}°C`}
+                  formatter={(value: { location?: string }) => `${value?.toFixed(1)}°C`}
                 />
                 <Legend />
                 <Area 
@@ -496,7 +495,7 @@ const WeatherAnalyticsPage = () => {
                 <YAxis yAxisId="humidity" orientation="right" />
                 <Tooltip 
                   labelFormatter={formatDate}
-                  formatter={(value: any, name: string) => [
+                  formatter={(value: { location?: string }, name: string) => [
                     typeof value === 'number' ? value.toFixed(1) : value,
                     name
                   ]}
@@ -535,7 +534,7 @@ const WeatherAnalyticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="range" />
                     <YAxis />
-                    <Tooltip formatter={(value: any) => `${value}%`} />
+                    <Tooltip formatter={(value: { location?: string }) => `${value}%`} />
                     <Bar dataKey="relativeConsumption" name="Relative Consumption">
                       {impactAnalysis.temperatureImpact.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

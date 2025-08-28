@@ -8,8 +8,8 @@ import WaterKPIRibbon from '../WaterKPIRibbon'
 
 // Mock Recharts components
 jest.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
-  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+  ResponsiveContainer: ({ children }: { children?: React.ReactNode; className?: string }) => <div data-testid="responsive-container">{children}</div>,
+  PieChart: ({ children }: { children?: React.ReactNode; className?: string }) => <div data-testid="pie-chart">{children}</div>,
   Pie: () => <div data-testid="pie" />,
   Cell: () => <div data-testid="cell" />
 }))

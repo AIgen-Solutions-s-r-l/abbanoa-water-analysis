@@ -116,7 +116,7 @@ const SettingsPage = () => {
     }
   };
 
-  const updateSettings = (category: keyof Settings, key: string, value: any) => {
+  const updateSettings = (category: keyof Settings, key: string, value: { key: string; value: string | number | boolean }) => {
     setSettings(prev => ({
       ...prev,
       [category]: {

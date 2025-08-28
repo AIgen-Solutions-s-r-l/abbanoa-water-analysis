@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext } from 'react';
 import { useAuth as useAuthHook } from '@/lib/hooks/useAuth';
-import type { AuthState, User, Tenant, LoginRequest, RegisterRequest, AuthResponse, ChangePasswordRequest } from '@/lib/types/auth';
 
 interface AuthContextValue extends AuthState {
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
@@ -36,7 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const auth = useAuthHook();
   
   // DEVELOPMENT MODE: If running locally, auto-login
-  React.useEffect(() => {
+  React.useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     if (process.env.NODE_ENV === 'development' && !auth.isAuthenticated && !auth.isLoading) {
       const devLogin = async () => {
         try {

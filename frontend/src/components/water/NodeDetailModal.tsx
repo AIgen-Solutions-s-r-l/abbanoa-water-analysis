@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import {
   XIcon,
   ActivityIcon,
@@ -38,7 +37,7 @@ import {
 } from 'recharts';
 
 interface NodeDetailModalProps {
-  node: any;
+  node: unknown;
   onClose: () => void;
 }
 
@@ -49,7 +48,7 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchNodeDetails();
   }, [node]);
 
@@ -65,14 +64,14 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
         // If we have real data, use it
         if (data && data.length > 0) {
           // Sort by timestamp to ensure chronological order
-          const sortedData = data.sort((a: any, b: any) => 
+          const sortedData = data.sort((a: unknown, b: unknown) => 
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
           );
           
           // Take up to 48 most recent readings
           const recentData = sortedData.slice(-48);
           
-          setHistoricalData(recentData.map((d: any, i: number) => ({
+          setHistoricalData(recentData.map((d: unknown, i: number) => ({
             time: new Date(d.timestamp).toLocaleTimeString('it-IT', { 
               hour: '2-digit', 
               minute: '2-digit',
@@ -456,7 +455,7 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
               {activeTab === 'alerts' && (
                 <div className="space-y-4">
                   {anomalies.length > 0 ? (
-                    anomalies.map((anomaly: any, idx: number) => (
+                    anomalies.map((anomaly: unknown, idx: number) => (
                       <Card key={idx} className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">

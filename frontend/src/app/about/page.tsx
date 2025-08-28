@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { 
-  Calculator, 
+ 
   TrendingUp, 
   Droplets, 
-  Gauge, 
+ 
   Zap, 
-  Activity,
+
   AlertTriangle,
   BarChart3,
   BookOpen

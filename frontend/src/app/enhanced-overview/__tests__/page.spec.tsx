@@ -18,7 +18,7 @@ jest.mock('next/navigation', () => ({
 // Mock components
 jest.mock('@/components/water/WaterKPIRibbon', () => ({
   __esModule: true,
-  default: ({ metrics }: any) => (
+  default: ({ metrics }: { children?: React.ReactNode; className?: string }) => (
     <div data-testid="water-kpi-ribbon">
       Water KPI Ribbon - Active Nodes: {metrics.activeNodes}
     </div>
@@ -27,7 +27,7 @@ jest.mock('@/components/water/WaterKPIRibbon', () => ({
 
 jest.mock('@/components/water/FlowAnalyticsChart', () => ({
   __esModule: true,
-  default: ({ data }: any) => (
+  default: ({ data }: { children?: React.ReactNode; className?: string }) => (
     <div data-testid="flow-analytics-chart">
       Flow Analytics Chart - Data Points: {data?.length || 0}
     </div>
@@ -45,7 +45,7 @@ jest.mock('@/components/water/NetworkPerformanceAnalytics', () => ({
 
 jest.mock('@/components/water/SystemHealthGauges', () => ({
   __esModule: true,
-  default: ({ metrics }: any) => (
+  default: ({ metrics }: { children?: React.ReactNode; className?: string }) => (
     <div data-testid="system-health">
       System Health - Efficiency: {metrics.energyEfficiency}%
     </div>
@@ -54,7 +54,7 @@ jest.mock('@/components/water/SystemHealthGauges', () => ({
 
 jest.mock('@/components/common/DateRangeSelector', () => ({
   __esModule: true,
-  default: ({ onDateRangeChange }: any) => (
+  default: ({ onDateRangeChange }: { children?: React.ReactNode; className?: string }) => (
     <div data-testid="date-range-selector">
       <button onClick={() => onDateRangeChange(new Date(), new Date(), 'test')}>
         Change Date Range

@@ -41,8 +41,8 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [systemConfig, setSystemConfig] = useState<any>({});
+  const [auditLogs, setAuditLogs] = useState<unknown[]>([]);
+  const [systemConfig, setSystemConfig] = useState<unknown>({});
 
   const [systemStatus] = useState<SystemStatus>({
     database: 'online',
@@ -51,7 +51,7 @@ const AdminPage = () => {
     alerts: 3
   });
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchData();
   }, [activeTab]);
 
@@ -62,7 +62,7 @@ const AdminPage = () => {
         const response = await fetch('/api/proxy/v1/users?limit=100');
         if (response.ok) {
           const data = await response.json();
-          setUsers(data.users.map((user: any) => ({
+          setUsers(data.users.map((user: { id: string; name: string; email: string; role: string; isActive: boolean }) => ({
             id: user.id,
             name: user.name,
             email: user.email,

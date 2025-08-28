@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { Activity, Droplets, Gauge, Shield, Clock, Zap } from 'lucide-react'
 
 export interface WaterKPI {
   id: string

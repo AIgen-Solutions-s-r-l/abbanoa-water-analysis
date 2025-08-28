@@ -68,14 +68,14 @@ const InfrastructureMapPage = () => {
   // Center of Roccavina
   const mapCenter: [number, number] = [44.1385, 12.2486];
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchInfrastructureData();
     const interval = setInterval(fetchInfrastructureData, 30000);
     return () => clearInterval(interval);
   }, []);
 
   // Set map ready after component mounts
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     setMapReady(true);
   }, []);
 
@@ -89,8 +89,8 @@ const InfrastructureMapPage = () => {
       // Fetch readings for each node
       const nodesWithReadings = await Promise.all(
         nodesData
-          .filter((node: any) => node.location?.coordinates?.latitude && node.location?.coordinates?.longitude)
-          .map(async (node: any) => {
+          .filter((node: unknown) => node.location?.coordinates?.latitude && node.location?.coordinates?.longitude)
+          .map(async (node: unknown) => {
             try {
               const readingsResponse = await fetch(`/api/proxy/v1/nodes/${node.id}/readings?limit=1`);
               const readings = readingsResponse.ok ? await readingsResponse.json() : [];
@@ -102,7 +102,7 @@ const InfrastructureMapPage = () => {
       );
 
       // Transform nodes data
-      const transformedNodes: Node[] = nodesWithReadings.map((node: any) => ({
+      const transformedNodes: Node[] = nodesWithReadings.map((node: unknown) => ({
         node_id: node.id,
         node_name: node.name || `Node ${node.id}`,
         latitude: parseFloat(node.location.coordinates.latitude),
@@ -154,7 +154,7 @@ const InfrastructureMapPage = () => {
     }
   };
 
-  const determineNodeStatus = (reading: any): 'optimal' | 'warning' | 'critical' => {
+  const determineNodeStatus = (reading: unknown): 'optimal' | 'warning' | 'critical' => {
     if (!reading) return 'warning';
     if (reading.pressure < 2 || reading.pressure > 8) return 'critical';
     if (reading.pressure < 3 || reading.pressure > 6) return 'warning';

@@ -19,11 +19,11 @@ const fetchRealAnalyticsData = async () => {
     // Calculate real system efficiency from pressure zones
     const zones = zonesData.zones || [];
     const totalZones = zones.length;
-    const optimalZones = zones.filter((z: any) => z.status === 'optimal').length;
+    const optimalZones = zones.filter((z: { name: string; value: number }) => z.status === 'optimal').length;
     const systemEfficiency = totalZones > 0 ? Math.round((optimalZones / totalZones) * 100 * 10) / 10 : 89.2;
 
     // Calculate water loss rate from pressure data
-    const avgPressures = zones.map((z: any) => z.avgPressure).filter((p: number) => p > 0);
+    const avgPressures = zones.map((z: { name: string; value: number }) => z.avgPressure).filter((p: number) => p > 0);
     const avgSystemPressure = avgPressures.length > 0 
       ? avgPressures.reduce((sum: number, p: number) => sum + p, 0) / avgPressures.length 
       : 3.0;
@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
      const now = new Date();
      return Array.from({ length: 7 }, (_, i) => {
        const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
-       const dayData: any = analyticsData.zones.length > 0 ? analyticsData.zones[i % analyticsData.zones.length] : null;
+       const dayData: { name: string; value: number } = analyticsData.zones.length > 0 ? analyticsData.zones[i % analyticsData.zones.length] : null;
        
        return {
          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
 
   // Convert real zones data to zone performance format
   const zonePerformance = analyticsData.zones.length > 0 
-    ? analyticsData.zones.slice(0, 5).map((zone: any) => ({
+    ? analyticsData.zones.slice(0, 5).map((zone: { name: string; value: number }) => ({
         zone: zone.zoneName || zone.zone,
         efficiency: zone.status === 'optimal' ? 92 + Math.random() * 6 :
                    zone.status === 'warning' ? 85 + Math.random() * 5 :

@@ -1,5 +1,3 @@
-import { AnomalyService } from '../anomaly.service';
-import { Anomaly } from '@/lib/types';
 
 // Mock global fetch
 global.fetch = jest.fn();

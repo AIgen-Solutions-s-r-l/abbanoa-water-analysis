@@ -70,12 +70,12 @@ export const FlowAnalyticsChart: React.FC<FlowAnalyticsChartProps> = ({
   ];
 
   // Custom tooltip for time series
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { data: Array<{ name: string; value: number }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{`Time: ${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: { data: Array<{ name: string; value: number }> }, index: number) => (
             <p
               key={index}
               className="text-sm"

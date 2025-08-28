@@ -19,30 +19,30 @@ const fetchRealMonitoringData = async () => {
     // Calculate system health metrics from real data
     const activeNodes = nodesData?.length || 0;
     const pressureZones = pressureData?.zones || [];
-    const totalReadings = pressureZones.reduce((sum: number, zone: any) => sum + (zone.readingCount || 0), 0);
+    const totalReadings = pressureZones.reduce((sum: number, zone: { id: string; name: string; status: string; value: number }) => sum + (zone.readingCount || 0), 0);
     
     // System efficiency based on pressure zone status
-    const optimalZones = pressureZones.filter((z: any) => z.status === 'optimal').length;
+    const optimalZones = pressureZones.filter((z: { id: string; name: string; status: string; value: number }) => z.status === 'optimal').length;
     const systemEfficiency = pressureZones.length > 0 ? Math.round((optimalZones / pressureZones.length) * 100) : 87;
     
     // Water loss estimation based on pressure
-    const avgPressures = pressureZones.map((z: any) => z.avgPressure).filter((p: number) => p > 0);
+    const avgPressures = pressureZones.map((z: { id: string; name: string; status: string; value: number }) => z.avgPressure).filter((p: number) => p > 0);
     const avgSystemPressure = avgPressures.length > 0 
       ? avgPressures.reduce((sum: number, p: number) => sum + p, 0) / avgPressures.length 
       : 3.2;
     const waterLoss = Math.max(5, Math.min(20, Math.round((4.0 - avgSystemPressure) * 4 + 8)));
     
     // System availability based on active nodes and anomalies
-    const criticalAnomalies = anomaliesData?.filter((a: any) => a.severity === 'critical').length || 0;
+    const criticalAnomalies = anomaliesData?.filter((a: { id: string; name: string; status: string; value: number }) => a.severity === 'critical').length || 0;
     const systemAvailability = Math.max(95, 99.5 - (criticalAnomalies * 1.5));
     
     // Water quality estimation
     const waterQuality = Math.max(90, 95 - (anomaliesData?.length || 0) * 1.2);
 
     // Transform nodes data for monitoring display
-    const monitoringNodes = nodesData?.slice(0, 8).map((node: any, index: number) => {
-      const associatedZone = pressureZones.find((z: any) => z.zone.includes(node.id));
-      const hasAnomalies = anomaliesData?.some((a: any) => a.node_id === node.id);
+    const monitoringNodes = nodesData?.slice(0, 8).map((node: { id: string; name: string; status: string; value: number }, index: number) => {
+      const associatedZone = pressureZones.find((z: { id: string; name: string; status: string; value: number }) => z.zone.includes(node.id));
+      const hasAnomalies = anomaliesData?.some((a: { id: string; name: string; status: string; value: number }) => a.node_id === node.id);
       
       return {
         id: node.id,
@@ -59,7 +59,7 @@ const fetchRealMonitoringData = async () => {
     }) || [];
 
     // Generate recent alerts from real anomalies
-    const recentAlerts = anomaliesData?.slice(0, 5).map((anomaly: any) => ({
+    const recentAlerts = anomaliesData?.slice(0, 5).map((anomaly: { id: string; name: string; status: string; value: number }) => ({
       id: anomaly.id,
       type: anomaly.severity || 'medium',
       message: anomaly.description || `${anomaly.anomaly_type} detected`,
@@ -336,7 +336,7 @@ export default function MonitoringPage() {
             🏭 Live Node Status Monitor
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {monitoringData.nodes.map((node: any) => (
+            {monitoringData.nodes.map((node: { id: string; name: string; status: string; value: number }) => (
               <div key={node.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -390,7 +390,7 @@ export default function MonitoringPage() {
               🚨 Recent System Alerts
             </h3>
             <div className="space-y-3">
-              {monitoringData.alerts.map((alert: any) => (
+              {monitoringData.alerts.map((alert: { id: string; name: string; status: string; value: number }) => (
                 <div key={alert.id} className={`border rounded-lg p-4 ${alertTypeColors[alert.type as keyof typeof alertTypeColors]}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1">

@@ -1,5 +1,4 @@
 import { DashboardService } from '../dashboard.service';
-import { DashboardMetrics } from '@/lib/types';
 
 // Mock global fetch
 global.fetch = jest.fn();

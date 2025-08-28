@@ -22,7 +22,7 @@ export class AnomalyService {
     const data = await response.json();
     
     // Transform backend data to match frontend Anomaly type
-    return data.map((item: any) => ({
+    return data.map((item: { [key: string]: unknown }) => ({
       id: item.id,
       deviceId: item.node_id,
       type: item.anomaly_type,

@@ -17,11 +17,11 @@ jest.mock('next/navigation', () => ({
 
 // Mock Card components
 jest.mock('@/components/ui/Card', () => ({
-  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
+  Card: ({ children, className }: { children?: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
 }));
 
 jest.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick, variant }: any) => (
+  Button: ({ children, onClick, variant }: { children?: React.ReactNode; className?: string }) => (
     <button onClick={onClick} className={variant}>{children}</button>
   ),
 }));
