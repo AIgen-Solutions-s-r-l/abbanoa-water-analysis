@@ -156,7 +156,10 @@ export default function ConsumptionAnalyticsPage() {
     }
   };
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined | null) => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0';
+    }
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M`;
     } else if (num >= 1000) {
@@ -230,7 +233,7 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Daily Consumption</p>
               <p className="text-2xl font-bold mt-1">
-                {formatNumber(analyticsData.summary.total_daily_consumption)} L
+                {formatNumber(analyticsData.summary?.total_daily_consumption)} L
               </p>
               <p className="text-xs text-green-600 mt-1">
                 ↑ 3.2% vs yesterday
@@ -245,10 +248,10 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
               <p className="text-2xl font-bold mt-1">
-                {formatNumber(analyticsData.summary.total_users)}
+                {formatNumber(analyticsData.summary?.total_users)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {analyticsData.summary.avg_consumption_per_user} L/user/day
+                {analyticsData.summary?.avg_consumption_per_user ?? 0} L/user/day
               </p>
             </div>
             <UsersIcon className="w-10 h-10 text-green-500" />
@@ -260,10 +263,10 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">System Efficiency</p>
               <p className="text-2xl font-bold mt-1">
-                {(analyticsData.summary.system_efficiency * 100).toFixed(1)}%
+                {((analyticsData.summary?.system_efficiency ?? 0) * 100).toFixed(1)}%
               </p>
               <p className="text-xs text-yellow-600 mt-1">
-                {analyticsData.summary.water_loss_percentage}% water loss
+                {analyticsData.summary?.water_loss_percentage ?? 0}% water loss
               </p>
             </div>
             <TargetIcon className="w-10 h-10 text-yellow-500" />
@@ -275,10 +278,10 @@ export default function ConsumptionAnalyticsPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Peak Demand</p>
               <p className="text-2xl font-bold mt-1">
-                {analyticsData.peak_demand.daily_peak_time}
+                {analyticsData.peak_demand?.daily_peak_time ?? 'N/A'}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {formatNumber(analyticsData.peak_demand.daily_peak_consumption)} L/hr
+                {formatNumber(analyticsData.peak_demand?.daily_peak_consumption)} L/hr
               </p>
             </div>
             <ActivityIcon className="w-10 h-10 text-red-500" />
@@ -304,7 +307,7 @@ export default function ConsumptionAnalyticsPage() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analyticsData.consumption_timeline}>
+              <AreaChart data={analyticsData.consumption_timeline || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="timestamp" 
@@ -343,7 +346,7 @@ export default function ConsumptionAnalyticsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={analyticsData.user_segments}
+                    data={analyticsData.user_segments || []}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -352,7 +355,7 @@ export default function ConsumptionAnalyticsPage() {
                     fill="#8884d8"
                     dataKey="user_count"
                   >
-                    {analyticsData.user_segments.map((entry, index) => (
+                    {(analyticsData.user_segments || []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -360,7 +363,7 @@ export default function ConsumptionAnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-4 space-y-2">
-                {analyticsData.user_segments.map((segment, index) => (
+                {(analyticsData.user_segments || []).map((segment, index) => (
                   <div key={segment.segment} className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <div 
@@ -389,7 +392,7 @@ export default function ConsumptionAnalyticsPage() {
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Conservation Opportunities</h2>
               <div className="space-y-4">
-                {analyticsData.conservation_opportunities.map((opp, index) => (
+                {(analyticsData.conservation_opportunities || []).map((opp, index) => (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -427,7 +430,7 @@ export default function ConsumptionAnalyticsPage() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">District-wise Consumption Analysis</h2>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={analyticsData.district_consumption}>
+              <BarChart data={analyticsData.district_consumption || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="district_name" angle={-45} textAnchor="end" height={80} />
                 <YAxis tickFormatter={(value) => formatNumber(value)} />
@@ -442,7 +445,7 @@ export default function ConsumptionAnalyticsPage() {
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">District Efficiency Scores</h2>
               <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={analyticsData.district_consumption}>
+                <RadarChart data={analyticsData.district_consumption || []}>
                   <PolarGrid />
                   <PolarAngleAxis dataKey="district_name" />
                   <PolarRadiusAxis angle={90} domain={[0, 1]} />
@@ -471,7 +474,7 @@ export default function ConsumptionAnalyticsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {analyticsData.district_consumption.map((district) => (
+                    {(analyticsData.district_consumption || []).map((district) => (
                       <tr key={district.district_id} className="border-b">
                         <td className="py-2">{district.district_name}</td>
                         <td className="text-right">{formatNumber(district.total_users)}</td>
@@ -501,7 +504,7 @@ export default function ConsumptionAnalyticsPage() {
                     className="text-sm border rounded px-3 py-1"
                   >
                     <option value="all">All Districts</option>
-                    {analyticsData.district_consumption.map((district) => (
+                    {(analyticsData.district_consumption || []).map((district) => (
                       <option key={district.district_id} value={district.district_id}>
                         {district.district_name}
                       </option>
@@ -684,7 +687,7 @@ export default function ConsumptionAnalyticsPage() {
               </div>
             </div>
             <div className="space-y-4">
-              {anomalies.map((anomaly) => (
+              {(anomalies || []).map((anomaly) => (
                 <div
                   key={anomaly.anomaly_id}
                   className={`border rounded-lg p-4 ${

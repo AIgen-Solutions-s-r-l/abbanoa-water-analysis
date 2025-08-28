@@ -1,9 +1,14 @@
 # Changelog
 
+## [Unreleased]
 
-
-
-
+### Fixed
+- 🐛 fix(consumption): handle undefined analyticsData.summary properties gracefully
+  - Added defensive checks for all summary properties using optional chaining
+  - Updated formatNumber function to handle undefined/null values
+  - Added fallback empty arrays for missing data collections
+  - Component now displays fallback values instead of crashing when data is missing
+  - Prevents "Cannot read properties of undefined" errors in production
 
 
 ## [v2.0.0.0] - 2025-08-26
