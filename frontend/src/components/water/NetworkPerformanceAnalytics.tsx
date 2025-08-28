@@ -81,30 +81,48 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
       console.log('🔧 Generating additional zones from node data...');
       
       // Group nodes by geographic/functional areas
+      const centralBusinessNodes = nodesData.filter((n: any) => n.node_id?.includes('211') || n.node_name?.toLowerCase().includes('central'));
+      const residentialNorthNodes = nodesData.filter((n: any) => n.node_id?.includes('215') || n.node_name?.toLowerCase().includes('residential'));
+      const industrialNodes = nodesData.filter((n: any) => n.node_id?.includes('273') || n.node_id?.includes('281'));
+      const residentialAreaNodes = nodesData.filter((n: any) => n.node_id?.includes('287') || n.node_id?.includes('288'));
+      
+      // Get all nodes that are already assigned to other groups
+      const assignedNodes = new Set([
+        ...centralBusinessNodes,
+        ...residentialNorthNodes,
+        ...industrialNodes,
+        ...residentialAreaNodes
+      ]);
+      
+      // Distribution network gets remaining nodes
+      const distributionNodes = nodesData.filter((n: any) => 
+        n.node_id?.includes('DIST') || !assignedNodes.has(n)
+      );
+      
       const nodeGroups = [
         { 
-          name: 'Cagliari Centro', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('211') || n.node_name?.toLowerCase().includes('cagliari')),
+          name: 'Central Business District', 
+          nodes: centralBusinessNodes,
           baseStatus: 'optimal' 
         },
         { 
-          name: 'Quartu Sant\'Elena', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('215') || n.node_name?.toLowerCase().includes('quartu')),
+          name: 'Residential North', 
+          nodes: residentialNorthNodes,
           baseStatus: 'warning' 
         },
         { 
           name: 'Industrial District', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('273') || n.node_id?.includes('281')),
+          nodes: industrialNodes,
           baseStatus: 'optimal' 
         },
         { 
           name: 'Residential Area', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('287') || n.node_id?.includes('288')),
+          nodes: residentialAreaNodes,
           baseStatus: 'critical' 
         },
         { 
           name: 'Distribution Network', 
-          nodes: nodesData.filter((n: any) => n.node_id?.includes('DIST') || !nodeGroups.some(g => g.nodes.includes(n))),
+          nodes: distributionNodes,
           baseStatus: 'optimal' 
         }
       ];
@@ -162,8 +180,8 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     console.error('❌ Failed to fetch pressure zones data:', error);
     // Enhanced fallback data representing different water network areas
     return [
-      { zone: 'Zone 1', zoneName: 'Cagliari Centro', minPressure: 2.8, avgPressure: 3.5, maxPressure: 4.2, nodeCount: 3, status: 'optimal' },
-      { zone: 'Zone 2', zoneName: 'Quartu Sant\'Elena', minPressure: 2.2, avgPressure: 2.9, maxPressure: 3.6, nodeCount: 2, status: 'warning' },
+      { zone: 'Zone 1', zoneName: 'Central Business District', minPressure: 2.8, avgPressure: 3.5, maxPressure: 4.2, nodeCount: 3, status: 'optimal' },
+      { zone: 'Zone 2', zoneName: 'Residential North', minPressure: 2.2, avgPressure: 2.9, maxPressure: 3.6, nodeCount: 2, status: 'warning' },
       { zone: 'Zone 3', zoneName: 'Industrial District', minPressure: 3.1, avgPressure: 3.8, maxPressure: 4.5, nodeCount: 2, status: 'optimal' },
       { zone: 'Zone 4', zoneName: 'Residential Area', minPressure: 1.8, avgPressure: 2.3, maxPressure: 2.8, nodeCount: 1, status: 'critical' },
       { zone: 'Zone 5', zoneName: 'Distribution Network', minPressure: 2.5, avgPressure: 3.2, maxPressure: 3.9, nodeCount: 1, status: 'optimal' }

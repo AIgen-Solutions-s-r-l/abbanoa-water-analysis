@@ -67,25 +67,25 @@ const calculateImpact = (severity: string) => {
 
 const generateCoordinates = (nodeName: string) => {
   const locations: { [key: string]: string } = {
-    'Selargius': '39.2438, 9.1638',
-    'Cagliari': '39.2238, 9.1217',
-    'Quartu': '39.2431, 9.1839',
-    'Assemini': '39.2889, 9.0014',
-    'Monserrato': '39.2547, 9.1658'
+    'Central': '44.1385, 12.2486',
+    'North': '44.1420, 12.2430',
+    'South': '44.1310, 12.2450',
+    'West': '44.1340, 12.2350',
+    'East': '44.1355, 12.2510'
   };
   
   const location = Object.keys(locations).find(loc => nodeName?.includes(loc));
-  return location ? locations[location] : '39.2238, 9.1217';
+  return location ? locations[location] : '44.1385, 12.2486';
 };
 
 const generateRealisticAnomalies = (count: number) => {
   const types = ['Pressure Drop', 'Flow Anomaly', 'Quality Alert', 'Potential Leak', 'System Failure'];
   const locations = [
-    'Cagliari Centro Distribution',
-    'Quartu Sant\'Elena Marina', 
-    'Assemini Industrial Zone',
-    'Monserrato Residential',
-    'Selargius Monitoring Station'
+    'Roccavina Centro Hub',
+    'Roccavina Nord Distribution', 
+    'Roccavina Sud Zone',
+    'Roccavina Est Network',
+    'Roccavina Ovest Monitoring'
   ];
   const severities = ['critical', 'high', 'medium', 'low'];
 

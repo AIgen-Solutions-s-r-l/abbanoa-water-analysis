@@ -65,8 +65,8 @@ const InfrastructureMapPage = () => {
   const [mapReady, setMapReady] = useState(false);
   const [showNodeModal, setShowNodeModal] = useState(false);
 
-  // Center of Selargius
-  const mapCenter: [number, number] = [39.256656, 9.162556];
+  // Center of Roccavina
+  const mapCenter: [number, number] = [44.1385, 12.2486];
 
   useEffect(() => {
     fetchInfrastructureData();
@@ -203,7 +203,7 @@ const InfrastructureMapPage = () => {
           Infrastructure Map
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Real-time view of the water distribution network in Selargius
+          Real-time view of the water distribution network in Roccavina
         </p>
       </div>
 
@@ -217,7 +217,7 @@ const InfrastructureMapPage = () => {
         {/* Map */}
         <Card className="lg:col-span-3 p-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Network Overview - Selargius</h2>
+            <h2 className="text-lg font-semibold">Network Overview - Roccavina</h2>
             <div className="flex gap-2">
               <Button
                 variant="ghost"
