@@ -14,7 +14,9 @@ import {
   PeakDemand,
   ConservationOpportunities,
   HourlyPattern,
-  TrendAnalysis
+  TrendAnalysis,
+  NodeAnalysis,
+  InfrastructureTypes
 } from '@/services/consumption.service';
 
 interface UseConsumptionDataReturn {
@@ -75,6 +77,20 @@ interface UseHourlyPatternReturn {
 
 interface UseTrendAnalysisReturn {
   data: TrendAnalysis | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+interface UseNodeAnalysisReturn {
+  data: NodeAnalysis | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+interface UseInfrastructureTypesReturn {
+  data: InfrastructureTypes | null;
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -425,6 +441,88 @@ export function useTrendAnalysis(autoRefresh: boolean = true): UseTrendAnalysisR
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch trend analysis data');
       console.error('Error in useTrendAnalysis:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData, autoRefresh]);
+
+  return {
+    data,
+    loading,
+    error,
+    refresh: fetchData
+  };
+}
+
+/**
+ * Hook for node analysis data
+ */
+export function useNodeAnalysis(autoRefresh: boolean = true): UseNodeAnalysisReturn {
+  const [data, setData] = useState<NodeAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await consumptionService.getNodeAnalysis();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch node analysis data');
+      console.error('Error in useNodeAnalysis:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData, autoRefresh]);
+
+  return {
+    data,
+    loading,
+    error,
+    refresh: fetchData
+  };
+}
+
+/**
+ * Hook for infrastructure types data
+ */
+export function useInfrastructureTypes(autoRefresh: boolean = true): UseInfrastructureTypesReturn {
+  const [data, setData] = useState<InfrastructureTypes | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await consumptionService.getInfrastructureTypes();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch infrastructure types data');
+      console.error('Error in useInfrastructureTypes:', err);
     } finally {
       setLoading(false);
     }

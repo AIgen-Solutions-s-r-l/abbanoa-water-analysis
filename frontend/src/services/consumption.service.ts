@@ -174,6 +174,64 @@ export interface TrendAnalysis {
   };
 }
 
+export interface NodeAnalysis {
+  node_analysis: Array<{
+    node_id: string;
+    node_name: string;
+    node_type: string;
+    infrastructure_type: string;
+    total_users: number;
+    daily_consumption_liters: number;
+    monthly_consumption_liters: number;
+    avg_per_user_daily: number;
+    peak_hour: number;
+    efficiency_score: number;
+    water_loss_percentage: number;
+    pressure_avg: number;
+    flow_rate_avg: number;
+    last_maintenance: string;
+    next_maintenance: string;
+    status: string;
+    alerts: number;
+    performance_rating: string;
+  }>;
+  infrastructure_summary: {
+    total_nodes: number;
+    main_nodes: number;
+    secondary_nodes: number;
+    industrial_nodes: number;
+    total_users_served: number;
+    total_daily_consumption: number;
+    avg_efficiency: number;
+    avg_water_loss: number;
+    operational_nodes: number;
+    maintenance_required: number;
+  };
+  data_metadata: {
+    is_real_time: boolean;
+  };
+}
+
+export interface InfrastructureTypes {
+  infrastructure_types: Array<{
+    type: string;
+    description: string;
+    node_count: number;
+    total_users: number;
+    daily_consumption: number;
+    avg_efficiency: number;
+    avg_water_loss: number;
+    avg_pressure: number;
+    avg_flow_rate: number;
+    performance_rating: string;
+    maintenance_frequency_days: number;
+    criticality_level: string;
+  }>;
+  data_metadata: {
+    is_real_time: boolean;
+  };
+}
+
 class ConsumptionService {
   private baseUrl: string;
 
@@ -349,6 +407,44 @@ class ConsumptionService {
       return data;
     } catch (error) {
       console.error('Error fetching trend analysis:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch node analysis data
+   */
+  async getNodeAnalysis(): Promise<NodeAnalysis> {
+    try {
+      const response = await fetch(`${this.baseUrl}/consumption/node-analysis`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching node analysis:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch infrastructure types analysis data
+   */
+  async getInfrastructureTypes(): Promise<InfrastructureTypes> {
+    try {
+      const response = await fetch(`${this.baseUrl}/consumption/infrastructure-types`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching infrastructure types:', error);
       throw error;
     }
   }

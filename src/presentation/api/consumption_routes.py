@@ -225,3 +225,48 @@ async def get_trend_analysis(
         raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/node-analysis")
+async def get_node_analysis(
+    service: ConsumptionService = Depends(get_consumption_service),
+) -> Dict[str, Any]:
+    """
+    Get detailed node-specific analysis and infrastructure metrics.
+    
+    Returns:
+        Dict containing node analysis data
+    """
+    try:
+        analytics_data = service.get_consumption_analytics()
+        return {
+            "node_analysis": analytics_data.get("node_analysis", []),
+            "infrastructure_summary": analytics_data.get("infrastructure_summary", {}),
+            "data_metadata": analytics_data.get("data_metadata", {}),
+        }
+    except ConsumptionServiceError as e:
+        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/infrastructure-types")
+async def get_infrastructure_types(
+    service: ConsumptionService = Depends(get_consumption_service),
+) -> Dict[str, Any]:
+    """
+    Get analysis by infrastructure type (primary, secondary, industrial, etc.).
+    
+    Returns:
+        Dict containing infrastructure type analysis
+    """
+    try:
+        analytics_data = service.get_consumption_analytics()
+        return {
+            "infrastructure_types": analytics_data.get("infrastructure_types", []),
+            "data_metadata": analytics_data.get("data_metadata", {}),
+        }
+    except ConsumptionServiceError as e:
+        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
