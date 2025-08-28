@@ -193,8 +193,7 @@ curl http://localhost:8000/health
 ### Running locally
 ```bash
 # Install dependencies
-pip install -r requirements-processing.txt
-pip install -r requirements-api.txt
+pip install -r requirements.txt
 
 # Set environment
 export POSTGRES_HOST=localhost

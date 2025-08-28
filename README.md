@@ -1,68 +1,171 @@
-# 🔐 Mock Authentication Backend
+# Water Infrastructure Analysis API
 
-This is a simple Express.js server that provides mock authentication for testing the Abbanoa Dashboard frontend.
+A comprehensive water infrastructure monitoring and analysis system built with FastAPI, Next.js, and modern data processing technologies.
+
+## 🏗️ Project Structure
+
+```
+abbanoa-water-analysis/
+├── src/                    # Main application source code
+│   ├── api/               # API endpoints and routing
+│   ├── application/       # Application services and use cases
+│   ├── core/              # Core domain entities and business logic
+│   ├── domain/            # Domain services and repositories
+│   ├── infrastructure/    # External services, database, and infrastructure
+│   ├── presentation/      # Web interfaces and CLI
+│   ├── processing/        # Data processing and analytics
+│   ├── routes/            # API route definitions
+│   ├── schemas/           # Pydantic models and data validation
+│   ├── servers/           # Standalone server implementations
+│   ├── shared/            # Shared utilities and constants
+│   └── utils/             # Utility scripts and helpers
+├── frontend/              # Next.js frontend application
+├── tests/                 # Test suite and test utilities
+│   ├── legacy/            # Legacy test files
+│   └── mock-backend/      # Mock authentication backend for testing
+├── docs/                  # Documentation and guides
+│   ├── releases/          # Release documentation
+│   └── legacy/            # Legacy code reference
+├── docker/                # Docker configurations and compose files
+├── scripts/               # Utility and deployment scripts
+├── config/                # Configuration files (PM2, cron, etc.)
+├── sql/                   # SQL queries and database scripts
+├── nginx/                 # Nginx configuration files
+├── notebooks/             # Jupyter notebooks for analysis
+├── jobs/                  # Background job definitions
+├── k8s/                   # Kubernetes manifests
+├── dbt/                   # Data build tool configurations
+├── database_exports/      # Database export files
+├── credentials/           # Credential templates (not tracked)
+├── DATA/                  # Data files and exports
+├── logs/                  # Application logs
+├── requirements.txt       # Python dependencies
+├── pyproject.toml         # Project configuration
+├── pytest.ini           # Test configuration
+├── Makefile              # Build and deployment commands
+├── cloudbuild.yaml       # Google Cloud Build configuration
+├── .dockerignore         # Docker ignore rules
+├── .gitignore           # Git ignore rules
+├── PROTOCOL.yaml        # Development protocol and standards
+├── CHANGELOG.md         # Project changelog
+└── README.md            # This file
+```
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+- Python 3.9+
+- Node.js 18+
+- PostgreSQL 13+
+- Redis 6+
+
+### Backend Setup
+
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Start the backend server:**
+   ```bash
+   # Using PM2 (recommended)
+   pm2 start config/ecosystem.config.js
+   
+   # Or using uvicorn directly
+   uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+### Frontend Setup
+
+1. **Navigate to frontend directory:**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+### Docker Setup
+
 ```bash
-npm install
-npm start
+# Start all services
+docker-compose -f docker/docker-compose.yml up -d
+
+# Or start specific services
+docker-compose -f docker/docker-compose.dev.yml up -d
 ```
 
-The server will run on `http://localhost:8000`
+## 🧪 Testing
 
-## 📋 Test Credentials
+```bash
+# Run all tests
+pytest
 
-| Email | Password | Role | Description |
-|-------|----------|------|-------------|
-| `admin@abbanoa.com` | `admin123` | `admin` | Full administrative access |
-| `operator@abbanoa.com` | `operator123` | `operator` | Water system operator |
-| `super@abbanoa.com` | `super123` | `super_admin` | Super administrator |
+# Run with coverage
+pytest --cov=src --cov-report=html
 
-## 🏢 Organizations
+# Run specific test categories
+pytest tests/unit/
+pytest tests/integration/
+pytest tests/e2e/
+```
 
-| Name | Domain | Plan | Features |
-|------|--------|------|----------|
-| Abbanoa S.p.A. | `abbanoa` | Enterprise | All features enabled |
-| Test Organization | `test-org` | Professional | Basic features |
+## 📚 Documentation
 
-## 🛠️ Available Endpoints
+- **API Documentation:** Available at `/docs` when the server is running
+- **Architecture:** See `docs/` directory for detailed architecture documentation
+- **Releases:** Check `docs/releases/` for release notes and migration guides
+- **Legacy Code:** Reference `docs/legacy/` for migration information
 
-### Authentication
-- `POST /api/v1/auth/login` - Login with email/password
-- `POST /api/v1/auth/register` - Register new user (returns info about test credentials)
-- `POST /api/v1/auth/refresh` - Refresh JWT token
-- `POST /api/v1/auth/logout` - Logout
-- `GET /api/v1/auth/me` - Get current user info
+## 🔧 Development
 
-### Tenants
-- `GET /api/v1/tenants/current` - Get current tenant
-- `GET /api/v1/auth/tenants` - Get available tenants
+This project follows strict development protocols defined in `PROTOCOL.yaml`:
 
-### Dashboard Data
-- `GET /api/v1/dashboard/metrics` - Get system metrics
-- `GET /api/v1/monitoring/status` - Get monitoring status
-- `GET /api/v1/anomalies` - Get anomaly data
+- **Code Standards:** Maximum 500 lines per file, modular design
+- **Testing:** 90% coverage requirement, TDD approach
+- **Quality Gates:** Linting, type checking, mutation testing
+- **Git Workflow:** Conventional commits, feature branches
 
-### Validation
-- `GET /api/v1/auth/validate-domain` - Check domain availability
-- `GET /api/v1/auth/check-email` - Check email existence
+## 🚀 Deployment
 
-## 🧪 Testing the Frontend
+### Production
 
-1. Make sure this backend is running on port 8001
-2. Start the frontend on port 3001
-3. Visit `http://localhost:3001`
-4. Use any of the test credentials to login
-5. Explore the dashboard features
+```bash
+# Using Docker
+docker-compose -f docker/docker-compose.prod.yml up -d
 
-## 🔧 Configuration
+# Using PM2
+pm2 start config/ecosystem.config.js --env production
+```
 
-- **Port**: 8000
-- **JWT Secret**: `mock-jwt-secret-key-for-testing`
-- **Token Expiry**: 24 hours
-- **CORS**: Enabled for all origins
+### Google Cloud Platform
 
----
+```bash
+# Deploy using Cloud Build
+gcloud builds submit --config cloudbuild.yaml
+```
 
-**Note**: This is a mock server for development/testing only. Do not use in production!
+## 📊 Features
+
+- **Real-time Monitoring:** Live water consumption and flow rate monitoring
+- **Anomaly Detection:** ML-powered anomaly detection and alerting
+- **Weather Integration:** Real-time weather data and impact analysis
+- **Data Analytics:** Comprehensive analytics and reporting
+- **User Management:** Multi-tenant authentication and authorization
+- **API-First Design:** RESTful API with comprehensive documentation
+
+## 🤝 Contributing
+
+1. Follow the development protocol in `PROTOCOL.yaml`
+2. Create feature branches: `git checkout -b feature/your-feature`
+3. Write tests for all new functionality
+4. Ensure all quality gates pass
+5. Submit a pull request
+
+## 📄 License
+
+This project is proprietary software for water infrastructure analysis.
