@@ -741,7 +741,7 @@ async def get_consumption_analytics():
     """Get comprehensive consumption analytics using SQLAlchemy ORM."""
     try:
         # Use SQLAlchemy service instead of simulated data
-        from src.infrastructure.database.consumption_service import ConsumptionService
+        from src.infrastructure.database.consumption_service import ConsumptionService, ConsumptionServiceError
         
         # Get database URL from environment or use default
         database_url = "postgresql://abbanoa_user:abbanoa_secure_pass@localhost:5432/abbanoa_db"
@@ -749,8 +749,10 @@ async def get_consumption_analytics():
         
         return consumption_service.get_consumption_analytics()
         
+    except ConsumptionServiceError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.get("/api/v1/consumption/forecast/{district_id}")
