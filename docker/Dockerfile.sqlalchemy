@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
-COPY requirements.sqlalchemy.txt .
+COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.sqlalchemy.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the server
-CMD ["python", "sqlalchemy_server.py"]
+CMD ["python", "src/servers/sqlalchemy_server.py"]

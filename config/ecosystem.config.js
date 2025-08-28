@@ -21,7 +21,7 @@ module.exports = {
     {
       name: 'abbanoa-postgres-api',
       cwd: '/root/abbanoa-water-analysis',
-      script: 'sqlalchemy_server.py',
+      script: 'src/servers/sqlalchemy_server.py',
       interpreter: '/root/abbanoa-water-analysis/venv/bin/python',
       env: {
         PYTHONPATH: '/root/abbanoa-water-analysis',

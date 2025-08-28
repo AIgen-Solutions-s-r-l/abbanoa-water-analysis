@@ -99,7 +99,7 @@ tests/
 
 1. **Install testing dependencies:**
 ```bash
-pip install -r requirements-test.txt
+pip install -r requirements.txt
 ```
 
 2. **Set up test environment:**
@@ -402,7 +402,7 @@ This testing suite is designed for seamless CI/CD integration:
 # Example GitHub Actions workflow
 - name: Run Test Suite
   run: |
-    pip install -r requirements-test.txt
+    pip install -r requirements.txt
     python run_tests.py --mode full --parallel
     
 - name: Upload Coverage

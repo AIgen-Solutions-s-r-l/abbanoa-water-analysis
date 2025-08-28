@@ -62,11 +62,11 @@ echo "🚀 Starting Production Weather Server..."
 
 # Stop existing weather server if running
 pkill -f "test_weather_server.py" 2>/dev/null || true
-pkill -f "weather_server_prod.py" 2>/dev/null || true
+pkill -f "src/servers/weather_server_prod.py" 2>/dev/null || true
 
 # Start the production weather server
 echo "Starting weather server on port 8000..."
-python3 weather_server_prod.py &
+python3 src/servers/weather_server_prod.py &
 
 # Wait a moment for server to start
 sleep 3
