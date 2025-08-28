@@ -92,7 +92,10 @@ describe('DashboardService', () => {
       });
       
       // Verify lastUpdate is a valid ISO date
-      expect(new Date(result.lastUpdate).toISOString()).toBe(result.lastUpdate);
+      expect(result.lastUpdate).toBeDefined();
+      if (result.lastUpdate) {
+        expect(new Date(result.lastUpdate).toISOString()).toBe(result.lastUpdate);
+      }
     });
 
     it('should throw error when API response is not ok', async () => {

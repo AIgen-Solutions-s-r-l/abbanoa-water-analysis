@@ -155,11 +155,11 @@ describe('AuthProvider', () => {
     const originalEnv = process.env.NODE_ENV;
 
     beforeEach(() => {
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
     });
 
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should attempt auto-login in development mode when not authenticated', () => {
@@ -236,7 +236,7 @@ describe('AuthProvider', () => {
     });
 
     it('should not attempt auto-login in production mode', () => {
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
 
       render(
         <AuthProvider>

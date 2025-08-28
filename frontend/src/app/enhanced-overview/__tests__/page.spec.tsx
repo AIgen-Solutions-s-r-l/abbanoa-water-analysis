@@ -247,7 +247,7 @@ describe('EnhancedOverviewPage', () => {
       
       // Should log error due to non-OK response
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error fetching dashboard data:', 
+        '❌ Error fetching dashboard data:', 
         expect.any(Error)
       );
     });

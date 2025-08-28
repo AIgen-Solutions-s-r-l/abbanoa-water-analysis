@@ -43,7 +43,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/dashboard/summary',
+        'http://localhost:8001/api/v1/dashboard/summary',
         {
           method: 'GET',
           headers: expect.any(Object),
@@ -71,7 +71,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/test',
+        'http://localhost:8001/api/test',
         expect.any(Object)
       );
     });
@@ -91,7 +91,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/users/123/profile',
+        'http://localhost:8001/api/v1/users/123/profile',
         expect.any(Object)
       );
     });
@@ -123,7 +123,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/users',
+        'http://localhost:8001/api/v1/users',
         {
           method: 'POST',
           headers: expect.objectContaining({
@@ -162,7 +162,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/upload',
+        'http://localhost:8001/api/v1/upload',
         {
           method: 'POST',
           headers: expect.objectContaining({
@@ -201,7 +201,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/users/123',
+        'http://localhost:8001/api/v1/users/123',
         {
           method: 'PUT',
           headers: expect.any(Object),
@@ -232,7 +232,7 @@ describe('API Proxy Route Integration Tests', () => {
 
       // Assert
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/users/123',
+        'http://localhost:8001/api/v1/users/123',
         {
           method: 'DELETE',
           headers: expect.any(Object),

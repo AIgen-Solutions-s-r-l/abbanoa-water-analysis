@@ -359,13 +359,13 @@ const WeatherAnalyticsPage = () => {
                   <div>
                     <p className="text-sm text-gray-500">Average Temperature</p>
                     <p className="text-2xl font-bold">
-                      {statistics.overview.averageTemperature?.toFixed(1) || '--'}°C
+                      {statistics?.overview?.averageTemperature?.toFixed(1) || '--'}°C
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Temperature Range</p>
                     <p className="text-lg">
-                      {statistics.overview.temperatureRange.min?.toFixed(1)}°C - {statistics.overview.temperatureRange.max?.toFixed(1)}°C
+                      {statistics?.overview?.temperatureRange.min?.toFixed(1)}°C - {statistics?.overview?.temperatureRange.max?.toFixed(1)}°C
                     </p>
                   </div>
                 </div>

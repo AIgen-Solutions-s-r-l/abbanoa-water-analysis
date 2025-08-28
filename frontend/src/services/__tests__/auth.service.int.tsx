@@ -66,7 +66,7 @@ describe('AuthService Integration Tests', () => {
         // Assert
         expect(result.success).toBe(true);
         expect(result.token).toBe('mock-access-token');
-        expect(result.user.email).toBe(credentials.email);
+        expect(result.user?.email).toBe(credentials.email);
         expect(result.tenant?.name).toBe('Roccavina S.p.A.');
         
         // Verify tokens are stored
@@ -114,8 +114,8 @@ describe('AuthService Integration Tests', () => {
           plan: 'enterprise',
           isActive: true,
         });
-        expect(result.tenant?.settings.features).toContain('monitoring');
-        expect(result.tenant?.settings.features).toContain('anomaly_detection');
+        expect(result.tenant?.settings?.features).toContain('monitoring');
+        expect(result.tenant?.settings?.features).toContain('anomaly_detection');
       });
     });
 
