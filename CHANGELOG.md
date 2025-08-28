@@ -1,5 +1,30 @@
 # Changelog
 
+## [v2.3.2.0] - 2025-08-28
+
+### Added
+- 🌤️ feat(weather): real weather data integration with OpenWeatherMap API
+  - Production weather server with comprehensive endpoints
+  - Automatic fallback to realistic mock data when API unavailable
+  - Support for 8 Cagliari districts with precise coordinates
+  - Complete API coverage: current, historical, statistics, impact analysis
+  - Setup scripts and comprehensive documentation
+- 🔧 feat(nginx): update upstream configuration to point to production weather server
+- 📚 docs: comprehensive setup guide and release documentation
+
+### Changed
+- ♻️ refactor(weather): migrate from test server to production weather server
+- 🔧 chore: update nginx configuration for weather API routing
+
+### Fixed
+- 🐛 fix(weather): resolve 404 errors on weather analytics page
+- 🐛 fix(api): ensure all weather endpoints are functional and tested
+
+### Technical
+- ✨ feat: add python3-aiohttp, python3-fastapi, python3-uvicorn dependencies
+- 🔧 chore: configure environment variables for API key management
+- ✅ test: comprehensive testing of all weather endpoints and nginx proxy
+
 ## [v2.2.0.0] - 2025-08-28
 
 ### Fixed
