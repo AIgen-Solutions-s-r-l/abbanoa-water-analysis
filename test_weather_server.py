@@ -112,6 +112,117 @@ async def get_weather_statistics():
         ]
     }
 
+@app.get("/weather/historical")
+async def get_historical_weather(
+    start_date: str,
+    end_date: str,
+    interval: str = "daily",
+    location: Optional[str] = None
+):
+    """Get historical weather data"""
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        days = (end - start).days + 1
+    except ValueError:
+        return {"error": "Invalid date format. Use YYYY-MM-DD"}
+    
+    if location and location not in CAGLIARI_LOCATIONS:
+        return {"error": f"Location '{location}' not found"}
+    
+    # Generate historical data
+    historical_data = []
+    current_date = start
+    
+    for i in range(min(days, 365)):  # Limit to 1 year max
+        # Generate realistic weather data
+        base_temp = 20 + 10 * (i / 365)  # Seasonal variation
+        temp_variation = random.uniform(-5, 5)
+        avg_temp = base_temp + temp_variation
+        
+        min_temp = avg_temp - random.uniform(3, 8)
+        max_temp = avg_temp + random.uniform(3, 8)
+        humidity = random.uniform(50, 85)
+        rainfall = random.uniform(0, 10) if random.random() < 0.3 else 0  # 30% chance of rain
+        wind_speed = random.uniform(5, 20)
+        
+        historical_data.append({
+            "date": current_date.strftime("%Y-%m-%d"),
+            "avg_temperature_c": round(avg_temp, 1),
+            "min_temperature_c": round(min_temp, 1),
+            "max_temperature_c": round(max_temp, 1),
+            "humidity_percent": round(humidity, 1),
+            "rainfall_mm": round(rainfall, 1),
+            "avg_wind_speed_kmh": round(wind_speed, 1)
+        })
+        
+        current_date += timedelta(days=1)
+    
+    # Apply interval grouping if needed
+    if interval == "weekly":
+        # Group by week
+        weekly_data = []
+        for i in range(0, len(historical_data), 7):
+            week_data = historical_data[i:i+7]
+            if week_data:
+                avg_temp = sum(d["avg_temperature_c"] for d in week_data) / len(week_data)
+                total_rainfall = sum(d["rainfall_mm"] for d in week_data)
+                avg_humidity = sum(d["humidity_percent"] for d in week_data) / len(week_data)
+                avg_wind = sum(d["avg_wind_speed_kmh"] for d in week_data) / len(week_data)
+                
+                weekly_data.append({
+                    "weekStart": week_data[0]["date"],
+                    "avg_temperature_c": round(avg_temp, 1),
+                    "rainfall_mm": round(total_rainfall, 1),
+                    "humidity_percent": round(avg_humidity, 1),
+                    "avg_wind_speed_kmh": round(avg_wind, 1)
+                })
+        return weekly_data
+    elif interval == "monthly":
+        # Group by month
+        monthly_data = []
+        current_month = None
+        month_data = []
+        
+        for data_point in historical_data:
+            month = datetime.strptime(data_point["date"], "%Y-%m-%d").strftime("%Y-%m")
+            if current_month != month:
+                if month_data:
+                    avg_temp = sum(d["avg_temperature_c"] for d in month_data) / len(month_data)
+                    total_rainfall = sum(d["rainfall_mm"] for d in month_data)
+                    avg_humidity = sum(d["humidity_percent"] for d in month_data) / len(month_data)
+                    avg_wind = sum(d["avg_wind_speed_kmh"] for d in month_data) / len(month_data)
+                    
+                    monthly_data.append({
+                        "month": current_month,
+                        "avg_temperature_c": round(avg_temp, 1),
+                        "rainfall_mm": round(total_rainfall, 1),
+                        "humidity_percent": round(avg_humidity, 1),
+                        "avg_wind_speed_kmh": round(avg_wind, 1)
+                    })
+                current_month = month
+                month_data = []
+            month_data.append(data_point)
+        
+        # Add last month
+        if month_data:
+            avg_temp = sum(d["avg_temperature_c"] for d in month_data) / len(month_data)
+            total_rainfall = sum(d["rainfall_mm"] for d in month_data)
+            avg_humidity = sum(d["humidity_percent"] for d in month_data) / len(month_data)
+            avg_wind = sum(d["avg_wind_speed_kmh"] for d in month_data) / len(month_data)
+            
+            monthly_data.append({
+                "month": current_month,
+                "avg_temperature_c": round(avg_temp, 1),
+                "rainfall_mm": round(total_rainfall, 1),
+                "humidity_percent": round(avg_humidity, 1),
+                "avg_wind_speed_kmh": round(avg_wind, 1)
+            })
+        
+        return monthly_data
+    
+    return historical_data
+
 @app.get("/weather/impact-analysis")
 async def get_weather_impact_analysis():
     """Get weather impact analysis on water consumption"""
