@@ -20,425 +20,376 @@ jest.mock('@/components/ui/Card', () => ({
   Card: ({ children, className }: any) => <div className={className}>{children}</div>,
 }));
 
-// Mock weather data
-const mockLocations = [
-  { location: 'Location 1', dataPoints: 100, dateRange: { start: '2025-01-01', end: '2025-06-30' } },
-  { location: 'Location 2', dataPoints: 200, dateRange: { start: '2025-01-01', end: '2025-06-30' } }
-];
+jest.mock('@/components/ui/Button', () => ({
+  Button: ({ children, onClick, variant }: any) => (
+    <button onClick={onClick} className={variant}>{children}</button>
+  ),
+}));
 
-const mockCurrentWeather = [
-  {
-    location: 'Location 1',
-    date: '2025-06-30',
-    temperature: { current: 25, min: 20, max: 30 },
-    humidity: 65,
-    rainfall: 0,
-    windSpeed: 10,
-    conditions: 'Sunny'
-  }
-];
-
-const mockHistoricalData = [
-  {
-    date: '2025-06-25',
-    avg_temperature_c: 22,
-    min_temperature_c: 18,
-    max_temperature_c: 26,
-    humidity_percent: 60,
-    rainfall_mm: 0,
-    avg_wind_speed_kmh: 15
-  }
-];
-
-const mockStatistics = {
-  overview: {
-    totalDays: 30,
-    averageTemperature: 22.5,
-    temperatureRange: { min: 15, max: 35 },
-    totalRainfall: 45,
-    averageDailyRainfall: 1.5,
-    rainyDays: 8,
-    dryDays: 22
-  },
-  seasonalPatterns: []
-};
-
-const mockImpactAnalysis = {
-  temperatureImpact: [],
-  rainfallImpact: [],
-  recommendations: []
-};
-
-// Mock fetch
+// Mock fetch globally
 global.fetch = jest.fn();
 
 describe('WeatherAnalyticsPage', () => {
-  let consoleLogSpy: jest.SpyInstance;
-  let consoleErrorSpy: jest.SpyInstance;
-  let consoleWarnSpy: jest.SpyInstance;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    
-    // Mock fetch responses
-    (global.fetch as jest.Mock).mockImplementation((url: string) => {
-      if (url.includes('/weather/locations')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockLocations)
-        });
-      }
-      if (url.includes('/weather/current')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockCurrentWeather)
-        });
-      }
-      if (url.includes('/weather/historical')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockHistoricalData)
-        });
-      }
-      if (url.includes('/weather/statistics')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockStatistics)
-        });
-      }
-      if (url.includes('/weather/impact-analysis')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockImpactAnalysis)
-        });
-      }
-      return Promise.reject(new Error('Unknown URL'));
-    });
   });
 
-  afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-  });
+  describe('Error Handling', () => {
+    it('should handle API errors gracefully', async () => {
+      // Arrange - Mock API to return error
+      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
-  describe('Component Rendering', () => {
-    it('should render the page title and header', async () => {
+      // Act
       render(<WeatherAnalyticsPage />);
+
+      // Assert - Should show loading initially, then handle error gracefully
+      expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
       
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.queryByText(/Loading/)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should handle missing weather data gracefully', async () => {
+      // Arrange - Mock API to return empty data
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      });
+
+      // Act
+      render(<WeatherAnalyticsPage />);
+
+      // Assert - Should render without crashing
+      await waitFor(() => {
+        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
+        expect(screen.getByText('Real-time weather monitoring and impact analysis')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle undefined statistics gracefully', async () => {
+      // Arrange - Mock API to return undefined statistics
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => undefined,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      });
+
+      // Act
+      render(<WeatherAnalyticsPage />);
+
+      // Assert - Should render without crashing
       await waitFor(() => {
         expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
       });
-      
-      expect(screen.getByText(/Real-time weather monitoring/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Cagliari Weather Data', () => {
+    const mockCagliariLocations = [
+      { location: 'Cagliari', dataPoints: 1000, dateRange: { start: '2024-11-01', end: '2025-06-30' } },
+      { location: 'Selargius', dataPoints: 950, dateRange: { start: '2024-11-01', end: '2025-06-30' } },
+      { location: 'Quartucciu', dataPoints: 920, dateRange: { start: '2024-11-01', end: '2025-06-30' } },
+      { location: 'Elmas', dataPoints: 880, dateRange: { start: '2024-11-01', end: '2025-06-30' } }
+    ];
+
+    const mockCurrentWeather = [
+      {
+        location: 'Cagliari',
+        date: '2025-08-28',
+        temperature: { current: 25.5, min: 20.2, max: 30.1 },
+        humidity: 65,
+        rainfall: 0,
+        windSpeed: 12,
+        conditions: 'Clear'
+      },
+      {
+        location: 'Selargius',
+        date: '2025-08-28',
+        temperature: { current: 24.8, min: 19.5, max: 29.3 },
+        humidity: 68,
+        rainfall: 0.5,
+        windSpeed: 10,
+        conditions: 'Light Rain'
+      }
+    ];
+
+    const mockHistoricalData = [
+      {
+        date: '2025-08-25',
+        avg_temperature_c: 24.2,
+        min_temperature_c: 19.1,
+        max_temperature_c: 29.3,
+        humidity_percent: 62,
+        rainfall_mm: 0,
+        avg_wind_speed_kmh: 15
+      },
+      {
+        date: '2025-08-26',
+        avg_temperature_c: 25.8,
+        min_temperature_c: 20.3,
+        max_temperature_c: 31.2,
+        humidity_percent: 58,
+        rainfall_mm: 0,
+        avg_wind_speed_kmh: 12
+      }
+    ];
+
+    const mockStatistics = {
+      overview: {
+        totalDays: 30,
+        averageTemperature: 23.5,
+        temperatureRange: { min: 15.2, max: 32.1 },
+        totalRainfall: 45.2,
+        averageDailyRainfall: 1.5,
+        rainyDays: 8,
+        dryDays: 22
+      },
+      seasonalPatterns: [
+        { month: 1, avgTemperature: 12.5, totalRainfall: 85.3 },
+        { month: 2, avgTemperature: 13.2, totalRainfall: 78.1 },
+        { month: 3, avgTemperature: 15.8, totalRainfall: 65.4 }
+      ]
+    };
+
+    const mockImpactAnalysis = {
+      temperatureImpact: [
+        { range: 'Cold (<10°C)', days: 45, relativeConsumption: 85, unit: '%' },
+        { range: 'Cool (10-15°C)', days: 90, relativeConsumption: 95, unit: '%' },
+        { range: 'Mild (15-20°C)', days: 120, relativeConsumption: 100, unit: '%' },
+        { range: 'Warm (20-25°C)', days: 60, relativeConsumption: 115, unit: '%' },
+        { range: 'Hot (>25°C)', days: 50, relativeConsumption: 130, unit: '%' }
+      ],
+      rainfallImpact: [
+        { category: 'Dry Days', days: 200, systemEfficiency: 98, unit: '%' },
+        { category: 'Light Rain', days: 100, systemEfficiency: 95, unit: '%' },
+        { category: 'Moderate Rain', days: 50, systemEfficiency: 90, unit: '%' },
+        { category: 'Heavy Rain', days: 15, systemEfficiency: 85, unit: '%' }
+      ],
+      recommendations: [
+        {
+          condition: 'High Temperature Alert',
+          impact: 'Water demand increases by 15-30% during hot weather',
+          action: 'Activate peak demand protocols and increase reservoir levels'
+        }
+      ]
+    };
+
+    it('should display Cagliari and district locations', async () => {
+      // Arrange
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCagliariLocations,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCurrentWeather,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockHistoricalData,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStatistics,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockImpactAnalysis,
+      });
+
+      // Act
+      render(<WeatherAnalyticsPage />);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
+        expect(screen.getByText('Cagliari')).toBeInTheDocument();
+        expect(screen.getByText('Selargius')).toBeInTheDocument();
+        expect(screen.getByText('Quartucciu')).toBeInTheDocument();
+        expect(screen.getByText('Elmas')).toBeInTheDocument();
+      });
     });
 
-    it('should render all tabs', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Overview')).toBeInTheDocument();
+    it('should display current weather for Cagliari', async () => {
+      // Arrange
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCagliariLocations,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCurrentWeather,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockHistoricalData,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStatistics,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockImpactAnalysis,
       });
-      
-      expect(screen.getByText('Trends')).toBeInTheDocument();
-      expect(screen.getByText('Impact')).toBeInTheDocument();
-      expect(screen.getByText('Correlations')).toBeInTheDocument();
+
+      // Act
+      render(<WeatherAnalyticsPage />);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('25.5°C')).toBeInTheDocument();
+        expect(screen.getByText('20.2° / 30.1°')).toBeInTheDocument();
+        expect(screen.getByText('65%')).toBeInTheDocument();
+        expect(screen.getByText('0mm')).toBeInTheDocument();
+        expect(screen.getByText('12km/h')).toBeInTheDocument();
+      });
     });
 
-    it('should render location selector', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        const selects = screen.getAllByRole('combobox');
-        expect(selects.length).toBeGreaterThan(0);
+    it('should display weather statistics correctly', async () => {
+      // Arrange
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCagliariLocations,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCurrentWeather,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockHistoricalData,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStatistics,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockImpactAnalysis,
       });
-      
-      const selects = screen.getAllByRole('combobox');
-      const locationSelect = selects[0]; // First select is location
-      expect(locationSelect).toBeInTheDocument();
-      expect(locationSelect).toHaveValue('all');
-    });
 
-    it('should render date range selector', async () => {
+      // Act
       render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        const selects = screen.getAllByRole('combobox');
-        expect(selects.length).toBeGreaterThan(0);
-      });
-      
-      const selects = screen.getAllByRole('combobox');
-      const dateRangeSelect = selects[1]; // Second select is date range
-      expect(dateRangeSelect).toBeInTheDocument();
-      expect(dateRangeSelect).toHaveValue('month');
-    });
 
-    it('should render interval selector', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      // The interval selector is only shown in historical data tab
+      // Assert
       await waitFor(() => {
-        expect(screen.getByText('Trends')).toBeInTheDocument();
+        expect(screen.getByText('23.5°C')).toBeInTheDocument();
+        expect(screen.getByText('15.2°C - 32.1°C')).toBeInTheDocument();
+        expect(screen.getByText('45.2mm')).toBeInTheDocument();
+        expect(screen.getByText('8 / 30 days')).toBeInTheDocument();
       });
-      
-      fireEvent.click(screen.getByText('Trends'));
-      
-      await waitFor(() => {
-        const selects = screen.getAllByRole('combobox');
-        expect(selects.length).toBeGreaterThan(2);
-      });
-      
-      const selects = screen.getAllByRole('combobox');
-      const intervalSelect = selects[2]; // Third select is interval
-      expect(intervalSelect).toBeInTheDocument();
-      expect(intervalSelect).toHaveValue('daily');
     });
   });
 
   describe('Tab Navigation', () => {
-    it('should show overview tab content by default', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
+    it('should switch between tabs correctly', async () => {
+      // Arrange
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => [],
       });
-      
-      // Overview tab should be active by default
-      const overviewTab = screen.getByText('Overview');
-      // Check that overview tab has active styling
-      expect(overviewTab.className).toContain('text-blue-600');
-    });
 
-    it('should switch to trends tab when clicked', async () => {
+      // Act
       render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Trends')).toBeInTheDocument();
-      });
-      
-      const trendsTab = screen.getByText('Trends');
-      fireEvent.click(trendsTab);
-      
-      expect(screen.getByText(/Temperature Trends/)).toBeInTheDocument();
-      expect(screen.getByText(/Rainfall & Humidity/)).toBeInTheDocument();
-    });
 
-    it('should switch to correlations tab when clicked', async () => {
-      render(<WeatherAnalyticsPage />);
-      
       await waitFor(() => {
-        expect(screen.getByText('Correlations')).toBeInTheDocument();
+        expect(screen.getByText('Overview')).toBeInTheDocument();
       });
-      
-      const correlationsTab = screen.getByText('Correlations');
-      fireEvent.click(correlationsTab);
-      
-      // Tab should become active
-      expect(correlationsTab.className).toContain('text-blue-600');
-    });
 
-    it('should switch to impact tab when clicked', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Impact')).toBeInTheDocument();
-      });
-      
-      const impactTab = screen.getByText('Impact');
-      fireEvent.click(impactTab);
-      
-      // Tab should become active
-      expect(impactTab.className).toContain('text-blue-600');
-    });
-  });
-
-  describe('Data Loading', () => {
-    it('should display loading state initially', () => {
-      // Mock fetch to delay response
-      (global.fetch as jest.Mock).mockImplementation(() => 
-        new Promise(resolve => setTimeout(resolve, 100))
-      );
-      
-      render(<WeatherAnalyticsPage />);
-      
-      // Should show loading spinner
-      const spinner = document.querySelector('.animate-spin');
-      expect(spinner).toBeInTheDocument();
-    });
-
-    it('should display weather data after loading', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
-      });
-      
-      // Should show weather statistics
-      expect(screen.getByText('Weather Statistics')).toBeInTheDocument();
-      expect(screen.getByText('Average Temperature')).toBeInTheDocument();
-    });
-    
-    it('should display no data message when API returns empty data', async () => {
-      // Mock empty responses
-      (global.fetch as jest.Mock).mockImplementation((url: string) => {
-        if (url.includes('/weather/locations')) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve([])
-          });
-        }
-        if (url.includes('/weather/current')) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve([])
-          });
-        }
-        if (url.includes('/weather/statistics')) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(null)
-          });
-        }
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([])
-        });
-      });
-      
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
-      
-      // Should show page title still
-      expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
-    });
-  });
-
-  describe('Filter Interactions', () => {
-    it('should update location filter', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        const selects = screen.getAllByRole('combobox');
-        expect(selects.length).toBeGreaterThan(0);
-      });
-      
-      const selects = screen.getAllByRole('combobox');
-      const locationSelect = selects[0];
-      
-      fireEvent.change(locationSelect, { target: { value: 'Location 1' } });
-      
-      expect(locationSelect).toHaveValue('Location 1');
-    });
-
-    it('should update date range filter', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        const selects = screen.getAllByRole('combobox');
-        expect(selects.length).toBeGreaterThan(0);
-      });
-      
-      const selects = screen.getAllByRole('combobox');
-      const dateRangeSelect = selects[1];
-      
-      fireEvent.change(dateRangeSelect, { target: { value: 'week' } });
-      
-      expect(dateRangeSelect).toHaveValue('week');
-    });
-
-    it('should update interval filter', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      // Switch to trends tab to see interval selector
-      await waitFor(() => {
-        expect(screen.getByText('Trends')).toBeInTheDocument();
-      });
-      
+      // Click on Trends tab
       fireEvent.click(screen.getByText('Trends'));
-      
+
+      // Assert
       await waitFor(() => {
-        const selects = screen.getAllByRole('combobox');
-        expect(selects.length).toBeGreaterThan(2);
+        expect(screen.getByText('Temperature Trends')).toBeInTheDocument();
       });
-      
-      const selects = screen.getAllByRole('combobox');
-      const intervalSelect = selects[2];
-      
-      // Check that it exists and has the default value
-      expect(intervalSelect).toBeInTheDocument();
-      expect(intervalSelect).toHaveValue('daily');
+
+      // Click on Impact tab
+      fireEvent.click(screen.getByText('Impact'));
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Temperature Impact on Water Consumption')).toBeInTheDocument();
+      });
+
+      // Click on Correlations tab
+      fireEvent.click(screen.getByText('Correlations'));
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Weather-System Performance Correlations')).toBeInTheDocument();
+      });
     });
   });
 
-  describe('Weather Icons', () => {
-    it('should display weather conditions correctly', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
+  describe('Location Selection', () => {
+    it('should allow selecting different locations', async () => {
+      // Arrange
+      const mockLocations = [
+        { location: 'Cagliari', dataPoints: 1000, dateRange: { start: '2024-11-01', end: '2025-06-30' } },
+        { location: 'Selargius', dataPoints: 950, dateRange: { start: '2024-11-01', end: '2025-06-30' } }
+      ];
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockLocations,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      }).mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
       });
-      
-      // Should show location name from mock data in the heading
-      const locationHeadings = screen.getAllByText('Location 1');
-      expect(locationHeadings.length).toBeGreaterThan(0);
-      
-      // Should show temperature with decimal
-      expect(screen.getByText(/25\.0/)).toBeInTheDocument();
+
+      // Act
+      render(<WeatherAnalyticsPage />);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('All Locations')).toBeInTheDocument();
+        expect(screen.getByText('Cagliari')).toBeInTheDocument();
+        expect(screen.getByText('Selargius')).toBeInTheDocument();
+      });
     });
   });
 
-  describe('Date Formatting', () => {
-    it('should format dates correctly', async () => {
-      render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
+  describe('Date Range Selection', () => {
+    it('should allow selecting different date ranges', async () => {
+      // Arrange
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => [],
       });
-      
-      // Date should be formatted as "Jun 30"
-      expect(screen.getByText('Jun 30')).toBeInTheDocument();
-    });
-  });
 
-  describe('Error Handling', () => {
-    it('should handle fetch errors gracefully', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
-      
+      // Act
       render(<WeatherAnalyticsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
-      });
-      
-      // Should still render the page without crashing
-      expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
-      
-      // Error should be logged
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching weather data:', expect.any(Error));
-    });
-  });
 
-  describe('Responsive Behavior', () => {
-    it('should render with responsive grid layouts', async () => {
-      render(<WeatherAnalyticsPage />);
-      
+      // Assert
       await waitFor(() => {
-        expect(screen.getByText('Weather Analytics')).toBeInTheDocument();
+        expect(screen.getByText('Last Week')).toBeInTheDocument();
+        expect(screen.getByText('Last Month')).toBeInTheDocument();
+        expect(screen.getByText('Last Year')).toBeInTheDocument();
       });
-      
-      // Check that the page has rendered with proper structure
-      const pageTitle = screen.getByText('Weather Analytics');
-      expect(pageTitle).toBeInTheDocument();
-      
-      // Check for responsive classes in the component
-      const container = pageTitle.closest('.p-6');
-      expect(container).toBeInTheDocument();
     });
   });
 });

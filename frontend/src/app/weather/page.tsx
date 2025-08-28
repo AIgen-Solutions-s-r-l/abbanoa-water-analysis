@@ -97,24 +97,32 @@ const WeatherAnalyticsPage = () => {
   const [statistics, setStatistics] = useState<WeatherStatistics | null>(null);
   const [impactAnalysis, setImpactAnalysis] = useState<ImpactAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWeatherData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Fetch locations
         const locationsRes = await fetch('/api/proxy/v1/weather/locations');
+        if (!locationsRes.ok) {
+          throw new Error(`Failed to fetch locations: ${locationsRes.status}`);
+        }
         const locationsData = await locationsRes.json();
-        setLocations(locationsData);
+        setLocations(Array.isArray(locationsData) ? locationsData : []);
 
         // Fetch current weather
         const currentUrl = selectedLocation === 'all' 
           ? '/api/proxy/v1/weather/current'
           : `/api/proxy/v1/weather/current?location=${selectedLocation}`;
         const currentRes = await fetch(currentUrl);
+        if (!currentRes.ok) {
+          throw new Error(`Failed to fetch current weather: ${currentRes.status}`);
+        }
         const currentData = await currentRes.json();
-        setCurrentWeather(currentData);
+        setCurrentWeather(Array.isArray(currentData) ? currentData : []);
 
         // Fetch historical data
         // Use June 2025 as the end date since that's when our data ends
@@ -135,6 +143,9 @@ const WeatherAnalyticsPage = () => {
         }
         
         const historicalRes = await fetch(historicalUrl);
+        if (!historicalRes.ok) {
+          throw new Error(`Failed to fetch historical data: ${historicalRes.status}`);
+        }
         const historicalData = await historicalRes.json();
         console.log('📊 Historical weather data:', historicalData);
         
@@ -156,16 +167,23 @@ const WeatherAnalyticsPage = () => {
           ? '/api/proxy/v1/weather/statistics'
           : `/api/proxy/v1/weather/statistics?location=${selectedLocation}`;
         const statsRes = await fetch(statsUrl);
+        if (!statsRes.ok) {
+          throw new Error(`Failed to fetch statistics: ${statsRes.status}`);
+        }
         const statsData = await statsRes.json();
         setStatistics(statsData);
 
         // Fetch impact analysis
         const impactRes = await fetch('/api/proxy/v1/weather/impact-analysis');
+        if (!impactRes.ok) {
+          throw new Error(`Failed to fetch impact analysis: ${impactRes.status}`);
+        }
         const impactData = await impactRes.json();
         setImpactAnalysis(impactData);
 
       } catch (error) {
         console.error('Error fetching weather data:', error);
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
       }
@@ -199,6 +217,31 @@ const WeatherAnalyticsPage = () => {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Weather Analytics</h1>
+            <p className="text-gray-600 mt-1">Real-time weather monitoring and impact analysis</p>
+          </div>
+        </div>
+        <Card className="p-6">
+          <div className="text-center">
+            <AlertTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Weather Data Unavailable</h2>
+            <p className="text-gray-600 mb-4">
+              {error}
+            </p>
+            <p className="text-sm text-gray-500">
+              The weather service is currently unavailable. Please try again later or contact support if the issue persists.
+            </p>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -238,7 +281,7 @@ const WeatherAnalyticsPage = () => {
 
       {/* Current Weather Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {currentWeather.map((weather, idx) => (
+        {currentWeather.length > 0 ? currentWeather.map((weather, idx) => (
           <Card key={idx} className="p-4">
             <div className="flex justify-between items-start mb-2">
               <div>
@@ -275,7 +318,14 @@ const WeatherAnalyticsPage = () => {
               </div>
             </div>
           </Card>
-        ))}
+        )) : (
+          <Card className="p-4 col-span-full">
+            <div className="text-center text-gray-500">
+              <CloudIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+              <p>No current weather data available</p>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Tab Navigation */}
@@ -298,67 +348,81 @@ const WeatherAnalyticsPage = () => {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'overview' && statistics && (
+      {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Statistics Summary */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Weather Statistics</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">Average Temperature</p>
-                  <p className="text-2xl font-bold">
-                    {statistics.overview.averageTemperature?.toFixed(1) || '--'}°C
-                  </p>
+            {statistics ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Average Temperature</p>
+                    <p className="text-2xl font-bold">
+                      {statistics.overview.averageTemperature?.toFixed(1) || '--'}°C
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Temperature Range</p>
+                    <p className="text-lg">
+                      {statistics.overview.temperatureRange.min?.toFixed(1)}°C - {statistics.overview.temperatureRange.max?.toFixed(1)}°C
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Temperature Range</p>
-                  <p className="text-lg">
-                    {statistics.overview.temperatureRange.min?.toFixed(1)}°C - {statistics.overview.temperatureRange.max?.toFixed(1)}°C
-                  </p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Total Rainfall</p>
+                    <p className="text-2xl font-bold">
+                      {statistics.overview.totalRainfall.toFixed(1)}mm
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Rainy Days</p>
+                    <p className="text-lg">
+                      {statistics.overview.rainyDays} / {statistics.overview.totalDays} days
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">Total Rainfall</p>
-                  <p className="text-2xl font-bold">
-                    {statistics.overview.totalRainfall.toFixed(1)}mm
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Rainy Days</p>
-                  <p className="text-lg">
-                    {statistics.overview.rainyDays} / {statistics.overview.totalDays} days
-                  </p>
-                </div>
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                <CloudIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                <p>No statistics data available</p>
               </div>
-            </div>
+            )}
           </Card>
 
           {/* Seasonal Patterns */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Seasonal Patterns</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={statistics.seasonalPatterns}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="month" 
-                  tickFormatter={(month) => monthNames[month - 1]}
-                />
-                <YAxis yAxisId="temp" orientation="left" />
-                <YAxis yAxisId="rain" orientation="right" />
-                <Tooltip 
-                  labelFormatter={(month) => monthNames[month - 1]}
-                  formatter={(value: any, name: string) => [
-                    typeof value === 'number' ? value.toFixed(1) : value,
-                    name
-                  ]}
-                />
-                <Legend />
-                <Bar yAxisId="rain" dataKey="totalRainfall" name="Rainfall (mm)" fill="#3B82F6" />
-                <Line yAxisId="temp" type="monotone" dataKey="avgTemperature" name="Avg Temp (°C)" stroke="#EF4444" />
-              </BarChart>
-            </ResponsiveContainer>
+            {statistics && statistics.seasonalPatterns ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={statistics.seasonalPatterns}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    tickFormatter={(month) => monthNames[month - 1]}
+                  />
+                  <YAxis yAxisId="temp" orientation="left" />
+                  <YAxis yAxisId="rain" orientation="right" />
+                  <Tooltip 
+                    labelFormatter={(month) => monthNames[month - 1]}
+                    formatter={(value: any, name: string) => [
+                      typeof value === 'number' ? value.toFixed(1) : value,
+                      name
+                    ]}
+                  />
+                  <Legend />
+                  <Bar yAxisId="rain" dataKey="totalRainfall" name="Rainfall (mm)" fill="#3B82F6" />
+                  <Line yAxisId="temp" type="monotone" dataKey="avgTemperature" name="Avg Temp (°C)" stroke="#EF4444" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                <CloudIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                <p>No seasonal patterns data available</p>
+              </div>
+            )}
           </Card>
         </div>
       )}
@@ -459,86 +523,97 @@ const WeatherAnalyticsPage = () => {
         </div>
       )}
 
-      {activeTab === 'impact' && impactAnalysis && (
+      {activeTab === 'impact' && (
         <div className="space-y-6">
-          {/* Temperature Impact on Consumption */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Temperature Impact on Water Consumption</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={impactAnalysis.temperatureImpact}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="range" />
-                <YAxis />
-                <Tooltip formatter={(value: any) => `${value}%`} />
-                <Bar dataKey="relativeConsumption" name="Relative Consumption">
-                  {impactAnalysis.temperatureImpact.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          {impactAnalysis ? (
+            <>
+              {/* Temperature Impact on Consumption */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Temperature Impact on Water Consumption</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={impactAnalysis.temperatureImpact}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="range" />
+                    <YAxis />
+                    <Tooltip formatter={(value: any) => `${value}%`} />
+                    <Bar dataKey="relativeConsumption" name="Relative Consumption">
+                      {impactAnalysis.temperatureImpact.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
 
-          {/* Rainfall Impact on System */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Rainfall Impact on System Efficiency</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={impactAnalysis.rainfallImpact}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.category}: ${entry.days} days`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="days"
-                  >
-                    {impactAnalysis.rainfallImpact.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              {/* Rainfall Impact on System */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Rainfall Impact on System Efficiency</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={impactAnalysis.rainfallImpact}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry) => `${entry.category}: ${entry.days} days`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="days"
+                      >
+                        {impactAnalysis.rainfallImpact.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-3">
+                    {impactAnalysis.rainfallImpact.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                          />
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{item.category}</span>
+                        </div>
+                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.systemEfficiency}%</span>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-3">
-                {impactAnalysis.rainfallImpact.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-                      />
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.category}</span>
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.systemEfficiency}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-
-          {/* Recommendations */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Weather-Based Recommendations</h2>
-            <div className="space-y-4">
-              {impactAnalysis.recommendations.map((rec, idx) => (
-                <div key={idx} className="border-l-4 border-blue-500 pl-4 py-3">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangleIcon className="h-5 w-5 text-amber-500 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{rec.condition}</h3>
-                      <p className="text-sm text-gray-600 mt-1">Impact: {rec.impact}</p>
-                      <p className="text-sm text-gray-800 mt-2 font-medium">
-                        <span className="text-blue-600">Action:</span> {rec.action}
-                      </p>
-                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
+              </Card>
+
+              {/* Recommendations */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Weather-Based Recommendations</h2>
+                <div className="space-y-4">
+                  {impactAnalysis.recommendations.map((rec, idx) => (
+                    <div key={idx} className="border-l-4 border-blue-500 pl-4 py-3">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangleIcon className="h-5 w-5 text-amber-500 mt-0.5" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{rec.condition}</h3>
+                          <p className="text-sm text-gray-600 mt-1">Impact: {rec.impact}</p>
+                          <p className="text-sm text-gray-800 mt-2 font-medium">
+                            <span className="text-blue-600">Action:</span> {rec.action}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </>
+          ) : (
+            <Card className="p-6">
+              <div className="text-center text-gray-500 py-8">
+                <CloudIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                <p>No impact analysis data available</p>
+              </div>
+            </Card>
+          )}
         </div>
       )}
 
