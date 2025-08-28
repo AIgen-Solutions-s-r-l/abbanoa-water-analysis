@@ -205,9 +205,9 @@ describe('ConsumptionAnalyticsPage', () => {
       // Assert
       await waitFor(() => {
         expect(screen.getByText('Daily Consumption')).toBeInTheDocument();
-        expect(screen.getByText('150K L')).toBeInTheDocument();
+        expect(screen.getByText('150.0K L')).toBeInTheDocument();
         expect(screen.getByText('Total Users')).toBeInTheDocument();
-        expect(screen.getByText('10K')).toBeInTheDocument();
+        expect(screen.getByText('10.0K')).toBeInTheDocument();
         expect(screen.getByText('System Efficiency')).toBeInTheDocument();
         expect(screen.getByText('85.0%')).toBeInTheDocument();
         expect(screen.getByText('Peak Demand')).toBeInTheDocument();
