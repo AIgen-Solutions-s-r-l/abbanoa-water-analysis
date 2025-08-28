@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [v2.2.0.0] - 2025-08-28
 
 ### Fixed
 - 🐛 fix(consumption): handle undefined analyticsData.summary properties gracefully
@@ -9,6 +9,18 @@
   - Added fallback empty arrays for missing data collections
   - Component now displays fallback values instead of crashing when data is missing
   - Prevents "Cannot read properties of undefined" errors in production
+
+### Added
+- ✨ feat: comprehensive test coverage for authentication, API proxy, weather, and dashboard
+- ✨ feat: mock data generation system with validation
+- ✨ feat: node anonymization for privacy compliance
+
+### Changed
+- ♻️ refactor(consumption): improved defensive coding patterns throughout component
+
+### Testing
+- ✅ test: added unit and integration tests across multiple components
+- ✅ test: increased coverage thresholds to match current levels
 
 
 ## [v2.0.0.0] - 2025-08-26
