@@ -12,7 +12,9 @@ import {
   ConsumptionTimeline,
   UserSegments,
   PeakDemand,
-  ConservationOpportunities
+  ConservationOpportunities,
+  HourlyPattern,
+  TrendAnalysis
 } from '@/services/consumption.service';
 
 interface UseConsumptionDataReturn {
@@ -59,6 +61,20 @@ interface UsePeakDemandReturn {
 
 interface UseConservationOpportunitiesReturn {
   data: ConservationOpportunities | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+interface UseHourlyPatternReturn {
+  data: HourlyPattern | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+interface UseTrendAnalysisReturn {
+  data: TrendAnalysis | null;
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -327,6 +343,88 @@ export function useConservationOpportunities(autoRefresh: boolean = true): UseCo
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch conservation opportunities data');
       console.error('Error in useConservationOpportunities:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData, autoRefresh]);
+
+  return {
+    data,
+    loading,
+    error,
+    refresh: fetchData
+  };
+}
+
+/**
+ * Hook for hourly pattern data
+ */
+export function useHourlyPattern(autoRefresh: boolean = true): UseHourlyPatternReturn {
+  const [data, setData] = useState<HourlyPattern | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await consumptionService.getHourlyPattern();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch hourly pattern data');
+      console.error('Error in useHourlyPattern:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData, autoRefresh]);
+
+  return {
+    data,
+    loading,
+    error,
+    refresh: fetchData
+  };
+}
+
+/**
+ * Hook for trend analysis data
+ */
+export function useTrendAnalysis(autoRefresh: boolean = true): UseTrendAnalysisReturn {
+  const [data, setData] = useState<TrendAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await consumptionService.getTrendAnalysis();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch trend analysis data');
+      console.error('Error in useTrendAnalysis:', err);
     } finally {
       setLoading(false);
     }

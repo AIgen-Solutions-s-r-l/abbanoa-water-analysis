@@ -165,7 +165,7 @@ async def get_conservation_opportunities(
 ) -> Dict[str, Any]:
     """
     Get water conservation opportunities.
-
+    
     Returns:
         Dict containing conservation opportunities data
     """
@@ -175,6 +175,50 @@ async def get_conservation_opportunities(
             "conservation_opportunities": analytics_data.get(
                 "conservation_opportunities", []
             ),
+            "data_metadata": analytics_data.get("data_metadata", {}),
+        }
+    except ConsumptionServiceError as e:
+        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/hourly-pattern")
+async def get_hourly_pattern(
+    service: ConsumptionService = Depends(get_consumption_service),
+) -> Dict[str, Any]:
+    """
+    Get detailed hourly consumption pattern for 24-hour visualization.
+    
+    Returns:
+        Dict containing hourly pattern data for charts
+    """
+    try:
+        analytics_data = service.get_consumption_analytics()
+        return {
+            "hourly_pattern": analytics_data.get("hourly_pattern", []),
+            "data_metadata": analytics_data.get("data_metadata", {}),
+        }
+    except ConsumptionServiceError as e:
+        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/trend-analysis")
+async def get_trend_analysis(
+    service: ConsumptionService = Depends(get_consumption_service),
+) -> Dict[str, Any]:
+    """
+    Get trend analysis data for consumption patterns.
+    
+    Returns:
+        Dict containing trend analysis data
+    """
+    try:
+        analytics_data = service.get_consumption_analytics()
+        return {
+            "trend_analysis": analytics_data.get("trend_analysis", {}),
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:

@@ -144,6 +144,36 @@ export interface ConservationOpportunities {
   };
 }
 
+export interface HourlyPattern {
+  hourly_pattern: Array<{
+    hour: number;
+    avg_consumption: number;
+    peak_hour: boolean;
+    hour_label: string;
+    consumption_formatted: string;
+  }>;
+  data_metadata: {
+    is_real_time: boolean;
+  };
+}
+
+export interface TrendAnalysis {
+  trend_analysis: {
+    growth_rate: number;
+    trend_direction: 'increasing' | 'decreasing' | 'stable';
+    peak_hour: number;
+    valley_hour: number;
+    daily_variance: number;
+    seasonal_trend: string;
+    avg_daily_consumption: number;
+    peak_consumption: number;
+    valley_consumption: number;
+  };
+  data_metadata: {
+    is_real_time: boolean;
+  };
+}
+
 class ConsumptionService {
   private baseUrl: string;
 
@@ -281,6 +311,44 @@ class ConsumptionService {
       return data;
     } catch (error) {
       console.error('Error fetching conservation opportunities:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch hourly pattern data
+   */
+  async getHourlyPattern(): Promise<HourlyPattern> {
+    try {
+      const response = await fetch(`${this.baseUrl}/consumption/hourly-pattern`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching hourly pattern:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch trend analysis data
+   */
+  async getTrendAnalysis(): Promise<TrendAnalysis> {
+    try {
+      const response = await fetch(`${this.baseUrl}/consumption/trend-analysis`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching trend analysis:', error);
       throw error;
     }
   }
