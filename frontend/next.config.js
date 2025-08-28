@@ -1,60 +1,33 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable standalone output for Docker deployment
-  output: 'standalone',
-  
-  // External packages for server components
-  serverExternalPackages: [],
-  
-  // Environment variables that should be available on the client side
-  env: {
-    BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:8000',
-  },
-  
-  // API routes configuration
   async rewrites() {
     return [
       {
-        source: '/api/proxy/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/:path*`,
+        source: '/api/weather/:path*',
+        destination: 'http://localhost:8000/weather/:path*',
       },
     ];
   },
-  
-  // Security headers
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/api/weather/:path*',
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
           },
           {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
           },
         ],
       },
     ];
-  },
-  
-  // Optimize images
-  images: {
-    domains: ['localhost'],
-  },
-  
-  // Build optimization
-  poweredByHeader: false,
-  
-  // Disable ESLint during production builds
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 

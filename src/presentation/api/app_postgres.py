@@ -69,6 +69,14 @@ async def startup_event():
         logger.info("User routes loaded successfully")
     except ImportError as e:
         logger.warning(f"User routes module not found: {e}")
+    
+    # Include weather routes
+    try:
+        from .endpoints.weather_router import router as weather_router
+        app.include_router(weather_router)
+        logger.info("Weather routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Weather routes module not found: {e}")
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 
 
