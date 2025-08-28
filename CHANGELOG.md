@@ -1,5 +1,30 @@
 # Changelog
 
+## [v2.4.0.0] - 2025-08-28
+
+### Added
+- 🎯 feat(consumption): implement SQLAlchemy ORM for real PostgreSQL data access
+  - Replace mocked data with real database queries using SQLAlchemy ORM
+  - Add ConsumptionService with proper error handling and data validation
+  - Create SQLAlchemy models for Node, SensorReading, and Anomaly tables
+  - Configure PM2 for development workflow (Docker only for DB)
+  - Add historical data indicators in API response
+  - Fix timezone handling and data validation
+  - Update ecosystem.config.js for SQLAlchemy server
+- 🔧 feat(infrastructure): improve SQLAlchemy service design with better error handling
+- 🧪 test(infrastructure): add SQLAlchemy models unit tests
+
+### Changed
+- ♻️ refactor(infrastructure): improve SQLAlchemy service design with better error handling
+- 🔄 refactor: migrate from Docker-based API to PM2-based development workflow
+
+### Technical
+- ✨ feat: add SQLAlchemy ORM integration with PostgreSQL
+- ✨ feat: add dedicated SQLAlchemy FastAPI server
+- ✨ feat: add comprehensive error handling with ConsumptionServiceError
+- 🔧 chore: update ecosystem.config.js for optimized development workflow
+- 📦 feat: add minimal requirements.sqlalchemy.txt for production deployment
+
 ## [v2.3.2.0] - 2025-08-28
 
 ### Added
