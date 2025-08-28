@@ -226,6 +226,27 @@ export default function ConsumptionAnalyticsPage() {
         </div>
       </div>
 
+      {/* Data Source Banner */}
+      {analyticsData.data_metadata && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <ClockIcon className="w-5 h-5 text-blue-600 mr-2" />
+            <div>
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Historical Data Source
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-300">
+                Showing data from {analyticsData.data_metadata.data_source} • 
+                Latest reading: {analyticsData.data_metadata.latest_timestamp ? 
+                  new Date(analyticsData.data_metadata.latest_timestamp).toLocaleString() : 'Unknown'} • 
+                {analyticsData.data_metadata.synthetic_percentage ? 
+                  `${analyticsData.data_metadata.synthetic_percentage}% synthetic data` : '100% real data'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-6">
@@ -235,8 +256,8 @@ export default function ConsumptionAnalyticsPage() {
               <p className="text-2xl font-bold mt-1">
                 {formatNumber(analyticsData.summary?.total_daily_consumption)} L
               </p>
-              <p className="text-xs text-green-600 mt-1">
-                ↑ 3.2% vs yesterday
+              <p className="text-xs text-blue-600 mt-1">
+                Historical data • {analyticsData.data_metadata?.data_age_hours ? `${Math.round(analyticsData.data_metadata.data_age_hours)}h old` : 'Unknown age'}
               </p>
             </div>
             <DropletIcon className="w-10 h-10 text-blue-500" />
