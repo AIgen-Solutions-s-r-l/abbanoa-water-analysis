@@ -440,6 +440,138 @@ app.get('/api/v1/dashboard/metrics', authenticateToken, (req, res) => {
   });
 });
 
+// Mock pressure zones endpoint
+app.get('/api/v1/pressure/zones', (req, res) => {
+  res.json({
+    success: true,
+    zones: [
+      {
+        zone: 'ZONE_001',
+        zoneName: 'Central Business District',
+        minPressure: 2.8,
+        avgPressure: 3.2,
+        maxPressure: 3.8,
+        nodeCount: 15,
+        status: 'optimal'
+      },
+      {
+        zone: 'ZONE_002',
+        zoneName: 'Residential North',
+        minPressure: 2.1,
+        avgPressure: 2.8,
+        maxPressure: 3.2,
+        nodeCount: 23,
+        status: 'warning'
+      },
+      {
+        zone: 'ZONE_003',
+        zoneName: 'Industrial District',
+        minPressure: 3.0,
+        avgPressure: 3.5,
+        maxPressure: 4.0,
+        nodeCount: 8,
+        status: 'optimal'
+      },
+      {
+        zone: 'ZONE_004',
+        zoneName: 'Residential Area',
+        minPressure: 1.8,
+        avgPressure: 2.2,
+        maxPressure: 2.6,
+        nodeCount: 31,
+        status: 'critical'
+      },
+      {
+        zone: 'ZONE_005',
+        zoneName: 'Distribution Network',
+        minPressure: 2.5,
+        avgPressure: 3.0,
+        maxPressure: 3.5,
+        nodeCount: 42,
+        status: 'optimal'
+      }
+    ]
+  });
+});
+
+// Mock nodes endpoint
+app.get('/api/v1/nodes', (req, res) => {
+  res.json([
+    {
+      node_id: 'NODE_211_001',
+      node_name: 'Central Business Sensor 1',
+      pressure: 3.2,
+      flow_rate: 45.2,
+      temperature: 18.5,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'NODE_211_002',
+      node_name: 'Central Business Sensor 2',
+      pressure: 3.5,
+      flow_rate: 38.7,
+      temperature: 19.1,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'NODE_215_001',
+      node_name: 'Residential North Sensor 1',
+      pressure: 2.8,
+      flow_rate: 52.1,
+      temperature: 17.8,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'NODE_273_001',
+      node_name: 'Industrial Sensor 1',
+      pressure: 3.8,
+      flow_rate: 78.3,
+      temperature: 20.2,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'NODE_281_001',
+      node_name: 'Industrial Sensor 2',
+      pressure: 3.6,
+      flow_rate: 65.4,
+      temperature: 19.8,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'NODE_287_001',
+      node_name: 'Residential Area Sensor 1',
+      pressure: 2.2,
+      flow_rate: 41.2,
+      temperature: 18.9,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'NODE_288_001',
+      node_name: 'Residential Area Sensor 2',
+      pressure: 1.8,
+      flow_rate: 35.6,
+      temperature: 18.2,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    },
+    {
+      node_id: 'DIST_001',
+      node_name: 'Distribution Network Sensor 1',
+      pressure: 3.0,
+      flow_rate: 89.7,
+      temperature: 19.5,
+      status: 'active',
+      last_reading: new Date().toISOString()
+    }
+  ]);
+});
+
 app.get('/api/v1/monitoring/status', authenticateToken, (req, res) => {
   res.json({
     success: true,

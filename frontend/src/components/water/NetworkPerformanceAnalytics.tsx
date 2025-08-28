@@ -44,6 +44,55 @@ interface NetworkPerformanceAnalyticsProps {
   className?: string
 }
 
+// Fallback mock data for when API is unavailable
+const getFallbackPressureData = (): PressureDistribution[] => [
+  {
+    zone: 'ZONE_001',
+    zoneName: 'Central Business District',
+    minPressure: 2.8,
+    avgPressure: 3.2,
+    maxPressure: 3.8,
+    nodeCount: 15,
+    status: 'optimal'
+  },
+  {
+    zone: 'ZONE_002',
+    zoneName: 'Residential North',
+    minPressure: 2.1,
+    avgPressure: 2.8,
+    maxPressure: 3.2,
+    nodeCount: 23,
+    status: 'warning'
+  },
+  {
+    zone: 'ZONE_003',
+    zoneName: 'Industrial District',
+    minPressure: 3.0,
+    avgPressure: 3.5,
+    maxPressure: 4.0,
+    nodeCount: 8,
+    status: 'optimal'
+  },
+  {
+    zone: 'ZONE_004',
+    zoneName: 'Residential Area',
+    minPressure: 1.8,
+    avgPressure: 2.2,
+    maxPressure: 2.6,
+    nodeCount: 31,
+    status: 'critical'
+  },
+  {
+    zone: 'ZONE_005',
+    zoneName: 'Distribution Network',
+    minPressure: 2.5,
+    avgPressure: 3.0,
+    maxPressure: 3.5,
+    nodeCount: 42,
+    status: 'optimal'
+  }
+];
+
 // Function to fetch real pressure zone data
 const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
   try {
@@ -56,7 +105,13 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     ]);
     
     if (!pressureResponse.ok || !nodesResponse.ok) {
-      throw new Error('Failed to fetch pressure zones or nodes data');
+      console.error('❌ API Response errors:', {
+        pressureStatus: pressureResponse.status,
+        pressureStatusText: pressureResponse.statusText,
+        nodesStatus: nodesResponse.status,
+        nodesStatusText: nodesResponse.statusText
+      });
+      throw new Error(`Failed to fetch data: Pressure zones (${pressureResponse.status}) or Nodes (${nodesResponse.status})`);
     }
     
     const pressureData = await pressureResponse.json();
@@ -64,6 +119,12 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     
     console.log('📊 Pressure zones from API:', pressureData.zones?.length || 0);
     console.log('🏭 Available nodes:', nodesData?.length || 0);
+    
+    // Validate that we have the expected data structure
+    if (!pressureData.zones || !Array.isArray(nodesData)) {
+      console.warn('⚠️ Invalid data structure received, using fallback data');
+      throw new Error('Invalid data structure from API');
+    }
     
     // Start with real pressure zones
     const realZones = pressureData.zones?.map((zone: any) => ({
@@ -178,14 +239,8 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     
   } catch (error) {
     console.error('❌ Failed to fetch pressure zones data:', error);
-    // Enhanced fallback data representing different water network areas
-    return [
-      { zone: 'Zone 1', zoneName: 'Central Business District', minPressure: 2.8, avgPressure: 3.5, maxPressure: 4.2, nodeCount: 3, status: 'optimal' },
-      { zone: 'Zone 2', zoneName: 'Residential North', minPressure: 2.2, avgPressure: 2.9, maxPressure: 3.6, nodeCount: 2, status: 'warning' },
-      { zone: 'Zone 3', zoneName: 'Industrial District', minPressure: 3.1, avgPressure: 3.8, maxPressure: 4.5, nodeCount: 2, status: 'optimal' },
-      { zone: 'Zone 4', zoneName: 'Residential Area', minPressure: 1.8, avgPressure: 2.3, maxPressure: 2.8, nodeCount: 1, status: 'critical' },
-      { zone: 'Zone 5', zoneName: 'Distribution Network', minPressure: 2.5, avgPressure: 3.2, maxPressure: 3.9, nodeCount: 1, status: 'optimal' }
-    ];
+    console.log('🔄 Using fallback data due to API error');
+    return getFallbackPressureData();
   }
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8001';
 
 export async function GET(
   request: NextRequest,
@@ -42,7 +42,9 @@ async function proxyRequest(
   try {
     // Reconstruct the path
     const path = pathSegments.join('/');
-    const url = `${BACKEND_URL}/${path}`;
+    const url = `${BACKEND_URL}/api/${path}`;
+    
+
     
     // Get headers from the original request
     const headers: Record<string, string> = {};
@@ -72,6 +74,8 @@ async function proxyRequest(
 
     // Make the request to the backend
     const response = await fetch(url, options);
+    
+
     
     // Get the response body
     const responseData = await response.json();
