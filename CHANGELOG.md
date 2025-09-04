@@ -120,7 +120,7 @@
 - 💥 BREAKING: BREAKING CHANGE: remove Streamlit dashboard in favor of Next.js frontend
 - 🔧 chore: Update .gitignore and enhance frontend components
 - ♻️ refactor: Remove analyze_node_volumes.py script and update node configurations
-- ♻️ refactor: Rename project from Abbanoa to Roccavina and update configurations
+- ♻️ refactor: Rename project from Roccavina to Abbanoa and update configurations
 - 🐛 fix: Enhance logging and data handling in Enhanced Overview and Flow Analytics Chart
 - 🐛 fix: Improve Infrastructure Map NodeDetailModal data display and Enhanced Overview chart
 - ✨ feat: Add Interactive Infrastructure Map with enhanced NodeDetailModal

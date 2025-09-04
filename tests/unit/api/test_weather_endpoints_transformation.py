@@ -65,10 +65,10 @@ class TestWeatherEndpointTransformations(unittest.TestCase):
         result = await get_current_weather_with_transformation(location=None)
         
         # Assert
-        # Should only contain Roccavina (transformed from Cagliari)
+        # Should only contain Abbanoa (transformed from Cagliari)
         # Maccarese and Selargius should be filtered out
         assert len(result) == 1
-        assert result[0]['location'] == 'Roccavina'
+        assert result[0]['location'] == 'Abbanoa'
         assert result[0]['temperature']['current'] == 25.5
     
     @patch('src.presentation.api.app_postgres.pool')
@@ -107,14 +107,14 @@ class TestWeatherEndpointTransformations(unittest.TestCase):
         result = await get_weather_locations_with_transformation()
         
         # Assert
-        # Should only contain Roccavina
+        # Should only contain Abbanoa
         assert len(result) == 1
-        assert result[0]['location'] == 'Roccavina'
+        assert result[0]['location'] == 'Abbanoa'
         assert result[0]['dataPoints'] == 1000
     
     @patch('src.presentation.api.app_postgres.pool')
     async def test_query_location_transformed_to_actual(self, mock_pool):
-        """Test that queries for Roccavina are transformed to Cagliari."""
+        """Test that queries for Abbanoa are transformed to Cagliari."""
         # Arrange
         mock_conn = AsyncMock()
         mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
@@ -123,10 +123,10 @@ class TestWeatherEndpointTransformations(unittest.TestCase):
         from src.presentation.api.app_postgres import get_current_weather_with_transformation
         
         # Act
-        await get_current_weather_with_transformation(location='Roccavina')
+        await get_current_weather_with_transformation(location='Abbanoa')
         
         # Assert
-        # Check that the query was called with 'Cagliari' not 'Roccavina'
+        # Check that the query was called with 'Cagliari' not 'Abbanoa'
         mock_conn.fetch.assert_called_once()
         args = mock_conn.fetch.call_args[0]
         assert 'Cagliari' in args[1]  # Second argument should be the transformed location

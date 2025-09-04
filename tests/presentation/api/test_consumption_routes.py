@@ -45,7 +45,10 @@ class TestConsumptionRoutes:
         }
         mock_consumption_service.get_consumption_analytics.return_value = mock_data
         
-        with patch('src.presentation.api.consumption_routes.get_consumption_service', return_value=mock_consumption_service):
+        # Mock the dependency injection
+        with patch('src.presentation.api.consumption_routes.get_consumption_service') as mock_get_service:
+            mock_get_service.return_value = mock_consumption_service
+            
             # Act
             response = client.get("/api/v1/consumption/analytics")
             

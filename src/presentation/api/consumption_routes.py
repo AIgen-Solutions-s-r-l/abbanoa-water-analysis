@@ -270,3 +270,24 @@ async def get_infrastructure_types(
         raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/test-data")
+async def get_test_data():
+    """Get test data for verification."""
+    return {
+        "message": "Test data endpoint working",
+        "data_metadata": {
+            "is_real_time": False,
+            "data_source": "Test Data",
+            "last_updated": "2025-08-28T20:30:00Z",
+            "data_quality": "test"
+        },
+        "summary": {
+            "total_consumption_liters": 1500000,
+            "avg_daily_consumption_liters": 50000,
+            "total_nodes": 7,
+            "data_points": 1183
+        },
+        "test_status": "API is working correctly"
+    }

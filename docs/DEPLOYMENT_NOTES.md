@@ -1,27 +1,27 @@
-# Deployment Notes: Roccavina Location Update
+# Deployment Notes: Abbanoa Location Update
 
 ## Changes Made
 
 ### ✅ Completed Changes
 1. **Backend Configuration Updates:**
-   - Updated `src/config/nodes.py` - All node coordinates changed from Cagliari to Roccavina area
-   - Updated `src/scripts/update_real_topology.py` - Topology script updated with Roccavina coordinates
-   - Updated `src/scripts/update_real_coordinates.py` - SCADA coordinates updated for Roccavina
+   - Updated `src/config/nodes.py` - All node coordinates changed from Cagliari to Abbanoa area
+   - Updated `src/scripts/update_real_topology.py` - Topology script updated with Abbanoa coordinates
+   - Updated `src/scripts/update_real_coordinates.py` - SCADA coordinates updated for Abbanoa
    - Updated `src/infrastructure/repositories/static_monitoring_node_repository.py` - Static repository coordinates updated
 
 2. **Frontend Updates:**
-   - Updated `frontend/src/app/infrastructure-map/page.tsx` - Map center changed to Roccavina (44.1385, 12.2486)
-   - Updated `frontend/src/app/anomalies/page.tsx` - Anomaly location coordinates updated to Roccavina area
-   - Updated location names from generic business district names to Roccavina-specific names
+   - Updated `frontend/src/app/infrastructure-map/page.tsx` - Map center changed to Abbanoa (44.1385, 12.2486)
+   - Updated `frontend/src/app/anomalies/page.tsx` - Anomaly location coordinates updated to Abbanoa area
+   - Updated location names from generic business district names to Abbanoa-specific names
 
 3. **Database Updates:**
-   - Ran `update_real_topology.py` script to update database with Roccavina coordinates
+   - Ran `update_real_topology.py` script to update database with Abbanoa coordinates
    - All 14 nodes and 15 pipe connections updated in the database
 
 ### 📍 New Coordinate Ranges
-- **Latitude:** 44.1270 to 44.1420 (Roccavina area)
-- **Longitude:** 12.2315 to 12.2520 (Roccavina area)
-- **Map Center:** 44.1385, 12.2486 (Roccavina city center)
+- **Latitude:** 44.1270 to 44.1420 (Abbanoa area)
+- **Longitude:** 12.2315 to 12.2520 (Abbanoa area)
+- **Map Center:** 44.1385, 12.2486 (Abbanoa city center)
 
 ## Deployment Steps Required
 
@@ -39,13 +39,13 @@ The infrastructure map at https://curator.aigensolutions.it/infrastructure-map n
 1. Pull the latest code on the production server
 2. Rebuild the frontend container with the new coordinates
 3. Restart the frontend service
-4. Verify the map displays Roccavina coordinates
+4. Verify the map displays Abbanoa coordinates
 
 ### 3. Verify Deployment
-- Check that the infrastructure map shows nodes in Roccavina area
-- Verify map center is at Roccavina coordinates (44.1385, 12.2486)
+- Check that the infrastructure map shows nodes in Abbanoa area
+- Verify map center is at Abbanoa coordinates (44.1385, 12.2486)
 - Confirm all node types and connections are preserved
-- Test that anomaly locations show Roccavina coordinates
+- Test that anomaly locations show Abbanoa coordinates
 
 ## Current Status
 - ✅ All code changes completed and committed
@@ -62,6 +62,6 @@ The infrastructure map at https://curator.aigensolutions.it/infrastructure-map n
 - `frontend/src/app/anomalies/page.tsx`
 
 ## Branch Information
-- **Feature Branch:** `feature/roccavina-location-name`
+- **Feature Branch:** `feature/abbanoa-location-name`
 - **Commits:** 1 commit with location name updates
 - **Status:** Ready for merge and deployment

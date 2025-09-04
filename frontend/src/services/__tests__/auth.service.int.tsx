@@ -67,7 +67,7 @@ describe('AuthService Integration Tests', () => {
         expect(result.success).toBe(true);
         expect(result.token).toBe('mock-access-token');
         expect(result.user?.email).toBe(credentials.email);
-        expect(result.tenant?.name).toBe('Roccavina S.p.A.');
+        expect(result.tenant?.name).toBe('Abbanoa S.p.A.');
         
         // Verify tokens are stored
         expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-access-token');
@@ -108,9 +108,9 @@ describe('AuthService Integration Tests', () => {
 
         // Assert
         expect(result.tenant).toMatchObject({
-          name: 'Roccavina S.p.A.',
-          slug: 'roccavina',
-          domain: 'roccavina',
+          name: 'Abbanoa S.p.A.',
+          slug: 'abbanoa',
+          domain: 'abbanoa',
           plan: 'enterprise',
           isActive: true,
         });

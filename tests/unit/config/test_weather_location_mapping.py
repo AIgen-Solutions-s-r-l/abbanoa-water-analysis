@@ -21,7 +21,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
     """Test weather location name transformations."""
     
     def test_get_display_name_for_selargius(self):
-        """Test that Selargius is displayed as Roccavina."""
+        """Test that Selargius is displayed as Abbanoa."""
         # Arrange
         actual_location = "Selargius"
         
@@ -29,7 +29,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
         display_name = get_display_name(actual_location)
         
         # Assert
-        assert display_name == "Roccavina"
+        assert display_name == "Abbanoa"
     
     def test_get_display_name_for_hidden_locations(self):
         """Test that hidden locations return None."""
@@ -54,7 +54,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
     def test_get_actual_location_from_display_name(self):
         """Test reverse mapping from display name to actual location."""
         # Arrange
-        display_name = "Roccavina"
+        display_name = "Abbanoa"
         
         # Act
         actual_location = get_actual_location(display_name)
@@ -88,7 +88,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
         
         # Assert
         assert transformed is not None
-        assert transformed["location"] == "Roccavina"
+        assert transformed["location"] == "Abbanoa"
         assert transformed["temperature"] == 25.5
         assert transformed["humidity"] == 65
         assert transformed["conditions"] == "Sunny"
@@ -133,7 +133,7 @@ class TestWeatherLocationMapping(unittest.TestCase):
         
         # Assert
         assert original_data["location"] == "Selargius"  # Original unchanged
-        assert transformed["location"] == "Roccavina"  # Transformed changed
+        assert transformed["location"] == "Abbanoa"  # Transformed changed
     
     def test_hidden_locations_set(self):
         """Test that HIDDEN_LOCATIONS contains expected locations."""

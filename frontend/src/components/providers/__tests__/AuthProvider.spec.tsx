@@ -171,7 +171,7 @@ describe('AuthProvider', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledWith('🔧 Development auto-login...');
       expect(mockAuthHook.login).toHaveBeenCalledWith({
-        email: 'admin@roccavina.com',
+        email: 'admin@abbanoa.com',
         password: 'admin123',
       });
       expect(sessionStorageMock.setItem).toHaveBeenCalledWith('dev_auto_login_tried', 'true');

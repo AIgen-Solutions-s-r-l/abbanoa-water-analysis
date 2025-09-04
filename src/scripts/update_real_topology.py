@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Update nodes with real Roccavina topology based on actual network diagram
+Update nodes with real Abbanoa topology based on actual network diagram
 """
 import asyncpg
 import asyncio
@@ -134,11 +134,11 @@ DB_CONFIG = {
 }
 
 async def update_topology():
-    """Update nodes and pipes with real Roccavina topology"""
+    """Update nodes and pipes with real Abbanoa topology"""
     conn = await asyncpg.connect(**DB_CONFIG)
     
     try:
-        logger.info("🔄 Updating to real Roccavina topology...")
+        logger.info("🔄 Updating to real Abbanoa topology...")
         
         # Clear existing data in correct order due to foreign keys
         await conn.execute("DELETE FROM water_infrastructure.anomalies")
@@ -153,7 +153,7 @@ async def update_topology():
                 (node_id, node_name, location_name, latitude, longitude, 
                  node_type, is_active, installation_date)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            """, node_id, node_data['name'], 'Roccavina', 
+            """, node_id, node_data['name'], 'Abbanoa', 
                 node_data['lat'], node_data['lon'],
                 node_data['type'], True, date(2010, 1, 1))
             

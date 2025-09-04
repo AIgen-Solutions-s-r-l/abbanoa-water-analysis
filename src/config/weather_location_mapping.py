@@ -7,13 +7,13 @@ from typing import Dict, Optional
 
 # Mapping of actual location names (in database) to display names
 LOCATION_DISPLAY_MAPPING: Dict[str, str] = {
-    "Selargius": "Roccavina",
+    "Selargius": "Abbanoa",
     # Other locations are filtered out
 }
 
 # Reverse mapping for API queries
 DISPLAY_TO_ACTUAL_MAPPING: Dict[str, str] = {
-    "Roccavina": "Selargius",
+    "Abbanoa": "Selargius",
 }
 
 # Locations that should be filtered out from results
