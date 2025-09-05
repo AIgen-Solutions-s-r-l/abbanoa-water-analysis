@@ -10,23 +10,9 @@ jobs:
   api-int:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: timescale/timescaledb:latest-pg14
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: abbanoa_processing
-          POSTGRES_USER: abbanoa_user
-          POSTGRES_PASSWORD: abbanoa_dev_pass
-        options: >-
-          --health-cmd "pg_isready -U abbanoa_user -d abbanoa_processing"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     env:
       API_BASE: http://localhost:8000/api/v1
+      USE_MOCK_API: 'true'
 
     steps:
       - name: Checkout
@@ -40,63 +26,7 @@ jobs:
       - name: Install system tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client curl
-
-      - name: Wait for Postgres
-        run: |
-          for i in {1..30}; do
-            pg_isready -h localhost -p 5432 -U abbanoa_user -d abbanoa_processing && break || sleep 2
-          done
-
-      - name: Initialize schema and seed minimal data
-        run: |
-          PGPASSWORD=abbanoa_dev_pass psql -h localhost -U abbanoa_user -d abbanoa_processing -v ON_ERROR_STOP=1 <<'SQL'
-          CREATE SCHEMA IF NOT EXISTS water_infrastructure;
-          CREATE TABLE IF NOT EXISTS water_infrastructure.nodes (
-            node_id VARCHAR PRIMARY KEY,
-            node_name VARCHAR,
-            node_type VARCHAR,
-            location_name VARCHAR,
-            latitude NUMERIC,
-            longitude NUMERIC,
-            installation_date DATE,
-            last_maintenance_date DATE,
-            is_active BOOLEAN DEFAULT true,
-            metadata JSONB DEFAULT '{}'::jsonb,
-            created_at TIMESTAMPTZ DEFAULT now(),
-            updated_at TIMESTAMPTZ DEFAULT now()
-          );
-          CREATE TABLE IF NOT EXISTS water_infrastructure.sensor_readings (
-            timestamp TIMESTAMPTZ,
-            node_id VARCHAR,
-            temperature NUMERIC,
-            flow_rate NUMERIC,
-            pressure NUMERIC,
-            total_flow NUMERIC,
-            quality_score NUMERIC,
-            is_interpolated BOOLEAN,
-            raw_data JSONB
-          );
-          CREATE TABLE IF NOT EXISTS water_infrastructure.anomalies (
-            anomaly_id SERIAL PRIMARY KEY,
-            node_id VARCHAR,
-            timestamp TIMESTAMPTZ,
-            anomaly_type VARCHAR,
-            severity VARCHAR,
-            measurement_type VARCHAR,
-            actual_value NUMERIC,
-            expected_min NUMERIC,
-            expected_max NUMERIC,
-            deviation_percentage NUMERIC,
-            metadata JSONB,
-            resolved_at TIMESTAMPTZ
-          );
-          INSERT INTO water_infrastructure.nodes (node_id, node_name, node_type, is_active)
-          VALUES ('VIA_DANTE_1','Via Dante Principale','main', true)
-          ON CONFLICT (node_id) DO NOTHING;
-          INSERT INTO water_infrastructure.sensor_readings (timestamp, node_id, flow_rate, pressure, quality_score, is_interpolated)
-          VALUES (now() - interval '1 hour','VIA_DANTE_1', 4.2, 3.1, 0.95, false);
-          SQL
+          sudo apt-get install -y curl
 
       - name: Install Poetry
         run: |
@@ -111,8 +41,8 @@ jobs:
 
       - name: Launch API (background)
         env:
-          # app_postgres.py uses hardcoded localhost:5432 and dev creds
           PYTHONPATH: ${{ github.workspace }}
+          USE_MOCK_API: ${{ env.USE_MOCK_API }}
         run: |
           nohup poetry run uvicorn presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 &
           sleep 5

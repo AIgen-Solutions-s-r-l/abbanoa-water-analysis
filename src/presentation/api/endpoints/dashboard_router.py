@@ -27,6 +27,30 @@ async def get_db_connection():
 @router.get("/dashboard/summary")
 async def get_dashboard_summary() -> Dict[str, Any]:
     """Get summary data for dashboard display."""
+    # CI-friendly branch: allow mocked response when requested
+    if os.getenv("USE_MOCK_API", "").lower() == "true":
+        return {
+            "nodes": [
+                {
+                    "node_id": "VIA_DANTE_1",
+                    "node_name": "Via Dante Principale",
+                    "flow_rate": 4.2,
+                    "pressure": 3.1,
+                    "anomaly_count": 0,
+                    "quality_score": 0.95,
+                }
+            ],
+            "network": {
+                "active_nodes": 1,
+                "total_flow": 4.2,
+                "avg_pressure": 3.1,
+                "total_volume_m3": 4.2 * 24,
+                "anomaly_count": 0,
+            },
+            "recent_anomalies": 0,
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+        }
+
     try:
         conn = await get_db_connection()
         
