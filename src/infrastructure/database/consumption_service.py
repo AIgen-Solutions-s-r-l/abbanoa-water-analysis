@@ -439,6 +439,9 @@ class ConsumptionService:
         """Create detailed hourly pattern data for chart visualization."""
         chart_data = []
         
+        # Precompute max to avoid repeated scans
+        max_total = max((h.total_consumption_liters for h in hourly_pattern), default=0)
+        
         for hour in range(24):
             # Find matching hour data
             hour_data = next((h for h in hourly_pattern if h.hour == hour), None)
@@ -447,7 +450,7 @@ class ConsumptionService:
                 chart_data.append({
                     "hour": hour,
                     "avg_consumption": round(hour_data.total_consumption_liters),
-                    "peak_hour": hour_data.total_consumption_liters == max(h.total_consumption_liters for h in hourly_pattern),
+                    "peak_hour": hour_data.total_consumption_liters == max_total,
                     "hour_label": f"{hour:02d}:00",
                     "consumption_formatted": self.format_consumption_number(hour_data.total_consumption_liters)
                 })
@@ -863,12 +866,26 @@ class ConsumptionService:
             },
             "conservation_opportunities": [
                 {
-                    "opportunity": "Leak Detection",
-                    "potential_savings_liters": 120000,
-                    "implementation_cost": 50000,
-                    "roi_percentage": 240,
-                    "priority": "high",
-                }
+                    "opportunity": "Leak Detection Program",
+                    "potential_savings_liters_daily": 120000,
+                    "potential_savings_percentage": 2,
+                    "implementation_cost": "Medium",
+                    "roi_months": 12,
+                },
+                {
+                    "opportunity": "Smart Meter Deployment",
+                    "potential_savings_liters_daily": 250000,
+                    "potential_savings_percentage": 5,
+                    "implementation_cost": "High",
+                    "roi_months": 24,
+                },
+                {
+                    "opportunity": "User Education Campaign",
+                    "potential_savings_liters_daily": 90000,
+                    "potential_savings_percentage": 3,
+                    "implementation_cost": "Low",
+                    "roi_months": 6,
+                },
             ],
             "hourly_pattern": [
                 {
@@ -899,8 +916,15 @@ class ConsumptionService:
                     "infrastructure_type": "primary_distribution",
                     "total_users": 25000,
                     "daily_consumption_liters": 375000,
+                    "monthly_consumption_liters": 11250000,
+                    "avg_per_user_daily": 15.0,
+                    "peak_hour": 8,
                     "efficiency_score": 0.92,
                     "water_loss_percentage": 8.0,
+                    "pressure_avg": 3.2,
+                    "flow_rate_avg": 4.3,
+                    "last_maintenance": datetime.now().strftime("%Y-%m-%d"),
+                    "next_maintenance": (datetime.now() + timedelta(days=90)).strftime("%Y-%m-%d"),
                     "status": "operational",
                     "alerts": 0,
                     "performance_rating": "excellent",
@@ -918,11 +942,17 @@ class ConsumptionService:
             "infrastructure_types": [
                 {
                     "type": "primary_distribution",
+                    "description": "Primary water distribution network",
                     "node_count": 2,
-                    "total_consumption": 750000,
+                    "total_users": 50000,
+                    "daily_consumption": 750000,
                     "avg_efficiency": 0.94,
-                    "maintenance_frequency": "monthly",
-                    "criticality": "high",
+                    "avg_water_loss": 7.5,
+                    "avg_pressure": 3.2,
+                    "avg_flow_rate": 4.3,
+                    "performance_rating": "excellent",
+                    "maintenance_frequency_days": 90,
+                    "criticality_level": "high",
                 }
             ],
         }

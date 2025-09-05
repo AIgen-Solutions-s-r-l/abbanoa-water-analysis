@@ -16,10 +16,8 @@ router = APIRouter(prefix="/consumption", tags=["consumption"])
 
 def get_consumption_service() -> ConsumptionService:
     """Get consumption service instance."""
-    database_url = os.getenv(
-        "DATABASE_URL",
-        "postgresql://abbanoa_user:abbanoa_secure_pass@localhost:5432/abbanoa_processing",
-    )
+    database_url = os.getenv("DATABASE_URL", "")
+    # Do not ship hardcoded credentials; default to empty (service will simulate on failure)
     return ConsumptionService(database_url)
 
 
@@ -44,9 +42,9 @@ async def get_consumption_analytics(
         analytics_data = service.get_consumption_analytics()
         return analytics_data
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/summary")
@@ -66,9 +64,9 @@ async def get_consumption_summary(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/districts")
@@ -88,9 +86,9 @@ async def get_district_consumption(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/timeline")
@@ -110,9 +108,9 @@ async def get_consumption_timeline(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/segments")
@@ -132,9 +130,9 @@ async def get_user_segments(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/peak-demand")
@@ -154,9 +152,9 @@ async def get_peak_demand(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/conservation")
@@ -200,9 +198,9 @@ async def get_hourly_pattern(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/trend-analysis")
@@ -222,9 +220,9 @@ async def get_trend_analysis(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/node-analysis")
@@ -245,9 +243,9 @@ async def get_node_analysis(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/infrastructure-types")
@@ -267,9 +265,9 @@ async def get_infrastructure_types(
             "data_metadata": analytics_data.get("data_metadata", {}),
         }
     except ConsumptionServiceError as e:
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        return {"error": f"Service error: {str(e)}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 @router.get("/test-data")

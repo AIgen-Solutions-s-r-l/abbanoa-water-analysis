@@ -25,13 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# PostgreSQL connection details from environment
+# PostgreSQL connection details (hardcoded for dev environment)
 POSTGRES_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST", "172.17.0.1"),  # Docker host IP
-    "port": int(os.getenv("POSTGRES_PORT", 5432)),
-    "database": os.getenv("POSTGRES_DB", "abbanoa_processing"),
-    "user": os.getenv("POSTGRES_USER", "abbanoa_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", "abbanoa_secure_pass"),
+    "host": "localhost",
+    "port": 5432,
+    "database": "abbanoa_processing",
+    "user": "abbanoa_user",
+    "password": "abbanoa_dev_pass",
 }
 
 # Connection pool
@@ -42,8 +42,14 @@ pool: asyncpg.Pool = None
 async def startup_event():
     """Initialize database connection pool on startup."""
     global pool
-    pool = await asyncpg.create_pool(**POSTGRES_CONFIG)
-    app.state.pool = pool  # Store pool in app state for dependency injection
+    try:
+        pool = await asyncpg.create_pool(**POSTGRES_CONFIG)
+        app.state.pool = pool  # Store pool in app state for dependency injection
+        logger.info("Database pool created successfully")
+    except Exception as e:
+        logger.warning(f"Database connection failed: {e}. API will work with mock data.")
+        pool = None
+        app.state.pool = None
     
     # Include user routes
     try:
@@ -68,6 +74,30 @@ async def startup_event():
         logger.info("Consumption routes loaded successfully")
     except ImportError as e:
         logger.warning(f"Consumption routes module not found: {e}")
+    
+    # Include dashboard summary endpoints
+    try:
+        from .endpoints.dashboard_router import router as dashboard_router
+        app.include_router(dashboard_router)
+        logger.info("Dashboard routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Dashboard routes module not found: {e}")
+    
+    # Include anomaly endpoints
+    try:
+        from .endpoints.anomaly_router import router as anomaly_router
+        app.include_router(anomaly_router)
+        logger.info("Anomaly routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Anomaly routes module not found: {e}")
+    
+    # Include pressure and nodes endpoints used by frontend proxy
+    try:
+        from .endpoints.pressure_router import router as pressure_router
+        app.include_router(pressure_router)
+        logger.info("Pressure/Nodes routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Pressure routes module not found: {e}")
     
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 

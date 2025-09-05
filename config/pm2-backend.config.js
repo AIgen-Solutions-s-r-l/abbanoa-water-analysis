@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'abbanoa-backend',
-      script: './run-backend.sh',
+      script: '/bin/bash',
+      args: ['-lc', 'export PATH="$HOME/.local/bin:$PATH"; cd src && poetry run uvicorn presentation.api.app_postgres:app --reload --host 0.0.0.0 --port 8000'],
       cwd: '.',
       instances: 1,
       exec_mode: 'fork',
@@ -11,7 +12,13 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         PYTHONUNBUFFERED: '1',
-        PYTHONDONTWRITEBYTECODE: '1'
+        PYTHONDONTWRITEBYTECODE: '1',
+        PATH: process.env.HOME + '/.local/bin:' + process.env.PATH,
+        POSTGRES_HOST: 'localhost',
+        POSTGRES_PORT: '5432',
+        POSTGRES_DB: 'abbanoa_processing',
+        POSTGRES_USER: 'abbanoa_user',
+        POSTGRES_PASSWORD: 'abbanoa_dev_pass'
       },
       error_file: './logs/pm2-backend-error.log',
       out_file: './logs/pm2-backend-out.log',
