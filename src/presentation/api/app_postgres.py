@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Roccavina Water Infrastructure API (PostgreSQL)",
+    title="Abbanoa Water Infrastructure API (PostgreSQL)",
     description="Local API using PostgreSQL for water infrastructure monitoring",
     version="1.0.0-local",
 )
@@ -123,7 +123,7 @@ async def health_check():
 async def api_status():
     """API status endpoint."""
     return {
-        "api": "Roccavina Water Infrastructure API",
+        "api": "Abbanoa Water Infrastructure API",
         "version": "1.0.0-local",
         "environment": "development",
         "database": "PostgreSQL",

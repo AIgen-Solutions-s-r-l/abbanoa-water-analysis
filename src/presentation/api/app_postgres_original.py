@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Roccavina Water Infrastructure API (PostgreSQL)",
+    title="Abbanoa Water Infrastructure API (PostgreSQL)",
     description="Local API using PostgreSQL for water infrastructure monitoring",
     version="1.0.0-local",
 )
@@ -564,7 +564,7 @@ async def get_current_user():
         "success": True,
         "data": {
             "id": "user-1",
-            "email": "admin@roccavina.com",
+            "email": "admin@abbanoa.com",
             "firstName": "Admin",
             "lastName": "User",
             "role": "admin",
@@ -584,8 +584,8 @@ async def get_current_tenant():
         "success": True,
         "data": {
             "id": "default",
-            "name": "Roccavina S.p.A.",
-            "domain": "roccavina",
+            "name": "Abbanoa S.p.A.",
+            "domain": "abbanoa",
             "logo": None,
             "plan": "enterprise",
             "isActive": True,
@@ -595,7 +595,7 @@ async def get_current_tenant():
                 "customBranding": {
                     "primaryColor": "#2563eb",
                     "logo": "",
-                    "companyName": "Roccavina S.p.A."
+                    "companyName": "Abbanoa S.p.A."
                 }
             },
             "createdAt": datetime.now().isoformat(),
@@ -612,7 +612,7 @@ async def login():
         "data": {
             "user": {
                 "id": "user-1",
-                "email": "admin@roccavina.com",
+                "email": "admin@abbanoa.com",
                 "firstName": "Admin",
                 "lastName": "User",
                 "role": "admin",
@@ -624,8 +624,8 @@ async def login():
             },
             "tenant": {
                 "id": "default",
-                "name": "Roccavina S.p.A.",
-                "domain": "roccavina",
+                "name": "Abbanoa S.p.A.",
+                "domain": "abbanoa",
                 "logo": None,
                 "plan": "enterprise",
                 "isActive": True,
@@ -635,7 +635,7 @@ async def login():
                     "customBranding": {
                         "primaryColor": "#2563eb",
                         "logo": "",
-                        "companyName": "Roccavina S.p.A."
+                        "companyName": "Abbanoa S.p.A."
                     }
                 },
                 "createdAt": datetime.now().isoformat(),
@@ -655,8 +655,8 @@ async def get_user_tenants():
         "success": True,
         "data": [{
             "id": "default",
-            "name": "Roccavina S.p.A.",
-            "domain": "roccavina",
+            "name": "Abbanoa S.p.A.",
+            "domain": "abbanoa",
             "logo": None,
             "plan": "enterprise",
             "isActive": True,

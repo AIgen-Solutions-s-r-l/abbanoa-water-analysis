@@ -65,8 +65,8 @@ The Infrastructure Map at https://curator.aigensolutions.it/infrastructure-map n
 
 ## Services Status
 
-- **Backend**: ✅ Online (PM2: roccavina-backend)
-- **Frontend**: ✅ Online (PM2: roccavina-frontend)
+- **Backend**: ✅ Online (PM2: abbanoa-backend)
+- **Frontend**: ✅ Online (PM2: abbanoa-frontend)
 - **API Health**: ✅ All endpoints responding correctly
 - **Database**: ✅ Connected and returning correct data
 

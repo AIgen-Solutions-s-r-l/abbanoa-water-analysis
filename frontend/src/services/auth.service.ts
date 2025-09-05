@@ -33,9 +33,9 @@ export class AuthService {
     
     const mockTenant = {
       id: 'default',
-      name: 'Roccavina S.p.A.',
-      slug: 'roccavina',
-      domain: 'roccavina',
+      name: 'Abbanoa S.p.A.',
+      slug: 'abbanoa',
+      domain: 'abbanoa',
       logo: undefined,
       plan: 'enterprise' as 'basic' | 'professional' | 'enterprise',
       isActive: true,
@@ -45,7 +45,7 @@ export class AuthService {
         customBranding: {
           primaryColor: '#2563eb',
           logo: '',
-          companyName: 'Roccavina S.p.A.'
+          companyName: 'Abbanoa S.p.A.'
         }
       },
       createdAt: new Date().toISOString(),
