@@ -12,10 +12,10 @@ router = APIRouter(prefix="/api/v1", tags=["anomalies"])
 # Database configuration
 DB_CONFIG = {
     'host': os.getenv('POSTGRES_HOST', 'localhost'),
-    'port': int(os.getenv('POSTGRES_PORT', '5434')),
+    'port': int(os.getenv('POSTGRES_PORT', '5432')),
     'database': os.getenv('POSTGRES_DB', 'abbanoa_processing'),
     'user': os.getenv('POSTGRES_USER', 'abbanoa_user'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'abbanoa_secure_pass')
+    'password': os.getenv('POSTGRES_PASSWORD', 'abbanoa_dev_pass')
 }
 
 
@@ -45,8 +45,8 @@ async def get_anomalies(
                 a.severity,
                 a.measurement_type,
                 a.actual_value,
-                a.expected_value as expected_min,
-                a.expected_value as expected_max,
+                a.expected_min,
+                a.expected_max,
                 a.deviation_percentage,
                 COALESCE(a.metadata->>'description', a.anomaly_type || ' anomaly detected') as description,
                 a.resolved_at
