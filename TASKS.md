@@ -25,6 +25,14 @@ Legend: [ ] TODO · [x] Done · P0=Critical, P1=High, P2=Medium
 - [ ] Frontend telemetry: basic Web Vitals + error boundaries reporting.
 - [ ] Feature flags for toggling new analytics endpoints per env.
 
+## QA Follow‑ups (from PR #9)
+- [ ] Expand mock fixtures to fully match production contracts (dashboard/anomalies). (P2)
+- [ ] Add error-path tests in CI mock mode (4xx/5xx) with parameterized cases. (P2)
+- [ ] Replace `sleep 5` with retry/backoff probe in workflow. (P3)
+- [ ] Extract mock branching to a shared helper/decorator for endpoints. (P3)
+- [ ] Ensure CI cleans background API at job end. (P3)
+- [ ] Augment `docs/QA_PLAN.md` with rollback strategy and limitations. (P3)
+
 ## Notes
 - Owner(s): PM to assign per squad.
 - Environments: dev (PM2), staging (TimescaleDB), prod.
