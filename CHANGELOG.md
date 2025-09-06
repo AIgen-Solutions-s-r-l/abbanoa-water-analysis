@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0] - 2025-09-05
+
+### Added
+- CI: API integration workflow (`.github/workflows/api-integration.yml`) running mockable black-box tests for `/api/v1/dashboard/summary` and `/api/v1/anomalies`.
+- QA: Added `docs/QA_PLAN.md` documenting verification steps and scope for mock mode.
+
+### Changed
+- Endpoints: Introduced `USE_MOCK_API` gating in `dashboard_router.py` and `anomaly_router.py` (CI-only path) to enable deterministic tests without a real DB.
+
+### Dev
+- Dev deps: Added `httpx` to `[tool.poetry.group.dev.dependencies]` for integration tests.
+
 ## [v2.5.0.0] - 2025-08-28
 
 ### Added
