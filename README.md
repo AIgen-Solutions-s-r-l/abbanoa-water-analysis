@@ -1,4 +1,5 @@
-# Water Infrastructure Analysis API
+# Water Infrastructure Analysis API  
+![API Integration Tests](https://github.com/AIgen-Solutions-s-r-l/abbanoa-water-analysis/actions/workflows/api-integration.yml/badge.svg)
 
 A comprehensive water infrastructure monitoring and analysis system built with FastAPI, Next.js, and modern data processing technologies.
 
