@@ -15,7 +15,7 @@ DB_CONFIG = {
     'port': int(os.getenv('POSTGRES_PORT', '5432')),
     'database': os.getenv('POSTGRES_DB', 'abbanoa_processing'),
     'user': os.getenv('POSTGRES_USER', 'abbanoa_user'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'abbanoa_dev_pass')
+    'password': os.getenv('POSTGRES_PASSWORD', 'abbanoa_secure_pass')
 }
 
 
@@ -27,30 +27,6 @@ async def get_db_connection():
 @router.get("/dashboard/summary")
 async def get_dashboard_summary() -> Dict[str, Any]:
     """Get summary data for dashboard display."""
-    # CI-friendly branch: allow mocked response when requested
-    if os.getenv("USE_MOCK_API", "").lower() == "true":
-        return {
-            "nodes": [
-                {
-                    "node_id": "VIA_DANTE_1",
-                    "node_name": "Via Dante Principale",
-                    "flow_rate": 4.2,
-                    "pressure": 3.1,
-                    "anomaly_count": 0,
-                    "quality_score": 0.95,
-                }
-            ],
-            "network": {
-                "active_nodes": 1,
-                "total_flow": 4.2,
-                "avg_pressure": 3.1,
-                "total_volume_m3": 4.2 * 24,
-                "anomaly_count": 0,
-            },
-            "recent_anomalies": 0,
-            "last_updated": datetime.now(timezone.utc).isoformat(),
-        }
-
     try:
         conn = await get_db_connection()
         
@@ -67,7 +43,6 @@ async def get_dashboard_summary() -> Dict[str, Any]:
             FROM water_infrastructure.nodes n
             LEFT JOIN water_infrastructure.sensor_readings sr 
                 ON sr.node_id = n.node_id
-                AND sr.timestamp > NOW() - INTERVAL '24 hours'
             WHERE n.is_active = true
             ORDER BY n.node_id, sr.timestamp DESC NULLS LAST
         """

@@ -42,8 +42,18 @@ pool: asyncpg.Pool = None
 async def startup_event():
     """Initialize database connection pool on startup."""
     global pool
-    pool = await asyncpg.create_pool(**POSTGRES_CONFIG)
-    app.state.pool = pool  # Store pool in app state for dependency injection
+    
+    try:
+        pool = await asyncpg.create_pool(**POSTGRES_CONFIG)
+        app.state.pool = pool  # Store pool in app state for dependency injection
+    except Exception as e:
+        logger.warning(f"Failed to connect to database: {e}")
+        if os.getenv("ENV", "development") != "development":
+            raise
+        else:
+            logger.info("Running in development mode - continuing without database")
+            pool = None
+            app.state.pool = None
     
     # Include user routes
     try:
@@ -68,6 +78,38 @@ async def startup_event():
         logger.info("Consumption routes loaded successfully")
     except ImportError as e:
         logger.warning(f"Consumption routes module not found: {e}")
+    
+    # Include anomaly routes
+    try:
+        from .endpoints.anomaly_router import router as anomaly_router
+        app.include_router(anomaly_router)
+        logger.info("Anomaly routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Anomaly routes module not found: {e}")
+    
+    # Include dashboard routes
+    try:
+        from .endpoints.dashboard_router import router as dashboard_router
+        app.include_router(dashboard_router)
+        logger.info("Dashboard routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Dashboard routes module not found: {e}")
+    
+    # Include pressure routes
+    try:
+        from .endpoints.pressure_router import router as pressure_router
+        app.include_router(pressure_router)
+        logger.info("Pressure routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Pressure routes module not found: {e}")
+    
+    # Include infrastructure routes
+    try:
+        from .endpoints.infrastructure_router import router as infrastructure_router
+        app.include_router(infrastructure_router)
+        logger.info("Infrastructure routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Infrastructure routes module not found: {e}")
     
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 

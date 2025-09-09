@@ -64,9 +64,15 @@ const InfrastructureMapPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [showNodeModal, setShowNodeModal] = useState(false);
+  const [networkMetrics, setNetworkMetrics] = useState({
+    network_health: 0,
+    total_flow: 0,
+    avg_pressure: 0,
+    active_alerts: 0
+  });
 
-  // Center of Abbanoa
-  const mapCenter: [number, number] = [44.1385, 12.2486];
+  // Center of Cagliari, Sardinia (Abbanoa service area)
+  const mapCenter: [number, number] = [39.2174, 9.1132];
 
   useEffect(() => { // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchInfrastructureData();
@@ -81,71 +87,70 @@ const InfrastructureMapPage = () => {
 
   const fetchInfrastructureData = async () => {
     try {
-      // Fetch nodes
-      const nodesResponse = await fetch('/api/proxy/v1/nodes');
-      if (!nodesResponse.ok) throw new Error('Failed to fetch nodes');
-      const nodesData = await nodesResponse.json();
+      // Fetch infrastructure data
+      const response = await fetch('/api/proxy/v1/infrastructure/map-data');
+      if (!response.ok) throw new Error('Failed to fetch infrastructure data');
+      const data = await response.json();
 
-      // Fetch readings for each node
-      const nodesWithReadings = await Promise.all(
-        nodesData
-          .filter((node: unknown) => node.location?.coordinates?.latitude && node.location?.coordinates?.longitude)
-          .map(async (node: unknown) => {
-            try {
-              const readingsResponse = await fetch(`/api/proxy/v1/nodes/${node.id}/readings?limit=1`);
-              const readings = readingsResponse.ok ? await readingsResponse.json() : [];
-              return { ...node, readings };
-            } catch {
-              return { ...node, readings: [] };
-            }
-          })
-      );
-
-      // Transform nodes data
-      const transformedNodes: Node[] = nodesWithReadings.map((node: unknown) => ({
+      // Transform nodes data from the new endpoint
+      const transformedNodes: Node[] = data.nodes.map((node: any) => ({
         node_id: node.id,
         node_name: node.name || `Node ${node.id}`,
-        latitude: parseFloat(node.location.coordinates.latitude),
-        longitude: parseFloat(node.location.coordinates.longitude),
-        location_name: node.location?.site_name || 'Unknown',
-        current_flow: node.readings?.[0]?.flow_rate || 0,
-        current_pressure: node.readings?.[0]?.pressure || 0,
-        status: determineNodeStatus(node.readings?.[0])
+        latitude: node.latitude,
+        longitude: node.longitude,
+        location_name: node.name || 'Unknown',
+        current_flow: node.flow_rate || 0,
+        current_pressure: node.pressure || 0,
+        status: node.has_anomaly ? 'critical' : 
+                node.pressure < 2 || node.pressure > 8 ? 'critical' :
+                node.pressure < 3 || node.pressure > 6 ? 'warning' : 'optimal'
       }));
 
       console.log('Transformed nodes:', transformedNodes);
       setNodes(transformedNodes);
 
-      // Generate pipes
-      const generatedPipes: Pipe[] = [];
-      for (let i = 0; i < transformedNodes.length; i++) {
-        for (let j = i + 1; j < transformedNodes.length; j++) {
-          const node1 = transformedNodes[i];
-          const node2 = transformedNodes[j];
-          const distance = calculateDistance(
-            node1.latitude, node1.longitude,
-            node2.latitude, node2.longitude
-          );
+      // Use pipes from API if available, otherwise generate them
+      if (data.pipes && data.pipes.length > 0) {
+        setPipes(data.pipes);
+      } else {
+        // Generate pipes for visualization
+        const generatedPipes: Pipe[] = [];
+        for (let i = 0; i < transformedNodes.length; i++) {
+          for (let j = i + 1; j < transformedNodes.length; j++) {
+            const node1 = transformedNodes[i];
+            const node2 = transformedNodes[j];
+            const distance = calculateDistance(
+              node1.latitude, node1.longitude,
+              node2.latitude, node2.longitude
+            );
 
-          // Connect nodes within ~1km
-          if (distance < 1000) {
-            generatedPipes.push({
-              pipe_id: `PIPE_${node1.node_id}_${node2.node_id}`,
-              from_node_id: node1.node_id,
-              to_node_id: node2.node_id,
-              from_lat: node1.latitude,
-              from_lon: node1.longitude,
-              to_lat: node2.latitude,
-              to_lon: node2.longitude,
-              diameter_mm: 200 + Math.floor(Math.random() * 200),
-              material: Math.random() > 0.5 ? 'Steel' : 'PVC',
-              flow_rate: Math.random() * 50
-            });
+            // Connect nodes within ~1km
+            if (distance < 1000) {
+              generatedPipes.push({
+                pipe_id: `PIPE_${node1.node_id}_${node2.node_id}`,
+                from_node_id: node1.node_id,
+                to_node_id: node2.node_id,
+                from_lat: node1.latitude,
+                from_lon: node1.longitude,
+                to_lat: node2.latitude,
+                to_lon: node2.longitude,
+                diameter_mm: 200 + Math.floor(Math.random() * 200),
+                material: Math.random() > 0.5 ? 'Steel' : 'PVC',
+                flow_rate: Math.random() * 50
+              });
+            }
           }
         }
+        setPipes(generatedPipes);
       }
-
-      setPipes(generatedPipes);
+      
+      // Update system metrics if available
+      setNetworkMetrics({
+        network_health: data.network_health || 0,
+        total_flow: data.total_flow || 0,
+        avg_pressure: data.avg_pressure || 0,
+        active_alerts: data.active_alerts || 0
+      });
     } catch (error) {
       console.error('Error fetching infrastructure data:', error);
       setError('Failed to load infrastructure data');
@@ -388,14 +393,14 @@ const InfrastructureMapPage = () => {
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600 dark:text-gray-400">Network Health</span>
                   <span className="font-medium">
-                    {Math.round((nodes.filter(n => n.status === 'optimal').length / nodes.length) * 100)}%
+                    {networkMetrics.network_health.toFixed(1)}%
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full"
                     style={{
-                      width: `${(nodes.filter(n => n.status === 'optimal').length / nodes.length) * 100}%`
+                      width: `${networkMetrics.network_health}%`
                     }}
                   />
                 </div>
@@ -405,19 +410,19 @@ const InfrastructureMapPage = () => {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Total Flow</span>
                   <span className="font-medium">
-                    {nodes.reduce((sum, n) => sum + n.current_flow, 0).toFixed(1)} L/s
+                    {networkMetrics.total_flow.toFixed(1)} L/s
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Avg Pressure</span>
                   <span className="font-medium">
-                    {(nodes.reduce((sum, n) => sum + n.current_pressure, 0) / nodes.length).toFixed(1)} bar
+                    {networkMetrics.avg_pressure.toFixed(1)} bar
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Active Alerts</span>
                   <span className="font-medium text-red-600">
-                    {nodes.filter(n => n.status === 'critical').length}
+                    {networkMetrics.active_alerts}
                   </span>
                 </div>
               </div>

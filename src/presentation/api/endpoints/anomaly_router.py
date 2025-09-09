@@ -31,25 +31,6 @@ async def get_anomalies(
     severity: Optional[str] = Query(None, description="Filter by severity")
 ) -> List[Dict[str, Any]]:
     """Get recent anomalies."""
-    # CI-friendly branch: allow mocked response when requested
-    if os.getenv("USE_MOCK_API", "").lower() == "true":
-        return [
-            {
-                "id": 1,
-                "node_id": "VIA_DANTE_1",
-                "node_name": "Via Dante Principale",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "anomaly_type": "pressure_low",
-                "severity": "warning",
-                "measurement_type": "pressure",
-                "actual_value": 2.3,
-                "expected_range": [2.8, 3.5],
-                "deviation_percentage": 17.8,
-                "description": "Pressure below threshold",
-                "resolved_at": None,
-            }
-        ]
-
     try:
         conn = await get_db_connection()
         
