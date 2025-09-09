@@ -1,0 +1,545 @@
+context:
+  task: "Feature flag management for progressive rollouts and A/B testing"
+  purpose: ["Risk mitigation", "Gradual rollout", "A/B testing", "Quick rollback"]
+  tools: ["LaunchDarkly", "Unleash", "Flagsmith", "Custom implementation"]
+
+protocol:
+  flagTypes:
+    release:
+      purpose: "Enable/disable features"
+      values: ["boolean"]
+      example: "enable_new_dashboard"
+      lifecycle: "Temporary until stable"
+    
+    experiment:
+      purpose: "A/B testing"
+      values: ["variant_a", "variant_b", "control"]
+      example: "checkout_flow_experiment"
+      lifecycle: "Limited time period"
+    
+    operational:
+      purpose: "Circuit breakers, kill switches"
+      values: ["boolean"]
+      example: "disable_heavy_computation"
+      lifecycle: "Permanent"
+    
+    permission:
+      purpose: "User access control"
+      values: ["boolean", "list of features"]
+      example: "premium_features_enabled"
+      lifecycle: "Permanent"
+    
+    configuration:
+      purpose: "Dynamic configuration"
+      values: ["string", "number", "json"]
+      example: "api_rate_limit"
+      lifecycle: "Permanent"
+
+  implementation:
+    backend:
+      python: |
+        from enum import Enum
+        from typing import Any, Dict, Optional, List
+        from datetime import datetime
+        import hashlib
+        import redis
+        import json
+        
+        class FlagType(Enum):
+            RELEASE = "release"
+            EXPERIMENT = "experiment"
+            OPERATIONAL = "operational"
+            PERMISSION = "permission"
+            CONFIGURATION = "configuration"
+        
+        class FeatureFlag:
+            def __init__(self, 
+                         name: str,
+                         flag_type: FlagType,
+                         default_value: Any,
+                         description: str = ""):
+                self.name = name
+                self.flag_type = flag_type
+                self.default_value = default_value
+                self.description = description
+                self.created_at = datetime.utcnow()
+                self.rules = []
+        
+        class FeatureFlagService:
+            def __init__(self, redis_client: redis.Redis):
+                self.redis = redis_client
+                self.flags_key = "feature_flags"
+                self.evaluations_key = "flag_evaluations"
+            
+            def create_flag(self, flag: FeatureFlag) -> None:
+                flag_data = {
+                    "name": flag.name,
+                    "type": flag.flag_type.value,
+                    "default_value": flag.default_value,
+                    "description": flag.description,
+                    "created_at": flag.created_at.isoformat(),
+                    "enabled": True,
+                    "rules": []
+                }
+                self.redis.hset(self.flags_key, flag.name, json.dumps(flag_data))
+            
+            def evaluate(self, 
+                        flag_name: str, 
+                        user_context: Dict[str, Any]) -> Any:
+                # Get flag configuration
+                flag_data = self.redis.hget(self.flags_key, flag_name)
+                if not flag_data:
+                    return None
+                
+                flag = json.loads(flag_data)
+                
+                # Check if flag is enabled
+                if not flag.get("enabled", True):
+                    return flag["default_value"]
+                
+                # Evaluate rules
+                for rule in flag.get("rules", []):
+                    if self._evaluate_rule(rule, user_context):
+                        # Track evaluation
+                        self._track_evaluation(flag_name, user_context, rule["value"])
+                        return rule["value"]
+                
+                # Return default value
+                self._track_evaluation(flag_name, user_context, flag["default_value"])
+                return flag["default_value"]
+            
+            def _evaluate_rule(self, rule: Dict, context: Dict) -> bool:
+                rule_type = rule.get("type")
+                
+                if rule_type == "percentage":
+                    # Percentage rollout
+                    user_id = context.get("user_id", "")
+                    bucket = int(hashlib.md5(f"{rule['flag_name']}:{user_id}".encode()).hexdigest(), 16) % 100
+                    return bucket < rule["percentage"]
+                
+                elif rule_type == "segment":
+                    # User segment targeting
+                    segment_conditions = rule.get("conditions", [])
+                    return all(self._check_condition(cond, context) for cond in segment_conditions)
+                
+                elif rule_type == "schedule":
+                    # Time-based activation
+                    now = datetime.utcnow()
+                    start = datetime.fromisoformat(rule.get("start_time"))
+                    end = datetime.fromisoformat(rule.get("end_time"))
+                    return start <= now <= end
+                
+                return False
+            
+            def _check_condition(self, condition: Dict, context: Dict) -> bool:
+                attribute = condition["attribute"]
+                operator = condition["operator"]
+                value = condition["value"]
+                context_value = context.get(attribute)
+                
+                if operator == "equals":
+                    return context_value == value
+                elif operator == "contains":
+                    return value in context_value if context_value else False
+                elif operator == "greater_than":
+                    return context_value > value if context_value else False
+                elif operator == "in":
+                    return context_value in value if context_value else False
+                
+                return False
+            
+            def _track_evaluation(self, flag_name: str, context: Dict, value: Any):
+                evaluation = {
+                    "flag": flag_name,
+                    "user_id": context.get("user_id"),
+                    "value": value,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                self.redis.lpush(f"{self.evaluations_key}:{flag_name}", 
+                                json.dumps(evaluation))
+        
+        # FastAPI integration
+        from fastapi import FastAPI, Depends
+        
+        app = FastAPI()
+        
+        def get_feature_flags() -> FeatureFlagService:
+            return FeatureFlagService(redis_client)
+        
+        @app.get("/api/v1/features")
+        async def check_feature(
+            feature_name: str,
+            user_id: Optional[str] = None,
+            flags: FeatureFlagService = Depends(get_feature_flags)
+        ):
+            context = {
+                "user_id": user_id,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            value = flags.evaluate(feature_name, context)
+            return {"feature": feature_name, "enabled": value}
+    
+    frontend:
+      react: |
+        import React, { createContext, useContext, useEffect, useState } from 'react';
+        
+        // Feature flag context
+        const FeatureFlagContext = createContext({});
+        
+        // Feature flag provider
+        export const FeatureFlagProvider = ({ children, userId }) => {
+          const [flags, setFlags] = useState({});
+          const [loading, setLoading] = useState(true);
+          
+          useEffect(() => {
+            fetchFlags();
+          }, [userId]);
+          
+          const fetchFlags = async () => {
+            try {
+              const response = await fetch(`/api/v1/feature-flags?user_id=${userId}`);
+              const data = await response.json();
+              setFlags(data);
+            } catch (error) {
+              console.error('Failed to fetch feature flags:', error);
+            } finally {
+              setLoading(false);
+            }
+          };
+          
+          const isEnabled = (flagName, defaultValue = false) => {
+            return flags[flagName] ?? defaultValue;
+          };
+          
+          const getVariant = (flagName, defaultVariant = 'control') => {
+            return flags[flagName] ?? defaultVariant;
+          };
+          
+          return (
+            <FeatureFlagContext.Provider value={{ flags, isEnabled, getVariant, loading }}>
+              {children}
+            </FeatureFlagContext.Provider>
+          );
+        };
+        
+        // Hook to use feature flags
+        export const useFeatureFlag = (flagName, defaultValue = false) => {
+          const { isEnabled } = useContext(FeatureFlagContext);
+          return isEnabled(flagName, defaultValue);
+        };
+        
+        // Feature flag component
+        export const Feature = ({ flag, fallback = null, children }) => {
+          const isEnabled = useFeatureFlag(flag);
+          
+          if (isEnabled) {
+            return <>{children}</>;
+          }
+          
+          return <>{fallback}</>;
+        };
+        
+        // A/B test component
+        export const ABTest = ({ experiment, variants }) => {
+          const { getVariant } = useContext(FeatureFlagContext);
+          const variant = getVariant(experiment);
+          
+          const VariantComponent = variants[variant] || variants.control;
+          
+          return <VariantComponent />;
+        };
+        
+        // Usage examples
+        function App() {
+          return (
+            <FeatureFlagProvider userId={currentUser.id}>
+              {/* Simple feature toggle */}
+              <Feature flag="new_navigation" fallback={<OldNavigation />}>
+                <NewNavigation />
+              </Feature>
+              
+              {/* A/B testing */}
+              <ABTest 
+                experiment="checkout_flow"
+                variants={{
+                  control: CheckoutV1,
+                  variant_a: CheckoutV2,
+                  variant_b: CheckoutV3
+                }}
+              />
+              
+              {/* Conditional rendering with hook */}
+              {useFeatureFlag('premium_features') && <PremiumDashboard />}
+            </FeatureFlagProvider>
+          );
+        }
+
+  rolloutStrategies:
+    percentage:
+      description: "Gradual rollout to percentage of users"
+      implementation: |
+        rules:
+          - type: percentage
+            percentage: 10  # Start with 10%
+            value: true
+      
+      progression:
+        - "1% - Canary deployment"
+        - "5% - Early adopters"
+        - "25% - Broader testing"
+        - "50% - Half rollout"
+        - "100% - Full deployment"
+    
+    userSegment:
+      description: "Target specific user groups"
+      implementation: |
+        rules:
+          - type: segment
+            conditions:
+              - attribute: subscription_tier
+                operator: equals
+                value: premium
+              - attribute: region
+                operator: in
+                value: ["US", "EU"]
+            value: true
+    
+    betaUsers:
+      description: "Enable for beta testers"
+      implementation: |
+        rules:
+          - type: segment
+            conditions:
+              - attribute: user_id
+                operator: in
+                value: ["user1", "user2", "user3"]
+            value: true
+    
+    schedule:
+      description: "Time-based activation"
+      implementation: |
+        rules:
+          - type: schedule
+            start_time: "2024-01-01T00:00:00Z"
+            end_time: "2024-01-31T23:59:59Z"
+            value: true
+    
+    ring:
+      description: "Deploy in rings/waves"
+      rings:
+        - name: "Internal"
+          condition: "employee == true"
+          percentage: 100
+        
+        - name: "Canary"
+          condition: "beta_tester == true"
+          percentage: 100
+        
+        - name: "Early Adopters"
+          condition: "early_adopter == true"
+          percentage: 100
+        
+        - name: "General Availability"
+          condition: "all users"
+          percentage: 100
+
+  monitoring:
+    metrics:
+      - name: "flag_evaluations_total"
+        type: "counter"
+        labels: ["flag_name", "value"]
+      
+      - name: "flag_evaluation_errors"
+        type: "counter"
+        labels: ["flag_name", "error_type"]
+      
+      - name: "experiment_conversions"
+        type: "counter"
+        labels: ["experiment", "variant", "outcome"]
+      
+      - name: "feature_usage"
+        type: "gauge"
+        labels: ["feature_name"]
+    
+    analytics:
+      events:
+        - "flag_evaluated"
+        - "experiment_exposure"
+        - "conversion_tracked"
+        - "flag_error"
+      
+      funnel: |
+        # Track user journey through experiment
+        analytics.track('experiment_exposure', {
+          experiment: 'checkout_flow',
+          variant: 'variant_a',
+          user_id: user.id
+        });
+        
+        analytics.track('checkout_started', {
+          experiment: 'checkout_flow',
+          variant: 'variant_a'
+        });
+        
+        analytics.track('checkout_completed', {
+          experiment: 'checkout_flow',
+          variant: 'variant_a',
+          revenue: 99.99
+        });
+
+  lifecycle:
+    phases:
+      1_planning:
+        - "Define flag purpose and success metrics"
+        - "Identify target audience"
+        - "Plan rollout strategy"
+        - "Set up monitoring"
+      
+      2_implementation:
+        - "Create flag in management system"
+        - "Implement flag checks in code"
+        - "Add analytics tracking"
+        - "Write tests for both states"
+      
+      3_rollout:
+        - "Deploy with flag disabled"
+        - "Enable for internal testing"
+        - "Progressive rollout to users"
+        - "Monitor metrics and errors"
+      
+      4_evaluation:
+        - "Analyze experiment results"
+        - "Check performance impact"
+        - "Gather user feedback"
+        - "Make go/no-go decision"
+      
+      5_cleanup:
+        - "Remove flag checks from code"
+        - "Clean up unused code paths"
+        - "Archive flag configuration"
+        - "Document learnings"
+
+taskPlan:
+  goal: "Implement feature flag system for safe deployments"
+  
+  tasks:
+    - id: 1.1
+      description: "Set up feature flag infrastructure"
+      components:
+        - "Redis for flag storage"
+        - "Admin UI for management"
+        - "SDK libraries"
+      status: "pending"
+    
+    - id: 1.2
+      description: "Create flag management API"
+      endpoints:
+        - "GET /flags - List all flags"
+        - "POST /flags - Create flag"
+        - "PUT /flags/{id} - Update flag"
+        - "GET /flags/evaluate - Evaluate flags for user"
+      status: "pending"
+    
+    - id: 1.3
+      description: "Implement client SDKs"
+      languages:
+        - "Python for backend"
+        - "JavaScript for frontend"
+        - "Mobile SDKs if needed"
+      status: "pending"
+    
+    - id: 1.4
+      description: "Add monitoring and analytics"
+      metrics:
+        - "Flag evaluation counts"
+        - "Experiment metrics"
+        - "Performance impact"
+      status: "pending"
+    
+    - id: 1.5
+      description: "Create admin interface"
+      features:
+        - "Flag creation/editing"
+        - "Rule configuration"
+        - "Monitoring dashboard"
+        - "A/B test results"
+      status: "pending"
+    
+    - id: 1.6
+      description: "Write documentation"
+      topics:
+        - "Integration guide"
+        - "Best practices"
+        - "Flag naming conventions"
+        - "Cleanup procedures"
+      status: "pending"
+    
+    - id: 1.7
+      description: "Implement example flags"
+      examples:
+        - "Dark mode toggle"
+        - "New feature rollout"
+        - "A/B test for conversion"
+      status: "pending"
+
+bestPractices:
+  naming:
+    convention: "snake_case"
+    prefixes:
+      - "enable_" for boolean flags
+      - "experiment_" for A/B tests
+      - "config_" for configuration
+      - "kill_" for kill switches
+    
+    examples:
+      good:
+        - "enable_new_checkout_flow"
+        - "experiment_homepage_redesign"
+        - "config_api_rate_limit"
+        - "kill_heavy_computation"
+      
+      bad:
+        - "flag1"
+        - "test"
+        - "new_feature"
+        - "tmp_flag"
+  
+  testing:
+    unit: |
+      @pytest.mark.parametrize("flag_value", [True, False])
+      def test_feature_both_states(flag_value, mocker):
+          mocker.patch('get_feature_flag', return_value=flag_value)
+          
+          result = function_under_test()
+          
+          if flag_value:
+              assert result == "new_behavior"
+          else:
+              assert result == "old_behavior"
+    
+    integration: |
+      def test_gradual_rollout():
+          # Test different percentage values
+          for percentage in [0, 10, 50, 100]:
+              flag.update_rule(percentage=percentage)
+              
+              enabled_count = 0
+              for user_id in range(1000):
+                  if evaluate_flag('feature', {'user_id': user_id}):
+                      enabled_count += 1
+              
+              # Allow 5% variance
+              expected = (percentage / 100) * 1000
+              assert abs(enabled_count - expected) < 50
+  
+  cleanup:
+    checklist:
+      - "Flag has been at 100% for > 2 weeks"
+      - "No errors or issues reported"
+      - "Remove flag evaluation code"
+      - "Remove old code branches"
+      - "Update tests"
+      - "Deploy and verify"
+      - "Archive flag configuration"
+      - "Update documentation"
