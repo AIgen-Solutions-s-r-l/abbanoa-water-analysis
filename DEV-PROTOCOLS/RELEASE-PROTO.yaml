@@ -1,0 +1,510 @@
+context:
+  task: "Release management from QA approval to production deployment"
+  phase: "Post-QA to Production"
+  description: "Protocol for merging approved PRs, versioning, and releasing to production"
+  prerequisites:
+    - "PR has been approved by reviewers"
+    - "QA validation completed (QA-PROTO.yaml executed)"
+    - "All CI checks passing"
+    - "No blocking issues identified"
+
+protocol:
+  releaseStrategy:
+    types:
+      continuous:
+        description: "Automated release on every merge to main"
+        cadence: "Multiple times per day"
+        risk: "Low - with feature flags"
+        rollback: "Immediate revert possible"
+      
+      scheduled:
+        description: "Regular release windows"
+        cadence: "Weekly/Bi-weekly"
+        risk: "Medium - batched changes"
+        rollback: "Revert to previous release"
+      
+      manual:
+        description: "On-demand releases"
+        cadence: "As needed"
+        risk: "Varies"
+        rollback: "Prepared rollback plan"
+    
+    environments:
+      staging:
+        purpose: "Final integration testing"
+        duration: "2-24 hours"
+        tests: "Smoke, integration, E2E"
+      
+      canary:
+        purpose: "Limited production rollout"
+        coverage: "5-10% of traffic"
+        duration: "1-4 hours"
+        monitoring: "Enhanced metrics"
+      
+      production:
+        purpose: "Full deployment"
+        coverage: "100% of traffic"
+        monitoring: "Standard + alerts"
+
+  preMergeChecks:
+    description: "Final validations before merge"
+    automated:
+      - check: "CI pipeline status"
+        command: "gh pr checks {PR_NUMBER}"
+        required: "All checks passing"
+      
+      - check: "Test coverage"
+        command: "gh pr view {PR_NUMBER} --json statusCheckRollup"
+        required: "No decrease from baseline"
+      
+      - check: "Security scan"
+        command: "gh api /repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/reviews"
+        required: "No critical vulnerabilities"
+      
+      - check: "Approval count"
+        command: "gh pr view {PR_NUMBER} --json reviews"
+        required: "Minimum 2 approvals"
+    
+    manual:
+      - "Changelog entry prepared"
+      - "Migration scripts ready (if needed)"
+      - "Feature flags configured (if needed)"
+      - "Rollback plan documented"
+      - "Stakeholders notified"
+
+  mergeProcess:
+    description: "Merge PR to main branch"
+    
+    strategy:
+      squashMerge:
+        when: "Small features, single logical change"
+        command: "gh pr merge {PR_NUMBER} --squash"
+        commitMessage: "{TYPE}({SCOPE}): {DESCRIPTION} (#{PR_NUMBER})"
+      
+      mergeCommit:
+        when: "Large features, preserve history"
+        command: "gh pr merge {PR_NUMBER} --merge"
+        commitMessage: "Merge pull request #{PR_NUMBER} from {BRANCH}"
+      
+      rebaseMerge:
+        when: "Linear history required"
+        command: "gh pr merge {PR_NUMBER} --rebase"
+        commitMessage: "Original commits preserved"
+    
+    steps:
+      - action: "execute_command"
+        command: "git checkout main && git pull origin main"
+        description: "Update local main branch"
+      
+      - action: "execute_command"
+        command: "gh pr merge {PR_NUMBER} --{MERGE_STRATEGY} --auto"
+        description: "Merge PR with chosen strategy"
+      
+      - action: "execute_command"
+        command: "git pull origin main"
+        description: "Update local after merge"
+      
+      - action: "cleanup"
+        commands:
+          - "git branch -d {FEATURE_BRANCH}"
+          - "git push origin --delete {FEATURE_BRANCH}"
+        description: "Clean up feature branch"
+
+  versioning:
+    description: "Determine and apply version number"
+    
+    strategy: "Semantic Versioning (SemVer)"
+    format: "MAJOR.MINOR.PATCH"
+    
+    automation:
+      tool: "semantic-release or standard-version"
+      config: |
+        # .releaserc.json
+        {
+          "branches": ["main"],
+          "plugins": [
+            "@semantic-release/commit-analyzer",
+            "@semantic-release/release-notes-generator",
+            "@semantic-release/changelog",
+            "@semantic-release/npm",
+            "@semantic-release/github",
+            "@semantic-release/git"
+          ]
+        }
+    
+    rules:
+      major:
+        trigger: "BREAKING CHANGE in commit"
+        example: "2.0.0 -> 3.0.0"
+        changelog: "### ⚠️ BREAKING CHANGES"
+      
+      minor:
+        trigger: "feat: commits"
+        example: "2.1.0 -> 2.2.0"
+        changelog: "### ✨ Features"
+      
+      patch:
+        trigger: "fix: commits"
+        example: "2.1.1 -> 2.1.2"
+        changelog: "### 🐛 Bug Fixes"
+    
+    preRelease:
+      format: "{VERSION}-{PRERELEASE}.{BUILD}"
+      examples:
+        - "2.1.0-alpha.1"
+        - "2.1.0-beta.3"
+        - "2.1.0-rc.2"
+    
+    commands:
+      - action: "determine_version"
+        command: |
+          # Analyze commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0)
+          COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:'%s')
+          
+          # Determine version bump
+          if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+            VERSION_BUMP="major"
+          elif echo "$COMMITS" | grep -q "^feat"; then
+            VERSION_BUMP="minor"
+          else
+            VERSION_BUMP="patch"
+          fi
+          
+          # Calculate new version
+          npm version $VERSION_BUMP --no-git-tag-version
+      
+      - action: "create_tag"
+        command: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
+          git push origin "v$NEW_VERSION"
+
+  changelog:
+    description: "Generate and update changelog"
+    
+    format: "Keep a Changelog"
+    sections:
+      - "Added - for new features"
+      - "Changed - for changes in existing functionality"
+      - "Deprecated - for soon-to-be removed features"
+      - "Removed - for now removed features"
+      - "Fixed - for any bug fixes"
+      - "Security - in case of vulnerabilities"
+    
+    generation:
+      automatic:
+        tool: "conventional-changelog"
+        command: "npx conventional-changelog -p angular -i CHANGELOG.md -s"
+      
+      template: |
+        ## [{{version}}] - {{date}}
+        
+        ### Added
+        {{#each commits}}
+        {{#if (eq type "feat")}}
+        - {{subject}} ([{{hash}}]({{url}}))
+        {{/if}}
+        {{/each}}
+        
+        ### Fixed
+        {{#each commits}}
+        {{#if (eq type "fix")}}
+        - {{subject}} ([{{hash}}]({{url}}))
+        {{/if}}
+        {{/each}}
+        
+        ### Changed
+        {{#each commits}}
+        {{#if (eq type "refactor")}}
+        - {{subject}} ([{{hash}}]({{url}}))
+        {{/if}}
+        {{/each}}
+    
+    commit:
+      - action: "execute_command"
+        command: |
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for v{VERSION}"
+          git push origin main
+
+  deployment:
+    description: "Deploy to production environments"
+    
+    stages:
+      staging:
+        trigger: "Automatic on merge to main"
+        steps:
+          - action: "build"
+            command: "npm run build:staging"
+          
+          - action: "test"
+            command: "npm run test:staging"
+          
+          - action: "deploy"
+            command: |
+              docker build -t app:staging .
+              docker tag app:staging registry/app:staging-{VERSION}
+              docker push registry/app:staging-{VERSION}
+              kubectl set image deployment/app app=registry/app:staging-{VERSION} -n staging
+          
+          - action: "verify"
+            healthCheck: "curl -f https://staging.example.com/health"
+            smokeTest: "npm run test:smoke:staging"
+      
+      canary:
+        trigger: "Manual after staging success"
+        steps:
+          - action: "deploy"
+            command: |
+              kubectl apply -f k8s/canary-deployment.yaml
+              kubectl set image deployment/app-canary app=registry/app:{VERSION} -n production
+          
+          - action: "traffic"
+            command: |
+              # Route 10% traffic to canary
+              kubectl patch virtualservice app -n production \
+                --type merge \
+                -p '{"spec":{"http":[{"weight":10,"destination":{"host":"app-canary"}}]}}'
+          
+          - action: "monitor"
+            duration: "1 hour"
+            metrics:
+              - "Error rate < 0.1%"
+              - "P95 latency < baseline + 10%"
+              - "CPU/Memory stable"
+      
+      production:
+        trigger: "Manual after canary success"
+        steps:
+          - action: "backup"
+            command: |
+              # Backup current deployment
+              kubectl get deployment app -n production -o yaml > backup/app-{TIMESTAMP}.yaml
+              pg_dump $DATABASE_URL > backup/db-{TIMESTAMP}.sql
+          
+          - action: "deploy"
+            blueGreen: true
+            command: |
+              # Blue-Green deployment
+              kubectl apply -f k8s/blue-deployment.yaml
+              kubectl set image deployment/app-blue app=registry/app:{VERSION} -n production
+              
+              # Wait for readiness
+              kubectl wait --for=condition=available --timeout=300s \
+                deployment/app-blue -n production
+              
+              # Switch traffic
+              kubectl patch service app -n production \
+                -p '{"spec":{"selector":{"version":"blue"}}}'
+              
+              # Keep green for rollback
+              kubectl scale deployment app-green --replicas=0 -n production
+          
+          - action: "verify"
+            checks:
+              - "Health endpoints responding"
+              - "Key user journeys working"
+              - "No increase in error rates"
+              - "Performance within SLA"
+
+  monitoring:
+    description: "Post-deployment monitoring"
+    
+    duration:
+      immediate: "First 30 minutes - active monitoring"
+      short: "First 2 hours - enhanced alerts"
+      medium: "First 24 hours - standard monitoring"
+    
+    metrics:
+      application:
+        - metric: "Error rate"
+          threshold: "< 0.5%"
+          action: "Rollback if > 1%"
+        
+        - metric: "Response time (P95)"
+          threshold: "< 200ms"
+          action: "Investigate if > 300ms"
+        
+        - metric: "Throughput"
+          threshold: "> 1000 req/s capacity"
+          action: "Scale if < 500 req/s available"
+      
+      business:
+        - metric: "Conversion rate"
+          threshold: "Within 5% of baseline"
+          action: "Alert product team"
+        
+        - metric: "User sessions"
+          threshold: "Normal patterns"
+          action: "Check for access issues"
+      
+      infrastructure:
+        - metric: "CPU usage"
+          threshold: "< 70%"
+          action: "Scale if > 80%"
+        
+        - metric: "Memory usage"
+          threshold: "< 80%"
+          action: "Investigate leaks if growing"
+        
+        - metric: "Disk I/O"
+          threshold: "< 70% capacity"
+          action: "Clean up if > 80%"
+    
+    alerts:
+      - channel: "Slack #deployments"
+        events: ["Deployment started", "Deployment completed", "Metrics summary"]
+      
+      - channel: "PagerDuty"
+        events: ["Deployment failed", "Rollback triggered", "Critical metrics exceeded"]
+      
+      - channel: "Email stakeholders"
+        events: ["Release notes", "Deployment success", "Known issues"]
+
+  rollback:
+    description: "Rollback procedure if issues detected"
+    
+    triggers:
+      automatic:
+        - "Health check failures > 3 consecutive"
+        - "Error rate > 5% for 2 minutes"
+        - "P95 latency > 1000ms for 5 minutes"
+        - "Pod crash loops detected"
+      
+      manual:
+        - "Critical bug reported"
+        - "Data corruption detected"
+        - "Security vulnerability discovered"
+        - "Business metrics severely impacted"
+    
+    strategies:
+      instant:
+        description: "Blue-Green switch back"
+        time: "< 30 seconds"
+        command: |
+          # Switch back to green
+          kubectl patch service app -n production \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+          
+          # Scale green back up
+          kubectl scale deployment app-green --replicas=3 -n production
+      
+      revert:
+        description: "Git revert and redeploy"
+        time: "< 5 minutes"
+        command: |
+          # Revert merge commit
+          git revert -m 1 {MERGE_COMMIT}
+          git push origin main
+          
+          # Trigger CI/CD pipeline
+          gh workflow run deploy.yml
+      
+      restore:
+        description: "Database restore if needed"
+        time: "< 30 minutes"
+        command: |
+          # Stop application
+          kubectl scale deployment app --replicas=0 -n production
+          
+          # Restore database
+          psql $DATABASE_URL < backup/db-{TIMESTAMP}.sql
+          
+          # Deploy previous version
+          kubectl set image deployment/app app=registry/app:{PREVIOUS_VERSION} -n production
+          kubectl scale deployment app --replicas=3 -n production
+    
+    postRollback:
+      - "Create incident report"
+      - "Root cause analysis"
+      - "Update rollback runbook"
+      - "Schedule postmortem"
+      - "Communicate to stakeholders"
+
+  postRelease:
+    description: "Actions after successful release"
+    
+    tasks:
+      - action: "create_release"
+        command: |
+          gh release create v{VERSION} \
+            --title "Release v{VERSION}" \
+            --notes-file RELEASE_NOTES.md \
+            --target main
+      
+      - action: "update_documentation"
+        targets:
+          - "API documentation"
+          - "User guides"
+          - "Migration guides"
+          - "README version badge"
+      
+      - action: "notify_stakeholders"
+        template: |
+          Subject: Release v{VERSION} Deployed Successfully
+          
+          We're pleased to announce that version {VERSION} has been successfully deployed to production.
+          
+          Key Features:
+          {FEATURE_LIST}
+          
+          Bug Fixes:
+          {BUG_FIX_LIST}
+          
+          Full changelog: {CHANGELOG_URL}
+          
+          Thank you for your patience and support.
+      
+      - action: "cleanup"
+        tasks:
+          - "Archive old deployments"
+          - "Prune Docker images"
+          - "Clean up test environments"
+          - "Update feature flags"
+      
+      - action: "metrics"
+        collect:
+          - "Deployment duration"
+          - "Time to recovery (if issues)"
+          - "Change failure rate"
+          - "Mean time between deployments"
+
+  compliance:
+    description: "Regulatory and compliance requirements"
+    
+    documentation:
+      - "Release approval signatures"
+      - "Test evidence"
+      - "Security scan results"
+      - "Change advisory board approval"
+    
+    retention:
+      artifacts: "90 days"
+      logs: "1 year"
+      backups: "30 days"
+    
+    audit:
+      trail: |
+        {
+          "release": "{VERSION}",
+          "timestamp": "{ISO_TIMESTAMP}",
+          "approvers": ["{LIST_OF_APPROVERS}"],
+          "pr_number": "{PR_NUMBER}",
+          "commit_sha": "{SHA}",
+          "deployer": "{USER}",
+          "environment": "production",
+          "status": "success",
+          "rollback_required": false
+        }
+
+  success_criteria:
+    description: "Release considered successful when"
+    conditions:
+      - "All deployment stages completed"
+      - "Health checks passing for 30 minutes"
+      - "No critical alerts triggered"
+      - "Error rate within normal range"
+      - "Performance SLAs met"
+      - "No rollback required"
+      - "Stakeholders notified"

@@ -79,6 +79,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Consumption routes module not found: {e}")
     
+    # Include consumption analytics routes
+    try:
+        from .endpoints.consumption_analytics_router import router as consumption_analytics_router
+        app.include_router(consumption_analytics_router)
+        logger.info("Consumption analytics routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Consumption analytics routes module not found: {e}")
+    
     # Include anomaly routes
     try:
         from .endpoints.anomaly_router import router as anomaly_router
