@@ -134,7 +134,9 @@ const fetchRealMonitoringData = async () => {
         name: nodeName || `Node ${nodeId}`,
         location: generateLocation(nodeName || nodeId),
         status: associatedZone?.status || (hasAnomalies ? 'warning' : 'optimal'),
-        pressure: associatedZone?.avgPressure || (2.8 + Math.random() * 1.4),
+        pressure: associatedZone?.avgPressure 
+          ? Math.round(associatedZone.avgPressure * 100) / 100  // Round to 2 decimal places
+          : Math.round((2.8 + Math.random() * 1.4) * 100) / 100,
         flowRate: (30 + Math.random() * 40).toFixed(1),
         uptime: (98 + Math.random() * 2).toFixed(1),
         alerts: hasAnomalies ? 1 : 0,
