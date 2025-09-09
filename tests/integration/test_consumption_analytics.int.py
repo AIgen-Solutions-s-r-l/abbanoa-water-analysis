@@ -84,3 +84,32 @@ class TestConsumptionAnalyticsEndpoint:
             assert "data_source" in metadata
             assert metadata["data_source"] == "distribution_nodes_correlation"
             assert "synthetic_percentage" in metadata
+
+    @pytest.mark.asyncio
+    async def test_consumption_anomalies_endpoint_returns_valid_structure(self, mock_sensor_data):
+        """Should return consumption anomalies derived from distribution node data."""
+        # Arrange
+        from src.presentation.api.app_postgres import app
+        from unittest.mock import patch
+        
+        client = TestClient(app)
+        
+        # Mock database connection
+        with patch('asyncpg.create_pool') as mock_pool:
+            mock_conn = AsyncMock()
+            mock_conn.fetch.return_value = mock_sensor_data
+            mock_pool.return_value.acquire.return_value.__aenter__.return_value = mock_conn
+            
+            # Act
+            response = client.get("/v1/consumption/anomalies")
+            
+            # Assert
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert "anomalies" in data
+            if data["anomalies"]:
+                anomaly = data["anomalies"][0]
+                assert "anomaly_id" in anomaly
+                assert "type" in anomaly
+                assert "severity" in anomaly
