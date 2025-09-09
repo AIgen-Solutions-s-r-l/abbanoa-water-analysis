@@ -3,19 +3,47 @@
 import asyncio
 from datetime import datetime
 import os
+import pytest
+from unittest.mock import patch, AsyncMock
 
-# Set mock mode for tests
-os.environ["USE_MOCK_API"] = "true"
 
-
-async def test_infrastructure_map_data():
+@patch('src.presentation.api.endpoints.infrastructure_router.get_db_connection')
+async def test_infrastructure_map_data(mock_get_db_connection):
     """Test the infrastructure map data endpoint."""
     from src.presentation.api.endpoints.infrastructure_router import get_infrastructure_map_data
     
-    # Call the endpoint function directly
+    # Arrange
+    mock_conn = AsyncMock()
+    mock_get_db_connection.return_value = mock_conn
+    
+    # Mock nodes data query
+    mock_conn.fetch.side_effect = [
+        # First call: nodes query
+        [
+            {
+                'node_id': 'TEST_NODE_1',
+                'node_name': 'Test Node 1',
+                'node_type': 'distribution',
+                'latitude': 40.9179,
+                'longitude': 9.4944,
+                'is_active': True,
+                'flow_rate': 15.2,
+                'pressure': 3.1,
+                'last_reading': datetime.now(),
+                'has_anomaly': False
+            }
+        ],
+        # Second call: zones query (may fail)
+        []
+    ]
+    
+    # Mock alert count query
+    mock_conn.fetchrow.return_value = {'alert_count': 2}
+    
+    # Act
     result = await get_infrastructure_map_data()
     
-    # Check the response structure
+    # Assert
     assert "network_health" in result
     assert "total_flow" in result
     assert "avg_pressure" in result
@@ -32,7 +60,7 @@ async def test_infrastructure_map_data():
     assert isinstance(result["nodes"], list)
     assert isinstance(result["zones"], list)
     
-    # Check node structure if present
+    # Check node structure
     if result["nodes"]:
         node = result["nodes"][0]
         assert "id" in node
@@ -45,43 +73,43 @@ async def test_infrastructure_map_data():
         assert "pressure" in node
         assert "has_anomaly" in node
     
-    # Check zone structure if present
-    if result["zones"]:
-        zone = result["zones"][0]
-        assert "id" in zone
-        assert "name" in zone
-        assert "node_count" in zone
+    # Verify mock was called
+    mock_get_db_connection.assert_called()
 
 
-async def test_network_summary():
+@patch('src.presentation.api.endpoints.infrastructure_router.get_db_connection')
+async def test_network_summary(mock_get_db_connection):
     """Test the network summary endpoint."""
     from src.presentation.api.endpoints.infrastructure_router import get_network_summary
     
-    # For mock mode, we need to provide a mock implementation
-    async def mock_get_network_summary():
-        return {
-            "network": {
-                "total_nodes": 5,
-                "active_nodes": 5,
-                "nodes_with_readings": 5,
-                "avg_flow_rate": 4.2,
-                "avg_pressure": 3.1,
-                "data_range": {
-                    "oldest": datetime.now().isoformat(),
-                    "latest": datetime.now().isoformat()
-                }
-            },
-            "anomalies": {
-                "total_24h": 0,
-                "active": 0,
-                "critical": 0
-            },
-            "timestamp": datetime.now().isoformat()
+    # Arrange
+    mock_conn = AsyncMock()
+    mock_get_db_connection.return_value = mock_conn
+    
+    # Mock network stats query
+    mock_conn.fetchrow.side_effect = [
+        # First call: network stats
+        {
+            'total_nodes': 10,
+            'active_nodes': 8,
+            'nodes_with_readings': 6,
+            'avg_flow_rate': 12.5,
+            'avg_pressure': 3.2,
+            'oldest_reading': datetime.now(),
+            'latest_reading': datetime.now()
+        },
+        # Second call: anomaly stats
+        {
+            'total_anomalies': 3,
+            'active_anomalies': 1,
+            'critical_anomalies': 0
         }
+    ]
     
-    result = await mock_get_network_summary()
+    # Act
+    result = await get_network_summary()
     
-    # Check the response structure
+    # Assert
     assert "network" in result
     assert "anomalies" in result
     assert "timestamp" in result
@@ -95,11 +123,26 @@ async def test_network_summary():
     assert "avg_pressure" in network
     assert "data_range" in network
     
+    # Check data types
+    assert isinstance(network["total_nodes"], int)
+    assert isinstance(network["active_nodes"], int)
+    assert isinstance(network["nodes_with_readings"], int)
+    assert isinstance(network["avg_flow_rate"], (int, float))
+    assert isinstance(network["avg_pressure"], (int, float))
+    
     # Check anomalies structure
     anomalies = result["anomalies"]
     assert "total_24h" in anomalies
     assert "active" in anomalies
     assert "critical" in anomalies
+    
+    # Check data types
+    assert isinstance(anomalies["total_24h"], int)
+    assert isinstance(anomalies["active"], int)
+    assert isinstance(anomalies["critical"], int)
+    
+    # Verify mock was called
+    mock_get_db_connection.assert_called()
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ Hybrid setup:
 1. **API Server** (`src/presentation/api/app_postgres.py`)
    - Main FastAPI application
    - Endpoints: dashboard, anomalies, weather, network, forecasts, infrastructure, pressure zones
-   - Mock mode support via `USE_MOCK_API` env variable
+   - Real-time data from PostgreSQL/TimescaleDB
 
 2. **SQLAlchemy Server** (`src/servers/sqlalchemy_server.py`)
    - Database-focused API server
@@ -212,10 +212,11 @@ The FastAPI application (`src/presentation/api/app_postgres.py`) serves the foll
 - `/api/v1/pressure/`: Pressure zones and monitoring
 
 ### Testing Strategy
-The codebase uses `USE_MOCK_API` environment variable to enable mock responses during testing:
-- Integration tests can run without external dependencies
-- Mock branches in endpoints return predefined test data
-- CI/CD pipeline uses mock mode for reliable testing
+The codebase uses mocked database connections for reliable testing:
+- Integration tests mock database connections using pytest-mock
+- Test data is provided via pytest fixtures in conftest.py
+- CI/CD pipeline runs tests without external database dependencies
+- Tests validate API logic, data transformation, and error handling
 
 ### Database Architecture
 - **Primary**: PostgreSQL for transactional data
@@ -256,7 +257,6 @@ Next.js 15 application with:
 ```bash
 # API Configuration
 API_BASE=http://localhost:8000/api/v1
-USE_MOCK_API=false  # Set to true for testing
 
 # Database
 DATABASE_URL=postgresql://user:pass@localhost/dbname
@@ -311,18 +311,21 @@ docker-compose -f docker/docker-compose.prod.yml run --rm etl-init
 
 ### Adding New API Endpoint
 1. Create router in `src/presentation/api/endpoints/`
-2. Add mock branch using `if os.getenv("USE_MOCK_API") == "true":`
+2. Implement database queries using asyncpg
 3. Register router in `app_postgres.py`
 4. Write integration tests in `tests/integration/`
 5. Update API documentation
 
 ### Running Integration Tests Locally
 ```bash
-# Start API with mock mode
-USE_MOCK_API=true poetry run uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 &
-
-# Run integration tests
+# Run integration tests (with mocked database connections)
 poetry run pytest tests/integration/
+
+# Run with coverage
+poetry run pytest tests/integration/ --cov=src --cov-report=html
+
+# Run specific test file
+poetry run pytest tests/integration/test_dashboard_and_anomalies.int.py -v
 ```
 
 ### Database Migrations
@@ -351,7 +354,7 @@ Hooks run: black, isort, flake8, mypy, and tests before commits.
 ### Common Issues
 1. **Port conflicts**: Check if ports 8000 (API) or 3001 (frontend) are in use
 2. **Poetry issues**: Run `poetry lock --no-update` if dependencies conflict
-3. **Test failures**: Ensure `USE_MOCK_API=true` for integration tests
+3. **Test failures**: Integration tests use mocked database connections - check mock configuration
 4. **TypeScript errors**: Run `npm run type-check` in frontend directory
 
 ### PM2 Management

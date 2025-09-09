@@ -1,0 +1,49 @@
+context:
+  task: "Perform a QA team review of the Pull Request to assess merge readiness."
+
+protocol:
+  reviewStandards:
+    perspectives:
+      - correctness: "Check if the code meets acceptance criteria and intended behavior."
+      - regression: "Identify potential regressions or breaking changes."
+      - security: "Look for vulnerabilities, unsafe patterns, missing validations."
+      - performance: "Spot bottlenecks, unnecessary complexity, resource issues."
+      - maintainability: "Evaluate readability, modularity, SRP, testability."
+      - consistency: "Verify adherence to architecture, coding standards, naming."
+      - testing: "Assess adequacy of unit/integration/e2e tests, edge cases, and negative paths."
+      - documentation: "Ensure README, CLAUDE.md, API docs, and CHANGELOG are updated."
+      - ux_devex: "Check error messages, logs, CLI/API usability where applicable."
+      - release: "Verify no TODO/FIXME remain, versioning rules respected, changelog updated."
+    severityLevels:
+      - P0: "Critical blocker (must fix before merge)"
+      - P1: "High severity (should fix before merge)"
+      - P2: "Medium severity (important improvements)"
+      - P3: "Low severity (minor issues/optimizations)"
+      - P4: "Style/readability suggestions"
+      - P5: "Optional/nice-to-have improvements"
+
+taskPlan:
+  goal: "Generate a structured QA review report of the PR."
+  tasks:
+    - id: 1.1
+      description: "Analyze changes across all QA perspectives."
+      status: "pending"
+    - id: 1.2
+      description: "Classify findings by severity (P0–P5)."
+      status: "pending"
+    - id: 1.3
+      description: "Draft release notes entry for CHANGELOG.md."
+      status: "pending"
+    - id: 1.4
+      description: "Produce a final verdict on merge readiness."
+      status: "pending"
+
+output:
+  format: "Markdown QA Review Report"
+  sections:
+    - "Summary: overall PR quality (approve/request changes/needs discussion)"
+    - "Findings by Severity: grouped issues P0–P5 with explanations"
+    - "File-by-file Observations: inline notes for critical changes"
+    - "Testing Gaps: recommended additional tests"
+    - "Release Notes Suggestion: draft changelog entry"
+    - "Final Verdict: merge readiness with justification"

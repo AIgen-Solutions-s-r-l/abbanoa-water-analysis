@@ -424,4 +424,141 @@ class ErrorSimulator:
 @pytest.fixture
 def error_simulator() -> ErrorSimulator:
     """Provide error simulation utilities."""
-    return ErrorSimulator() 
+    return ErrorSimulator()
+
+
+# Database mocking fixtures for integration tests
+
+from unittest.mock import AsyncMock
+
+@pytest.fixture
+def mock_db_connection():
+    """Fixture that provides a mock database connection."""
+    mock_conn = AsyncMock()
+    mock_conn.close = AsyncMock()
+    return mock_conn
+
+
+@pytest.fixture 
+def mock_dashboard_data():
+    """Fixture that provides mock data for dashboard tests."""
+    return {
+        'latest_timestamp': datetime.now(),
+        'nodes_data': [
+            {
+                'node_id': 'TEST_NODE_1',
+                'node_name': 'Test Node 1', 
+                'node_type': 'distribution',
+                'flow_rate': 10.5,
+                'pressure': 3.2,
+                'temperature': 18.5,
+                'last_reading': datetime.now(),
+                'quality_score': 0.95
+            },
+            {
+                'node_id': 'TEST_NODE_2',
+                'node_name': 'Test Node 2', 
+                'node_type': 'reservoir',
+                'flow_rate': 25.1,
+                'pressure': 2.8,
+                'temperature': 19.2,
+                'last_reading': datetime.now(),
+                'quality_score': 0.88
+            }
+        ],
+        'consumption_data': {
+            'total_liters': 50000.0,
+            'avg_flow_rate': 15.3,
+            'avg_pressure': 3.0,
+            'active_connections': 5
+        },
+        'anomaly_data': {
+            'pressure_anomalies': 1,
+            'flow_anomalies': 0,
+            'temp_anomalies': 1
+        }
+    }
+
+
+@pytest.fixture
+def mock_infrastructure_data():
+    """Fixture that provides mock data for infrastructure tests."""
+    return {
+        'nodes_data': [
+            {
+                'node_id': 'TEST_NODE_1',
+                'node_name': 'Test Node 1',
+                'node_type': 'distribution',
+                'latitude': 40.9179,
+                'longitude': 9.4944,
+                'is_active': True,
+                'flow_rate': 15.2,
+                'pressure': 3.1,
+                'last_reading': datetime.now(),
+                'has_anomaly': False
+            }
+        ],
+        'alert_count': 2,
+        'network_stats': {
+            'total_nodes': 10,
+            'active_nodes': 8,
+            'nodes_with_readings': 6,
+            'avg_flow_rate': 12.5,
+            'avg_pressure': 3.2,
+            'oldest_reading': datetime.now(),
+            'latest_reading': datetime.now()
+        },
+        'anomaly_stats': {
+            'total_anomalies': 3,
+            'active_anomalies': 1,
+            'critical_anomalies': 0
+        }
+    }
+
+
+@pytest.fixture
+def mock_pressure_zones_data():
+    """Fixture that provides mock data for pressure zones tests."""
+    return [
+        {
+            'zone_id': 'ZONE_A',
+            'zone_name': 'Test Zone A',
+            'min_pressure': 2.5,
+            'avg_pressure': 3.2,
+            'max_pressure': 3.8,
+            'node_count': 5
+        },
+        {
+            'zone_id': 'ZONE_B', 
+            'zone_name': 'Test Zone B',
+            'min_pressure': 2.8,
+            'avg_pressure': 3.5,
+            'max_pressure': 4.1,
+            'node_count': 3
+        }
+    ]
+
+
+@pytest.fixture
+def mock_anomalies_data():
+    """Fixture that provides mock data for anomalies tests."""
+    return [
+        {
+            'anomaly_id': 'TEST_ANOM_1',
+            'node_id': 'TEST_NODE_1',
+            'timestamp': datetime.now(),
+            'anomaly_type': 'pressure_drop',
+            'severity': 'medium',
+            'description': 'Test pressure anomaly',
+            'resolved_at': None
+        },
+        {
+            'anomaly_id': 'TEST_ANOM_2',
+            'node_id': 'TEST_NODE_2',
+            'timestamp': datetime.now(),
+            'anomaly_type': 'flow_spike',
+            'severity': 'high',
+            'description': 'Test flow anomaly',
+            'resolved_at': None
+        }
+    ] 

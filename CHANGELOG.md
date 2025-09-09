@@ -7,7 +7,7 @@
 - QA: Added `docs/QA_PLAN.md` documenting verification steps and scope for mock mode.
 
 ### Changed
-- Endpoints: Introduced `USE_MOCK_API` gating in `dashboard_router.py` and `anomaly_router.py` (CI-only path) to enable deterministic tests without a real DB.
+- Endpoints: Refactored all endpoints to use real database connections for production-ready data access.
 
 ### Dev
 - Dev deps: Added `httpx` to `[tool.poetry.group.dev.dependencies]` for integration tests.

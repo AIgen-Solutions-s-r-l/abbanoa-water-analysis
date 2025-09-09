@@ -12,12 +12,24 @@ const fetchRealMonitoringData = async () => {
       fetch('/api/proxy/v1/anomalies')
     ]);
 
-    const nodesData = await nodesResponse.json();
+    let nodesData = await nodesResponse.json();
     const pressureData = await pressureResponse.json();
-    const anomaliesData = await anomaliesResponse.json();
+    let anomaliesData = await anomaliesResponse.json();
+    
+    // Ensure nodesData is an array
+    if (!Array.isArray(nodesData)) {
+      console.warn('Nodes data is not an array:', nodesData);
+      nodesData = [];
+    }
+    
+    // Ensure anomaliesData is an array (API might return error object or non-array)
+    if (!Array.isArray(anomaliesData)) {
+      console.warn('Anomalies data is not an array:', anomaliesData);
+      anomaliesData = [];
+    }
 
     // Calculate system health metrics from real data
-    const activeNodes = nodesData?.length || 0;
+    const activeNodes = nodesData.length;
     const pressureZones = pressureData?.zones || [];
     const totalReadings = pressureZones.reduce((sum: number, zone: { id: string; name: string; status: string; value: number }) => sum + (zone.readingCount || 0), 0);
     
@@ -33,16 +45,20 @@ const fetchRealMonitoringData = async () => {
     const waterLoss = Math.max(5, Math.min(20, Math.round((4.0 - avgSystemPressure) * 4 + 8)));
     
     // System availability based on active nodes and anomalies
-    const criticalAnomalies = anomaliesData?.filter((a: { id: string; name: string; status: string; value: number }) => a.severity === 'critical').length || 0;
+    const criticalAnomalies = Array.isArray(anomaliesData) 
+      ? anomaliesData.filter((a: { id: string; name: string; status: string; value: number; severity?: string }) => a.severity === 'critical').length 
+      : 0;
     const systemAvailability = Math.max(95, 99.5 - (criticalAnomalies * 1.5));
     
     // Water quality estimation
-    const waterQuality = Math.max(90, 95 - (anomaliesData?.length || 0) * 1.2);
+    const waterQuality = Math.max(90, 95 - (Array.isArray(anomaliesData) ? anomaliesData.length : 0) * 1.2);
 
     // Transform nodes data for monitoring display
-    const monitoringNodes = nodesData?.slice(0, 8).map((node: { id: string; name: string; status: string; value: number }, index: number) => {
+    const monitoringNodes = nodesData.slice(0, 8).map((node: { id: string; name: string; status: string; value: number }) => {
       const associatedZone = pressureZones.find((z: { id: string; name: string; status: string; value: number }) => z.zone.includes(node.id));
-      const hasAnomalies = anomaliesData?.some((a: { id: string; name: string; status: string; value: number }) => a.node_id === node.id);
+      const hasAnomalies = Array.isArray(anomaliesData) 
+        ? anomaliesData.some((a: { id: string; name: string; status: string; value: number; node_id?: string }) => a.node_id === node.id)
+        : false;
       
       return {
         id: node.id,
@@ -56,17 +72,19 @@ const fetchRealMonitoringData = async () => {
         lastUpdate: new Date(Date.now() - Math.random() * 300000), // Last 5 minutes
         readings: associatedZone?.readingCount || Math.floor(Math.random() * 1000 + 100)
       };
-    }) || [];
+    });
 
     // Generate recent alerts from real anomalies
-    const recentAlerts = anomaliesData?.slice(0, 5).map((anomaly: { id: string; name: string; status: string; value: number }) => ({
+    const recentAlerts = Array.isArray(anomaliesData) 
+      ? anomaliesData.slice(0, 5).map((anomaly: any) => ({
       id: anomaly.id,
       type: anomaly.severity || 'medium',
       message: anomaly.description || `${anomaly.anomaly_type} detected`,
       location: anomaly.node_name || 'Unknown Location',
       timestamp: new Date(anomaly.timestamp || Date.now()),
       resolved: !!anomaly.resolved_at
-    })) || [];
+    })) 
+      : [];
 
     return {
       systemHealth: {
@@ -81,7 +99,7 @@ const fetchRealMonitoringData = async () => {
         activeNodes,
         totalReadings,
         totalZones: pressureZones.length,
-        anomaliesCount: anomaliesData?.length || 0
+        anomaliesCount: Array.isArray(anomaliesData) ? anomaliesData.length : 0
       },
       lastUpdated: new Date()
     };
