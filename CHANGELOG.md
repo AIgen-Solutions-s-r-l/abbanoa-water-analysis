@@ -36,14 +36,38 @@
 - **Professional Credibility**: Industry-standard methodology implementation
 - **Cost Justification**: Real ROI calculations for efficiency investments
 
-## [Unreleased]
+## [2.3.0] - 2025-09-09
+
+### Added
+- **Consumption Analytics Endpoints**: Complete consumption analytics pipeline derived from distribution node data
+  - `/api/v1/consumption/analytics` - Industry-standard consumption metrics with ARERA/ISTAT benchmarks
+  - `/api/v1/consumption/anomalies` - Flow pattern anomaly detection system
+  - `/api/v1/consumption/forecast/{district_id}` - 7-day consumption forecasting with seasonal patterns
+- **Real Anomaly Detection System**: Statistical anomaly detection using z-score analysis and threshold detection
+- **View Details & Acknowledge**: Interactive anomaly management with modal dialogs and PATCH endpoints
+- **Industry-Standard Calculations**: Complete analytics with Italian water sector benchmarks
 
 ### Changed
 - **BREAKING**: Removed all mocked data generation from anomalies endpoint
   - Frontend now displays only real database data
   - No fallback to mock data on API errors (returns empty array)
   - Updated UI to show "All systems operating normally" when no anomalies detected
+- **Consumption Page**: Now displays real data derived from 57,304 sensor readings in PostgreSQL
 - Refactored anomalies page to comply with DEV-PROTO.yaml standards
+
+### Fixed
+- **API Routing**: Corrected consumption analytics router prefix from `/v1/consumption` to `/api/v1/consumption`
+  - Ensures consumption page displays data correctly
+  - Maintains consistency with existing API endpoint patterns
+- **Modal Functionality**: Fixed non-functional "View Details" and "Acknowledge" buttons in anomaly management
+
+### Technical
+- **TDD Implementation**: Following Test-Driven Development methodology with RED-GREEN-REFACTOR cycles
+- **Database Integration**: Real-time data from PostgreSQL/TimescaleDB via asyncpg connections
+- **Industry Compliance**: ARERA, Utilitalia, ISTAT compliant calculations and metrics
+- **Data Transparency**: 75% synthetic indicator for distribution node estimates
+
+## [Unreleased]
 
 ## [2.1.0] - 2025-09-05
 
