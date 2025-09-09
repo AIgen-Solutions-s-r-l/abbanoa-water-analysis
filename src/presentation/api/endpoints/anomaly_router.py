@@ -119,8 +119,8 @@ async def detect_anomalies(
         if node_id:
             nodes = [node_id]
         else:
-            # Get all active nodes
-            node_query = "SELECT node_id FROM water_infrastructure.nodes WHERE status = 'active'"
+            # Get all nodes (remove status filter as column doesn't exist)
+            node_query = "SELECT node_id FROM water_infrastructure.nodes"
             node_rows = await conn.fetch(node_query)
             nodes = [row['node_id'] for row in node_rows]
         
@@ -239,4 +239,41 @@ async def get_anomaly_statistics(
         
     except Exception as e:
         logger.error(f"Error fetching anomaly statistics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/anomalies/{anomaly_id}/acknowledge")
+async def acknowledge_anomaly(anomaly_id: int) -> Dict[str, Any]:
+    """Mark an anomaly as acknowledged/resolved."""
+    try:
+        conn = await get_db_connection()
+        
+        # Update anomaly to set resolved_at timestamp
+        update_query = """
+            UPDATE water_infrastructure.anomalies
+            SET resolved_at = NOW()
+            WHERE anomaly_id = $1 AND resolved_at IS NULL
+            RETURNING anomaly_id, node_id, resolved_at
+        """
+        
+        result = await conn.fetchrow(update_query, anomaly_id)
+        
+        if not result:
+            await conn.close()
+            raise HTTPException(status_code=404, detail="Anomaly not found or already resolved")
+        
+        await conn.close()
+        
+        return {
+            "status": "success",
+            "anomaly_id": result['anomaly_id'],
+            "node_id": result['node_id'],
+            "resolved_at": result['resolved_at'].isoformat(),
+            "message": "Anomaly acknowledged successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error acknowledging anomaly: {e}")
         raise HTTPException(status_code=500, detail=str(e)) 
