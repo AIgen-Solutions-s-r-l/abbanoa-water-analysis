@@ -33,8 +33,13 @@ async def get_pressure_zones() -> Dict[str, List[Dict[str, Any]]]:
         
         # Query to get pressure zones data from existing tables
         # Join pressure_zones with sensor_readings to get actual pressure data
+        # Use the most recent 24 hours of data available (not NOW())
         query = """
-            WITH zone_pressure_stats AS (
+            WITH latest_data AS (
+                SELECT MAX(timestamp) as max_time 
+                FROM water_infrastructure.sensor_readings
+            ),
+            zone_pressure_stats AS (
                 SELECT 
                     pz.zone_id,
                     pz.zone_name,
@@ -45,9 +50,11 @@ async def get_pressure_zones() -> Dict[str, List[Dict[str, Any]]]:
                     COALESCE(MAX(sr.pressure), 0) as max_pressure,
                     COALESCE(pz.efficiency, 95.0) as efficiency
                 FROM water_infrastructure.pressure_zones pz
+                CROSS JOIN latest_data ld
                 LEFT JOIN water_infrastructure.sensor_readings sr 
                     ON pz.node_id = sr.node_id
-                    AND sr.timestamp >= NOW() - INTERVAL '24 hours'
+                    AND sr.timestamp >= ld.max_time - INTERVAL '24 hours'
+                    AND sr.timestamp <= ld.max_time
                 WHERE pz.is_active = true
                 GROUP BY pz.zone_id, pz.zone_name, pz.efficiency
             )
