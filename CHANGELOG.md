@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- **BREAKING**: Removed all mocked data generation from anomalies endpoint
+  - Frontend now displays only real database data
+  - No fallback to mock data on API errors (returns empty array)
+  - Updated UI to show "All systems operating normally" when no anomalies detected
+- Refactored anomalies page to comply with DEV-PROTO.yaml standards
+
 ## [2.1.0] - 2025-09-05
 
 ### Added
