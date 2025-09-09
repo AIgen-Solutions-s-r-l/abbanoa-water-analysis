@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/v1/consumption", tags=["consumption"])
+router = APIRouter(prefix="/api/v1/consumption", tags=["consumption"])
 
 
 class ConsumptionSummary(BaseModel):
