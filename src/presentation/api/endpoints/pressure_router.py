@@ -69,7 +69,9 @@ async def get_pressure_zones() -> Dict[str, List[Dict[str, Any]]]:
                 efficiency,
                 CASE 
                     WHEN avg_pressure < 2.5 THEN 'critical'
-                    WHEN avg_pressure < 2.8 THEN 'warning'
+                    WHEN avg_pressure < 3.0 THEN 'warning'
+                    WHEN avg_pressure >= 4.0 AND avg_pressure <= 5.0 AND efficiency >= 95 THEN 'optimal'
+                    WHEN avg_pressure > 6.0 THEN 'warning'  -- Pressione troppo alta
                     ELSE 'normal'
                 END as status
             FROM zone_pressure_stats

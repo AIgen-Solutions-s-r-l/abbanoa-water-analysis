@@ -79,16 +79,37 @@ const fetchRealMonitoringData = async () => {
     const pressureZones = pressureData?.zones || [];
     const totalReadings = pressureZones.reduce((sum: number, zone: { id: string; name: string; status: string; value: number }) => sum + (zone.readingCount || 0), 0);
     
-    // System efficiency based on pressure zone status
-    const optimalZones = pressureZones.filter((z: { id: string; name: string; status: string; value: number }) => z.status === 'optimal').length;
-    const systemEfficiency = pressureZones.length > 0 ? Math.round((optimalZones / pressureZones.length) * 100) : 87;
+    // System efficiency based on multiple factors (formula realistica)
+    // Efficienza = f(pressione, perdite, zone operative)
+    const optimalZones = pressureZones.filter((z: any) => z.status === 'optimal').length;
+    const normalZones = pressureZones.filter((z: any) => z.status === 'normal').length;
+    const warningZones = pressureZones.filter((z: any) => z.status === 'warning').length;
+    const criticalZones = pressureZones.filter((z: any) => z.status === 'critical').length;
     
-    // Water loss estimation based on pressure
-    const avgPressures = pressureZones.map((z: { id: string; name: string; status: string; value: number }) => z.avgPressure).filter((p: number) => p > 0);
+    // Calcolo ponderato dell'efficienza
+    let systemEfficiency = 0;
+    if (pressureZones.length > 0) {
+      const weightedScore = (optimalZones * 100 + normalZones * 85 + warningZones * 60 + criticalZones * 30) / pressureZones.length;
+      // Considera anche l'efficienza media delle zone
+      const avgZoneEfficiency = pressureZones.reduce((sum: number, z: any) => sum + (z.efficiency || 0), 0) / pressureZones.length;
+      systemEfficiency = Math.round((weightedScore * 0.6 + avgZoneEfficiency * 0.4));
+    } else {
+      systemEfficiency = 0;
+    }
+    
+    // Water loss estimation based on pressure (formula fisica reale)
+    // Perdite proporzionali alla radice quadrata della pressione (formula di Lambert)
+    // Baseline: 5% perdite a 4 bar (pressione ottimale)
+    const avgPressures = pressureZones.map((z: any) => z.avgPressure).filter((p: number) => p > 0);
     const avgSystemPressure = avgPressures.length > 0 
       ? avgPressures.reduce((sum: number, p: number) => sum + p, 0) / avgPressures.length 
-      : 3.2;
-    const waterLoss = Math.max(5, Math.min(20, Math.round((4.0 - avgSystemPressure) * 4 + 8)));
+      : 4.0;
+    
+    // Formula realistica: perdite aumentano con la radice quadrata della pressione
+    // Baseline: 5% a 4 bar, aumenta con sqrt(P/4)
+    const pressureRatio = avgSystemPressure / 4.0;
+    const baseLoss = 5; // 5% perdite base a pressione ottimale
+    const waterLoss = Math.round(baseLoss * Math.sqrt(pressureRatio) * 100) / 100;
     
     // System availability based on active nodes and anomalies
     const criticalAnomalies = Array.isArray(anomaliesData) 
