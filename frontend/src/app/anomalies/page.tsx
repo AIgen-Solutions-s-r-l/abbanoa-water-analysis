@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 // Real data fetching function - NO MOCKED DATA
 const fetchRealAnomaliesData = async () => {
@@ -17,7 +18,7 @@ const fetchRealAnomaliesData = async () => {
     const nodesData = await nodesResponse.json();
 
     // Transform real data to match our UI format
-    const transformedAnomalies = anomaliesData.map((anomaly: { id: string; type: string; severity: string; timestamp: string; description: string }, index: number) => ({
+    const transformedAnomalies = anomaliesData.map((anomaly: any, index: number) => ({
       id: anomaly.id || `ANO-${Date.now()}-${index}`,
       timestamp: anomaly.timestamp || new Date().toISOString(),
       severity: anomaly.severity || 'medium',
@@ -26,12 +27,14 @@ const fetchRealAnomaliesData = async () => {
       description: anomaly.description || `${anomaly.anomaly_type} detected in ${anomaly.measurement_type}`,
       impact: calculateImpact(anomaly.severity),
       status: anomaly.resolved_at ? 'resolved' : 'active',
-      confidence: anomaly.confidence || 0,
+      confidence: (anomaly.confidence * 100) || 0,
       source: 'System Detection',
       expectedValue: anomaly.expected_value?.toString() || 'N/A',
       actualValue: anomaly.actual_value?.toString() || 'N/A',
-      deviation: anomaly.deviation_percentage ? `${Math.abs(anomaly.deviation_percentage)}%` : 'N/A',
-      coordinates: generateCoordinates(anomaly.node_name)
+      deviation: anomaly.deviation_percentage ? `${Math.abs(anomaly.deviation_percentage).toFixed(1)}%` : 'N/A',
+      coordinates: generateCoordinates(anomaly.node_name),
+      node_id: anomaly.node_id,
+      measurement_type: anomaly.measurement_type
     }));
 
     // Return ONLY real data - no padding with mock data
@@ -84,6 +87,31 @@ export default function AnomaliesPage() {
   });
   
   const [loading, setLoading] = useState(true);
+  const [selectedAnomaly, setSelectedAnomaly] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  // Handle acknowledge function
+  const handleAcknowledge = async (anomalyId: string | number) => {
+    try {
+      const response = await fetch(`/api/proxy/v1/anomalies/${anomalyId}/acknowledge`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        // Reload anomalies data
+        const realData = await fetchRealAnomaliesData();
+        setAnomaliesData(realData);
+        console.log('Anomaly acknowledged successfully');
+      } else {
+        console.error('Failed to acknowledge anomaly');
+      }
+    } catch (error) {
+      console.error('Error acknowledging anomaly:', error);
+    }
+  };
   const [filters, setFilters] = useState({
     severity: 'all',
     status: 'all',
@@ -333,9 +361,23 @@ export default function AnomaliesPage() {
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-xs text-gray-500">Source: {anomaly.source}</span>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="secondary">View Details</Button>
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      onClick={() => {
+                        setSelectedAnomaly(anomaly);
+                        setShowDetailsModal(true);
+                      }}
+                    >
+                      View Details
+                    </Button>
                     {anomaly.status === 'active' && (
-                      <Button size="sm">Acknowledge</Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleAcknowledge(anomaly.id)}
+                      >
+                        Acknowledge
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -350,6 +392,115 @@ export default function AnomaliesPage() {
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No anomalies detected</h3>
             <p className="text-gray-600 dark:text-gray-400">All systems are operating normally.</p>
           </div>
+        )}
+
+        {/* Details Modal */}
+        {showDetailsModal && selectedAnomaly && (
+          <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">
+                  Anomaly Details - {selectedAnomaly.id}
+                </DialogTitle>
+                <DialogDescription>
+                  Detailed information about the detected anomaly
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Type</p>
+                    <p className="text-lg font-semibold">{selectedAnomaly.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Severity</p>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${severityColors[selectedAnomaly.severity]}`}>
+                      {selectedAnomaly.severity.toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Location</p>
+                    <p className="text-lg">{selectedAnomaly.location}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</p>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${statusColors[selectedAnomaly.status]}`}>
+                      {selectedAnomaly.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Timestamp</p>
+                    <p className="text-lg">{new Date(selectedAnomaly.timestamp).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Node ID</p>
+                    <p className="text-lg font-mono">{selectedAnomaly.node_id}</p>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Measurements</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Expected Value</p>
+                      <p className="text-xl font-bold text-green-600">{selectedAnomaly.expectedValue}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Actual Value</p>
+                      <p className="text-xl font-bold text-red-600">{selectedAnomaly.actualValue}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Deviation</p>
+                      <p className="text-xl font-bold text-orange-600">{selectedAnomaly.deviation}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Description</h4>
+                  <p className="text-gray-700 dark:text-gray-300">{selectedAnomaly.description}</p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Impact Assessment</h4>
+                  <p className="text-gray-700 dark:text-gray-300">{selectedAnomaly.impact}</p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Additional Information</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Detection Confidence: </span>
+                      <span className="font-medium">{selectedAnomaly.confidence}%</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Source: </span>
+                      <span className="font-medium">{selectedAnomaly.source}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Coordinates: </span>
+                      <span className="font-medium">{selectedAnomaly.coordinates}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+                    Close
+                  </Button>
+                  {selectedAnomaly.status === 'active' && (
+                    <Button onClick={() => {
+                      handleAcknowledge(selectedAnomaly.id);
+                      setShowDetailsModal(false);
+                    }}>
+                      Acknowledge & Close
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </div>
