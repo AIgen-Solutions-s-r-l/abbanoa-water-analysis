@@ -103,6 +103,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Pressure routes module not found: {e}")
     
+    # Include efficiency routes
+    try:
+        from .endpoints.efficiency_router import router as efficiency_router
+        app.include_router(efficiency_router)
+        logger.info("Efficiency routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Efficiency routes module not found: {e}")
+    
     # Include infrastructure routes
     try:
         from .endpoints.infrastructure_router import router as infrastructure_router
