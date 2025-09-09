@@ -98,33 +98,29 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
   try {
     console.log('🔄 Fetching pressure zones data...');
     
-    // Fetch both pressure zones and nodes data for comprehensive zone overview
-    const [pressureResponse, nodesResponse] = await Promise.all([
-      fetch('/api/proxy/v1/pressure/zones'),
-      fetch('/api/proxy/v1/nodes')
-    ]);
+    // Fetch pressure zones data
+    const pressureResponse = await fetch('/api/proxy/v1/pressure/zones');
     
-    if (!pressureResponse.ok || !nodesResponse.ok) {
+    if (!pressureResponse.ok) {
       console.error('❌ API Response errors:', {
         pressureStatus: pressureResponse.status,
-        pressureStatusText: pressureResponse.statusText,
-        nodesStatus: nodesResponse.status,
-        nodesStatusText: nodesResponse.statusText
+        pressureStatusText: pressureResponse.statusText
       });
-      throw new Error(`Failed to fetch data: Pressure zones (${pressureResponse.status}) or Nodes (${nodesResponse.status})`);
+      throw new Error(`Failed to fetch data: Pressure zones (${pressureResponse.status})`);
     }
     
     const pressureData = await pressureResponse.json();
-    const nodesData = await nodesResponse.json();
     
     console.log('📊 Pressure zones from API:', pressureData.zones?.length || 0);
-    console.log('🏭 Available nodes:', nodesData?.length || 0);
     
     // Validate that we have the expected data structure
-    if (!pressureData.zones || !Array.isArray(nodesData)) {
+    if (!pressureData.zones) {
       console.warn('⚠️ Invalid data structure received, using fallback data');
       throw new Error('Invalid data structure from API');
     }
+    
+    // For nodes data, we can use an empty array as nodes endpoint doesn't exist yet
+    const nodesData: any[] = [];
     
     // Start with real pressure zones
     const realZones = pressureData.zones?.map((zone: any) => ({
