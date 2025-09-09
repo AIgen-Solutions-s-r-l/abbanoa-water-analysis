@@ -12,9 +12,49 @@ const fetchRealMonitoringData = async () => {
       fetch('/api/proxy/v1/anomalies')
     ]);
 
-    let nodesData = await nodesResponse.json();
-    const pressureData = await pressureResponse.json();
-    let anomaliesData = await anomaliesResponse.json();
+    // Safely parse JSON responses with error handling
+    let nodesData = [];
+    let pressureData = { zones: [] };
+    let anomaliesData = [];
+    
+    try {
+      if (nodesResponse.ok) {
+        const nodesText = await nodesResponse.text();
+        if (nodesText) {
+          nodesData = JSON.parse(nodesText);
+        }
+      } else {
+        console.warn('Nodes endpoint error:', nodesResponse.status);
+      }
+    } catch (e) {
+      console.warn('Failed to parse nodes data:', e);
+    }
+    
+    try {
+      if (pressureResponse.ok) {
+        const pressureText = await pressureResponse.text();
+        if (pressureText) {
+          pressureData = JSON.parse(pressureText);
+        }
+      } else {
+        console.warn('Pressure endpoint error:', pressureResponse.status);
+      }
+    } catch (e) {
+      console.warn('Failed to parse pressure data:', e);
+    }
+    
+    try {
+      if (anomaliesResponse.ok) {
+        const anomaliesText = await anomaliesResponse.text();
+        if (anomaliesText) {
+          anomaliesData = JSON.parse(anomaliesText);
+        }
+      } else {
+        console.warn('Anomalies endpoint error:', anomaliesResponse.status);
+      }
+    } catch (e) {
+      console.warn('Failed to parse anomalies data:', e);
+    }
     
     // Ensure nodesData is an array
     if (!Array.isArray(nodesData)) {
