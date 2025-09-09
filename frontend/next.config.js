@@ -4,12 +4,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   async rewrites() {
-    return [
-      {
-        source: '/api/weather/:path*',
-        destination: 'http://localhost:8000/weather/:path*',
-      },
-    ];
+    return [];
   },
   async headers() {
     return [

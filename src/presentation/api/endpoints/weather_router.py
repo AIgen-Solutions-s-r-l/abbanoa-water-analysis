@@ -5,7 +5,7 @@ import random
 import json
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/weather", tags=["weather"])
+router = APIRouter(prefix="/api/v1/weather", tags=["weather"])
 
 # Weather data models
 class WeatherLocation(BaseModel):
