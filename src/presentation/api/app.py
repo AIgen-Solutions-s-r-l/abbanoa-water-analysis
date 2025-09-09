@@ -19,6 +19,8 @@ from src.routes.efficiency import router as efficiency_router
 from src.presentation.api.endpoints.network_router import router as network_router
 from src.presentation.api.endpoints.anomaly_router import router as anomaly_router
 from src.presentation.api.endpoints.dashboard_router import router as dashboard_router
+from src.presentation.api.endpoints.pressure_router import router as pressure_router
+from src.presentation.api.endpoints.infrastructure_router import router as infrastructure_router
 from src.presentation.api.middleware.error_handler import ErrorHandlerMiddleware, register_error_handlers
 
 
@@ -104,6 +106,8 @@ app.include_router(efficiency_router)
 app.include_router(network_router)
 app.include_router(anomaly_router)
 app.include_router(dashboard_router)
+app.include_router(pressure_router)
+app.include_router(infrastructure_router)
 
 
 @app.on_event("startup")
