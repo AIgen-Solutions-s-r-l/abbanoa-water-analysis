@@ -6,8 +6,8 @@ import React, { useState, useEffect } from 'react';
 const fetchRealMonitoringData = async () => {
   try {
     // Fetch multiple endpoints in parallel for comprehensive monitoring
-    const [nodesResponse, pressureResponse, anomaliesResponse] = await Promise.all([
-      fetch('/api/proxy/v1/nodes'),
+    const [dashboardResponse, pressureResponse, anomaliesResponse] = await Promise.all([
+      fetch('/api/proxy/v1/dashboard/summary'),
       fetch('/api/proxy/v1/pressure/zones'),
       fetch('/api/proxy/v1/anomalies')
     ]);
@@ -18,16 +18,22 @@ const fetchRealMonitoringData = async () => {
     let anomaliesData = [];
     
     try {
-      if (nodesResponse.ok) {
-        const nodesText = await nodesResponse.text();
-        if (nodesText) {
-          nodesData = JSON.parse(nodesText);
+      if (dashboardResponse.ok) {
+        const dashboardText = await dashboardResponse.text();
+        if (dashboardText) {
+          const dashboardData = JSON.parse(dashboardText);
+          // Extract nodes from dashboard data
+          if (dashboardData?.success && dashboardData?.data?.nodes) {
+            nodesData = dashboardData.data.nodes;
+          } else if (dashboardData?.nodes) {
+            nodesData = dashboardData.nodes;
+          }
         }
       } else {
-        console.warn('Nodes endpoint error:', nodesResponse.status);
+        console.warn('Dashboard endpoint error:', dashboardResponse.status);
       }
     } catch (e) {
-      console.warn('Failed to parse nodes data:', e);
+      console.warn('Failed to parse dashboard data:', e);
     }
     
     try {
@@ -94,16 +100,18 @@ const fetchRealMonitoringData = async () => {
     const waterQuality = Math.max(90, 95 - (Array.isArray(anomaliesData) ? anomaliesData.length : 0) * 1.2);
 
     // Transform nodes data for monitoring display
-    const monitoringNodes = nodesData.slice(0, 8).map((node: { id: string; name: string; status: string; value: number }) => {
-      const associatedZone = pressureZones.find((z: { id: string; name: string; status: string; value: number }) => z.zone.includes(node.id));
+    const monitoringNodes = nodesData.slice(0, 8).map((node: any) => {
+      const nodeId = node.node_id || node.id;
+      const nodeName = node.node_name || node.name;
+      const associatedZone = pressureZones.find((z: any) => z.zone === nodeId || z.zone?.includes(nodeId));
       const hasAnomalies = Array.isArray(anomaliesData) 
-        ? anomaliesData.some((a: { id: string; name: string; status: string; value: number; node_id?: string }) => a.node_id === node.id)
+        ? anomaliesData.some((a: any) => a.node_id === nodeId)
         : false;
       
       return {
-        id: node.id,
-        name: node.name || `Node ${node.id}`,
-        location: generateLocation(node.name || node.id),
+        id: nodeId,
+        name: nodeName || `Node ${nodeId}`,
+        location: generateLocation(nodeName || nodeId),
         status: associatedZone?.status || (hasAnomalies ? 'warning' : 'optimal'),
         pressure: associatedZone?.avgPressure || (2.8 + Math.random() * 1.4),
         flowRate: (30 + Math.random() * 40).toFixed(1),
