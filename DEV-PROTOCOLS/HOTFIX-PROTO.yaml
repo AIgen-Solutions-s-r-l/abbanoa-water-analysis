@@ -1,0 +1,179 @@
+context:
+  task: "Emergency hotfix deployment for critical production issues"
+  severity: "P0 - Critical"
+  trigger: "Production incident or security vulnerability"
+
+protocol:
+  emergencyResponse:
+    escalation:
+      immediate: "Notify on-call engineer"
+      team: "Alert #incident-response channel"
+      stakeholders: "Update status page within 5 minutes"
+    
+    priorities:
+      1: "Stop the bleeding - mitigate immediate impact"
+      2: "Root cause analysis"
+      3: "Permanent fix deployment"
+      4: "Post-mortem documentation"
+
+  branchingStrategy:
+    source: "main or last stable release tag"
+    naming: "hotfix/{YYYYMMDD}-{issue-id}-{short-description}"
+    protection: "Bypass PR requirements for P0 only"
+
+  validationGates:
+    minimal:
+      - "Smoke tests on critical paths"
+      - "Security scan if vulnerability-related"
+      - "Rollback plan documented"
+    
+    fastTrack:
+      enabled: true
+      conditions:
+        - "Service completely down"
+        - "Data corruption in progress"
+        - "Active security breach"
+      skipChecks:
+        - "Full test suite (run critical only)"
+        - "Code review (post-deployment review)"
+        - "Performance benchmarks"
+
+taskPlan:
+  goal: "Deploy critical fix to production within SLA"
+  sla:
+    P0: "30 minutes from incident start"
+    P1: "2 hours from incident start"
+  
+  tasks:
+    - id: 1.1
+      description: "Create hotfix branch from production tag"
+      command: "git checkout -b hotfix/{YYYYMMDD}-{issue-id} {PROD_TAG}"
+      timeLimit: "2 minutes"
+      status: "pending"
+    
+    - id: 1.2
+      description: "Implement minimal viable fix"
+      validation: "Fix addresses root cause, not symptoms"
+      status: "pending"
+    
+    - id: 1.3
+      description: "Run critical path tests only"
+      command: "npm run test:critical || poetry run pytest -m critical"
+      timeLimit: "5 minutes"
+      status: "pending"
+    
+    - id: 1.4
+      description: "Deploy to staging for smoke test"
+      command: "pm2 deploy staging"
+      validation: "Manual verification of fix"
+      status: "pending"
+    
+    - id: 1.5
+      description: "Execute production deployment"
+      preChecks:
+        - "Backup current state"
+        - "Document rollback command"
+      command: "pm2 deploy production"
+      status: "pending"
+    
+    - id: 1.6
+      description: "Verify fix in production"
+      monitors:
+        - "Check error rates"
+        - "Verify key metrics"
+        - "User impact assessment"
+      status: "pending"
+    
+    - id: 1.7
+      description: "Backport to development branches"
+      command: |
+        git checkout main
+        git cherry-pick {HOTFIX_COMMIT}
+        git push origin main
+      status: "pending"
+
+rollback:
+  trigger: "Fix causes new issues or doesn't resolve problem"
+  steps:
+    - action: "immediate_revert"
+      command: "pm2 deploy production revert"
+      timeLimit: "2 minutes"
+    
+    - action: "restore_from_backup"
+      condition: "If revert fails"
+      command: "docker-compose down && docker-compose up -d --scale api={PREVIOUS_SCALE}"
+    
+    - action: "database_rollback"
+      condition: "If schema changes were made"
+      command: "psql -f /rollback/{TIMESTAMP}.sql"
+
+monitoring:
+  realtime:
+    - metric: "API response time"
+      threshold: "> 2x baseline"
+      action: "Alert and consider rollback"
+    
+    - metric: "Error rate"
+      threshold: "> 5%"
+      action: "Immediate rollback"
+    
+    - metric: "Database connections"
+      threshold: "> 90% pool"
+      action: "Scale or optimize"
+
+  postDeployment:
+    duration: "2 hours intensive, 24 hours standard"
+    checks:
+      - "Grafana dashboards"
+      - "Application logs"
+      - "User feedback channels"
+      - "Performance metrics"
+
+postMortem:
+  timeline: "Within 48 hours of incident"
+  template:
+    - "Incident summary"
+    - "Timeline of events"
+    - "Root cause analysis"
+    - "Impact assessment"
+    - "What went well"
+    - "What could be improved"
+    - "Action items"
+  
+  storage: "docs/incidents/{YYYY}/{MM}/{DD}-{incident-id}.md"
+  
+  actionItems:
+    preventive:
+      - "Add monitoring for early detection"
+      - "Improve test coverage for affected area"
+      - "Update runbooks"
+    
+    process:
+      - "Review emergency response time"
+      - "Update escalation procedures"
+      - "Training needs identified"
+
+communication:
+  templates:
+    initial: |
+      🔴 INCIDENT: {title}
+      Status: Investigating
+      Impact: {affected_services}
+      ETA: Assessing
+    
+    update: |
+      🟡 UPDATE: {title}
+      Status: Fix in progress
+      Impact: {current_impact}
+      ETA: {estimated_time}
+    
+    resolved: |
+      🟢 RESOLVED: {title}
+      Duration: {total_time}
+      Root cause: {brief_cause}
+      Post-mortem: Scheduled for {date}
+  
+  channels:
+    internal: "#incident-response"
+    customer: "status.example.com"
+    stakeholder: "email to incident-list@"

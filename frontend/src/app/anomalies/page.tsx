@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
-// Real data fetching function
+// Real data fetching function - NO MOCKED DATA
 const fetchRealAnomaliesData = async () => {
   try {
     // Fetch real anomalies data from backend
@@ -18,7 +18,7 @@ const fetchRealAnomaliesData = async () => {
 
     // Transform real data to match our UI format
     const transformedAnomalies = anomaliesData.map((anomaly: { id: string; type: string; severity: string; timestamp: string; description: string }, index: number) => ({
-      id: anomaly.id || `ANO-2025-${String(index + 1).padStart(3, '0')}`,
+      id: anomaly.id || `ANO-${Date.now()}-${index}`,
       timestamp: anomaly.timestamp || new Date().toISOString(),
       severity: anomaly.severity || 'medium',
       type: anomaly.anomaly_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Unknown Type',
@@ -26,30 +26,26 @@ const fetchRealAnomaliesData = async () => {
       description: anomaly.description || `${anomaly.anomaly_type} detected in ${anomaly.measurement_type}`,
       impact: calculateImpact(anomaly.severity),
       status: anomaly.resolved_at ? 'resolved' : 'active',
-      confidence: 85 + Math.floor(Math.random() * 15), // 85-100%
-      source: 'ML Algorithm',
-      expectedValue: anomaly.expected_range ? `${anomaly.expected_range[0]}-${anomaly.expected_range[1]}` : 'N/A',
+      confidence: anomaly.confidence || 0,
+      source: 'System Detection',
+      expectedValue: anomaly.expected_value?.toString() || 'N/A',
       actualValue: anomaly.actual_value?.toString() || 'N/A',
       deviation: anomaly.deviation_percentage ? `${Math.abs(anomaly.deviation_percentage)}%` : 'N/A',
       coordinates: generateCoordinates(anomaly.node_name)
     }));
 
-    // If we have few real anomalies, pad with realistic examples
-    const paddedAnomalies = transformedAnomalies.length < 5 
-      ? [...transformedAnomalies, ...generateRealisticAnomalies(5 - transformedAnomalies.length)]
-      : transformedAnomalies;
-
+    // Return ONLY real data - no padding with mock data
     return {
-      anomalies: paddedAnomalies,
-      totalNodes: nodesData?.length || 9,
+      anomalies: transformedAnomalies,
+      totalNodes: nodesData?.length || 0,
       lastUpdated: new Date()
     };
   } catch (error) {
     console.error('Error fetching real anomalies data:', error);
-    // Fallback to realistic examples if API fails
+    // Return empty array if API fails - NO MOCK DATA
     return {
-      anomalies: generateRealisticAnomalies(5),
-      totalNodes: 9,
+      anomalies: [],
+      totalNodes: 0,
       lastUpdated: new Date()
     };
   }
@@ -78,40 +74,7 @@ const generateCoordinates = (nodeName: string) => {
   return location ? locations[location] : '44.1385, 12.2486';
 };
 
-const generateRealisticAnomalies = (count: number) => {
-  const types = ['Pressure Drop', 'Flow Anomaly', 'Quality Alert', 'Potential Leak', 'System Failure'];
-  const locations = [
-    'Abbanoa Centro Hub',
-    'Abbanoa Nord Distribution', 
-    'Abbanoa Sud Zone',
-    'Abbanoa Est Network',
-    'Abbanoa Ovest Monitoring'
-  ];
-  const severities = ['critical', 'high', 'medium', 'low'];
-
-  return Array.from({ length: count }, (_, i) => {
-    const severity = severities[Math.floor(Math.random() * severities.length)];
-    const type = types[Math.floor(Math.random() * types.length)];
-    const location = locations[Math.floor(Math.random() * locations.length)];
-    
-    return {
-      id: `ANO-2025-${String(i + 10).padStart(3, '0')}`,
-      timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      severity,
-      type,
-      location,
-      description: `${type} detected in monitoring system`,
-      impact: calculateImpact(severity),
-      status: Math.random() > 0.7 ? 'resolved' : 'active',
-      confidence: 85 + Math.floor(Math.random() * 15),
-      source: 'ML Algorithm',
-      expectedValue: '2.5-3.5 bar',
-      actualValue: (1.8 + Math.random() * 2).toFixed(1),
-      deviation: `${Math.floor(Math.random() * 30)}%`,
-      coordinates: generateCoordinates(location)
-    };
-  });
-};
+// Removed mock data generation function - using only real data
 
 export default function AnomaliesPage() {
   const [anomaliesData, setAnomaliesData] = useState({
@@ -383,9 +346,9 @@ export default function AnomaliesPage() {
 
         {filteredAnomalies.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No anomalies found</h3>
-            <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters to see more results.</p>
+            <div className="text-gray-400 text-6xl mb-4">✅</div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No anomalies detected</h3>
+            <p className="text-gray-600 dark:text-gray-400">All systems are operating normally.</p>
           </div>
         )}
       </div>
