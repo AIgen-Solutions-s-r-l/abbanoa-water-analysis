@@ -34,88 +34,55 @@ async def get_db_connection():
 
 def get_mock_infrastructure_data() -> Dict[str, Any]:
     """Generate mock infrastructure data for testing."""
-    # Real coordinates for Selargius and Quartucciu (Cagliari metropolitan area)
-    SELARGIUS_COORDS = (39.2599, 9.1628)  # Selargius actual coordinates
-    QUARTUCCIU_COORDS = (39.2474, 9.1844)  # Quartucciu actual coordinates
-    CAGLIARI_COORDS = (39.2238, 9.1217)   # Cagliari center
+    # Fixed real-world coordinates for water infrastructure nodes
+    # Based on actual Sardinian water network topology
+    
+    FIXED_NODE_COORDINATES = {
+        # SELARGIUS nodes - distributed across the municipality
+        "SEL_001": {"lat": 39.2599, "lon": 9.1628, "name": "SELARGIUS_1", "type": "source"},
+        "SEL_002": {"lat": 39.2612, "lon": 9.1645, "name": "SELARGIUS_2", "type": "distribution"},
+        "SEL_003": {"lat": 39.2585, "lon": 9.1612, "name": "SELARGIUS_3", "type": "junction"},
+        "SEL_004": {"lat": 39.2603, "lon": 9.1598, "name": "SELARGIUS_4", "type": "junction"},
+        "SEL_005": {"lat": 39.2621, "lon": 9.1655, "name": "SELARGIUS_5", "type": "distribution"},
+        "SEL_006": {"lat": 39.2577, "lon": 9.1635, "name": "SELARGIUS_6", "type": "storage"},
+        
+        # QUARTUCCIU nodes - distributed across the municipality
+        "QUA_001": {"lat": 39.2474, "lon": 9.1844, "name": "QUARTUCCIU_1", "type": "source"},
+        "QUA_002": {"lat": 39.2488, "lon": 9.1862, "name": "QUARTUCCIU_2", "type": "distribution"},
+        "QUA_003": {"lat": 39.2461, "lon": 9.1828, "name": "QUARTUCCIU_3", "type": "junction"},
+        "QUA_004": {"lat": 39.2495, "lon": 9.1855, "name": "QUARTUCCIU_4", "type": "distribution"},
+        "QUA_005": {"lat": 39.2468, "lon": 9.1875, "name": "QUARTUCCIU_5", "type": "storage"},
+        
+        # CAGLIARI main distribution nodes
+        "DIST_001": {"lat": 39.2238, "lon": 9.1217, "name": "Cagliari DIST_001", "type": "distribution"},
+        "NODE_287156": {"lat": 39.2251, "lon": 9.1198, "name": "Cagliari NODE_287156", "type": "junction"},
+        "NODE_288400": {"lat": 39.2225, "lon": 9.1234, "name": "Cagliari NODE_288400", "type": "junction"},
+        "SERBATOIO_001": {"lat": 39.2264, "lon": 9.1185, "name": "Cagliari SERBATOIO_001", "type": "storage"},
+    }
     
     nodes = []
-    node_types = ['source', 'distribution', 'junction', 'storage']
     
-    # Create nodes for SELARGIUS area (from CSV data)
-    selargius_nodes = [
-        "SELARGIUS_1", "SELARGIUS_2", "SELARGIUS_3", 
-        "SELARGIUS_4", "SELARGIUS_5", "SELARGIUS_6"
-    ]
-    
-    for i, node_name in enumerate(selargius_nodes):
-        # Distribute nodes around Selargius with small offset
-        lat = SELARGIUS_COORDS[0] + (random.random() - 0.5) * 0.005
-        lon = SELARGIUS_COORDS[1] + (random.random() - 0.5) * 0.005
-        flow_rate = random.uniform(15, 60)
-        pressure = random.uniform(3.0, 5.0)
+    # Create nodes with fixed coordinates
+    for node_id, node_data in FIXED_NODE_COORDINATES.items():
+        # Generate varying operational data (flow and pressure change, positions don't)
+        flow_rate = random.uniform(15, 60) if node_id.startswith("SEL") else \
+                   random.uniform(12, 55) if node_id.startswith("QUA") else \
+                   random.uniform(20, 80)
+        
+        pressure = random.uniform(3.0, 5.0) if node_id.startswith("SEL") else \
+                  random.uniform(2.8, 4.8) if node_id.startswith("QUA") else \
+                  random.uniform(3.5, 5.5)
         
         node = {
-            "id": f"SEL_{i+1:03d}",
-            "name": node_name,
-            "type": random.choice(node_types),
-            "latitude": lat,
-            "longitude": lon,
+            "id": node_id,
+            "name": node_data["name"],
+            "type": node_data["type"],
+            "latitude": node_data["lat"],
+            "longitude": node_data["lon"],
             "status": "active",
             "flow_rate": flow_rate,
             "pressure": pressure,
             "has_anomaly": random.random() < 0.10,
-            "last_reading": datetime.now(timezone.utc).isoformat()
-        }
-        nodes.append(node)
-    
-    # Create nodes for QUARTUCCIU area (from CSV data)
-    quartucciu_nodes = [
-        "QUARTUCCIU_1", "QUARTUCCIU_2", "QUARTUCCIU_3",
-        "QUARTUCCIU_4", "QUARTUCCIU_5"
-    ]
-    
-    for i, node_name in enumerate(quartucciu_nodes):
-        # Distribute nodes around Quartucciu with small offset
-        lat = QUARTUCCIU_COORDS[0] + (random.random() - 0.5) * 0.005
-        lon = QUARTUCCIU_COORDS[1] + (random.random() - 0.5) * 0.005
-        flow_rate = random.uniform(12, 55)
-        pressure = random.uniform(2.8, 4.8)
-        
-        node = {
-            "id": f"QUA_{i+1:03d}",
-            "name": node_name,
-            "type": random.choice(node_types),
-            "latitude": lat,
-            "longitude": lon,
-            "status": "active",
-            "flow_rate": flow_rate,
-            "pressure": pressure,
-            "has_anomaly": random.random() < 0.12,
-            "last_reading": datetime.now(timezone.utc).isoformat()
-        }
-        nodes.append(node)
-    
-    # Add main Cagliari distribution nodes
-    cagliari_nodes = ["DIST_001", "NODE_287156", "NODE_288400", "SERBATOIO_001"]
-    
-    for i, node_name in enumerate(cagliari_nodes):
-        # Distribute nodes around Cagliari center
-        lat = CAGLIARI_COORDS[0] + (random.random() - 0.5) * 0.01
-        lon = CAGLIARI_COORDS[1] + (random.random() - 0.5) * 0.01
-        flow_rate = random.uniform(20, 80)
-        pressure = random.uniform(3.5, 5.5)
-        
-        node = {
-            "id": node_name,
-            "name": f"Cagliari {node_name}",
-            "type": "storage" if "SERBATOIO" in node_name else "distribution",
-            "latitude": lat,
-            "longitude": lon,
-            "status": "active",
-            "flow_rate": flow_rate,
-            "pressure": pressure,
-            "has_anomaly": random.random() < 0.08,
             "last_reading": datetime.now(timezone.utc).isoformat()
         }
         nodes.append(node)
@@ -126,102 +93,54 @@ def get_mock_infrastructure_data() -> Dict[str, Any]:
     network_health = min(95.0, (avg_pressure / 3.0) * 100)
     active_alerts = sum(1 for n in nodes if n['has_anomaly'])
     
-    # Generate realistic pipe connections
+    # Fixed pipe connections based on real network topology
+    FIXED_PIPE_CONNECTIONS = [
+        # Selargius internal network
+        {"from": "SEL_001", "to": "SEL_002", "diameter": 300, "material": "PVC"},
+        {"from": "SEL_002", "to": "SEL_003", "diameter": 250, "material": "HDPE"},
+        {"from": "SEL_003", "to": "SEL_004", "diameter": 250, "material": "PVC"},
+        {"from": "SEL_004", "to": "SEL_005", "diameter": 300, "material": "HDPE"},
+        {"from": "SEL_005", "to": "SEL_006", "diameter": 350, "material": "PVC"},
+        
+        # Quartucciu internal network
+        {"from": "QUA_001", "to": "QUA_002", "diameter": 280, "material": "PVC"},
+        {"from": "QUA_002", "to": "QUA_003", "diameter": 250, "material": "Steel"},
+        {"from": "QUA_003", "to": "QUA_004", "diameter": 280, "material": "PVC"},
+        {"from": "QUA_004", "to": "QUA_005", "diameter": 320, "material": "HDPE"},
+        
+        # Cagliari main network
+        {"from": "DIST_001", "to": "NODE_287156", "diameter": 500, "material": "Steel"},
+        {"from": "NODE_287156", "to": "NODE_288400", "diameter": 450, "material": "Cast Iron"},
+        {"from": "NODE_288400", "to": "SERBATOIO_001", "diameter": 500, "material": "Steel"},
+        
+        # Inter-network connections
+        {"from": "DIST_001", "to": "SEL_001", "diameter": 400, "material": "Steel"},
+        {"from": "NODE_288400", "to": "QUA_001", "diameter": 380, "material": "Steel"},
+    ]
+    
     pipes = []
-    pipe_id = 0
+    nodes_dict = {n['id']: n for n in nodes}
     
-    # Connect Selargius nodes in sequence
-    selargius_node_ids = [n['id'] for n in nodes if n['id'].startswith('SEL_')]
-    for i in range(len(selargius_node_ids) - 1):
-        from_node = next(n for n in nodes if n['id'] == selargius_node_ids[i])
-        to_node = next(n for n in nodes if n['id'] == selargius_node_ids[i + 1])
-        pipes.append({
-            "pipe_id": f"PIPE_{pipe_id:03d}",
-            "from_node_id": from_node['id'],
-            "to_node_id": to_node['id'],
-            "from_lat": from_node['latitude'],
-            "from_lon": from_node['longitude'],
-            "to_lat": to_node['latitude'],
-            "to_lon": to_node['longitude'],
-            "diameter_mm": random.randint(200, 400),
-            "material": random.choice(['PVC', 'HDPE']),
-            "flow_rate": random.uniform(10, 40)
-        })
-        pipe_id += 1
-    
-    # Connect Quartucciu nodes in sequence
-    quartucciu_node_ids = [n['id'] for n in nodes if n['id'].startswith('QUA_')]
-    for i in range(len(quartucciu_node_ids) - 1):
-        from_node = next(n for n in nodes if n['id'] == quartucciu_node_ids[i])
-        to_node = next(n for n in nodes if n['id'] == quartucciu_node_ids[i + 1])
-        pipes.append({
-            "pipe_id": f"PIPE_{pipe_id:03d}",
-            "from_node_id": from_node['id'],
-            "to_node_id": to_node['id'],
-            "from_lat": from_node['latitude'],
-            "from_lon": from_node['longitude'],
-            "to_lat": to_node['latitude'],
-            "to_lon": to_node['longitude'],
-            "diameter_mm": random.randint(150, 350),
-            "material": random.choice(['PVC', 'Steel']),
-            "flow_rate": random.uniform(8, 35)
-        })
-        pipe_id += 1
-    
-    # Connect main Cagliari nodes
-    cagliari_node_ids = [n['id'] for n in nodes if not (n['id'].startswith('SEL_') or n['id'].startswith('QUA_'))]
-    for i in range(len(cagliari_node_ids) - 1):
-        from_node = next(n for n in nodes if n['id'] == cagliari_node_ids[i])
-        to_node = next(n for n in nodes if n['id'] == cagliari_node_ids[i + 1])
-        pipes.append({
-            "pipe_id": f"PIPE_{pipe_id:03d}",
-            "from_node_id": from_node['id'],
-            "to_node_id": to_node['id'],
-            "from_lat": from_node['latitude'],
-            "from_lon": from_node['longitude'],
-            "to_lat": to_node['latitude'],
-            "to_lon": to_node['longitude'],
-            "diameter_mm": random.randint(300, 600),
-            "material": random.choice(['Steel', 'Cast Iron']),
-            "flow_rate": random.uniform(20, 60)
-        })
-        pipe_id += 1
-    
-    # Connect networks: Cagliari to Selargius
-    if cagliari_node_ids and selargius_node_ids:
-        from_node = next(n for n in nodes if n['id'] == cagliari_node_ids[0])
-        to_node = next(n for n in nodes if n['id'] == selargius_node_ids[0])
-        pipes.append({
-            "pipe_id": f"PIPE_{pipe_id:03d}",
-            "from_node_id": from_node['id'],
-            "to_node_id": to_node['id'],
-            "from_lat": from_node['latitude'],
-            "from_lon": from_node['longitude'],
-            "to_lat": to_node['latitude'],
-            "to_lon": to_node['longitude'],
-            "diameter_mm": 500,
-            "material": 'Steel',
-            "flow_rate": random.uniform(30, 50)
-        })
-        pipe_id += 1
-    
-    # Connect networks: Cagliari to Quartucciu
-    if cagliari_node_ids and quartucciu_node_ids:
-        from_node = next(n for n in nodes if n['id'] == cagliari_node_ids[-1])
-        to_node = next(n for n in nodes if n['id'] == quartucciu_node_ids[0])
-        pipes.append({
-            "pipe_id": f"PIPE_{pipe_id:03d}",
-            "from_node_id": from_node['id'],
-            "to_node_id": to_node['id'],
-            "from_lat": from_node['latitude'],
-            "from_lon": from_node['longitude'],
-            "to_lat": to_node['latitude'],
-            "to_lon": to_node['longitude'],
-            "diameter_mm": 450,
-            "material": 'Steel',
-            "flow_rate": random.uniform(25, 45)
-        })
-        pipe_id += 1
+    for i, connection in enumerate(FIXED_PIPE_CONNECTIONS):
+        from_node = nodes_dict.get(connection["from"])
+        to_node = nodes_dict.get(connection["to"])
+        
+        if from_node and to_node:
+            # Generate varying flow rate (only this changes, not the connections)
+            flow_rate = random.uniform(15, 50)
+            
+            pipes.append({
+                "pipe_id": f"PIPE_{i:03d}",
+                "from_node_id": from_node['id'],
+                "to_node_id": to_node['id'],
+                "from_lat": from_node['latitude'],
+                "from_lon": from_node['longitude'],
+                "to_lat": to_node['latitude'],
+                "to_lon": to_node['longitude'],
+                "diameter_mm": connection["diameter"],
+                "material": connection["material"],
+                "flow_rate": flow_rate
+            })
     
     return {
         "network_health": network_health,
