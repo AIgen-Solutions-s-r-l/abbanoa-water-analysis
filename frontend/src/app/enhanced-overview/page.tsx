@@ -58,9 +58,8 @@ const fetchDashboardData = async () => {
             trend: 'stable'
           },
           quality: {
-            ph: 7.2,
-            chlorine: 1.8,
-            turbidity: 0.5
+            score: 95.0,
+            status: 'Good'
           }
         },
         alerts: [

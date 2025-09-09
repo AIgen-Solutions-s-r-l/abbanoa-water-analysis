@@ -292,14 +292,8 @@ const fetchEfficiencyData = async (): Promise<EfficiencyTrend[]> => {
   }
 }
 
-const mockQualityData: DataQualityMetric[] = [
-  { parameter: 'Flow Rate', completeness: 98.5, accuracy: 96.2, timeliness: 99.1, consistency: 94.8, overall: 97.2 },
-  { parameter: 'Pressure', completeness: 97.8, accuracy: 98.1, timeliness: 98.7, consistency: 96.3, overall: 97.7 },
-  { parameter: 'Temperature', completeness: 95.2, accuracy: 97.4, timeliness: 96.8, consistency: 95.9, overall: 96.3 },
-  { parameter: 'pH Level', completeness: 92.1, accuracy: 94.7, timeliness: 93.5, consistency: 91.8, overall: 93.0 },
-  { parameter: 'Chlorine', completeness: 89.8, accuracy: 92.3, timeliness: 91.2, consistency: 88.7, overall: 90.5 },
-  { parameter: 'Turbidity', completeness: 91.5, accuracy: 93.8, timeliness: 92.4, consistency: 90.2, overall: 92.0 }
-]
+// We don't use mock data - show only real data or message
+const mockQualityData: DataQualityMetric[] = []
 
 const TabButton: React.FC<{
   active: boolean
@@ -623,11 +617,8 @@ const EfficiencyTrendsChart: React.FC<{ data: EfficiencyTrend[] }> = ({ data }) 
 )
 
 const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) => {
-  // Ensure we always have data to display
-  const qualityMetrics = data && data.length > 0 ? data : mockQualityData;
-  
-  // Debug log to check data
-  console.log('📊 Quality metrics data:', qualityMetrics);
+  // Only use real data, no mocks
+  const qualityMetrics = data && data.length > 0 ? data : [];
   
   const getQualityColor = (value: number) => {
     if (value >= 95) return 'bg-green-500'
@@ -641,20 +632,31 @@ const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) =>
       {/* Quality Matrix */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Data Quality Matrix</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-600">
-                <th className="text-left py-3 text-gray-900 dark:text-gray-100">Parameter</th>
-                <th className="text-center py-3 text-gray-900 dark:text-gray-100">Completeness</th>
-                <th className="text-center py-3 text-gray-900 dark:text-gray-100">Accuracy</th>
-                <th className="text-center py-3 text-gray-900 dark:text-gray-100">Timeliness</th>
-                <th className="text-center py-3 text-gray-900 dark:text-gray-100">Consistency</th>
-                <th className="text-center py-3 text-gray-900 dark:text-gray-100">Overall</th>
-              </tr>
-            </thead>
-            <tbody>
-              {qualityMetrics.map((metric) => (
+        
+        {qualityMetrics.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">
+              Data quality metrics are not currently available in the database.
+            </p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+              Quality metrics will be displayed when available from the monitoring system.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-600">
+                  <th className="text-left py-3 text-gray-900 dark:text-gray-100">Parameter</th>
+                  <th className="text-center py-3 text-gray-900 dark:text-gray-100">Completeness</th>
+                  <th className="text-center py-3 text-gray-900 dark:text-gray-100">Accuracy</th>
+                  <th className="text-center py-3 text-gray-900 dark:text-gray-100">Timeliness</th>
+                  <th className="text-center py-3 text-gray-900 dark:text-gray-100">Consistency</th>
+                  <th className="text-center py-3 text-gray-900 dark:text-gray-100">Overall</th>
+                </tr>
+              </thead>
+              <tbody>
+                {qualityMetrics.map((metric) => (
                 <tr key={metric.parameter} className="border-b border-gray-200 dark:border-gray-600">
                   <td className="py-3 font-medium text-gray-900 dark:text-gray-100">{metric.parameter}</td>
                   <td className="py-3 text-center">
@@ -697,13 +699,15 @@ const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) =>
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
-      {/* Overall Quality Chart */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Overall Data Quality by Parameter</h3>
-        <div className="space-y-3">
-          {qualityMetrics.map((metric) => {
+      {/* Overall Quality Chart - Only show if we have data */}
+      {qualityMetrics.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Overall Data Quality by Parameter</h3>
+          <div className="space-y-3">
+            {qualityMetrics.map((metric) => {
             const percentage = metric.overall;
             const color = percentage >= 95 ? 'bg-green-500' : 
                          percentage >= 90 ? 'bg-yellow-500' : 
@@ -728,6 +732,7 @@ const DataQualityMatrix: React.FC<{ data: DataQualityMetric[] }> = ({ data }) =>
           })}
         </div>
       </div>
+      )}
     </div>
   )
 }
