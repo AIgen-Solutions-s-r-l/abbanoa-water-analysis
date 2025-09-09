@@ -41,12 +41,13 @@ async def get_nodes(
                 n.node_id,
                 n.node_name,
                 n.node_type,
-                n.location_lat,
-                n.location_lng,
-                n.status,
-                n.capacity,
-                n.current_flow,
-                n.last_reading,
+                n.location_name,
+                n.latitude,
+                n.longitude,
+                n.installation_date,
+                n.last_maintenance_date,
+                n.is_active,
+                n.metadata,
                 n.created_at,
                 n.updated_at
             FROM water_infrastructure.nodes n
@@ -58,8 +59,9 @@ async def get_nodes(
         
         if status is not None:
             param_count += 1
-            query += f" AND n.status = ${param_count}"
-            params.append(str(status))
+            query += f" AND n.is_active = ${param_count}"
+            # Convert status to boolean for is_active field
+            params.append(status == 'active')
             
         if node_type is not None:
             param_count += 1
@@ -72,38 +74,35 @@ async def get_nodes(
         
         # Transform nodes data
         nodes = []
-        total_capacity = 0
-        total_current_flow = 0
         status_counts = {}
         
         for row in nodes_data:
+            # Map is_active to status for consistency with frontend expectations
+            status = "active" if row['is_active'] else "offline"
+            
             node = {
                 "node_id": row['node_id'],
                 "node_name": row['node_name'],
                 "node_type": row['node_type'],
+                "location_name": row['location_name'],
                 "location": {
-                    "lat": float(row['location_lat']) if row['location_lat'] else None,
-                    "lng": float(row['location_lng']) if row['location_lng'] else None
+                    "lat": float(row['latitude']) if row['latitude'] else None,
+                    "lng": float(row['longitude']) if row['longitude'] else None
                 },
-                "status": row['status'],
-                "capacity": float(row['capacity']) if row['capacity'] else 0.0,
-                "current_flow": float(row['current_flow']) if row['current_flow'] else 0.0,
-                "last_reading": row['last_reading'].isoformat() if row['last_reading'] else None,
+                "status": status,
+                "installation_date": row['installation_date'].isoformat() if row['installation_date'] else None,
+                "last_maintenance_date": row['last_maintenance_date'].isoformat() if row['last_maintenance_date'] else None,
+                "metadata": row['metadata'],
                 "created_at": row['created_at'].isoformat() if row['created_at'] else None,
                 "updated_at": row['updated_at'].isoformat() if row['updated_at'] else None
             }
             nodes.append(node)
             
-            # Calculate summary statistics
-            total_capacity += node["capacity"]
-            total_current_flow += node["current_flow"]
-            
             # Count by status
-            node_status = node["status"]
-            if node_status in status_counts:
-                status_counts[node_status] += 1
+            if status in status_counts:
+                status_counts[status] += 1
             else:
-                status_counts[node_status] = 1
+                status_counts[status] = 1
         
         await conn.close()
         
@@ -113,9 +112,6 @@ async def get_nodes(
             "active_nodes": status_counts.get('active', 0),
             "maintenance_nodes": status_counts.get('maintenance', 0),
             "offline_nodes": status_counts.get('offline', 0),
-            "total_capacity": total_capacity,
-            "total_current_flow": total_current_flow,
-            "capacity_utilization": round((total_current_flow / total_capacity * 100), 2) if total_capacity > 0 else 0.0,
             "status_breakdown": status_counts
         }
         
@@ -148,17 +144,15 @@ async def get_node_details(node_id: str) -> Dict[str, Any]:
                 n.node_id,
                 n.node_name,
                 n.node_type,
-                n.location_lat,
-                n.location_lng,
-                n.status,
-                n.capacity,
-                n.current_flow,
-                n.last_reading,
+                n.location_name,
+                n.latitude,
+                n.longitude,
+                n.installation_date,
+                n.last_maintenance_date,
+                n.is_active,
+                n.metadata,
                 n.created_at,
-                n.updated_at,
-                n.description,
-                n.maintenance_schedule,
-                n.installation_date
+                n.updated_at
             FROM water_infrastructure.nodes n
             WHERE n.node_id = $1
         """
@@ -192,17 +186,15 @@ async def get_node_details(node_id: str) -> Dict[str, Any]:
             "node_id": node_result['node_id'],
             "node_name": node_result['node_name'],
             "node_type": node_result['node_type'],
+            "location_name": node_result['location_name'],
             "location": {
-                "lat": float(node_result['location_lat']) if node_result['location_lat'] else None,
-                "lng": float(node_result['location_lng']) if node_result['location_lng'] else None
+                "lat": float(node_result['latitude']) if node_result['latitude'] else None,
+                "lng": float(node_result['longitude']) if node_result['longitude'] else None
             },
-            "status": node_result['status'],
-            "capacity": float(node_result['capacity']) if node_result['capacity'] else 0.0,
-            "current_flow": float(node_result['current_flow']) if node_result['current_flow'] else 0.0,
-            "last_reading": node_result['last_reading'].isoformat() if node_result['last_reading'] else None,
-            "description": node_result['description'],
-            "maintenance_schedule": node_result['maintenance_schedule'],
+            "status": "active" if node_result['is_active'] else "offline",
             "installation_date": node_result['installation_date'].isoformat() if node_result['installation_date'] else None,
+            "last_maintenance_date": node_result['last_maintenance_date'].isoformat() if node_result['last_maintenance_date'] else None,
+            "metadata": node_result['metadata'],
             "created_at": node_result['created_at'].isoformat() if node_result['created_at'] else None,
             "updated_at": node_result['updated_at'].isoformat() if node_result['updated_at'] else None
         }
