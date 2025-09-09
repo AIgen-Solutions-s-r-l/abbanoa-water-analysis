@@ -62,7 +62,7 @@ const AdminPage = () => {
         const response = await fetch('/api/proxy/v1/users?limit=100');
         if (response.ok) {
           const data = await response.json();
-          setUsers(data.users.map((user: { id: string; name: string; email: string; role: string; isActive: boolean }) => ({
+          setUsers(data.users.map((user: { id: string; name: string; email: string; role: string; isActive: boolean; status: string; last_login: string }) => ({
             id: user.id,
             name: user.name,
             email: user.email,
