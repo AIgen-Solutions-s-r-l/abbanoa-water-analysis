@@ -76,10 +76,6 @@ class AnomalyDetector:
         Returns:
             List of sensor readings
         """
-        if hasattr(self.db_connection, 'fetch'):
-            # Using mock in tests
-            return await self.db_connection.fetch()
-        
         # Real database query
         query = """
             SELECT timestamp, node_id, pressure, flow_rate, temperature, quality_score
@@ -97,7 +93,7 @@ class AnomalyDetector:
     def _detect_pressure_anomalies(self, sensor_data: List[Dict]) -> List[Dict]:
         """Detect pressure-related anomalies."""
         anomalies = []
-        pressures = [d.get('pressure', 0) for d in sensor_data if d.get('pressure')]
+        pressures = [float(d.get('pressure', 0)) for d in sensor_data if d.get('pressure')]
         
         if not pressures:
             return anomalies
@@ -110,6 +106,7 @@ class AnomalyDetector:
             pressure = data.get('pressure')
             if not pressure:
                 continue
+            pressure = float(pressure)
             
             # Check absolute thresholds
             if pressure < self.thresholds['pressure']['min']:
@@ -149,7 +146,7 @@ class AnomalyDetector:
     def _detect_flow_anomalies(self, sensor_data: List[Dict]) -> List[Dict]:
         """Detect flow rate anomalies."""
         anomalies = []
-        flows = [d.get('flow_rate', 0) for d in sensor_data if d.get('flow_rate')]
+        flows = [float(d.get('flow_rate', 0)) for d in sensor_data if d.get('flow_rate')]
         
         if not flows:
             return anomalies
@@ -161,6 +158,7 @@ class AnomalyDetector:
             flow = data.get('flow_rate')
             if not flow:
                 continue
+            flow = float(flow)
             
             # Check for abnormal flow rates
             if flow > self.thresholds['flow_rate']['max']:
@@ -181,18 +179,20 @@ class AnomalyDetector:
             
             # Detect potential leaks (high flow with low pressure)
             pressure = data.get('pressure')
-            if pressure and flow > mean_flow * 1.3 and pressure < self.thresholds['pressure']['min']:
-                anomalies.append({
-                    'node_id': data['node_id'],
-                    'timestamp': data['timestamp'],
-                    'anomaly_type': 'potential_leak',
-                    'severity': 'critical',
-                    'actual_value': flow,
-                    'expected_value': mean_flow,
-                    'deviation_percentage': ((flow - mean_flow) / mean_flow) * 100,
-                    'measurement_type': 'flow_rate',
-                    'description': f'Potential leak detected: high flow ({flow:.1f} L/s) with low pressure ({pressure:.1f} bar)'
-                })
+            if pressure:
+                pressure = float(pressure)
+                if flow > mean_flow * 1.3 and pressure < self.thresholds['pressure']['min']:
+                    anomalies.append({
+                        'node_id': data['node_id'],
+                        'timestamp': data['timestamp'],
+                        'anomaly_type': 'potential_leak',
+                        'severity': 'critical',
+                        'actual_value': flow,
+                        'expected_value': mean_flow,
+                        'deviation_percentage': ((flow - mean_flow) / mean_flow) * 100,
+                        'measurement_type': 'flow_rate',
+                        'description': f'Potential leak detected: high flow ({flow:.1f} L/s) with low pressure ({pressure:.1f} bar)'
+                    })
         
         return anomalies
     
@@ -204,6 +204,7 @@ class AnomalyDetector:
             quality = data.get('quality_score')
             if not quality:
                 continue
+            quality = float(quality)
             
             if quality < self.thresholds['quality_score']['min']:
                 deviation_pct = ((self.thresholds['quality_score']['normal'] - quality) / 
@@ -231,7 +232,7 @@ class AnomalyDetector:
         sorted_data = sorted(sensor_data, key=lambda x: x['timestamp'])
         
         # Detect sudden changes in pressure
-        pressures = [d.get('pressure', 0) for d in sorted_data if d.get('pressure')]
+        pressures = [float(d.get('pressure', 0)) for d in sorted_data if d.get('pressure')]
         if len(pressures) > 3:
             sudden_changes = self.detect_sudden_changes(pressures, window=3)
             for idx in sudden_changes:
