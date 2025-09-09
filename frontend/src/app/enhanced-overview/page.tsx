@@ -411,8 +411,8 @@ const generateFallbackTimeSeriesData = (startDate?: Date, endDate?: Date): FlowA
 };
 
 // Convert dashboard data to WaterCoreMetrics format
-const convertToWaterMetrics = (dashboardData: unknown): WaterCoreMetrics => {
-  if (!dashboardData || !dashboardData.kpis) {
+const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
+  if (!dashboardData || !dashboardData.data) {
     return {
       activeNodes: 0,
       totalNodes: 0,
@@ -427,25 +427,27 @@ const convertToWaterMetrics = (dashboardData: unknown): WaterCoreMetrics => {
     };
   }
 
-  const { kpis, nodes, energy_analysis } = dashboardData;
-  const activeNodes = nodes?.filter((n: unknown) => n.flow_rate > 0 || n.pressure > 0).length || 0;
+  const { data } = dashboardData;
+  const nodes = data.nodes || [];
+  const network = data.network || {};
+  const activeNodes = nodes.filter((n: any) => n.flow_rate > 0 || n.pressure > 0).length || 0;
   
-  // Extract energy metrics
-  const energyData = kpis?.energy_consumption || {};
-  console.log('🔋 Energy data from API:', energyData);
+  // Extract energy metrics from network data
+  const energyKwh = network.energy_consumption_kwh || 0;
+  console.log('🔋 Energy data from API:', energyKwh);
   
   return {
     activeNodes: activeNodes,
-    totalNodes: nodes?.length || 0,
-    totalFlowRate: kpis?.total_flow || 0,
-    averagePressure: kpis?.average_pressure || 0,
-    dataQuality: kpis?.water_quality_index || 95.0,
+    totalNodes: nodes.length || 0,
+    totalFlowRate: network.total_flow_lps || 0,
+    averagePressure: network.average_pressure_bar || 0,
+    dataQuality: network.water_quality_index || 95.0,
     systemUptime: 99.2, // Default high uptime for real system
-    energyEfficiency: energyData.pump_efficiency_percent || 70,
-    // Add new energy metrics
-    currentPowerKw: energyData.current_power_kw || 0,
-    dailyCostEur: energyData.daily_cost_eur || 0,
-    costPerCubicMeter: energyData.cost_per_cubic_meter || 0,
+    energyEfficiency: network.efficiency_percentage || 70,
+    // Add new energy metrics (calculated from available data)
+    currentPowerKw: energyKwh / 24, // Convert daily kWh to average kW
+    dailyCostEur: energyKwh * 0.15, // Estimate cost at €0.15/kWh
+    costPerCubicMeter: (energyKwh * 0.15) / (network.total_volume_m3 || 1), // Cost per m³
   };
 };
 
@@ -519,12 +521,21 @@ export default function EnhancedOverviewPage() {
         setMetrics(realMetrics);
         
         // Generate flow analytics from real nodes with date range
-        if (dashboardData.nodes && dashboardData.nodes.length > 0) {
-          console.log('🏭 Processing nodes for flow data:', dashboardData.nodes.length);
-          console.log('📝 First 3 nodes structure:', dashboardData.nodes.slice(0, 3));
+        if (dashboardData.data?.nodes && dashboardData.data.nodes.length > 0) {
+          console.log('🏭 Processing nodes for flow data:', dashboardData.data.nodes.length);
+          console.log('📝 First 3 nodes structure:', dashboardData.data.nodes.slice(0, 3));
+          
+          // Map API node structure to expected format
+          const mappedNodes = dashboardData.data.nodes.map((node: any) => ({
+            id: node.node_id,
+            name: node.node_name,
+            flow_rate: node.flow_rate || 0,
+            pressure: node.pressure || 0
+          }));
+          
           const startDate = customDateRange?.startDate || dateRange?.startDate;
           const endDate = customDateRange?.endDate || dateRange?.endDate;
-          const realFlowData = await generateFlowDataFromNodes(dashboardData.nodes, startDate, endDate);
+          const realFlowData = await generateFlowDataFromNodes(mappedNodes, startDate, endDate);
           console.log('📈 Flow data generated:', realFlowData.length, 'data points');
           setFlowData(realFlowData);
         } else {
