@@ -119,6 +119,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Infrastructure routes module not found: {e}")
     
+    # Include nodes routes
+    try:
+        from .endpoints.nodes_router import router as nodes_router
+        app.include_router(nodes_router)
+        logger.info("Nodes routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Nodes routes module not found: {e}")
+    
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 
 
