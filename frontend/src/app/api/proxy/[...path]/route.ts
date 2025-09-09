@@ -42,7 +42,10 @@ async function proxyRequest(
   try {
     // Reconstruct the path
     const path = pathSegments.join('/');
-    const url = `${BACKEND_URL}/api/${path}`;
+    // Get query parameters from the original request
+    const searchParams = request.nextUrl.searchParams.toString();
+    const queryString = searchParams ? `?${searchParams}` : '';
+    const url = `${BACKEND_URL}/api/${path}${queryString}`;
     
 
     
