@@ -198,32 +198,137 @@ class NetworkEfficiencyService:
         return cards
     
     # Private helper methods
-    def _calculate_water_loss_percentage(self, network_data: Any) -> float:
-        """Calculate water loss percentage."""
-        # Mock calculation - replace with actual logic
-        return 15.0
+    def _calculate_water_loss_percentage(self, network_data: Any) -> Optional[float]:
+        """Calculate water loss percentage from flow differential."""
+        if not network_data:
+            return None
+        
+        input_flow = network_data.get('input_flow', 0)
+        output_flow = network_data.get('output_flow', 0)
+        known_consumption = network_data.get('known_consumption', 0)
+        
+        if input_flow <= 0:
+            return None
+        
+        # Water loss = Input - Output - Known Consumption
+        loss = input_flow - output_flow - known_consumption
+        return (loss / input_flow) * 100
     
-    def _calculate_pressure_efficiency(self, network_data: Any) -> float:
-        """Calculate pressure efficiency."""
-        # Mock calculation - replace with actual logic
-        return 85.0
+    def _calculate_pressure_efficiency(self, network_data: Any) -> Optional[float]:
+        """Calculate pressure efficiency from sensor readings."""
+        if not network_data:
+            return None
+        
+        pressure_readings = network_data.get('pressure_readings', [])
+        if not pressure_readings:
+            return None
+        
+        efficiencies = []
+        for reading in pressure_readings:
+            actual = reading.get('pressure', 0)
+            target = reading.get('target', 1)
+            if target > 0:
+                # Efficiency is ratio of actual to target, capped at 100%
+                efficiency = min(actual / target, 1.0) * 100
+                efficiencies.append(efficiency)
+        
+        if not efficiencies:
+            return None
+        
+        return sum(efficiencies) / len(efficiencies)
     
-    def _calculate_flow_efficiency(self, network_data: Any) -> float:
-        """Calculate flow efficiency."""
-        # Mock calculation - replace with actual logic
-        return 90.0
+    def _calculate_flow_efficiency(self, network_data: Any) -> Optional[float]:
+        """Calculate flow efficiency based on pipe capacity utilization."""
+        if not network_data:
+            return None
+        
+        pipes = network_data.get('pipes', [])
+        if not pipes:
+            return None
+        
+        efficiencies = []
+        for pipe in pipes:
+            flow = pipe.get('flow', 0)
+            capacity = pipe.get('capacity', 1)
+            
+            if capacity <= 0:
+                continue
+            
+            utilization = flow / capacity
+            
+            # Optimal efficiency at 70-80% capacity
+            if 0.7 <= utilization <= 0.8:
+                efficiency = 100.0
+            elif utilization < 0.7:
+                efficiency = (utilization / 0.7) * 100
+            else:
+                # Over 80% reduces efficiency
+                efficiency = max(0, 100 - ((utilization - 0.8) / 0.2) * 50)
+            
+            efficiencies.append(efficiency)
+        
+        if not efficiencies:
+            return None
+        
+        return sum(efficiencies) / len(efficiencies)
     
-    def _calculate_energy_efficiency(self, network_data: Any) -> float:
-        """Calculate energy efficiency."""
-        # Mock calculation - replace with actual logic
-        return 80.0
+    def _calculate_energy_efficiency(self, network_data: Any) -> Optional[float]:
+        """Calculate energy efficiency from pump consumption data."""
+        if not network_data:
+            return None
+        
+        pumps = network_data.get('pumps', [])
+        baseline = network_data.get('baseline_efficiency', 0.7)  # kWh/m³
+        
+        if not pumps or baseline <= 0:
+            return None
+        
+        efficiencies = []
+        for pump in pumps:
+            flow_rate = pump.get('flow_rate', 0)
+            energy = pump.get('energy_consumed', 0)
+            
+            if flow_rate > 0 and energy > 0:
+                actual_efficiency = energy / flow_rate
+                efficiency = (baseline / actual_efficiency) * 100
+                efficiencies.append(min(efficiency, 100))
+        
+        if not efficiencies:
+            return None
+        
+        return sum(efficiencies) / len(efficiencies)
     
-    def _calculate_network_coverage(self, network_data: Any) -> float:
-        """Calculate network coverage."""
-        # Mock calculation - replace with actual logic
-        return 95.0
+    def _calculate_network_coverage(self, network_data: Any) -> Optional[float]:
+        """Calculate network coverage from service area data."""
+        if not network_data:
+            return None
+        
+        total_area = network_data.get('total_service_area', 0)
+        covered_area = network_data.get('covered_area', 0)
+        
+        if total_area <= 0:
+            return None
+        
+        return (covered_area / total_area) * 100
     
-    def _calculate_distribution_efficiency(self, network_data: Any) -> float:
-        """Calculate distribution efficiency."""
-        # Mock calculation - replace with actual logic
-        return 88.0 
+    def _calculate_distribution_efficiency(self, network_data: Any) -> Optional[float]:
+        """Calculate distribution efficiency from delivery metrics."""
+        if not network_data:
+            return None
+        
+        # Combine multiple factors for distribution efficiency
+        delivered_volume = network_data.get('delivered_volume', 0)
+        requested_volume = network_data.get('requested_volume', 0)
+        
+        if requested_volume <= 0:
+            return None
+        
+        delivery_ratio = delivered_volume / requested_volume
+        
+        # Factor in service interruptions
+        total_hours = network_data.get('total_hours', 1)
+        interruption_hours = network_data.get('interruption_hours', 0)
+        service_ratio = (total_hours - interruption_hours) / total_hours
+        
+        # Combined efficiency
+        return min(delivery_ratio * service_ratio * 100, 100) 
