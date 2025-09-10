@@ -6,6 +6,9 @@ import { WaterIndustryCalculator } from '@/utils/industryCalculations';
 // Real data fetching functions - USE REAL DATABASE DATA
 const fetchRealAnalyticsData = async () => {
   try {
+    // Initialize calculator for industry-standard calculations
+    const calculator = new WaterIndustryCalculator();
+    
     // Fetch REAL consumption analytics from PostgreSQL
     const consumptionResponse = await fetch('/api/proxy/v1/consumption/analytics');
     const consumptionData = await consumptionResponse.json();
