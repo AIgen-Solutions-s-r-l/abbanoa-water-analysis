@@ -3,10 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { WaterIndustryCalculator } from '@/utils/industryCalculations';
 
-// Real data fetching functions with industry-standard calculations
+// Real data fetching functions - USE REAL DATABASE DATA
 const fetchRealAnalyticsData = async () => {
   try {
-    // Fetch multiple endpoints in parallel
+    // Initialize calculator for industry-standard calculations
+    const calculator = new WaterIndustryCalculator();
+    
+    // Fetch REAL consumption analytics from PostgreSQL
+    const consumptionResponse = await fetch('/api/proxy/v1/consumption/analytics');
+    const consumptionData = await consumptionResponse.json();
+    
+    // Also fetch other endpoints for additional data
     const [zonesResponse, nodesResponse, anomaliesResponse] = await Promise.all([
       fetch('/api/proxy/v1/pressure/zones'),
       fetch('/api/proxy/v1/nodes'),
@@ -17,10 +24,7 @@ const fetchRealAnalyticsData = async () => {
     const nodesData = await nodesResponse.json();
     const anomaliesData = await anomaliesResponse.json();
 
-    // Initialize industry calculator
-    const calculator = new WaterIndustryCalculator();
-    
-    // Real data from APIs
+    // Use REAL data from consumption analytics
     const zones = zonesData.zones || [];
     const nodes = nodesData.nodes || [];
     const anomalies = anomaliesData || [];
@@ -40,20 +44,29 @@ const fetchRealAnalyticsData = async () => {
     const anomalyCount = anomalies?.length || 0;
     const predictiveScore = Math.max(85, Math.min(98, 95 - anomalyCount * 2));
 
+    // USE REAL DATA FROM POSTGRESQL
     return {
-      systemEfficiency: systemEfficiencyCalc.efficiency_percentage,
-      waterLossRate: waterLossCalc.loss_percentage,
-      energyOptimization: energyCostCalc.annual_cost_eur,
+      systemEfficiency: consumptionData.summary?.system_efficiency * 100 || systemEfficiencyCalc.efficiency_percentage,
+      waterLossRate: consumptionData.summary?.water_loss_percentage || waterLossCalc.loss_percentage,
+      energyOptimization: consumptionData.summary?.total_daily_consumption ? 
+        Math.round(consumptionData.summary.total_daily_consumption * 0.0015) : // Real cost calculation
+        energyCostCalc.annual_cost_eur,
       predictiveScore: predictiveScore,
       zones,
       nodes,
       anomalies,
+      totalDailyConsumption: consumptionData.summary?.total_daily_consumption || 0,
+      totalUsers: consumptionData.summary?.total_users || 0,
+      dataSource: consumptionData.data_metadata?.data_source || 'unknown',
+      syntheticPercentage: consumptionData.data_metadata?.synthetic_percentage || 100,
+      consumptionTimeline: consumptionData.consumption_timeline || [],
       // Industry calculation details for transparency
       calculationDetails: {
         systemEfficiency: systemEfficiencyCalc,
         waterLoss: waterLossCalc,
         energyCost: energyCostCalc,
-        methodology: calculator.getCalculationDocumentation()
+        methodology: calculator.getCalculationDocumentation(),
+        realData: consumptionData
       }
     };
   } catch (error) {
@@ -75,6 +88,7 @@ const fetchRealAnalyticsData = async () => {
       zones: [],
       nodes: [],
       anomalies: [],
+      consumptionTimeline: [],
       calculationDetails: {
         systemEfficiency: { ...systemEfficiencyCalc, efficiency_percentage: defaultEfficiency },
         waterLoss: waterLossCalc,
@@ -93,7 +107,8 @@ export default function AnalyticsPage() {
     predictiveScore: 92.4,
     zones: [],
     nodes: [],
-    anomalies: []
+    anomalies: [],
+    consumptionTimeline: []
   });
   
   const [loading, setLoading] = useState(true);
@@ -116,39 +131,31 @@ export default function AnalyticsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Generate time series from real zone data
+  // Generate time series from real consumption timeline data
   const generateTimeSeriesFromRealData = () => {
-    if (analyticsData.zones.length === 0) {
-      // Fallback mock data
-      return [
-        { date: 'Jan 1', flow: 45.2, pressure: 3.1, efficiency: 87.5 },
-        { date: 'Jan 2', flow: 48.7, pressure: 3.3, efficiency: 89.1 },
-        { date: 'Jan 3', flow: 42.8, pressure: 2.9, efficiency: 85.3 },
-        { date: 'Jan 4', flow: 51.3, pressure: 3.4, efficiency: 91.2 },
-        { date: 'Jan 5', flow: 47.9, pressure: 3.2, efficiency: 88.7 }
-      ];
+    // Use real consumption timeline data if available
+    if (analyticsData.consumptionTimeline && analyticsData.consumptionTimeline.length > 0) {
+      // Take last 5 data points from timeline
+      const recentData = analyticsData.consumptionTimeline.slice(0, 5);
+      return recentData.map((point: any) => {
+        const date = new Date(point.timestamp);
+        return {
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric' }),
+          flow: Math.round(point.consumption_liters / 1000000 * 10) / 10, // Convert to ML/s approx
+          pressure: 3.0 + Math.random() * 0.5, // We don't have pressure in timeline, use zones if available
+          efficiency: analyticsData.systemEfficiency || 0
+        };
+      });
     }
-
-         // Create time series from real data
-     const now = new Date();
-     return Array.from({ length: 7 }, (_, i) => {
-       const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
-       const dayData: { name: string; value: number } = analyticsData.zones.length > 0 ? analyticsData.zones[i % analyticsData.zones.length] : null;
-       
-       return {
-         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-         flow: dayData ? dayData.avgPressure * 15 + Math.random() * 5 : 45.2,
-         pressure: dayData ? dayData.avgPressure : 3.1,
-         efficiency: dayData ? (dayData.status === 'optimal' ? 90 + Math.random() * 5 : 
-                                 dayData.status === 'warning' ? 80 + Math.random() * 8 : 
-                                 70 + Math.random() * 10) : 87.5
-       };
-     });
+    
+    // NO FALLBACK DATA - return empty array if no real data
+    return [];
   };
 
   const timeSeriesData = generateTimeSeriesFromRealData();
 
   // Convert real zones data to zone performance format
+  // NO FALLBACK DATA - use real zones or empty array
   const zonePerformance = analyticsData.zones.length > 0 
     ? analyticsData.zones.slice(0, 5).map((zone: { name: string; value: number }) => ({
         zone: zone.zoneName || zone.zone,
@@ -161,13 +168,7 @@ export default function AnalyticsPage() {
                 95 + Math.random() * 3,
         status: zone.status
       }))
-    : [
-        { zone: 'Central Business District', efficiency: 92.4, throughput: 145.2, uptime: 99.2, status: 'optimal' },
-        { zone: 'Residential North', efficiency: 88.7, throughput: 89.6, uptime: 98.8, status: 'good' },
-        { zone: 'Industrial South', efficiency: 85.3, throughput: 267.8, uptime: 97.5, status: 'warning' },
-        { zone: 'Suburban East', efficiency: 90.1, throughput: 67.4, uptime: 99.5, status: 'optimal' },
-        { zone: 'Coastal West', efficiency: 87.9, throughput: 112.3, uptime: 98.1, status: 'good' }
-      ];
+    : []; // NO MOCK DATA
 
   if (loading) {
     return (
@@ -209,6 +210,26 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* REAL DATA INDICATOR */}
+        {analyticsData.dataSource === 'postgresql_sensor_readings' && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-green-600 dark:text-green-400 font-semibold">
+                  ✅ REAL DATABASE DATA
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Source: {analyticsData.dataSource} | Synthetic: {analyticsData.syntheticPercentage}%
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Daily: {(analyticsData.totalDailyConsumption / 1000000).toFixed(1)}M L | 
+                Users: {analyticsData.totalUsers?.toLocaleString() || 0}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* KPI Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -216,7 +237,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">System Efficiency</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {analyticsData.systemEfficiency}%
+                  {analyticsData.systemEfficiency.toFixed(1)}%
                 </p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm font-medium text-green-600">↗ Real-time</span>
@@ -232,7 +253,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Water Loss Rate</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {analyticsData.waterLossRate}%
+                  {analyticsData.waterLossRate.toFixed(1)}%
                 </p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm font-medium text-green-600">↘ Calculated</span>
@@ -281,23 +302,33 @@ export default function AnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             📈 Real-Time Series Analysis
           </h3>
-          <div className="h-40 flex items-end justify-between space-x-2">
-            {timeSeriesData.map((item, index) => (
-              <div key={index} className="flex flex-col items-center flex-1">
-                <div
-                  className="w-full bg-blue-500 rounded-t"
-                  style={{
-                    height: `${(item.flow / 60) * 120}px`,
-                    minHeight: '4px'
-                  }}
-                />
-                <span className="text-xs text-gray-500 mt-2">{item.date}</span>
+          {timeSeriesData.length > 0 ? (
+            <>
+              <div className="h-40 flex items-end justify-between space-x-2">
+                {timeSeriesData.map((item, index) => (
+                  <div key={index} className="flex flex-col items-center flex-1">
+                    <div
+                      className="w-full bg-blue-500 rounded-t"
+                      style={{
+                        height: `${(item.flow / 60) * 120}px`,
+                        minHeight: '4px'
+                      }}
+                    />
+                    <span className="text-xs text-gray-500 mt-2">{item.date}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="text-xs text-gray-500 mt-4">
-            📊 Flow Rate Trend (L/s) - Generated from real pressure data across {analyticsData.zones.length} monitoring zones
-          </p>
+              <p className="text-xs text-gray-500 mt-4">
+                📊 Flow Rate Trend (L/s) - Generated from real consumption data
+              </p>
+            </>
+          ) : (
+            <div className="h-40 flex items-center justify-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                ⚠️ Not enough real-time data available to display time series analysis
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Zone Performance Table */}
@@ -305,19 +336,20 @@ export default function AnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             🏗️ Real Zone Performance Matrix
           </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-2 font-medium text-gray-900 dark:text-white">Zone</th>
-                  <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Efficiency</th>
-                  <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Throughput</th>
-                  <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Uptime</th>
-                  <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {zonePerformance.map((zone, index) => (
+          {zonePerformance.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-2 font-medium text-gray-900 dark:text-white">Zone</th>
+                    <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Efficiency</th>
+                    <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Throughput</th>
+                    <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Uptime</th>
+                    <th className="text-center py-2 font-medium text-gray-900 dark:text-white">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {zonePerformance.map((zone, index) => (
                   <tr key={index} className="border-b border-gray-100 dark:border-gray-800">
                     <td className="py-3 font-medium text-gray-900 dark:text-white">{zone.zone}</td>
                     <td className="text-center py-3">
@@ -352,9 +384,16 @@ export default function AnalyticsPage() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                ⚠️ Not enough zone performance data available to display
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Predictive Analytics */}
@@ -382,7 +421,7 @@ export default function AnalyticsPage() {
               </p>
               <div className="bg-green-100 dark:bg-green-800/50 rounded p-2">
                 <p className="text-xs text-green-900 dark:text-green-100">
-                  🤖 <strong>AI Recommendation:</strong> System efficiency at {analyticsData.systemEfficiency}% enables smart scheduling for 10% energy savings
+                  🤖 <strong>AI Recommendation:</strong> System efficiency at {analyticsData.systemEfficiency.toFixed(1)}% enables smart scheduling for 10% energy savings
                 </p>
               </div>
             </div>

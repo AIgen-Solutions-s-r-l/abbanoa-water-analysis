@@ -180,9 +180,12 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
     try:
         conn = await get_db_connection()
         
-        # If no database connection, return mock data
+        # If no database connection, return error
         if conn is None:
-            return get_mock_infrastructure_data()
+            raise HTTPException(
+                status_code=503,
+                detail="Database connection unavailable. Unable to fetch infrastructure data."
+            )
         
         # Get nodes with latest readings
         nodes_query = """
@@ -302,10 +305,15 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
             "last_updated": datetime.now(timezone.utc).isoformat()
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching infrastructure data: {e}")
-        # Return mock data on error
-        return get_mock_infrastructure_data()
+        # Return error instead of mock data
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch infrastructure data: {str(e)}"
+        )
     finally:
         if conn:
             try:
@@ -321,31 +329,12 @@ async def get_node_details(node_id: str) -> Dict[str, Any]:
     try:
         conn = await get_db_connection()
         
-        # If no database connection, return mock data
+        # If no database connection, return error
         if conn is None:
-            mock_data = get_mock_infrastructure_data()
-            for node in mock_data['nodes']:
-                if node['id'] == node_id:
-                    return {
-                        "id": node['id'],
-                        "name": node['name'],
-                        "type": node['type'],
-                        "location": {
-                            "latitude": node['latitude'],
-                            "longitude": node['longitude']
-                        },
-                        "status": node['status'],
-                        "description": f"Mock description for {node['name']}",
-                        "current_readings": {
-                            "flow_rate": node['flow_rate'],
-                            "pressure": node['pressure'],
-                            "temperature": 20.5,
-                            "quality_score": 95.0,
-                            "timestamp": node['last_reading']
-                        },
-                        "recent_anomalies": []
-                    }
-            raise HTTPException(status_code=404, detail="Node not found")
+            raise HTTPException(
+                status_code=503,
+                detail="Database connection unavailable. Unable to fetch node details."
+            )
         
         # Get node details with latest readings
         node_query = """
@@ -441,6 +430,13 @@ async def get_network_summary() -> Dict[str, Any]:
     """Get network summary statistics."""
     try:
         conn = await get_db_connection()
+        
+        # If no database connection, return error
+        if conn is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database connection unavailable. Unable to fetch network summary."
+            )
         
         # Get network statistics
         stats_query = """

@@ -1,0 +1,57 @@
+# Quality Thresholds Configuration
+# This file defines all quality-related thresholds and metrics
+# Values can be overridden via environment variables prefixed with QUALITY_THRESHOLDS_
+
+temperature:
+  optimal: 15.0  # °C
+  min_normal: 10.0  # °C
+  max_normal: 20.0  # °C
+  alert_threshold: 25.0  # °C
+  high_alert_threshold: 30.0  # °C
+
+pressure:
+  optimal: 4.0  # bar
+  minimum: 2.0  # bar
+  critical: 1.0  # bar
+  maximum: 6.0  # bar
+  normal_min: 3.0  # bar
+  normal_max: 5.0  # bar
+
+flow:
+  minimum: 0.1  # L/s
+  stagnation: 0.5  # L/s
+  normal_min: 50.0  # L/s
+  normal_max: 150.0  # L/s
+  normal_value: 100.0  # L/s
+  maximum: 10000.0  # L/s
+
+quality_score:
+  excellent: 0.9  # 90% or higher
+  good: 0.7  # 70% or higher
+  acceptable: 0.6  # 60% or higher
+  minimum: 0.85  # Minimum required
+  normal: 0.95  # Expected normal value
+  maximum: 1.0  # Maximum possible
+
+quality_grades:
+  grade_a: 90.0  # % - Excellent
+  grade_b: 80.0  # % - Good
+  grade_c: 70.0  # % - Acceptable
+  grade_d: 60.0  # % - Poor
+
+compliance:
+  quality_warning: 90.0  # %
+  quality_target: 98.0  # %
+  temperature_warning: 95.0  # %
+  temperature_target: 99.0  # %
+  pressure_warning: 90.0  # %
+  pressure_target: 95.0  # %
+  contamination_warning: 5  # incidents
+  contamination_target: 0  # incidents
+
+data_quality:
+  min_completeness: 95.0  # %
+  outlier_sigma: 3.0  # Standard deviations
+  uptime_target: 99.0  # %
+  prediction_accuracy_min: 95.0  # %
+  prediction_accuracy_target: 99.0  # %

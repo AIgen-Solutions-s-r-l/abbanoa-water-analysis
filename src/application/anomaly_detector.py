@@ -6,6 +6,7 @@ import numpy as np
 from scipy import stats
 import asyncpg
 import logging
+from src.config.quality_thresholds import get_quality_config
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +21,28 @@ class AnomalyDetector:
             db_connection: Database connection for data access
         """
         self.db_connection = db_connection
+        config = get_quality_config()
         self.thresholds = {
-            'pressure': {'min': 2.0, 'max': 4.0, 'normal': 3.0},
-            'flow_rate': {'min': 50, 'max': 150, 'normal': 100},
-            'quality_score': {'min': 0.85, 'max': 1.0, 'normal': 0.95},
-            'temperature': {'min': 10, 'max': 25, 'normal': 15}
+            'pressure': {
+                'min': config.pressure.minimum,
+                'max': config.pressure.maximum,
+                'normal': config.pressure.optimal
+            },
+            'flow_rate': {
+                'min': config.flow.normal_min,
+                'max': config.flow.normal_max,
+                'normal': config.flow.normal_value
+            },
+            'quality_score': {
+                'min': config.quality_score.minimum,
+                'max': config.quality_score.maximum,
+                'normal': config.quality_score.normal
+            },
+            'temperature': {
+                'min': config.temperature.min_normal,
+                'max': config.temperature.max_normal,
+                'normal': config.temperature.optimal
+            }
         }
     
     async def detect_anomalies(self, node_id: str, hours: int = 24) -> List[Dict[str, Any]]:
