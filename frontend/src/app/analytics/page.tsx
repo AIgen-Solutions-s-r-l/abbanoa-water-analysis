@@ -56,6 +56,7 @@ const fetchRealAnalyticsData = async () => {
       totalUsers: consumptionData.summary?.total_users || 0,
       dataSource: consumptionData.data_metadata?.data_source || 'unknown',
       syntheticPercentage: consumptionData.data_metadata?.synthetic_percentage || 100,
+      consumptionTimeline: consumptionData.consumption_timeline || [],
       // Industry calculation details for transparency
       calculationDetails: {
         systemEfficiency: systemEfficiencyCalc,
@@ -84,6 +85,7 @@ const fetchRealAnalyticsData = async () => {
       zones: [],
       nodes: [],
       anomalies: [],
+      consumptionTimeline: [],
       calculationDetails: {
         systemEfficiency: { ...systemEfficiencyCalc, efficiency_percentage: defaultEfficiency },
         waterLoss: waterLossCalc,
@@ -102,7 +104,8 @@ export default function AnalyticsPage() {
     predictiveScore: 92.4,
     zones: [],
     nodes: [],
-    anomalies: []
+    anomalies: [],
+    consumptionTimeline: []
   });
   
   const [loading, setLoading] = useState(true);
@@ -128,16 +131,16 @@ export default function AnalyticsPage() {
   // Generate time series from real consumption timeline data
   const generateTimeSeriesFromRealData = () => {
     // Use real consumption timeline data if available
-    if (consumptionData && consumptionData.consumption_timeline && consumptionData.consumption_timeline.length > 0) {
+    if (analyticsData.consumptionTimeline && analyticsData.consumptionTimeline.length > 0) {
       // Take last 5 data points from timeline
-      const recentData = consumptionData.consumption_timeline.slice(0, 5);
+      const recentData = analyticsData.consumptionTimeline.slice(0, 5);
       return recentData.map((point: any) => {
         const date = new Date(point.timestamp);
         return {
           date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric' }),
           flow: Math.round(point.consumption_liters / 1000000 * 10) / 10, // Convert to ML/s approx
           pressure: 3.0 + Math.random() * 0.5, // We don't have pressure in timeline, use zones if available
-          efficiency: consumptionData.summary?.system_efficiency * 100 || 0
+          efficiency: analyticsData.systemEfficiency || 0
         };
       });
     }
