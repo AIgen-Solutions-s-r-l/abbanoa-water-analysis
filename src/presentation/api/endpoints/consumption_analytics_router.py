@@ -248,14 +248,23 @@ async def get_consumption_analytics():
                 forecast_consumption=None  # Real data, no forecast
             ))
         
-        # Calculate user segments from node types
+        # Calculate user segments from node types - GROUP BY segment to avoid duplicates
         segment_query = """
             SELECT 
-                node_type,
-                COUNT(*) as count
+                CASE 
+                    WHEN node_type IN ('distribution', 'secondary') THEN 'Residential'
+                    WHEN node_type = 'main' THEN 'Commercial'
+                    ELSE 'Industrial'
+                END as segment_name,
+                COUNT(*) as count,
+                CASE 
+                    WHEN node_type IN ('distribution', 'secondary') THEN 200
+                    WHEN node_type = 'main' THEN 500
+                    ELSE 1000
+                END as avg_daily
             FROM water_infrastructure.nodes
             WHERE is_active = true
-            GROUP BY node_type
+            GROUP BY segment_name, avg_daily
         """
         segment_rows = await conn.fetch(segment_query)
         
@@ -263,20 +272,10 @@ async def get_consumption_analytics():
         total_nodes = sum(row['count'] for row in segment_rows)
         
         for row in segment_rows:
-            node_type = row['node_type']
+            segment_name = row['segment_name']
             node_count = int(row['count'])
+            avg_daily = float(row['avg_daily'])
             percentage = (node_count / total_nodes * 100) if total_nodes > 0 else 0
-            
-            # Map node types to user segments
-            if node_type in ['distribution', 'secondary']:
-                segment_name = "Residential"
-                avg_daily = 200  # L/day per household
-            elif node_type == 'main':
-                segment_name = "Commercial"
-                avg_daily = 500
-            else:  # reservoir, treatment
-                segment_name = "Industrial"
-                avg_daily = 1000
             
             user_segments.append(UserSegment(
                 segment=segment_name,

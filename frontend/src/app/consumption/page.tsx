@@ -386,7 +386,7 @@ export default function ConsumptionAnalyticsPage() {
               </ResponsiveContainer>
               <div className="mt-4 space-y-2">
                 {(analyticsData.user_segments || []).map((segment, index) => (
-                  <div key={segment.segment} className="flex justify-between items-center">
+                  <div key={`segment-${index}`} className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full" 
