@@ -69,6 +69,48 @@
 
 ## [Unreleased]
 
+## [2.4.0] - 2024-12-10
+
+### ✨ Added
+- **Centralized configuration system** for quality metrics and thresholds (#42)
+  - Created `src/config/quality_thresholds.py` with Pydantic-based validation
+  - Added `config/quality_thresholds.yaml` for default configuration values
+  - Support for environment variable overrides (prefix: `QUALITY_THRESHOLDS_`)
+  - Comprehensive configuration documentation in `docs/QUALITY_CONFIGURATION.md`
+  - Full unit test coverage for configuration system
+  - Integration tests with mocked dependencies
+
+### 🔄 Changed
+- **Replaced hardcoded quality metrics** throughout the application:
+  - `water_quality_service.py`: Now uses configurable temperature, pressure, flow thresholds
+  - `quality_service.py`: KPI alerts and compliance targets from configuration
+  - `anomaly_detector.py`: Detection thresholds now configurable
+- **Quality grades** (A-F) now determined by configurable percentage thresholds
+- **Compliance targets** adjustable per environment without code changes
+
+### 📚 Documentation
+- Added comprehensive Quality Configuration Guide (`docs/QUALITY_CONFIGURATION.md`)
+- Updated technical documentation with configuration examples
+- Added migration guide from hardcoded to configurable values
+
+### 🧪 Testing
+- Added 289 lines of unit tests for configuration system
+- Created integration tests with mocked Google Cloud dependencies
+- Added test fixtures for configuration mocking
+
+### 🔧 Technical Improvements
+- Type-safe configuration with Pydantic validation
+- Singleton pattern for configuration instance
+- Configuration validation with logical constraints
+- Support for YAML and environment-based configuration
+
+### 🚀 Benefits
+- **Flexibility**: Different thresholds for dev/staging/production
+- **No-code changes**: Adjust thresholds via configuration
+- **Type safety**: Pydantic ensures correct types and ranges
+- **Backward compatible**: Default values maintain existing behavior
+- **Better testing**: Easy to test with different configurations
+
 ## [2.1.0] - 2025-09-05
 
 ### Added
