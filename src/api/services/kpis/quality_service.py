@@ -10,6 +10,7 @@ from typing import List, Optional, Dict, Any
 
 from src.schemas.api.kpis import QualityKPIs, KPIAlert, KPIGoal, KPICard, AlertLevel, TrendDirection
 from src.infrastructure.data.hybrid_data_service import HybridDataService
+from src.config.quality_thresholds import get_quality_config
 from .kpi_defaults import get_default_quality_kpis
 from .kpi_utils import calculate_quality_score, create_kpi_alert, create_kpi_goal
 
@@ -77,34 +78,35 @@ class QualityService:
     def check_quality_alerts(self, quality_kpis: QualityKPIs) -> List[KPIAlert]:
         """Check quality alerts."""
         alerts = []
+        config = get_quality_config()
         
-        if quality_kpis.quality_compliance_percentage < 90.0:
+        if quality_kpis.quality_compliance_percentage < config.compliance.quality_warning:
             alerts.append(create_kpi_alert(
                 category="quality",
                 metric_name="quality_compliance_percentage",
-                message=f"Quality compliance is {quality_kpis.quality_compliance_percentage:.1f}%, below threshold of 90%",
+                message=f"Quality compliance is {quality_kpis.quality_compliance_percentage:.1f}%, below threshold of {config.compliance.quality_warning}%",
                 severity=AlertLevel.high,
-                threshold=90.0,
+                threshold=config.compliance.quality_warning,
                 current_value=quality_kpis.quality_compliance_percentage
             ))
         
-        if quality_kpis.contamination_incidents_count > 5:
+        if quality_kpis.contamination_incidents_count > config.compliance.contamination_warning:
             alerts.append(create_kpi_alert(
                 category="quality",
                 metric_name="contamination_incidents_count",
-                message=f"Contamination incidents count is {quality_kpis.contamination_incidents_count}, above threshold of 5",
+                message=f"Contamination incidents count is {quality_kpis.contamination_incidents_count}, above threshold of {config.compliance.contamination_warning}",
                 severity=AlertLevel.medium,
-                threshold=5,
+                threshold=config.compliance.contamination_warning,
                 current_value=quality_kpis.contamination_incidents_count
             ))
         
-        if quality_kpis.temperature_compliance_percentage < 95.0:
+        if quality_kpis.temperature_compliance_percentage < config.compliance.temperature_warning:
             alerts.append(create_kpi_alert(
                 category="quality",
                 metric_name="temperature_compliance_percentage",
-                message=f"Temperature compliance is {quality_kpis.temperature_compliance_percentage:.1f}%, below threshold of 95%",
+                message=f"Temperature compliance is {quality_kpis.temperature_compliance_percentage:.1f}%, below threshold of {config.compliance.temperature_warning}%",
                 severity=AlertLevel.medium,
-                threshold=95.0,
+                threshold=config.compliance.temperature_warning,
                 current_value=quality_kpis.temperature_compliance_percentage
             ))
         
@@ -113,31 +115,32 @@ class QualityService:
     def generate_quality_goals(self, quality_kpis: QualityKPIs) -> List[KPIGoal]:
         """Generate quality goals."""
         goals = []
+        config = get_quality_config()
         
         goals.append(create_kpi_goal(
             category="quality",
             metric_name="quality_compliance_percentage",
-            target_value=98.0,
+            target_value=config.compliance.quality_target,
             current_value=quality_kpis.quality_compliance_percentage,
-            description="Achieve 98% quality compliance",
+            description=f"Achieve {config.compliance.quality_target}% quality compliance",
             target_date=datetime.now() + timedelta(days=60)
         ))
         
         goals.append(create_kpi_goal(
             category="quality",
             metric_name="contamination_incidents_count",
-            target_value=0,
+            target_value=config.compliance.contamination_target,
             current_value=quality_kpis.contamination_incidents_count,
-            description="Achieve zero contamination incidents",
+            description=f"Achieve {config.compliance.contamination_target} contamination incidents",
             target_date=datetime.now() + timedelta(days=30)
         ))
         
         goals.append(create_kpi_goal(
             category="quality",
             metric_name="temperature_compliance_percentage",
-            target_value=99.0,
+            target_value=config.compliance.temperature_target,
             current_value=quality_kpis.temperature_compliance_percentage,
-            description="Achieve 99% temperature compliance",
+            description=f"Achieve {config.compliance.temperature_target}% temperature compliance",
             target_date=datetime.now() + timedelta(days=45)
         ))
         
@@ -146,6 +149,7 @@ class QualityService:
     def generate_quality_cards(self, quality_kpis: QualityKPIs) -> List[KPICard]:
         """Generate quality KPI cards."""
         cards = []
+        config = get_quality_config()
         
         cards.append(KPICard(
             title="Quality Compliance",
@@ -154,7 +158,7 @@ class QualityService:
             category="quality",
             trend=TrendDirection.increasing,
             change_percentage=1.5,
-            status="good" if quality_kpis.quality_compliance_percentage >= 90.0 else "warning",
+            status="good" if quality_kpis.quality_compliance_percentage >= config.compliance.quality_warning else "warning",
             description="Quality compliance percentage"
         ))
         
@@ -165,7 +169,7 @@ class QualityService:
             category="quality",
             trend=TrendDirection.decreasing,
             change_percentage=-20.0,
-            status="good" if quality_kpis.contamination_incidents_count <= 3 else "warning",
+            status="good" if quality_kpis.contamination_incidents_count <= config.compliance.contamination_warning else "warning",
             description="Number of contamination incidents"
         ))
         
@@ -176,7 +180,7 @@ class QualityService:
             category="quality",
             trend=TrendDirection.stable,
             change_percentage=0.0,
-            status="good" if quality_kpis.temperature_compliance_percentage >= 95.0 else "warning",
+            status="good" if quality_kpis.temperature_compliance_percentage >= config.compliance.temperature_warning else "warning",
             description="Temperature compliance percentage"
         ))
         
@@ -187,7 +191,7 @@ class QualityService:
             category="quality",
             trend=TrendDirection.increasing,
             change_percentage=2.0,
-            status="good" if quality_kpis.pressure_compliance_percentage >= 90.0 else "warning",
+            status="good" if quality_kpis.pressure_compliance_percentage >= config.compliance.pressure_warning else "warning",
             description="Pressure compliance percentage"
         ))
         

@@ -24,6 +24,7 @@ from src.schemas.api.water_quality import (
     QualityPrediction
 )
 from src.infrastructure.data.hybrid_data_service import HybridDataService
+from src.config.quality_thresholds import get_quality_config
 
 
 class WaterQualityService:
@@ -81,7 +82,8 @@ class WaterQualityService:
         violations = []
         if not (6.5 <= ph <= 8.5):
             violations.append("pH out of range")
-        if temp > 30:
+        config = get_quality_config()
+        if temp > config.temperature.high_alert_threshold:
             violations.append("Temperature too high")
         if turbidity > 5:
             violations.append("Turbidity too high")
@@ -196,10 +198,11 @@ async def get_water_quality_data(
         data['flow_velocity'] = data['flow_rate'] * 0.001  # Simple velocity approximation
         data['pressure_gradient'] = data['pressure'].diff() / 1000  # Pressure gradient approximation
         
-        # Quality score calculation (from water_quality_tab.py logic)
-        data['temp_quality'] = 1.0 - abs(data['temperature'] - 15.0) / 10.0  # Optimal at 15°C
-        data['pressure_quality'] = 1.0 - abs(data['pressure'] - 4.0) / 5.0  # Optimal at 4 bar
-        data['flow_quality'] = np.where(data['flow_rate'] > 0, 1.0, 0.5)  # Penalize zero flow
+        # Quality score calculation using configuration
+        config = get_quality_config()
+        data['temp_quality'] = 1.0 - abs(data['temperature'] - config.temperature.optimal) / 10.0
+        data['pressure_quality'] = 1.0 - abs(data['pressure'] - config.pressure.optimal) / 5.0
+        data['flow_quality'] = np.where(data['flow_rate'] > config.flow.minimum, 1.0, 0.5)  # Penalize low flow
         
         # Overall quality score
         data['overall_quality'] = (data['temp_quality'] + data['pressure_quality'] + data['flow_quality']) / 3.0
@@ -230,8 +233,10 @@ def calculate_quality_metrics(data: pd.DataFrame) -> WaterQualityMetrics:
     # Calculate quality metrics
     overall_quality = data['overall_quality'].mean() * 100
     
-    # Temperature compliance (percentage within normal range 10-20°C)
-    temp_compliance = ((data['temperature'] >= 10) & (data['temperature'] <= 20)).mean() * 100
+    # Temperature compliance using configuration
+    config = get_quality_config()
+    temp_compliance = ((data['temperature'] >= config.temperature.min_normal) & 
+                      (data['temperature'] <= config.temperature.max_normal)).mean() * 100
     
     # Flow consistency (low coefficient of variation is good)
     flow_consistency = max(0, 100 - (data['flow_rate'].std() / data['flow_rate'].mean() * 100)) if data['flow_rate'].mean() > 0 else 0
@@ -239,17 +244,9 @@ def calculate_quality_metrics(data: pd.DataFrame) -> WaterQualityMetrics:
     # Pressure stability (low coefficient of variation is good)
     pressure_stability = max(0, 100 - (data['pressure'].std() / data['pressure'].mean() * 100)) if data['pressure'].mean() > 0 else 0
     
-    # Quality grade
-    if overall_quality >= 90:
-        quality_grade = "A"
-    elif overall_quality >= 80:
-        quality_grade = "B"
-    elif overall_quality >= 70:
-        quality_grade = "C"
-    elif overall_quality >= 60:
-        quality_grade = "D"
-    else:
-        quality_grade = "F"
+    # Quality grade using configuration
+    config = get_quality_config()
+    quality_grade = config.quality_grades.get_grade(overall_quality).value
     
     # Contamination alerts (simulate based on quality score)
     contamination_alerts = int(((1 - data['overall_quality']) * 10).sum())
@@ -272,6 +269,7 @@ def generate_temperature_analysis(data: pd.DataFrame) -> List[TemperatureAnalysi
     if data.empty:
         return []
     
+    config = get_quality_config()
     analysis = []
     avg_temp = data['temperature'].mean()
     
@@ -296,7 +294,7 @@ def generate_temperature_analysis(data: pd.DataFrame) -> List[TemperatureAnalysi
             timestamp=row['timestamp'].isoformat(),
             node_id=str(row['node_id']),
             temperature=row['temperature'],
-            is_within_normal_range=10 <= row['temperature'] <= 20,
+            is_within_normal_range=config.temperature.min_normal <= row['temperature'] <= config.temperature.max_normal,
             deviation_from_average=deviation,
             trend=trend
         ))
@@ -419,40 +417,43 @@ def generate_quality_alerts(data: pd.DataFrame, metrics: WaterQualityMetrics) ->
     if data.empty:
         return alerts
     
-    # Temperature alerts
-    temp_violations = data[data['temperature'] > 25]
+    # Temperature alerts using configuration
+    config = get_quality_config()
+    temp_violations = data[data['temperature'] > config.temperature.alert_threshold]
     for _, row in temp_violations.iterrows():
         alerts.append(QualityAlert(
             alert_id=str(uuid.uuid4()),
             timestamp=row['timestamp'].isoformat(),
             node_id=str(row['node_id']),
             alert_type="temperature",
-            severity="high" if row['temperature'] > 30 else "medium",
+            severity="high" if row['temperature'] > config.temperature.high_alert_threshold else "medium",
             description=f"Temperature ({row['temperature']:.1f}°C) exceeds normal range",
             current_value=row['temperature'],
-            threshold_value=25.0,
+            threshold_value=config.temperature.alert_threshold,
             recommended_action="Check cooling systems and investigate heat sources",
             status="active"
         ))
     
-    # Pressure alerts
-    pressure_violations = data[data['pressure'] < 2.0]
+    # Pressure alerts using configuration
+    config = get_quality_config()
+    pressure_violations = data[data['pressure'] < config.pressure.minimum]
     for _, row in pressure_violations.iterrows():
         alerts.append(QualityAlert(
             alert_id=str(uuid.uuid4()),
             timestamp=row['timestamp'].isoformat(),
             node_id=str(row['node_id']),
             alert_type="pressure",
-            severity="critical" if row['pressure'] < 1.0 else "high",
+            severity="critical" if row['pressure'] < config.pressure.critical else "high",
             description=f"Pressure ({row['pressure']:.1f} bar) below minimum threshold",
             current_value=row['pressure'],
-            threshold_value=2.0,
+            threshold_value=config.pressure.minimum,
             recommended_action="Check pump systems and investigate pressure drops",
             status="active"
         ))
     
-    # Flow alerts
-    flow_violations = data[data['flow_rate'] < 0.1]
+    # Flow alerts using configuration
+    config = get_quality_config()
+    flow_violations = data[data['flow_rate'] < config.flow.minimum]
     for _, row in flow_violations.iterrows():
         alerts.append(QualityAlert(
             alert_id=str(uuid.uuid4()),
@@ -462,13 +463,14 @@ def generate_quality_alerts(data: pd.DataFrame, metrics: WaterQualityMetrics) ->
             severity="medium",
             description=f"Low flow rate ({row['flow_rate']:.2f} L/s) detected",
             current_value=row['flow_rate'],
-            threshold_value=0.1,
+            threshold_value=config.flow.minimum,
             recommended_action="Check for blockages or valve issues",
             status="active"
         ))
     
-    # Quality score alerts
-    quality_violations = data[data['overall_quality'] < 0.6]
+    # Quality score alerts using configuration
+    config = get_quality_config()
+    quality_violations = data[data['overall_quality'] < config.quality_score.acceptable]
     for _, row in quality_violations.iterrows():
         alerts.append(QualityAlert(
             alert_id=str(uuid.uuid4()),
@@ -478,7 +480,7 @@ def generate_quality_alerts(data: pd.DataFrame, metrics: WaterQualityMetrics) ->
             severity="high",
             description=f"Overall quality score ({row['overall_quality']:.2f}) below acceptable threshold",
             current_value=row['overall_quality'],
-            threshold_value=0.6,
+            threshold_value=config.quality_score.acceptable,
             recommended_action="Investigate all quality parameters and take corrective action",
             status="active"
         ))
@@ -493,18 +495,20 @@ def generate_contamination_indicators(data: pd.DataFrame) -> List[ContaminationI
     if data.empty:
         return indicators
     
+    config = get_quality_config()
+    
     # Analyze each node for contamination risk
     for node_id in data['node_id'].unique():
         node_data = data[data['node_id'] == node_id]
         
-        # Temperature-based contamination risk
-        temp_risk = (node_data['temperature'] > 25).mean()
+        # Temperature-based contamination risk using configuration
+        temp_risk = (node_data['temperature'] > config.temperature.alert_threshold).mean()
         
-        # Quality-based contamination risk
-        quality_risk = (node_data['overall_quality'] < 0.7).mean()
+        # Quality-based contamination risk using configuration
+        quality_risk = (node_data['overall_quality'] < config.quality_score.good).mean()
         
-        # Flow-based contamination risk (stagnation)
-        flow_risk = (node_data['flow_rate'] < 0.5).mean()
+        # Flow-based contamination risk using configuration
+        flow_risk = (node_data['flow_rate'] < config.flow.stagnation).mean()
         
         # Combined risk assessment
         combined_risk = (temp_risk + quality_risk + flow_risk) / 3.0
@@ -621,17 +625,9 @@ def generate_node_quality_profiles(data: pd.DataFrame) -> List[NodeQualityProfil
             "pressure_stability": node_data['pressure'].std()
         }
         
-        # Quality grade
-        if overall_score >= 90:
-            quality_grade = "A"
-        elif overall_score >= 80:
-            quality_grade = "B"
-        elif overall_score >= 70:
-            quality_grade = "C"
-        elif overall_score >= 60:
-            quality_grade = "D"
-        else:
-            quality_grade = "F"
+        # Quality grade using configuration
+        config = get_quality_config()
+        quality_grade = config.quality_grades.get_grade(overall_score).value
         
         profiles.append(NodeQualityProfile(
             node_id=str(node_id),

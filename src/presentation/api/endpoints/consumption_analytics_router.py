@@ -275,13 +275,13 @@ async def get_consumption_analytics():
             segment_name = row['segment_name']
             node_count = int(row['count'])
             avg_daily = float(row['avg_daily'])
-            percentage = (node_count / total_nodes * 100) if total_nodes > 0 else 0
+            percentage = round((node_count / total_nodes * 100), 1) if total_nodes > 0 else 0
             
             user_segments.append(UserSegment(
                 segment=segment_name,
                 user_count=node_count * 200,
                 percentage=percentage,
-                avg_daily_consumption=avg_daily,
+                avg_daily_consumption=round(avg_daily, 1),
                 trend="stable"
             ))
         
