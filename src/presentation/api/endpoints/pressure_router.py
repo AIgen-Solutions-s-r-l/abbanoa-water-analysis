@@ -27,6 +27,71 @@ async def get_db_connection():
 @router.get("/pressure/zones")
 async def get_pressure_zones() -> Dict[str, List[Dict[str, Any]]]:
     """Get pressure zones summary data using real database tables."""
+    # Check if we should use mock data
+    use_mock = os.getenv('USE_MOCK_API', 'false').lower() == 'true'
+    
+    if use_mock:
+        # Return mock data for testing
+        return {
+            "zones": [
+                {
+                    "zone": "Z01",
+                    "zoneName": "Zona Centro", 
+                    "minPressure": 3.2,
+                    "avgPressure": 4.5,
+                    "maxPressure": 5.8,
+                    "nodeCount": 15,
+                    "nodesWithData": 14,
+                    "efficiency": 96.5,
+                    "status": "optimal"
+                },
+                {
+                    "zone": "Z02",
+                    "zoneName": "Zona Nord",
+                    "minPressure": 2.8,
+                    "avgPressure": 3.9,
+                    "maxPressure": 5.2,
+                    "nodeCount": 12,
+                    "nodesWithData": 12,
+                    "efficiency": 94.2,
+                    "status": "normal"
+                },
+                {
+                    "zone": "Z03",
+                    "zoneName": "Zona Sud",
+                    "minPressure": 2.1,
+                    "avgPressure": 2.7,
+                    "maxPressure": 3.5,
+                    "nodeCount": 10,
+                    "nodesWithData": 9,
+                    "efficiency": 88.5,
+                    "status": "warning"
+                },
+                {
+                    "zone": "Z04",
+                    "zoneName": "Zona Est",
+                    "minPressure": 4.0,
+                    "avgPressure": 4.8,
+                    "maxPressure": 5.5,
+                    "nodeCount": 18,
+                    "nodesWithData": 18,
+                    "efficiency": 97.2,
+                    "status": "optimal"
+                },
+                {
+                    "zone": "Z05",
+                    "zoneName": "Zona Ovest",
+                    "minPressure": 3.5,
+                    "avgPressure": 4.2,
+                    "maxPressure": 4.9,
+                    "nodeCount": 14,
+                    "nodesWithData": 13,
+                    "efficiency": 95.8,
+                    "status": "normal"
+                }
+            ]
+        }
+    
     conn = None
     try:
         conn = await get_db_connection()
