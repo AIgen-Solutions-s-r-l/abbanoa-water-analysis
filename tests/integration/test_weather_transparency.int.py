@@ -173,3 +173,7 @@ class TestWeatherDataSourceFailover:
             # Should have both real and estimated data
             assert "real" in sources
             assert "estimated" in sources
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
