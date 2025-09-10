@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.4.1] - 2025-09-10
+
+### Fixed
+- **Infrastructure API**: Removed hardcoded mock data from infrastructure endpoints (#36)
+  - Replaced `get_mock_infrastructure_data()` function with real PostgreSQL queries
+  - Infrastructure data now fetched from `water_infrastructure.nodes` and `pipes` tables
+  - Added real-time pipe connection data from database
+  - Improved error handling to return proper HTTP status codes (503/500) instead of fallback mock data
+
+### Changed
+- Added `DEFAULT_LATITUDE` and `DEFAULT_LONGITUDE` constants for missing coordinates
+- Removed unused `nodes` parameter from `get_pipes_data()` function
+
+### Testing
+- Added comprehensive integration tests for infrastructure endpoints
+- Validated mock data removal and real database queries
+
 ## [2.2.0] - 2024-12-09
 
 ### Added
