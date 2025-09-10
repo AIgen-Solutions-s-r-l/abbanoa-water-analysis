@@ -1,17 +1,19 @@
 """Infrastructure data API endpoints for map and network visualization."""
 
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import asyncpg
 import os
 import logging
-import random
-
 from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/infrastructure", tags=["infrastructure"])
+
+# Default coordinates for Sardinia region when node coordinates are missing
+DEFAULT_LATITUDE = 40.9179
+DEFAULT_LONGITUDE = 9.4944
 
 # Database configuration
 DB_CONFIG = {
@@ -32,145 +34,59 @@ async def get_db_connection():
         return None
 
 
-def get_mock_infrastructure_data() -> Dict[str, Any]:
-    """Generate mock infrastructure data for testing."""
-    # Fixed real-world coordinates for water infrastructure nodes
-    # Based on actual Sardinian water network topology
+async def get_pipes_data(conn) -> List[Dict[str, Any]]:
+    """Get pipe connections from database."""
+    if not conn:
+        return []
     
-    FIXED_NODE_COORDINATES = {
-        # SELARGIUS nodes - distributed across the municipality
-        "SEL_001": {"lat": 39.2599, "lon": 9.1628, "name": "SELARGIUS_1", "type": "source"},
-        "SEL_002": {"lat": 39.2612, "lon": 9.1645, "name": "SELARGIUS_2", "type": "distribution"},
-        "SEL_003": {"lat": 39.2585, "lon": 9.1612, "name": "SELARGIUS_3", "type": "junction"},
-        "SEL_004": {"lat": 39.2603, "lon": 9.1598, "name": "SELARGIUS_4", "type": "junction"},
-        "SEL_005": {"lat": 39.2621, "lon": 9.1655, "name": "SELARGIUS_5", "type": "distribution"},
-        "SEL_006": {"lat": 39.2577, "lon": 9.1635, "name": "SELARGIUS_6", "type": "storage"},
+    try:
+        # Query pipes from database
+        pipes_query = """
+            SELECT 
+                p.pipe_id,
+                p.from_node_id,
+                p.to_node_id,
+                p.diameter_mm,
+                p.material,
+                p.length_m,
+                n1.latitude as from_lat,
+                n1.longitude as from_lon,
+                n2.latitude as to_lat,
+                n2.longitude as to_lon,
+                COALESCE(sr.flow_rate, 0.0) as flow_rate
+            FROM water_infrastructure.pipes p
+            INNER JOIN water_infrastructure.nodes n1 ON p.from_node_id = n1.node_id
+            INNER JOIN water_infrastructure.nodes n2 ON p.to_node_id = n2.node_id
+            LEFT JOIN water_infrastructure.sensor_readings sr ON sr.pipe_id = p.pipe_id
+                AND sr.timestamp = (
+                    SELECT MAX(timestamp) 
+                    FROM water_infrastructure.sensor_readings 
+                    WHERE pipe_id = p.pipe_id
+                )
+            WHERE p.is_active = true
+        """
         
-        # QUARTUCCIU nodes - distributed across the municipality
-        "QUA_001": {"lat": 39.2474, "lon": 9.1844, "name": "QUARTUCCIU_1", "type": "source"},
-        "QUA_002": {"lat": 39.2488, "lon": 9.1862, "name": "QUARTUCCIU_2", "type": "distribution"},
-        "QUA_003": {"lat": 39.2461, "lon": 9.1828, "name": "QUARTUCCIU_3", "type": "junction"},
-        "QUA_004": {"lat": 39.2495, "lon": 9.1855, "name": "QUARTUCCIU_4", "type": "distribution"},
-        "QUA_005": {"lat": 39.2468, "lon": 9.1875, "name": "QUARTUCCIU_5", "type": "storage"},
+        pipes_data = await conn.fetch(pipes_query)
         
-        # CAGLIARI main distribution nodes
-        "DIST_001": {"lat": 39.2238, "lon": 9.1217, "name": "Cagliari DIST_001", "type": "distribution"},
-        "NODE_287156": {"lat": 39.2251, "lon": 9.1198, "name": "Cagliari NODE_287156", "type": "junction"},
-        "NODE_288400": {"lat": 39.2225, "lon": 9.1234, "name": "Cagliari NODE_288400", "type": "junction"},
-        "SERBATOIO_001": {"lat": 39.2264, "lon": 9.1185, "name": "Cagliari SERBATOIO_001", "type": "storage"},
-    }
-    
-    nodes = []
-    
-    # Create nodes with fixed coordinates
-    for node_id, node_data in FIXED_NODE_COORDINATES.items():
-        # Generate varying operational data (flow and pressure change, positions don't)
-        flow_rate = random.uniform(15, 60) if node_id.startswith("SEL") else \
-                   random.uniform(12, 55) if node_id.startswith("QUA") else \
-                   random.uniform(20, 80)
-        
-        pressure = random.uniform(3.0, 5.0) if node_id.startswith("SEL") else \
-                  random.uniform(2.8, 4.8) if node_id.startswith("QUA") else \
-                  random.uniform(3.5, 5.5)
-        
-        node = {
-            "id": node_id,
-            "name": node_data["name"],
-            "type": node_data["type"],
-            "latitude": node_data["lat"],
-            "longitude": node_data["lon"],
-            "status": "active",
-            "flow_rate": flow_rate,
-            "pressure": pressure,
-            "has_anomaly": random.random() < 0.10,
-            "last_reading": datetime.now(timezone.utc).isoformat()
-        }
-        nodes.append(node)
-    
-    # Calculate metrics
-    total_flow = sum(n['flow_rate'] for n in nodes)
-    avg_pressure = sum(n['pressure'] for n in nodes) / len(nodes)
-    network_health = min(95.0, (avg_pressure / 3.0) * 100)
-    active_alerts = sum(1 for n in nodes if n['has_anomaly'])
-    
-    # Fixed pipe connections based on real network topology
-    FIXED_PIPE_CONNECTIONS = [
-        # Selargius internal network
-        {"from": "SEL_001", "to": "SEL_002", "diameter": 300, "material": "PVC"},
-        {"from": "SEL_002", "to": "SEL_003", "diameter": 250, "material": "HDPE"},
-        {"from": "SEL_003", "to": "SEL_004", "diameter": 250, "material": "PVC"},
-        {"from": "SEL_004", "to": "SEL_005", "diameter": 300, "material": "HDPE"},
-        {"from": "SEL_005", "to": "SEL_006", "diameter": 350, "material": "PVC"},
-        
-        # Quartucciu internal network
-        {"from": "QUA_001", "to": "QUA_002", "diameter": 280, "material": "PVC"},
-        {"from": "QUA_002", "to": "QUA_003", "diameter": 250, "material": "Steel"},
-        {"from": "QUA_003", "to": "QUA_004", "diameter": 280, "material": "PVC"},
-        {"from": "QUA_004", "to": "QUA_005", "diameter": 320, "material": "HDPE"},
-        
-        # Cagliari main network
-        {"from": "DIST_001", "to": "NODE_287156", "diameter": 500, "material": "Steel"},
-        {"from": "NODE_287156", "to": "NODE_288400", "diameter": 450, "material": "Cast Iron"},
-        {"from": "NODE_288400", "to": "SERBATOIO_001", "diameter": 500, "material": "Steel"},
-        
-        # Inter-network connections
-        {"from": "DIST_001", "to": "SEL_001", "diameter": 400, "material": "Steel"},
-        {"from": "NODE_288400", "to": "QUA_001", "diameter": 380, "material": "Steel"},
-    ]
-    
-    pipes = []
-    nodes_dict = {n['id']: n for n in nodes}
-    
-    for i, connection in enumerate(FIXED_PIPE_CONNECTIONS):
-        from_node = nodes_dict.get(connection["from"])
-        to_node = nodes_dict.get(connection["to"])
-        
-        if from_node and to_node:
-            # Generate varying flow rate (only this changes, not the connections)
-            flow_rate = random.uniform(15, 50)
-            
+        pipes = []
+        for row in pipes_data:
             pipes.append({
-                "pipe_id": f"PIPE_{i:03d}",
-                "from_node_id": from_node['id'],
-                "to_node_id": to_node['id'],
-                "from_lat": from_node['latitude'],
-                "from_lon": from_node['longitude'],
-                "to_lat": to_node['latitude'],
-                "to_lon": to_node['longitude'],
-                "diameter_mm": connection["diameter"],
-                "material": connection["material"],
-                "flow_rate": flow_rate
+                "pipe_id": row['pipe_id'],
+                "from_node_id": row['from_node_id'],
+                "to_node_id": row['to_node_id'],
+                "from_lat": float(row['from_lat']) if row['from_lat'] else None,
+                "from_lon": float(row['from_lon']) if row['from_lon'] else None,
+                "to_lat": float(row['to_lat']) if row['to_lat'] else None,
+                "to_lon": float(row['to_lon']) if row['to_lon'] else None,
+                "diameter_mm": row['diameter_mm'],
+                "material": row['material'],
+                "flow_rate": float(row['flow_rate']) if row['flow_rate'] else 0.0
             })
-    
-    return {
-        "network_health": network_health,
-        "total_flow": total_flow,
-        "avg_pressure": avg_pressure,
-        "active_alerts": active_alerts,
-        "nodes": nodes,
-        "pipes": pipes,
-        "zones": [
-            {
-                "id": "zone_central",
-                "name": "Central District",
-                "node_count": 5,
-                "efficiency": 92.5
-            },
-            {
-                "id": "zone_north",
-                "name": "North District",
-                "node_count": 5,
-                "efficiency": 88.3
-            },
-            {
-                "id": "zone_south",
-                "name": "South District",
-                "node_count": 5,
-                "efficiency": 94.1
-            }
-        ],
-        "last_updated": datetime.now(timezone.utc).isoformat()
-    }
+        
+        return pipes
+    except Exception as e:
+        logger.warning(f"Could not fetch pipes data: {e}")
+        return []
 
 
 @router.get("/map-data")
@@ -228,8 +144,8 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
                 "id": row['node_id'],
                 "name": row['node_name'],
                 "type": row['node_type'] or "distribution",
-                "latitude": float(row['latitude']) if row['latitude'] else 40.9179,
-                "longitude": float(row['longitude']) if row['longitude'] else 9.4944,
+                "latitude": float(row['latitude']) if row['latitude'] else DEFAULT_LATITUDE,
+                "longitude": float(row['longitude']) if row['longitude'] else DEFAULT_LONGITUDE,
                 "status": "active" if row['is_active'] else "inactive",
                 "flow_rate": flow_rate,
                 "pressure": pressure,
@@ -300,7 +216,7 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
             "avg_pressure": avg_pressure,
             "active_alerts": active_alerts,
             "nodes": nodes,
-            "pipes": [],  # To be implemented when pipe data is available
+            "pipes": await get_pipes_data(conn),
             "zones": zones,
             "last_updated": datetime.now(timezone.utc).isoformat()
         }
@@ -403,8 +319,8 @@ async def get_node_details(node_id: str) -> Dict[str, Any]:
             "name": node_data['node_name'],
             "type": node_data['node_type'] or "distribution",
             "location": {
-                "latitude": float(node_data['latitude']) if node_data['latitude'] else 40.9179,
-                "longitude": float(node_data['longitude']) if node_data['longitude'] else 9.4944
+                "latitude": float(node_data['latitude']) if node_data['latitude'] else DEFAULT_LATITUDE,
+                "longitude": float(node_data['longitude']) if node_data['longitude'] else DEFAULT_LONGITUDE
             },
             "status": "active" if node_data['is_active'] else "inactive",
             "description": node_data['description'],
