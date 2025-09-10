@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.5.0] - 2025-09-10
+
+### Added
+- **KPI Real Calculations**: Replaced mock calculations with real sensor-based metrics (#37)
+  - System Performance KPIs now calculated from actual sensor readings
+  - Network Efficiency metrics derived from flow, pressure, and energy data
+  - All calculations follow industry-standard formulas
+
+### Changed
+- System Performance Service: Uptime, response time, throughput, error rate, CPU/memory, and availability metrics now use real data
+- Network Efficiency Service: Water loss, pressure, flow, energy, coverage, and distribution efficiency calculated from PostgreSQL
+- All KPI methods return `Optional[float]` for proper null handling
+- Added comprehensive validation for insufficient data scenarios
+
+### Testing
+- Added integration tests for all KPI calculation methods
+- Validated removal of all hardcoded percentage values
+- Test coverage for null handling and edge cases
+
 ## [2.4.1] - 2025-09-10
 
 ### Fixed
