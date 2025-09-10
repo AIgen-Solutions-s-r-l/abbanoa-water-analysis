@@ -221,37 +221,108 @@ class SystemPerformanceService:
         return cards
     
     # Private helper methods
-    def _calculate_uptime_percentage(self, system_data: Any) -> float:
-        """Calculate system uptime percentage."""
-        # Mock calculation - replace with actual logic
-        return 99.5
+    def _calculate_uptime_percentage(self, system_data: Any) -> Optional[float]:
+        """Calculate system uptime percentage from sensor readings."""
+        if not system_data or 'sensor_readings' not in system_data:
+            return None
+        
+        readings = system_data.get('sensor_readings', [])
+        if not readings:
+            return None
+        
+        # Count active vs inactive periods
+        total_periods = len(readings)
+        active_periods = sum(1 for r in readings if r.get('status') == 'active')
+        
+        if total_periods == 0:
+            return None
+        
+        return (active_periods / total_periods) * 100
     
-    def _calculate_average_response_time(self, system_data: Any) -> float:
-        """Calculate average response time in milliseconds."""
-        # Mock calculation - replace with actual logic
-        return 150.0
+    def _calculate_average_response_time(self, system_data: Any) -> Optional[float]:
+        """Calculate average response time in milliseconds from sensor data."""
+        if not system_data or 'response_times' not in system_data:
+            return None
+        
+        response_times = system_data.get('response_times', [])
+        if not response_times:
+            return None
+        
+        # Calculate average
+        return sum(response_times) / len(response_times)
     
-    def _calculate_system_throughput(self, system_data: Any) -> float:
-        """Calculate system throughput in requests per second."""
-        # Mock calculation - replace with actual logic
-        return 1000.0
+    def _calculate_system_throughput(self, system_data: Any) -> Optional[float]:
+        """Calculate system throughput from flow rate sensors."""
+        if not system_data:
+            return None
+        
+        flow_rates = system_data.get('flow_rates', [])
+        if not flow_rates:
+            return None
+        
+        # Calculate total flow over time interval
+        total_flow = sum(flow_rates)
+        time_interval = system_data.get('time_interval', 3600)  # Default 1 hour
+        
+        if time_interval <= 0:
+            return None
+        
+        # Return flow per hour
+        return total_flow / (time_interval / 3600)
     
-    def _calculate_error_rate(self, system_data: Any) -> float:
-        """Calculate error rate percentage."""
-        # Mock calculation - replace with actual logic
-        return 0.1
+    def _calculate_error_rate(self, system_data: Any) -> Optional[float]:
+        """Calculate error rate percentage from anomaly data."""
+        if not system_data:
+            return None
+        
+        total_operations = system_data.get('total_operations', 0)
+        if total_operations <= 0:
+            return None
+        
+        anomalies = system_data.get('anomalies', [])
+        error_count = sum(1 for a in anomalies if a.get('type') == 'error')
+        
+        return (error_count / total_operations) * 100
     
-    def _calculate_cpu_utilization(self, system_data: Any) -> float:
-        """Calculate CPU utilization percentage."""
-        # Mock calculation - replace with actual logic
-        return 65.0
+    def _calculate_cpu_utilization(self, system_data: Any) -> Optional[float]:
+        """Calculate CPU utilization percentage from system metrics."""
+        if not system_data:
+            return None
+        
+        cpu_readings = system_data.get('cpu_readings', [])
+        if not cpu_readings:
+            # Try to get from system metrics
+            system_metrics = system_data.get('system_metrics', {})
+            return system_metrics.get('cpu_usage')
+        
+        # Average of CPU readings
+        return sum(cpu_readings) / len(cpu_readings)
     
-    def _calculate_memory_utilization(self, system_data: Any) -> float:
-        """Calculate memory utilization percentage."""
-        # Mock calculation - replace with actual logic
-        return 70.0
+    def _calculate_memory_utilization(self, system_data: Any) -> Optional[float]:
+        """Calculate memory utilization percentage from system metrics."""
+        if not system_data:
+            return None
+        
+        memory_readings = system_data.get('memory_readings', [])
+        if not memory_readings:
+            # Try to get from system metrics
+            system_metrics = system_data.get('system_metrics', {})
+            return system_metrics.get('memory_usage')
+        
+        # Average of memory readings
+        return sum(memory_readings) / len(memory_readings)
     
-    def _calculate_system_availability(self, system_data: Any) -> float:
-        """Calculate system availability percentage."""
-        # Mock calculation - replace with actual logic
-        return 99.9 
+    def _calculate_system_availability(self, system_data: Any) -> Optional[float]:
+        """Calculate system availability percentage from uptime and maintenance windows."""
+        if not system_data:
+            return None
+        
+        # Get total time and downtime
+        total_time = system_data.get('total_time_hours', 0)
+        downtime = system_data.get('downtime_hours', 0)
+        
+        if total_time <= 0:
+            return None
+        
+        uptime = total_time - downtime
+        return (uptime / total_time) * 100 
