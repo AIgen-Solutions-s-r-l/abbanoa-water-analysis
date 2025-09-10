@@ -1,7 +1,7 @@
 """Infrastructure data API endpoints for map and network visualization."""
 
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import asyncpg
 import os
 import logging
@@ -10,6 +10,10 @@ from fastapi import APIRouter, HTTPException, Query
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/infrastructure", tags=["infrastructure"])
+
+# Default coordinates for Sardinia region when node coordinates are missing
+DEFAULT_LATITUDE = 40.9179
+DEFAULT_LONGITUDE = 9.4944
 
 # Database configuration
 DB_CONFIG = {
@@ -30,7 +34,7 @@ async def get_db_connection():
         return None
 
 
-async def get_pipes_data(conn, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+async def get_pipes_data(conn) -> List[Dict[str, Any]]:
     """Get pipe connections from database."""
     if not conn:
         return []
@@ -140,8 +144,8 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
                 "id": row['node_id'],
                 "name": row['node_name'],
                 "type": row['node_type'] or "distribution",
-                "latitude": float(row['latitude']) if row['latitude'] else 40.9179,
-                "longitude": float(row['longitude']) if row['longitude'] else 9.4944,
+                "latitude": float(row['latitude']) if row['latitude'] else DEFAULT_LATITUDE,
+                "longitude": float(row['longitude']) if row['longitude'] else DEFAULT_LONGITUDE,
                 "status": "active" if row['is_active'] else "inactive",
                 "flow_rate": flow_rate,
                 "pressure": pressure,
@@ -212,7 +216,7 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
             "avg_pressure": avg_pressure,
             "active_alerts": active_alerts,
             "nodes": nodes,
-            "pipes": await get_pipes_data(conn, nodes),
+            "pipes": await get_pipes_data(conn),
             "zones": zones,
             "last_updated": datetime.now(timezone.utc).isoformat()
         }
@@ -315,8 +319,8 @@ async def get_node_details(node_id: str) -> Dict[str, Any]:
             "name": node_data['node_name'],
             "type": node_data['node_type'] or "distribution",
             "location": {
-                "latitude": float(node_data['latitude']) if node_data['latitude'] else 40.9179,
-                "longitude": float(node_data['longitude']) if node_data['longitude'] else 9.4944
+                "latitude": float(node_data['latitude']) if node_data['latitude'] else DEFAULT_LATITUDE,
+                "longitude": float(node_data['longitude']) if node_data['longitude'] else DEFAULT_LONGITUDE
             },
             "status": "active" if node_data['is_active'] else "inactive",
             "description": node_data['description'],
