@@ -21,8 +21,8 @@ module.exports = {
     {
       name: 'abbanoa-postgres-api',
       cwd: '/root/abbanoa-water-analysis',
-      script: 'src/servers/sqlalchemy_server.py',
-      interpreter: '/root/abbanoa-water-analysis/venv/bin/python',
+      script: 'python3',
+      args: '-m uvicorn src.presentation.api.app_postgres:app --reload --host 0.0.0.0 --port 8000',
       env: {
         PYTHONPATH: '/root/abbanoa-water-analysis',
         PORT: 8000
