@@ -151,7 +151,8 @@ async def get_consumption_analytics():
             AND timestamp >= NOW() - INTERVAL '24 hours'
         """
         efficiency_data = await conn.fetchrow(efficiency_query)
-        system_efficiency = float(efficiency_data['avg_quality'] or 85) / 100
+        # quality_score is already between 0 and 1, no need to divide by 100
+        system_efficiency = float(efficiency_data['avg_quality'] or 0.85)
         
         # Calculate water loss from pressure variations
         pressure_query = """
@@ -164,15 +165,16 @@ async def get_consumption_analytics():
         """
         pressure_data = await conn.fetchrow(pressure_query)
         # Higher pressure variation = more water loss
-        water_loss_percentage = float(pressure_data['pressure_variation'] or 2) * 3.5
+        water_loss_raw = float(pressure_data['pressure_variation'] or 2) * 3.5
+        water_loss_percentage = round(min(water_loss_raw, 20), 1)  # Cap at 20% and round to 1 decimal
         
         summary = ConsumptionSummary(
-            total_daily_consumption=total_daily_consumption,
-            total_monthly_consumption=total_monthly_consumption,
+            total_daily_consumption=round(total_daily_consumption, 0),
+            total_monthly_consumption=round(total_monthly_consumption, 0),
             total_users=total_users,
-            avg_consumption_per_user=avg_consumption_per_user,
-            system_efficiency=system_efficiency,
-            water_loss_percentage=min(water_loss_percentage, 20)  # Cap at 20%
+            avg_consumption_per_user=round(avg_consumption_per_user, 1),
+            system_efficiency=round(system_efficiency, 3),  # Keep 3 decimals for precision (0.950 = 95%)
+            water_loss_percentage=water_loss_percentage
         )
         
         # Get real district consumption from pressure zones

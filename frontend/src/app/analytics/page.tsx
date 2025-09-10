@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">System Efficiency</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {analyticsData.systemEfficiency}%
+                  {analyticsData.systemEfficiency.toFixed(1)}%
                 </p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm font-medium text-green-600">↗ Real-time</span>
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Water Loss Rate</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {analyticsData.waterLossRate}%
+                  {analyticsData.waterLossRate.toFixed(1)}%
                 </p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm font-medium text-green-600">↘ Calculated</span>
@@ -421,7 +421,7 @@ export default function AnalyticsPage() {
               </p>
               <div className="bg-green-100 dark:bg-green-800/50 rounded p-2">
                 <p className="text-xs text-green-900 dark:text-green-100">
-                  🤖 <strong>AI Recommendation:</strong> System efficiency at {analyticsData.systemEfficiency}% enables smart scheduling for 10% energy savings
+                  🤖 <strong>AI Recommendation:</strong> System efficiency at {analyticsData.systemEfficiency.toFixed(1)}% enables smart scheduling for 10% energy savings
                 </p>
               </div>
             </div>
