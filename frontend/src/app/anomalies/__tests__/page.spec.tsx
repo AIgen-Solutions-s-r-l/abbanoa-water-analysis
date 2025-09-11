@@ -51,7 +51,7 @@ describe('AnomaliesPage', () => {
     await waitFor(() => {
       // Check that fetch was called with the hours parameter for 1 week (168 hours)
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/anomalies?hours=168')
+        expect.stringContaining('/api/proxy/v1/anomalies?hours=168')
       );
     });
 

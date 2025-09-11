@@ -128,7 +128,7 @@ export default function ConsumptionAnalyticsPage() {
 
   const fetchForecastData = async () => {
     try {
-      const response = await fetch(`/api/v1/consumption/forecast/${selectedDistrict}`);
+      const response = await fetch(`/api/proxy/v1/consumption/forecast/${selectedDistrict}`);
       if (response.ok) {
         const data = await response.json();
         setForecastData(data);
@@ -141,12 +141,12 @@ export default function ConsumptionAnalyticsPage() {
   const fetchConsumptionData = async () => {
     try {
       // Fetch consumption analytics
-      const analyticsResponse = await fetch('/api/v1/consumption/analytics');
+      const analyticsResponse = await fetch('/api/proxy/v1/consumption/analytics');
       const analyticsJson = await analyticsResponse.json();
       setAnalyticsData(analyticsJson);
 
       // Fetch consumption anomalies
-      const anomaliesResponse = await fetch('/api/v1/consumption/anomalies');
+      const anomaliesResponse = await fetch('/api/proxy/v1/consumption/anomalies');
       const anomaliesJson = await anomaliesResponse.json();
       setAnomalies(anomaliesJson.anomalies || []);
 

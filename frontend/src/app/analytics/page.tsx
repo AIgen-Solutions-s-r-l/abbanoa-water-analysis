@@ -10,14 +10,14 @@ const fetchRealAnalyticsData = async () => {
     const calculator = new WaterIndustryCalculator();
     
     // Fetch REAL consumption analytics from PostgreSQL
-    const consumptionResponse = await fetch('/api/v1/consumption/analytics');
+    const consumptionResponse = await fetch('/api/proxy/v1/consumption/analytics');
     const consumptionData = await consumptionResponse.json();
     
     // Also fetch other endpoints for additional data
     const [zonesResponse, nodesResponse, anomaliesResponse] = await Promise.all([
-      fetch('/api/v1/pressure/zones'),
-      fetch('/api/v1/nodes'),
-      fetch('/api/v1/anomalies?hours=168')
+      fetch('/api/proxy/v1/pressure/zones'),
+      fetch('/api/proxy/v1/nodes'),
+      fetch('/api/proxy/v1/anomalies?hours=168')
     ]);
 
     const zonesData = await zonesResponse.json();

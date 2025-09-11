@@ -50,7 +50,7 @@ const ProfilePage = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/v1/profile');
+      const response = await fetch('/api/proxy/v1/profile');
       if (response.ok) {
         const data = await response.json();
         setProfile({
@@ -83,7 +83,7 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/v1/profile', {
+      const response = await fetch('/api/proxy/v1/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

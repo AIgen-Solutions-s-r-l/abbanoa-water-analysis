@@ -14,7 +14,7 @@ interface AnomalyStats {
 export class AnomalyService {
   static async getAnomalies(): Promise<Anomaly[]> {
     // Use the working proxy endpoint directly
-    const response = await fetch('/api/v1/anomalies?hours=168');
+    const response = await fetch('/api/proxy/v1/anomalies?hours=168');
     if (!response.ok) {
       throw new Error(`Failed to fetch anomalies: ${response.status}`);
     }
@@ -51,7 +51,7 @@ export class AnomalyService {
     // This endpoint might not exist in the real backend yet
     // For now, we'll just simulate it
     console.log('Resolving anomaly:', id);
-    // await fetch(`/api/v1/anomalies/${id}/resolve`, { method: 'PUT' });
+    // await fetch(`/api/proxy/v1/anomalies/${id}/resolve`, { method: 'PUT' });
   }
 
   static async getStats(): Promise<AnomalyStats> {

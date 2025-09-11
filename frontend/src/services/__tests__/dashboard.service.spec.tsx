@@ -43,7 +43,7 @@ describe('DashboardService', () => {
       const result = await DashboardService.getMetrics();
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith('/api/v1/dashboard/summary');
+      expect(global.fetch).toHaveBeenCalledWith('/api/proxy/v1/dashboard/summary');
       expect(result).toEqual({
         totalFlow: 1234.5,
         averagePressure: 4.2,
@@ -109,7 +109,7 @@ describe('DashboardService', () => {
       await expect(DashboardService.getMetrics()).rejects.toThrow(
         'Failed to fetch dashboard data: 500'
       );
-      expect(global.fetch).toHaveBeenCalledWith('/api/v1/dashboard/summary');
+      expect(global.fetch).toHaveBeenCalledWith('/api/proxy/v1/dashboard/summary');
     });
 
     it('should throw error when fetch fails', async () => {
@@ -259,7 +259,7 @@ describe('DashboardService', () => {
       const result = await DashboardService.getNetworkStatus();
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith('/api/v1/dashboard/summary');
+      expect(global.fetch).toHaveBeenCalledWith('/api/proxy/v1/dashboard/summary');
       expect(result).toEqual({
         operationalPercentage: 95,
         activeNodes: 145,

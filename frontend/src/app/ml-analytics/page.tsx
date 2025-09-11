@@ -77,7 +77,7 @@ const MLAnalyticsPage = () => {
 
   const fetchMLSummary = async () => {
     try {
-      const response = await fetch('/api/v1/ml/dashboard-summary');
+      const response = await fetch('/api/proxy/v1/ml/dashboard-summary');
       const data = await response.json();
       setMlSummary(data.summary);
     } catch (error) {
@@ -89,7 +89,7 @@ const MLAnalyticsPage = () => {
     setModelTraining(true);
     try {
       const response = await fetch(
-        `/api/v1/ml/train-anomaly-detector?node_id=${selectedNode}&days=7`,
+        `/api/proxy/v1/ml/train-anomaly-detector?node_id=${selectedNode}&days=7`,
         { method: 'POST' }
       );
       const data = await response.json();
@@ -107,7 +107,7 @@ const MLAnalyticsPage = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/v1/ml/detect-anomalies?node_id=${selectedNode}&hours=24`
+        `/api/proxy/v1/ml/detect-anomalies?node_id=${selectedNode}&hours=24`
       );
       const data = await response.json();
       console.log('Anomaly detection response:', data);
@@ -128,7 +128,7 @@ const MLAnalyticsPage = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/v1/ml/predict-demand?district_id=${selectedDistrict}&hours_ahead=24`
+        `/api/proxy/v1/ml/predict-demand?district_id=${selectedDistrict}&hours_ahead=24`
       );
       const data = await response.json();
       setDemandPredictions(data.predictions || []);

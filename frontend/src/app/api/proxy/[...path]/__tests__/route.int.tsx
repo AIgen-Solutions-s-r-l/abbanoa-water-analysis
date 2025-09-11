@@ -34,7 +34,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => mockResponse,
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/dashboard/summary');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/dashboard/summary');
       const params = Promise.resolve({ path: ['v1', 'dashboard', 'summary'] });
 
       // Act
@@ -83,7 +83,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => ({ data: 'nested' }),
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/users/123/profile');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/users/123/profile');
       const params = Promise.resolve({ path: ['v1', 'users', '123', 'profile'] });
 
       // Act
@@ -108,7 +108,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => mockResponse,
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/users', {
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => ({ received: textBody }),
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/upload', {
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',
@@ -186,7 +186,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => mockResponse,
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/users/123', {
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/users/123', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -223,7 +223,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => mockResponse,
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/users/123');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/users/123');
       const params = Promise.resolve({ path: ['v1', 'users', '123'] });
 
       // Act
@@ -251,7 +251,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => ({ success: true }),
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/test', {
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/test', {
         headers: {
           'Authorization': 'Bearer token123',
           'X-Custom-Header': 'custom-value',
@@ -281,7 +281,7 @@ describe('API Proxy Route Integration Tests', () => {
       const networkError = new Error('Network error');
       mockFetch.mockRejectedValueOnce(networkError);
 
-      const request = new NextRequest('http://localhost:3000/api/v1/test');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/test');
       const params = Promise.resolve({ path: ['v1', 'test'] });
 
       // Act
@@ -303,7 +303,7 @@ describe('API Proxy Route Integration Tests', () => {
         },
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/test');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/test');
       const params = Promise.resolve({ path: ['v1', 'test'] });
 
       // Act
@@ -328,7 +328,7 @@ describe('API Proxy Route Integration Tests', () => {
           json: async () => ({ code: statusCode }),
         });
 
-        const request = new NextRequest('http://localhost:3000/api/v1/test');
+        const request = new NextRequest('http://localhost:3000/api/proxy/v1/test');
         const params = Promise.resolve({ path: ['v1', 'test'] });
 
         // Act
@@ -348,7 +348,7 @@ describe('API Proxy Route Integration Tests', () => {
         },
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/test');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/test');
       const params = Promise.resolve({ path: ['v1', 'test'] });
 
       // Act
@@ -370,7 +370,7 @@ describe('API Proxy Route Integration Tests', () => {
         json: async () => ({ data: 'test' }),
       });
 
-      const request = new NextRequest('http://localhost:3000/api/v1/test');
+      const request = new NextRequest('http://localhost:3000/api/proxy/v1/test');
       const params = Promise.resolve({ path: ['v1', 'test'] });
 
       // Act

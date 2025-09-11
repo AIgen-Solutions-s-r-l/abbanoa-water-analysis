@@ -80,7 +80,7 @@ const SettingsPage = () => {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/v1/profile/settings');
+      const response = await fetch('/api/proxy/v1/profile/settings');
       if (response.ok) {
         const data = await response.json();
         setSettings({
@@ -161,7 +161,7 @@ const SettingsPage = () => {
         debug_mode: settings.system.debugMode
       };
 
-      const response = await fetch('/api/v1/profile/settings', {
+      const response = await fetch('/api/proxy/v1/profile/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
