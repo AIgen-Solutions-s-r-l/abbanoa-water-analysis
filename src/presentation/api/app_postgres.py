@@ -119,6 +119,22 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Efficiency routes module not found: {e}")
     
+    # Include anomaly predictions routes
+    try:
+        from .endpoints.anomaly_predictions import router as predictions_router
+        app.include_router(predictions_router, prefix="/api/v1/anomalies")
+        logger.info("Anomaly predictions routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Anomaly predictions routes module not found: {e}")
+    
+    # Include prediction tracking routes
+    try:
+        from .endpoints.prediction_tracking import router as tracking_router
+        app.include_router(tracking_router, prefix="/api/v1/anomalies")
+        logger.info("Prediction tracking routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Prediction tracking routes module not found: {e}")
+    
     # Include infrastructure routes
     try:
         from .endpoints.infrastructure_router import router as infrastructure_router
@@ -142,6 +158,14 @@ async def startup_event():
         logger.info("Reports routes loaded successfully")
     except ImportError as e:
         logger.warning(f"Reports routes module not found: {e}")
+    
+    # Include network topology routes
+    try:
+        from .endpoints.network_topology_router import router as network_topology_router
+        app.include_router(network_topology_router)
+        logger.info("Network topology routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Network topology routes module not found: {e}")
     
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 

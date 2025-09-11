@@ -3,15 +3,8 @@
 from fastapi import APIRouter, HTTPException, Request, Query
 from typing import List, Optional, Dict
 from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 import logging
-
-from src.core.exceptions import (
-    PredictionNotFoundError,
-    InvalidFeedbackError,
-    ReconciliationError,
-    ValidationError
-)
 
 from src.application.services.prediction_tracker import (
     PredictionTracker,
@@ -33,37 +26,17 @@ router = APIRouter(
 
 class FeedbackRequest(BaseModel):
     """Operator feedback for a prediction"""
-    prediction_id: int = Field(..., gt=0, description="Prediction ID")
-    operator_id: str = Field(..., min_length=1, max_length=50, description="Operator identifier")
+    prediction_id: int = Field(..., description="Prediction ID")
+    operator_id: str = Field(..., description="Operator identifier")
     feedback: str = Field(..., description="Feedback type: false_positive, false_negative, correct")
-    notes: Optional[str] = Field(None, max_length=1000, description="Additional notes")
-    
-    @validator('feedback')
-    def validate_feedback_type(cls, v):
-        allowed = {'false_positive', 'false_negative', 'correct', 'uncertain'}
-        if v not in allowed:
-            raise ValueError(f'Feedback must be one of: {allowed}')
-        return v
-    
-    @validator('operator_id')
-    def validate_operator_id(cls, v):
-        if not v.replace('_', '').replace('-', '').isalnum():
-            raise ValueError('Operator ID must be alphanumeric (with _ or - allowed)')
-        return v
+    notes: Optional[str] = Field(None, description="Additional notes")
 
 
 class OutcomeRequest(BaseModel):
     """Mark prediction outcome"""
-    prediction_id: int = Field(..., gt=0)
+    prediction_id: int
     actual_occurred: bool
-    feedback_source: str = Field(default="automatic", max_length=50)
-    
-    @validator('feedback_source')
-    def validate_feedback_source(cls, v):
-        allowed = {'automatic', 'operator', 'system', 'manual'}
-        if v not in allowed:
-            raise ValueError(f'Feedback source must be one of: {allowed}')
-        return v
+    feedback_source: str = "automatic"
 
 
 class MetricsResponse(BaseModel):
@@ -255,54 +228,32 @@ async def get_performance_metrics(
 @router.get("/metrics/history")
 async def get_metrics_history(
     req: Request,
-    days: int = Query(30, ge=7, le=365, description="Days of history"),
-    page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(50, ge=10, le=200, description="Items per page")
-) -> Dict:
-    """Get historical performance metrics with pagination
+    days: int = Query(30, ge=7, le=365, description="Days of history")
+) -> List[Dict]:
+    """Get historical performance metrics
     
     Args:
         req: FastAPI request
         days: Days of history
-        page: Page number
-        per_page: Items per page
         
     Returns:
-        Paginated metrics with metadata
+        List of historical metrics
     """
     try:
         pool = req.app.state.pool if hasattr(req.app.state, 'pool') else None
         if not pool:
             raise HTTPException(status_code=500, detail="Database connection not available")
         
-        # Calculate offset
-        offset = (page - 1) * per_page
-        
-        # Count total items
-        count_query = """
-            SELECT COUNT(*) as total FROM water_infrastructure.model_performance_metrics
-            WHERE calculated_at > NOW() - INTERVAL $1
-        """
-        
-        # Get paginated data
-        data_query = """
+        query = """
             SELECT * FROM water_infrastructure.model_performance_metrics
-            WHERE calculated_at > NOW() - INTERVAL $1
+            WHERE calculated_at > NOW() - INTERVAL '%s days'
             ORDER BY calculated_at DESC
-            LIMIT $2 OFFSET $3
         """
         
         async with pool.acquire() as conn:
-            interval = f"{days} days"
+            rows = await conn.fetch(query % days)
             
-            # Get total count
-            count_row = await conn.fetchrow(count_query, interval)
-            total_items = count_row['total'] if count_row else 0
-            
-            # Get paginated data
-            rows = await conn.fetch(data_query, interval, per_page, offset)
-            
-            items = [
+            return [
                 {
                     "calculated_at": row['calculated_at'].isoformat(),
                     "model_version": row['model_version'],
@@ -313,21 +264,6 @@ async def get_metrics_history(
                 }
                 for row in rows
             ]
-            
-            # Calculate pagination metadata
-            total_pages = (total_items + per_page - 1) // per_page
-            
-            return {
-                "items": items,
-                "pagination": {
-                    "page": page,
-                    "per_page": per_page,
-                    "total_items": total_items,
-                    "total_pages": total_pages,
-                    "has_next": page < total_pages,
-                    "has_prev": page > 1
-                }
-            }
     except Exception as e:
         logger.error(f"Failed to get metrics history: {e}")
         raise HTTPException(status_code=500, detail="Failed to get metrics history")

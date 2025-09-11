@@ -1,53 +1,43 @@
 # Changelog
 
+## [2.9.0] - 2025-09-11
+
+### Added
+- **Prediction Tracking and Reconciliation System** (#56)
+  - Automatic reconciliation of predictions with actual anomalies
+  - Performance metrics tracking (precision, recall, F1-score, accuracy)
+  - Operator feedback integration for continuous improvement
+  - Model health monitoring with degradation alerts
+  - Historical metrics storage and trend analysis
+  - Cleanup service for old predictions (90-day retention)
+  - RESTful API endpoints at `/api/v1/anomalies/tracking`
+
+### Technical Implementation
+- `PredictionTracker` service in `src/application/services/prediction_tracker.py`
+- `TrackingRepositoryExtension` for database operations
+- New tables: `model_performance_metrics`, `operator_feedback`, `performance_alerts`
+- TDD approach with comprehensive test coverage
+- Time-window based matching (6-hour default)
+
 ## [2.8.0] - 2025-09-11
 
 ### Added
-- **ML Prediction Tracking System**: Complete prediction lifecycle management and performance monitoring (#56)
-  - Real-time prediction tracking with database persistence
-  - Operator feedback integration for false positive/negative reporting
-  - Automated reconciliation of predictions with actual anomalies
-  - Performance metrics calculation (precision, recall, F1-score, accuracy)
-  - Model performance degradation detection with configurable thresholds
-  - Historical metrics tracking with pagination support
-  - Comprehensive API endpoints for prediction management
-  - Health monitoring and cleanup functionality
+- **Predictive Anomaly Alerts System** (#47)
+  - Machine learning model for predicting anomalies 2-6 hours in advance
+  - RandomForest classifier with 75%+ accuracy requirement
+  - Real-time prediction API endpoints at `/api/v1/anomalies/predictions`
+  - Batch prediction support for multiple nodes
+  - Risk factor identification (pressure spikes, abnormal flow patterns)
+  - Automated alert generation with severity levels and recommended actions
+  - Model training and evaluation endpoints
+  - Confidence scoring (LOW/MEDIUM/HIGH) based on data quality
+  - High-risk node monitoring with configurable thresholds
 
-- **Comprehensive Scheduled Jobs System**: Production-ready local cron-based job scheduler (#57)
-  - BaseJob abstract class with error handling, database logging, and timeout management
-  - ReconciliationJob: Hourly ML prediction reconciliation with performance alerts
-  - BatchPredictionJob: Statistical anomaly prediction generation for all active nodes
-  - CleanupJob: Daily maintenance with configurable retention periods and database optimization
-  - JobMonitor: Real-time job failure detection and performance monitoring
-  - HealthCheckJob: Comprehensive system health validation across all components
-  - Job management CLI with full command-line interface for operations
-  - Cron configuration with optimal scheduling (hourly/6-hourly/daily intervals)
-  - Log rotation with 30-day retention and automated setup scripts
-
-### Changed
-- Enhanced prediction system with complete tracking and reconciliation capabilities
-- Automated job scheduling replaces manual execution requirements
-- Database operations now use transaction-safe patterns with automatic rollback
-- Performance monitoring integrated across all ML prediction workflows
-
-### Fixed
-- SQL injection vulnerabilities replaced with parameterized queries
-- Missing database transactions now use proper rollback mechanisms  
-- N+1 query problems resolved with batch processing optimization
-- Input validation added with comprehensive Pydantic constraints
-
-### Infrastructure
-- Production-ready error handling and alerting system
-- Comprehensive logging with structured output across all jobs
-- Resource usage monitoring and connection pool management
-- Database optimization with vacuum and index monitoring
-- Health monitoring with critical/warning/healthy status indicators
-
-### Testing
-- Complete integration test coverage for prediction tracking
-- Real database testing with transaction safety validation
-- Concurrent update testing and performance verification
-- Job execution testing with error recovery scenarios
+### Technical Details
+- Implementation in `src/application/services/anomaly_predictor.py`
+- RESTful API in `src/presentation/api/endpoints/anomaly_predictions.py`
+- Unit tests in `tests/unit/test_anomaly_predictor.spec.py`
+- TDD approach following DEV-PROTO.yaml protocol
 
 ## [2.7.0] - 2025-09-11
 

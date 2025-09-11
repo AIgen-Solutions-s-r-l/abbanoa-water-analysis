@@ -1,18 +1,16 @@
 """Extension methods for prediction tracking in the repository"""
 
 import asyncpg
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List
 from datetime import datetime
 import pandas as pd
 import json
 import logging
 
-from .database_transaction_mixin import DatabaseTransactionMixin
-
 logger = logging.getLogger(__name__)
 
 
-class TrackingRepositoryExtension(DatabaseTransactionMixin):
+class TrackingRepositoryExtension:
     """Repository extension for prediction tracking functionality"""
     
     def __init__(self, pool: asyncpg.Pool):
@@ -51,37 +49,28 @@ class TrackingRepositoryExtension(DatabaseTransactionMixin):
             actual_occurred: Whether anomaly actually occurred
             feedback_source: Source of feedback
         """
-        operations = [
-            ("""
-                ALTER TABLE water_infrastructure.ml_predictions 
-                ADD COLUMN IF NOT EXISTS feedback_source VARCHAR(50)
-            """, []),
-            ("""
-                ALTER TABLE water_infrastructure.ml_predictions
-                ADD COLUMN IF NOT EXISTS outcome_timestamp TIMESTAMP WITH TIME ZONE
-            """, []),
-            ("""
-                UPDATE water_infrastructure.ml_predictions
-                SET actual_occurred = $2,
-                    feedback_at = NOW(),
-                    outcome_timestamp = NOW(),
-                    feedback_source = $3
-                WHERE prediction_id = $1
-            """, [prediction_id, actual_occurred, feedback_source])
-        ]
-        
-        try:
-            async with self.transaction() as conn:
-                for query, args in operations:
-                    if args:
-                        await conn.execute(query, *args)
-                    else:
-                        await conn.execute(query)
+        # First add columns if they don't exist
+        alter_query = """
+            ALTER TABLE water_infrastructure.ml_predictions 
+            ADD COLUMN IF NOT EXISTS feedback_source VARCHAR(50);
             
+            ALTER TABLE water_infrastructure.ml_predictions
+            ADD COLUMN IF NOT EXISTS outcome_timestamp TIMESTAMP WITH TIME ZONE;
+        """
+        
+        update_query = """
+            UPDATE water_infrastructure.ml_predictions
+            SET actual_occurred = $2,
+                feedback_at = NOW(),
+                outcome_timestamp = NOW(),
+                feedback_source = $3
+            WHERE prediction_id = $1
+        """
+        
+        async with self.pool.acquire() as conn:
+            await conn.execute(alter_query)
+            await conn.execute(update_query, prediction_id, actual_occurred, feedback_source)
             logger.info(f"Updated prediction {prediction_id} outcome: {actual_occurred}")
-        except Exception as e:
-            logger.error(f"Failed to update prediction {prediction_id}: {e}")
-            raise
     
     async def get_unreconciled_predictions(self) -> pd.DataFrame:
         """Get predictions that haven't been reconciled
@@ -143,13 +132,12 @@ class TrackingRepositoryExtension(DatabaseTransactionMixin):
                 CASE WHEN probability > 0.7 THEN true ELSE false END as predicted,
                 COALESCE(actual_occurred, false) as actual
             FROM water_infrastructure.ml_predictions
-            WHERE created_at > NOW() - INTERVAL $1
+            WHERE created_at > NOW() - INTERVAL '%s days'
                 AND feedback_at IS NOT NULL
         """
         
         async with self.pool.acquire() as conn:
-            interval = f"{days_back} days"
-            rows = await conn.fetch(query, interval)
+            rows = await conn.fetch(query % days_back)
             if not rows:
                 return pd.DataFrame()
             return pd.DataFrame([dict(row) for row in rows])
@@ -267,13 +255,12 @@ class TrackingRepositoryExtension(DatabaseTransactionMixin):
         """
         query = """
             DELETE FROM water_infrastructure.ml_predictions
-            WHERE created_at < NOW() - INTERVAL $1
+            WHERE created_at < NOW() - INTERVAL '%s days'
             RETURNING prediction_id
         """
         
         async with self.pool.acquire() as conn:
-            interval = f"{retention_days} days"
-            rows = await conn.fetch(query, interval)
+            rows = await conn.fetch(query % retention_days)
             deleted_count = len(rows)
             logger.info(f"Deleted {deleted_count} old predictions")
             return deleted_count
@@ -327,12 +314,11 @@ class TrackingRepositoryExtension(DatabaseTransactionMixin):
         query = """
             SELECT COUNT(*) as count
             FROM water_infrastructure.operator_feedback
-            WHERE created_at > NOW() - INTERVAL $1
+            WHERE created_at > NOW() - INTERVAL '%s days'
         """
         
         async with self.pool.acquire() as conn:
-            interval = f"{days} days"
-            row = await conn.fetchrow(query, interval)
+            row = await conn.fetchrow(query % days)
             return row['count'] if row else 0
     
     async def log_alert(self, alert_type: str, details: Dict):
@@ -361,52 +347,3 @@ class TrackingRepositoryExtension(DatabaseTransactionMixin):
             await conn.execute(create_table)
             await conn.execute(insert_query, alert_type, json.dumps(details))
             logger.warning(f"Performance alert: {alert_type} - {details}")
-    
-    async def batch_update_outcomes(self, outcome_updates: List[Tuple]):
-        """Batch update prediction outcomes in a single transaction
-        
-        Args:
-            outcome_updates: List of (prediction_id, actual_occurred, feedback_source) tuples
-        """
-        if not outcome_updates:
-            return
-        
-        operations = []
-        
-        # Add schema updates first
-        operations.extend([
-            ("""
-                ALTER TABLE water_infrastructure.ml_predictions 
-                ADD COLUMN IF NOT EXISTS feedback_source VARCHAR(50)
-            """, []),
-            ("""
-                ALTER TABLE water_infrastructure.ml_predictions
-                ADD COLUMN IF NOT EXISTS outcome_timestamp TIMESTAMP WITH TIME ZONE
-            """, [])
-        ])
-        
-        # Add all updates
-        update_query = """
-            UPDATE water_infrastructure.ml_predictions
-            SET actual_occurred = $2,
-                feedback_at = NOW(),
-                outcome_timestamp = NOW(),
-                feedback_source = $3
-            WHERE prediction_id = $1
-        """
-        
-        for prediction_id, actual_occurred, feedback_source in outcome_updates:
-            operations.append((update_query, [prediction_id, actual_occurred, feedback_source]))
-        
-        try:
-            async with self.transaction() as conn:
-                for query, args in operations:
-                    if args:
-                        await conn.execute(query, *args)
-                    else:
-                        await conn.execute(query)
-            
-            logger.info(f"Batch updated {len(outcome_updates)} prediction outcomes")
-        except Exception as e:
-            logger.error(f"Failed to batch update outcomes: {e}")
-            raise
