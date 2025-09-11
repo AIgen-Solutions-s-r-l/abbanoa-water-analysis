@@ -3,6 +3,16 @@
 
 A comprehensive water infrastructure monitoring and analysis system built with FastAPI, Next.js, and modern data processing technologies.
 
+## 🚀 New Features
+
+### Predictive Anomaly Alerts System
+Advanced ML-based system for predicting infrastructure anomalies 2-6 hours before they occur:
+- **Real-time predictions** with confidence scoring
+- **Risk factor identification** (pressure spikes, abnormal flow, instability)
+- **Automated alert generation** with recommended actions
+- **Batch predictions** for multiple nodes
+- **RESTful API** at `/api/v1/anomalies/predictions`
+
 ## 🏗️ Project Structure
 
 ```

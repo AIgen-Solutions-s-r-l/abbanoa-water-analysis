@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.8.0] - 2025-09-11
+
+### Added
+- **Predictive Anomaly Alerts System** (#47)
+  - Machine learning model for predicting anomalies 2-6 hours in advance
+  - RandomForest classifier with 75%+ accuracy requirement
+  - Real-time prediction API endpoints at `/api/v1/anomalies/predictions`
+  - Batch prediction support for multiple nodes
+  - Risk factor identification (pressure spikes, abnormal flow patterns)
+  - Automated alert generation with severity levels and recommended actions
+  - Model training and evaluation endpoints
+  - Confidence scoring (LOW/MEDIUM/HIGH) based on data quality
+  - High-risk node monitoring with configurable thresholds
+
+### Technical Details
+- Implementation in `src/application/services/anomaly_predictor.py`
+- RESTful API in `src/presentation/api/endpoints/anomaly_predictions.py`
+- Unit tests in `tests/unit/test_anomaly_predictor.spec.py`
+- TDD approach following DEV-PROTO.yaml protocol
+
 ## [2.7.0] - 2025-09-11
 
 ### Added
