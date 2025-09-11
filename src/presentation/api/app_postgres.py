@@ -127,6 +127,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Anomaly predictions routes module not found: {e}")
     
+    # Include prediction tracking routes
+    try:
+        from .endpoints.prediction_tracking import router as tracking_router
+        app.include_router(tracking_router, prefix="/api/v1/anomalies")
+        logger.info("Prediction tracking routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Prediction tracking routes module not found: {e}")
+    
     # Include infrastructure routes
     try:
         from .endpoints.infrastructure_router import router as infrastructure_router
