@@ -91,7 +91,11 @@ async def get_pipes_data(conn) -> List[Dict[str, Any]]:
 
 @router.get("/map-data")
 async def get_infrastructure_map_data() -> Dict[str, Any]:
-    """Get infrastructure data for map visualization."""
+    """Get infrastructure data for map visualization.
+    
+    Returns complete network topology including nodes, pipes, and zones.
+    Ensures proper connection lifecycle management.
+    """
     conn = None
     try:
         conn = await get_db_connection()
@@ -207,6 +211,9 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
                 }
             ]
         
+        # Get pipes data before closing connection
+        pipes = await get_pipes_data(conn)
+        
         if conn:
             await conn.close()
         
@@ -216,7 +223,7 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
             "avg_pressure": avg_pressure,
             "active_alerts": active_alerts,
             "nodes": nodes,
-            "pipes": await get_pipes_data(conn),
+            "pipes": pipes,
             "zones": zones,
             "last_updated": datetime.now(timezone.utc).isoformat()
         }
@@ -234,8 +241,9 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
         if conn:
             try:
                 await conn.close()
-            except:
-                pass
+                logger.debug("Database connection closed successfully")
+            except Exception as close_error:
+                logger.warning(f"Error closing database connection: {close_error}")
 
 
 @router.get("/nodes/{node_id}")

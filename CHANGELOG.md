@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.9.1] - 2025-09-11
+
+### Fixed
+- **Critical Bug Fix: Infrastructure API Connection Management** (#60)
+  - Fixed "connection is closed" error in `/api/v1/infrastructure/map-data` endpoint
+  - Moved pipes data fetching before connection closure in `infrastructure_router.py:211`
+  - Improved connection lifecycle management with proper error handling
+  - Added debug logging for connection closure events
+  - Prevents incomplete API responses and ensures pipes data is properly returned
+
 ## [2.9.0] - 2025-09-11
 
 ### Added
