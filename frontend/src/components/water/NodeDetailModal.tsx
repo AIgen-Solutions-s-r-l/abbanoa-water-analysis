@@ -57,7 +57,7 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
       setLoading(true);
       
       // Fetch historical data - get last 48 hours of available data
-      const histResponse = await fetch(`/api/proxy/v1/nodes/${node.node_id}/readings?limit=1000`);
+      const histResponse = await fetch(`/api/v1/nodes/${node.node_id}/readings?limit=1000`);
       if (histResponse.ok) {
         const data = await histResponse.json();
         
@@ -109,7 +109,7 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({ node, onClose }) => {
       setPredictions(predData);
 
       // Fetch anomalies
-      const anomResponse = await fetch(`/api/proxy/v1/anomalies?node_id=${node.node_id}&limit=10`);
+      const anomResponse = await fetch(`/api/v1/anomalies?node_id=${node.node_id}&limit=10`);
       if (anomResponse.ok) {
         const data = await anomResponse.json();
         setAnomalies(data.anomalies || []);

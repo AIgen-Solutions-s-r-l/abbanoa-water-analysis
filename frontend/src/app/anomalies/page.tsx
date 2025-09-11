@@ -10,8 +10,8 @@ const fetchRealAnomaliesData = async () => {
   try {
     // Fetch real anomalies data from backend - last 7 days (168 hours)
     const [anomaliesResponse, nodesResponse] = await Promise.all([
-      fetch('/api/proxy/v1/anomalies?hours=168'),
-      fetch('/api/proxy/v1/nodes')
+      fetch('/api/v1/anomalies?hours=168'),
+      fetch('/api/v1/nodes')
     ]);
 
     const anomaliesData = await anomaliesResponse.json();
@@ -93,7 +93,7 @@ export default function AnomaliesPage() {
   // Handle acknowledge function
   const handleAcknowledge = async (anomalyId: string | number) => {
     try {
-      const response = await fetch(`/api/proxy/v1/anomalies/${anomalyId}/acknowledge`, {
+      const response = await fetch(`/api/v1/anomalies/${anomalyId}/acknowledge`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'

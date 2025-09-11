@@ -13,7 +13,7 @@ function DashboardContent() {
   const handleRunAnomalyDetection = async () => {
     setIsRunningDetection(true);
     try {
-      const response = await fetch('/api/proxy/v1/anomalies/detect', {
+      const response = await fetch('/api/v1/anomalies/detect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

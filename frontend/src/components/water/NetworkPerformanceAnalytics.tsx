@@ -99,7 +99,7 @@ const fetchPressureZonesData = async (): Promise<PressureDistribution[]> => {
     console.log('🔄 Fetching pressure zones data...');
     
     // Fetch pressure zones data
-    const pressureResponse = await fetch('/api/proxy/v1/pressure/zones');
+    const pressureResponse = await fetch('/api/v1/pressure/zones');
     
     if (!pressureResponse.ok) {
       console.error('❌ API Response errors:', {
@@ -267,7 +267,7 @@ const generateFallbackEfficiencyData = (): EfficiencyTrend[] => {
 // Function to fetch real efficiency data
 const fetchEfficiencyData = async (): Promise<EfficiencyTrend[]> => {
   try {
-    const response = await fetch('/api/proxy/v1/efficiency/trends?aggregation=weekly');
+    const response = await fetch('/api/v1/efficiency/trends?aggregation=weekly');
     if (!response.ok) {
       console.warn(`⚠️ Efficiency trends endpoint not available (${response.status}), using fallback data`);
       // Return fallback data if endpoint doesn't exist

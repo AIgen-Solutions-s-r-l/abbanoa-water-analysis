@@ -10,7 +10,7 @@ import { WaterCoreMetrics, FlowAnalyticsData, WaterSystemAlert } from '@/lib/typ
 const fetchDashboardData = async () => {
   try {
     const timestamp = new Date().getTime();
-    const response = await fetch(`/api/proxy/v1/dashboard/summary?t=${timestamp}`);
+    const response = await fetch(`/api/v1/dashboard/summary?t=${timestamp}`);
     
     if (!response.ok) {
       console.error('❌ Dashboard API response error:', {
@@ -453,7 +453,7 @@ const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
 // Generate real alerts from anomaly data
 const generateRealAlerts = async (): Promise<WaterSystemAlert[]> => {
   try {
-    const response = await fetch('/api/proxy/v1/anomalies?hours=168');
+    const response = await fetch('/api/v1/anomalies?hours=168');
     if (!response.ok) return [];
     
     const anomalies = await response.json();

@@ -7,9 +7,9 @@ const fetchRealMonitoringData = async () => {
   try {
     // Fetch multiple endpoints in parallel for comprehensive monitoring
     const [dashboardResponse, pressureResponse, anomaliesResponse] = await Promise.all([
-      fetch('/api/proxy/v1/dashboard/summary'),
-      fetch('/api/proxy/v1/pressure/zones'),
-      fetch('/api/proxy/v1/anomalies?hours=168')
+      fetch('/api/v1/dashboard/summary'),
+      fetch('/api/v1/pressure/zones'),
+      fetch('/api/v1/anomalies?hours=168')
     ]);
 
     // Safely parse JSON responses with error handling

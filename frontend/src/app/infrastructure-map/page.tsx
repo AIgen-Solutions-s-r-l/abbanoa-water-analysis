@@ -88,7 +88,7 @@ const InfrastructureMapPage = () => {
   const fetchInfrastructureData = async () => {
     try {
       // Fetch infrastructure data
-      const response = await fetch('/api/proxy/v1/infrastructure/map-data');
+      const response = await fetch('/api/v1/infrastructure/map-data');
       if (!response.ok) throw new Error('Failed to fetch infrastructure data');
       const data = await response.json();
 

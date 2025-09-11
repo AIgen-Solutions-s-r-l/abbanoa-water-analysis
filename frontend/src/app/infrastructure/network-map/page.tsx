@@ -100,7 +100,7 @@ export default function NetworkMapPage() {
     
     try {
       // Fetch topology data
-      const topologyRes = await fetch('/api/proxy/v1/network/topology?include_metrics=true');
+      const topologyRes = await fetch('/api/v1/network/topology?include_metrics=true');
       if (!topologyRes.ok) {
         throw new Error(`Failed to fetch topology: ${topologyRes.statusText}`);
       }
@@ -108,7 +108,7 @@ export default function NetworkMapPage() {
       setTopology(topologyData.topology);
 
       // Fetch hierarchy data
-      const hierarchyRes = await fetch('/api/proxy/v1/network/topology/hierarchy');
+      const hierarchyRes = await fetch('/api/v1/network/topology/hierarchy');
       if (!hierarchyRes.ok) {
         throw new Error(`Failed to fetch hierarchy: ${hierarchyRes.statusText}`);
       }

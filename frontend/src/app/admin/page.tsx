@@ -59,7 +59,7 @@ const AdminPage = () => {
     setLoading(true);
     try {
       if (activeTab === 'users') {
-        const response = await fetch('/api/proxy/v1/users?limit=100');
+        const response = await fetch('/api/v1/users?limit=100');
         if (response.ok) {
           const data = await response.json();
           setUsers(data.users.map((user: { id: string; name: string; email: string; role: string; isActive: boolean; status: string; last_login: string }) => ({
@@ -72,13 +72,13 @@ const AdminPage = () => {
           })));
         }
       } else if (activeTab === 'logs') {
-        const response = await fetch('/api/proxy/v1/audit-logs?limit=50');
+        const response = await fetch('/api/v1/audit-logs?limit=50');
         if (response.ok) {
           const data = await response.json();
           setAuditLogs(data.logs);
         }
       } else if (activeTab === 'system') {
-        const response = await fetch('/api/proxy/v1/system-config');
+        const response = await fetch('/api/v1/system-config');
         if (response.ok) {
           const data = await response.json();
           setSystemConfig(data);
@@ -311,7 +311,7 @@ const AdminPage = () => {
                   const timeout = (document.getElementById('api_timeout') as HTMLInputElement).value;
                   
                   try {
-                    await fetch('/api/proxy/v1/system-config/api_rate_limit', {
+                    await fetch('/api/v1/system-config/api_rate_limit', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -320,7 +320,7 @@ const AdminPage = () => {
                       })
                     });
                     
-                    await fetch('/api/proxy/v1/system-config/api_timeout', {
+                    await fetch('/api/v1/system-config/api_timeout', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({

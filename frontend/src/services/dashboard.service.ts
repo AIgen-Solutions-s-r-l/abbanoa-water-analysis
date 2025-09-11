@@ -19,7 +19,7 @@ interface NetworkStatus {
 export class DashboardService {
   static async getMetrics(): Promise<DashboardMetrics> {
     // Use the working proxy endpoint directly
-    const response = await fetch('/api/proxy/v1/dashboard/summary');
+    const response = await fetch('/api/v1/dashboard/summary');
     if (!response.ok) {
       throw new Error(`Failed to fetch dashboard data: ${response.status}`);
     }
@@ -64,7 +64,7 @@ export class DashboardService {
 
   static async getNetworkStatus(): Promise<NetworkStatus> {
     // Use the working proxy endpoint directly
-    const response = await fetch('/api/proxy/v1/dashboard/summary');
+    const response = await fetch('/api/v1/dashboard/summary');
     if (!response.ok) {
       throw new Error(`Failed to fetch dashboard data: ${response.status}`);
     }
