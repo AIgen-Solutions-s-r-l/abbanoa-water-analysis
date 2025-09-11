@@ -1,5 +1,54 @@
 # Changelog
 
+## [2.8.0] - 2025-09-11
+
+### Added
+- **ML Prediction Tracking System**: Complete prediction lifecycle management and performance monitoring (#56)
+  - Real-time prediction tracking with database persistence
+  - Operator feedback integration for false positive/negative reporting
+  - Automated reconciliation of predictions with actual anomalies
+  - Performance metrics calculation (precision, recall, F1-score, accuracy)
+  - Model performance degradation detection with configurable thresholds
+  - Historical metrics tracking with pagination support
+  - Comprehensive API endpoints for prediction management
+  - Health monitoring and cleanup functionality
+
+- **Comprehensive Scheduled Jobs System**: Production-ready local cron-based job scheduler (#57)
+  - BaseJob abstract class with error handling, database logging, and timeout management
+  - ReconciliationJob: Hourly ML prediction reconciliation with performance alerts
+  - BatchPredictionJob: Statistical anomaly prediction generation for all active nodes
+  - CleanupJob: Daily maintenance with configurable retention periods and database optimization
+  - JobMonitor: Real-time job failure detection and performance monitoring
+  - HealthCheckJob: Comprehensive system health validation across all components
+  - Job management CLI with full command-line interface for operations
+  - Cron configuration with optimal scheduling (hourly/6-hourly/daily intervals)
+  - Log rotation with 30-day retention and automated setup scripts
+
+### Changed
+- Enhanced prediction system with complete tracking and reconciliation capabilities
+- Automated job scheduling replaces manual execution requirements
+- Database operations now use transaction-safe patterns with automatic rollback
+- Performance monitoring integrated across all ML prediction workflows
+
+### Fixed
+- SQL injection vulnerabilities replaced with parameterized queries
+- Missing database transactions now use proper rollback mechanisms  
+- N+1 query problems resolved with batch processing optimization
+- Input validation added with comprehensive Pydantic constraints
+
+### Infrastructure
+- Production-ready error handling and alerting system
+- Comprehensive logging with structured output across all jobs
+- Resource usage monitoring and connection pool management
+- Database optimization with vacuum and index monitoring
+- Health monitoring with critical/warning/healthy status indicators
+
+### Testing
+- Complete integration test coverage for prediction tracking
+- Real database testing with transaction safety validation
+- Concurrent update testing and performance verification
+- Job execution testing with error recovery scenarios
+
 ## [2.7.0] - 2025-09-11
 
 ### Added
