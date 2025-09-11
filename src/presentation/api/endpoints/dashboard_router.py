@@ -2,33 +2,20 @@
 
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List
-import asyncpg
-import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from src.presentation.api.core.database import get_db_connection
+from src.presentation.api.core.error_handling import handle_database_errors
 
 router = APIRouter(prefix="/api/v1", tags=["dashboard"])
 
-# Database configuration
-DB_CONFIG = {
-    'host': os.getenv('POSTGRES_HOST', 'localhost'),
-    'port': int(os.getenv('POSTGRES_PORT', '5432')),
-    'database': os.getenv('POSTGRES_DB', 'abbanoa_processing'),
-    'user': os.getenv('POSTGRES_USER', 'abbanoa_user'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'abbanoa_secure_pass')
-}
-
-
-async def get_db_connection():
-    """Get database connection."""
-    return await asyncpg.connect(**DB_CONFIG)
-
 
 @router.get("/dashboard/summary")
+@handle_database_errors
 async def get_dashboard_summary() -> Dict[str, Any]:
     """Get summary data for dashboard display with latest available real data."""
+    conn = await get_db_connection()
     try:
-        conn = await get_db_connection()
         
         # Get the latest data timestamp from our historical data
         latest_time_query = """
@@ -198,6 +185,5 @@ async def get_dashboard_summary() -> Dict[str, Any]:
             "success": True,
             "data": dashboard_data
         }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+    finally:
+        await conn.close() 

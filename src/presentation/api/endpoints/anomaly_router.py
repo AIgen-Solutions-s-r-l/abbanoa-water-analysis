@@ -2,40 +2,27 @@
 
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
-import asyncpg
-import os
 import logging
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Query, BackgroundTasks
 from src.application.anomaly_detector import AnomalyDetector
+from src.presentation.api.core.database import get_db_connection
+from src.presentation.api.core.error_handling import handle_database_errors, ErrorResponse
 
 router = APIRouter(prefix="/api/v1", tags=["anomalies"])
 logger = logging.getLogger(__name__)
 
-# Database configuration
-DB_CONFIG = {
-    'host': os.getenv('POSTGRES_HOST', 'localhost'),
-    'port': int(os.getenv('POSTGRES_PORT', '5432')),
-    'database': os.getenv('POSTGRES_DB', 'abbanoa_processing'),
-    'user': os.getenv('POSTGRES_USER', 'abbanoa_user'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'abbanoa_secure_pass')
-}
-
-
-async def get_db_connection():
-    """Get database connection."""
-    return await asyncpg.connect(**DB_CONFIG)
-
 
 @router.get("/anomalies")
+@handle_database_errors
 async def get_anomalies(
     hours: int = Query(24, description="Hours to look back"),
     node_id: Optional[str] = Query(None, description="Filter by node ID"),
     severity: Optional[str] = Query(None, description="Filter by severity")
 ) -> List[Dict[str, Any]]:
     """Get recent anomalies."""
+    conn = await get_db_connection()
     try:
-        conn = await get_db_connection()
         
         # Build the query with filters
         query = """
@@ -98,21 +85,20 @@ async def get_anomalies(
         
         # Return only real data from database
         return anomalies
-        
-    except Exception as e:
-        logger.error(f"Error fetching anomalies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
 
 
 @router.post("/anomalies/detect")
+@handle_database_errors
 async def detect_anomalies(
     background_tasks: BackgroundTasks,
     node_id: Optional[str] = Query(None, description="Node ID to analyze"),
     hours: int = Query(24, description="Hours of data to analyze")
 ) -> Dict[str, Any]:
     """Trigger anomaly detection for specified nodes."""
+    conn = await get_db_connection()
     try:
-        conn = await get_db_connection()
         detector = AnomalyDetector(conn)
         
         # If no node specified, analyze all nodes
@@ -147,19 +133,18 @@ async def detect_anomalies(
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "results": results
         }
-        
-    except Exception as e:
-        logger.error(f"Error during anomaly detection: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
 
 
 @router.get("/anomalies/statistics")
+@handle_database_errors
 async def get_anomaly_statistics(
     days: int = Query(7, description="Number of days for statistics")
 ) -> Dict[str, Any]:
     """Get anomaly statistics and trends."""
+    conn = await get_db_connection()
     try:
-        conn = await get_db_connection()
         
         # Get anomaly counts by type and severity
         stats_query = """
@@ -236,17 +221,16 @@ async def get_anomaly_statistics(
             "top_affected_nodes": top_nodes,
             "generated_at": datetime.now(timezone.utc).isoformat()
         }
-        
-    except Exception as e:
-        logger.error(f"Error fetching anomaly statistics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
 
 
 @router.patch("/anomalies/{anomaly_id}/acknowledge")
+@handle_database_errors
 async def acknowledge_anomaly(anomaly_id: int) -> Dict[str, Any]:
     """Mark an anomaly as acknowledged/resolved."""
+    conn = await get_db_connection()
     try:
-        conn = await get_db_connection()
         
         # Update anomaly to set resolved_at timestamp
         update_query = """
@@ -260,7 +244,7 @@ async def acknowledge_anomaly(anomaly_id: int) -> Dict[str, Any]:
         
         if not result:
             await conn.close()
-            raise HTTPException(status_code=404, detail="Anomaly not found or already resolved")
+            raise ErrorResponse.not_found("Anomaly")
         
         await conn.close()
         
@@ -271,9 +255,5 @@ async def acknowledge_anomaly(anomaly_id: int) -> Dict[str, Any]:
             "resolved_at": result['resolved_at'].isoformat(),
             "message": "Anomaly acknowledged successfully"
         }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error acknowledging anomaly: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+    finally:
+        await conn.close() 
