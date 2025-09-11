@@ -44,9 +44,41 @@ jobs:
         run: |
           # API will run with mocked database connections for testing
           nohup poetry run uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 &
-          sleep 5
-          # Health check may fail due to database dependency - this is expected
-          curl -sfL http://localhost:8000/health || echo 'API health check failed (expected without DB)'
+          echo "API starting with PID $!"
+          
+      - name: Wait for API to be ready
+        run: |
+          # Use retry mechanism with exponential backoff instead of fixed sleep
+          MAX_ATTEMPTS=30
+          WAIT_TIME=1
+          ATTEMPT=1
+          API_URL="http://localhost:8000/health"
+          
+          echo "⏳ Waiting for API at $API_URL"
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            if curl -sf "$API_URL" > /dev/null 2>&1; then
+              echo "✅ API ready after attempt $ATTEMPT"
+              break
+            fi
+            
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "❌ API failed to start after $MAX_ATTEMPTS attempts"
+              echo "Diagnostic info:"
+              curl -v "$API_URL" 2>&1 | head -10 || true
+              ps aux | grep uvicorn | grep -v grep || true
+              exit 1
+            fi
+            
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS failed, waiting ${WAIT_TIME}s..."
+            sleep $WAIT_TIME
+            
+            ATTEMPT=$((ATTEMPT + 1))
+            # Exponential backoff with cap at 4s
+            if [ $WAIT_TIME -lt 4 ]; then
+              WAIT_TIME=$((WAIT_TIME * 2))
+            fi
+          done
 
       - name: Run API integration tests (isolated)
         env:
