@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.7.0] - 2025-09-11
+
+### Added
+- **Extended Anomaly Timeframe**: Frontend now fetches anomalies from the last 7 days (168 hours) instead of just 24 hours
+  - Updated all anomaly fetch calls across the application to include `hours=168` parameter
+  - Modified pages: anomalies, analytics, monitoring, enhanced-overview
+  - Updated AnomalyService to fetch weekly data by default
+  - Added tests for 1-week anomaly queries
+
+### Changed
+- All anomaly queries now request 168 hours of data to provide better visibility into system issues over time
+- Users can now see historical anomaly patterns from the past week
+
+### Testing
+- Added unit tests for 1-week anomaly query functionality
+- Updated existing tests to expect new query parameter
+
 ## [2.6.0] - 2025-09-11
 
 ### Added
