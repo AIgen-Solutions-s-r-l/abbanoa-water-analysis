@@ -60,7 +60,7 @@ class DetectNetworkAnomaliesUseCase:
         # Our data spans from November 13, 2024 to March 31, 2025
         data_start = datetime(2024, 11, 13)
         data_end = datetime(2025, 3, 31)
-        
+
         # Use the actual data range instead of current time
         end_time = data_end
         start_time = max(data_start, end_time - timedelta(hours=time_window_hours))
@@ -86,7 +86,11 @@ class DetectNetworkAnomaliesUseCase:
             for event in anomaly_events:
                 # Calculate deviation percentage safely
                 deviation_percentage = 0.0
-                if event.measurement_value is not None and event.threshold is not None and event.threshold != 0:
+                if (
+                    event.measurement_value is not None
+                    and event.threshold is not None
+                    and event.threshold != 0
+                ):
                     try:
                         deviation_percentage = abs(
                             (event.measurement_value - event.threshold)
