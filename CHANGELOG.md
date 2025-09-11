@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.6.0] - 2025-09-11
+
+### Added
+- **Database-Driven Report Generation**: Complete replacement of mock report data with real PostgreSQL queries (#40)
+  - Real-time consumption reports from sensor readings with window functions
+  - Water quality compliance reports with actual metrics from database
+  - System efficiency reports with calculated KPIs from sensor data
+  - Anomaly detection reports from threshold violations
+  - Report scheduling system with database persistence
+  - Multiple export formats (JSON, CSV, PDF placeholder)
+  - Template-based report generation for common report types
+  - Progress tracking with `report_jobs` table
+
+### Changed
+- Reports now generated from `water_infrastructure.sensor_readings` table
+- Report status tracked in database instead of mock responses
+- Implemented connection pooling to prevent resource exhaustion
+- All report endpoints use async context managers for proper cleanup
+
+### Fixed
+- Database connection leaks in error paths (P1 issue)
+- Resource exhaustion under load through connection pooling
+
+### Refactored
+- Split reports module into three files following Single Responsibility Principle
+- Separated API endpoints, generation logic, and utilities for maintainability
+
+### Testing
+- Added comprehensive integration tests for all report types
+- Tests cover scheduling, templates, and export formats
+- Validated connection pooling and error handling
+
 ## [2.5.1] - 2025-09-11
 
 ### Added
