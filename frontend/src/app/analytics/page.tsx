@@ -17,7 +17,7 @@ const fetchRealAnalyticsData = async () => {
     const [zonesResponse, nodesResponse, anomaliesResponse] = await Promise.all([
       fetch('/api/proxy/v1/pressure/zones'),
       fetch('/api/proxy/v1/nodes'),
-      fetch('/api/proxy/v1/anomalies')
+      fetch('/api/proxy/v1/anomalies?hours=168')
     ]);
 
     const zonesData = await zonesResponse.json();

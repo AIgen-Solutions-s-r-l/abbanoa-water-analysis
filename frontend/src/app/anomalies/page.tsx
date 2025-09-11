@@ -8,9 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 // Real data fetching function - NO MOCKED DATA
 const fetchRealAnomaliesData = async () => {
   try {
-    // Fetch real anomalies data from backend
+    // Fetch real anomalies data from backend - last 7 days (168 hours)
     const [anomaliesResponse, nodesResponse] = await Promise.all([
-      fetch('/api/proxy/v1/anomalies'),
+      fetch('/api/proxy/v1/anomalies?hours=168'),
       fetch('/api/proxy/v1/nodes')
     ]);
 

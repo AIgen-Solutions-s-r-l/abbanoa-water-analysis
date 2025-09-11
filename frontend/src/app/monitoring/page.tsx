@@ -9,7 +9,7 @@ const fetchRealMonitoringData = async () => {
     const [dashboardResponse, pressureResponse, anomaliesResponse] = await Promise.all([
       fetch('/api/proxy/v1/dashboard/summary'),
       fetch('/api/proxy/v1/pressure/zones'),
-      fetch('/api/proxy/v1/anomalies')
+      fetch('/api/proxy/v1/anomalies?hours=168')
     ]);
 
     // Safely parse JSON responses with error handling

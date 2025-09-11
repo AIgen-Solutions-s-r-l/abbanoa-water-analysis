@@ -48,7 +48,7 @@ describe('AnomalyService', () => {
       const result = await AnomalyService.getAnomalies();
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith('/api/proxy/v1/anomalies');
+      expect(global.fetch).toHaveBeenCalledWith('/api/proxy/v1/anomalies?hours=168');
       expect(result).toEqual([
         {
           id: 'anomaly-1',

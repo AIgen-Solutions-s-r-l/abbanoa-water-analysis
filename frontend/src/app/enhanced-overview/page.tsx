@@ -453,7 +453,7 @@ const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
 // Generate real alerts from anomaly data
 const generateRealAlerts = async (): Promise<WaterSystemAlert[]> => {
   try {
-    const response = await fetch('/api/proxy/v1/anomalies');
+    const response = await fetch('/api/proxy/v1/anomalies?hours=168');
     if (!response.ok) return [];
     
     const anomalies = await response.json();
