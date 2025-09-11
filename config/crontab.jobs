@@ -1,0 +1,36 @@
+# Abbanoa Water Analysis - Scheduled Jobs Configuration
+# 
+# Install with: crontab config/crontab.jobs
+# View with: crontab -l
+#
+# Job Schedule:
+# - Reconciliation: Every hour at minute 15
+# - Batch Prediction: Every 6 hours at minute 30
+# - Daily Cleanup: Daily at 02:00 AM
+# - Job Monitor: Every 15 minutes
+# - Health Check: Every 4 hours at minute 0
+#
+# Logs are written to /root/abbanoa-water-analysis/logs/
+
+# Set environment variables
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+PYTHONPATH=/root/abbanoa-water-analysis
+
+# Prediction Reconciliation - Every hour at minute 15
+15 * * * * cd /root/abbanoa-water-analysis && /usr/bin/python3 src/jobs/reconciliation_job.py >> logs/reconciliation.log 2>&1
+
+# Batch Prediction Generation - Every 6 hours at minute 30 (00:30, 06:30, 12:30, 18:30)
+30 */6 * * * cd /root/abbanoa-water-analysis && /usr/bin/python3 src/jobs/batch_prediction_job.py >> logs/batch_prediction.log 2>&1
+
+# Daily Cleanup - Every day at 02:00 AM
+0 2 * * * cd /root/abbanoa-water-analysis && /usr/bin/python3 src/jobs/cleanup_job.py >> logs/cleanup.log 2>&1
+
+# Job Monitoring - Every 15 minutes
+*/15 * * * * cd /root/abbanoa-water-analysis && /usr/bin/python3 src/jobs/job_monitor.py >> logs/monitor.log 2>&1
+
+# System Health Check - Every 4 hours at minute 0 (00:00, 04:00, 08:00, 12:00, 16:00, 20:00)
+0 */4 * * * cd /root/abbanoa-water-analysis && /usr/bin/python3 src/jobs/health_check.py >> logs/health_check.log 2>&1
+
+# Weekly log rotation - Every Sunday at 01:00 AM
+0 1 * * 0 /usr/sbin/logrotate /root/abbanoa-water-analysis/config/logrotate.conf
