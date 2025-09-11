@@ -152,6 +152,15 @@ async def shutdown_event():
     global pool
     if pool:
         await pool.close()
+    
+    # Also cleanup reports router connection pool if available
+    try:
+        from .endpoints.reports_router import cleanup_connection_pool
+        await cleanup_connection_pool()
+    except ImportError:
+        pass
+    except Exception as e:
+        logger.warning(f"Error cleaning up reports connection pool: {e}")
 
 
 @app.get("/")

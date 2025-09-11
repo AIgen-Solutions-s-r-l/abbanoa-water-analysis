@@ -369,16 +369,14 @@ async def download_report(job_id: str):
             export_report
         )
         
-        conn = await get_db_connection()
-        try:
+        # Use the new implementation with proper connection pooling
+        async with get_db_connection() as conn:
             # Generate real report from last 7 days
             end_date = datetime.now()
             start_date = end_date - timedelta(days=7)
             report = await generate_consumption_report(conn, start_date, end_date)
             report['job_id'] = job_id
             json_data = await export_report(report, 'json')
-        finally:
-            await conn.close()
         
         # Create streaming response
         return StreamingResponse(
@@ -464,8 +462,8 @@ async def get_report_schedule(schedule_id: str):
         # Get real schedule from database
         from src.presentation.api.endpoints.reports_router import get_db_connection
         
-        conn = await get_db_connection()
-        try:
+        # Use the new implementation with proper connection pooling  
+        async with get_db_connection() as conn:
             query = """
                 SELECT * FROM report_schedules
                 WHERE schedule_id = $1
