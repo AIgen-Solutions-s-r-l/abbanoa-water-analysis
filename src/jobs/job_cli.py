@@ -137,11 +137,11 @@ Examples:
     async def show_status(self, days: int = 1, specific_job: str = None):
         """Show job execution status"""
         try:
-            # Create a temporary job to access the database
-            temp_job = BaseJob("status_check", timeout_minutes=5)
-            pool = await temp_job.create_db_pool()
+            # Use health check job for database access
+            health_job = HealthCheckJob()
+            pool = await health_job.create_db_pool()
             
-            query = """
+            query = f"""
                 SELECT 
                     job_name,
                     status,
@@ -150,24 +150,19 @@ Examples:
                     duration_seconds,
                     error_message
                 FROM water_infrastructure.job_executions 
-                WHERE started_at > NOW() - INTERVAL %s
+                WHERE started_at > NOW() - INTERVAL '{days} days'
             """
             
-            params = [f"{days} days"]
-            
             if specific_job:
-                query += " AND job_name = %s"
-                params.append(specific_job)
+                query += " AND job_name = $1"
+                params = [specific_job]
+            else:
+                params = []
             
             query += " ORDER BY started_at DESC LIMIT 50"
             
             async with pool.acquire() as conn:
-                # Convert to asyncpg parameterized query
-                asyncpg_query = query.replace('%s', '$1' if len(params) == 1 else '$1' if specific_job else '$1')
-                if specific_job:
-                    asyncpg_query = query.replace('%s', '$1').replace('%s', '$2')
-                
-                rows = await conn.fetch(asyncpg_query, *params)
+                rows = await conn.fetch(query, *params)
                 
                 if not rows:
                     print("No job executions found")

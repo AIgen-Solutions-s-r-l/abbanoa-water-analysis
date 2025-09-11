@@ -5,6 +5,7 @@ import sys
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any
+import pytz
 
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -39,11 +40,12 @@ class ReconciliationJob(BaseJob):
             return {
                 "status": "skipped",
                 "reason": "minimum_interval_not_reached",
-                "last_run": last_execution["started_at"]
+                "last_run": last_execution["started_at"].isoformat() if last_execution["started_at"] else None
             }
         
-        # Get count of unreconciled predictions
-        unreconciled_count = await repo.count_unreconciled_predictions()
+        # Get unreconciled predictions to check count
+        unreconciled_predictions = await repo.get_unreconciled_predictions()
+        unreconciled_count = len(unreconciled_predictions)
         
         if unreconciled_count == 0:
             self.logger.info("No unreconciled predictions found")
@@ -96,7 +98,13 @@ class ReconciliationJob(BaseJob):
             return False
         
         last_run = last_execution["started_at"]
-        time_since_last = datetime.now() - last_run
+        
+        # Ensure both datetimes are timezone-aware for comparison
+        if last_run.tzinfo is None:
+            last_run = pytz.UTC.localize(last_run)
+        
+        now = datetime.now(pytz.UTC)
+        time_since_last = now - last_run
         min_interval = timedelta(hours=self.min_reconciliation_interval_hours)
         
         return time_since_last < min_interval
