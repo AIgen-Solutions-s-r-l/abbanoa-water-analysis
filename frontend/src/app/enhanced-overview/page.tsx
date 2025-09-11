@@ -433,7 +433,13 @@ const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
   
   // Extract energy metrics from network data
   const energyKwh = network.energy_consumption_kwh || 0;
-  console.log('🔋 Energy data from API:', energyKwh);
+  const totalVolumeM3 = network.total_volume_m3 || 0;
+  console.log('🔋 Energy data from API:', { 
+    energyKwh, 
+    totalVolumeM3, 
+    network,
+    costCalculation: totalVolumeM3 > 0 ? (energyKwh * 0.15) / totalVolumeM3 : 0
+  });
   
   return {
     activeNodes: activeNodes,
@@ -446,7 +452,7 @@ const convertToWaterMetrics = (dashboardData: any): WaterCoreMetrics => {
     // Add new energy metrics (calculated from available data)
     currentPowerKw: energyKwh / 24, // Convert daily kWh to average kW
     dailyCostEur: energyKwh * 0.15, // Estimate cost at €0.15/kWh
-    costPerCubicMeter: (energyKwh * 0.15) / (network.total_volume_m3 || 1), // Cost per m³
+    costPerCubicMeter: totalVolumeM3 > 0 ? (energyKwh * 0.15) / totalVolumeM3 : 0, // Cost per m³
   };
 };
 
