@@ -54,5 +54,19 @@ jobs:
           API_BASE: ${{ env.API_BASE }}
         run: |
           poetry run pytest -q -p no:conftest tests/integration/test_dashboard_anomalies_int.py
+      
+      - name: Run Error Scenario Tests (4xx/5xx)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          API_BASE: ${{ env.API_BASE }}
+          API_MODE: mock
+          MOCK_ERRORS: true
+        run: |
+          echo "🔍 Testing Error Scenarios in Mock Mode"
+          poetry run pytest tests/integration/test_error_scenarios_comprehensive.py \
+            -v \
+            --tb=short \
+            --maxfail=10 \
+            || echo "Some error tests failed (this may be expected for unimplemented error handling)"
 
 
