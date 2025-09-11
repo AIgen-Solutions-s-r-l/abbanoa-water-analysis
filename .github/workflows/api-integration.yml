@@ -43,8 +43,11 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           # API will run with mocked database connections for testing
-          nohup poetry run uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 &
-          echo "API starting with PID $!"
+          nohup poetry run uvicorn src.presentation.api.app_postgres:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+          API_PID=$!
+          echo "API starting with PID $API_PID"
+          echo $API_PID > api.pid
+          echo "API_PID=$API_PID" >> $GITHUB_ENV
           
       - name: Wait for API to be ready
         run: |
@@ -100,5 +103,63 @@ jobs:
             --tb=short \
             --maxfail=10 \
             || echo "Some error tests failed (this may be expected for unimplemented error handling)"
+      
+      - name: Cleanup API Process
+        if: always()
+        run: |
+          echo "🧹 Cleaning up API process"
+          
+          # Try to read PID from file first
+          if [ -f api.pid ]; then
+            API_PID=$(cat api.pid)
+            echo "Found API PID from file: $API_PID"
+          elif [ ! -z "$API_PID" ]; then
+            echo "Using API PID from environment: $API_PID"
+          else
+            echo "⚠️ No API PID found, trying to find uvicorn process"
+            API_PID=$(ps aux | grep "[u]vicorn.*app_postgres:app" | awk '{print $2}' | head -1)
+          fi
+          
+          if [ ! -z "$API_PID" ]; then
+            echo "Attempting to terminate API process (PID: $API_PID)"
+            
+            # First try graceful shutdown
+            if kill -TERM $API_PID 2>/dev/null; then
+              echo "✅ Sent TERM signal to API process"
+              
+              # Give it a moment to shutdown gracefully
+              sleep 2
+              
+              # Check if still running
+              if kill -0 $API_PID 2>/dev/null; then
+                echo "Process still running, sending KILL signal"
+                kill -KILL $API_PID 2>/dev/null || true
+              fi
+            else
+              echo "Process already terminated or not found"
+            fi
+            
+            # Clean up PID file
+            rm -f api.pid
+          else
+            echo "No API process found to terminate"
+          fi
+          
+          # Double-check no uvicorn processes are left
+          REMAINING=$(ps aux | grep "[u]vicorn.*app_postgres:app" | wc -l)
+          if [ "$REMAINING" -gt 0 ]; then
+            echo "⚠️ Found $REMAINING remaining uvicorn process(es), force killing"
+            pkill -f "uvicorn.*app_postgres:app" || true
+          fi
+          
+          echo "✅ Cleanup complete"
+      
+      - name: Upload API Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-logs
+          path: api.log
+          retention-days: 7
 
 
