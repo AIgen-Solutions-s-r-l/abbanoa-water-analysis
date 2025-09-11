@@ -21,6 +21,11 @@ interface CardFooterProps {
   className?: string;
 }
 
+interface CardTitleProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
 const Card = ({ children, className = '', padding = 'md' }: CardProps) => {
   const paddingClasses = {
     none: '',
@@ -60,5 +65,13 @@ const CardFooter = ({ children, className = '' }: CardFooterProps) => {
   );
 };
 
-export { Card, CardHeader, CardContent, CardFooter };
-export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps }; 
+const CardTitle = ({ children, className = '' }: CardTitleProps) => {
+  return (
+    <h3 className={`text-lg font-semibold text-gray-900 dark:text-gray-100 ${className}`}>
+      {children}
+    </h3>
+  );
+};
+
+export { Card, CardHeader, CardContent, CardFooter, CardTitle };
+export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps, CardTitleProps }; 
