@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.5.1] - 2025-09-11
+
+### Added
+- **Weather Service Transparency**: Enhanced weather API with data source tracking (#38)
+  - Added `data_source` field to all weather endpoints indicating "real" or "estimated" data
+  - Implemented `last_real_update` timestamp to track when real data was last retrieved
+  - Statistics endpoint now includes data quality metrics (real vs estimated percentages)
+  - Impact analysis shows data reliability level with explanatory notes
+  - Status endpoint enhanced with `real_data_available` flag and fallback reasons
+
+### Changed
+- Weather responses now clearly distinguish between real API data and estimated fallback data
+- Historical weather data marked with "historical" data source
+- Status endpoint `data_source` value changed from "Mock Data" to "Estimated Data" for clarity
+
+### Testing
+- Added comprehensive integration tests for weather data source tracking
+- Verified all transparency features across weather endpoints
+- Tested fallback behavior when API is unavailable
+
 ## [2.5.0] - 2025-09-10
 
 ### Added
