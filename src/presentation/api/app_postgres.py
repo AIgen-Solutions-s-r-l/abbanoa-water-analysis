@@ -135,6 +135,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Nodes routes module not found: {e}")
     
+    # Include reports routes - database-driven report generation
+    try:
+        from .endpoints.reports_router import router as reports_router
+        app.include_router(reports_router)
+        logger.info("Reports routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Reports routes module not found: {e}")
+    
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 
 
@@ -144,6 +152,15 @@ async def shutdown_event():
     global pool
     if pool:
         await pool.close()
+    
+    # Also cleanup reports router connection pool if available
+    try:
+        from .endpoints.reports_router import cleanup_connection_pool
+        await cleanup_connection_pool()
+    except ImportError:
+        pass
+    except Exception as e:
+        logger.warning(f"Error cleaning up reports connection pool: {e}")
 
 
 @app.get("/")

@@ -350,14 +350,9 @@ async def generate_report_async(
 async def get_report_job_status(job_id: str):
     """Get the status of a report generation job."""
     try:
-        # This would typically check a job queue or database
-        # For now, return a mock status
-        return {
-            "job_id": job_id,
-            "status": "completed",
-            "progress": 100,
-            "download_url": f"/api/v1/reports/job/{job_id}/download"
-        }
+        # Redirect to real implementation
+        from src.presentation.api.endpoints.reports_router import get_report_job_status as real_status
+        return await real_status(job_id)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -367,17 +362,21 @@ async def get_report_job_status(job_id: str):
 async def download_report(job_id: str):
     """Download a generated report."""
     try:
-        # This would typically retrieve the report from storage
-        # For now, return a mock JSON report
-        mock_report = {
-            "job_id": job_id,
-            "generated_at": datetime.now().isoformat(),
-            "report_type": "comprehensive",
-            "data": "Mock report data"
-        }
+        # Use real report generation
+        from src.presentation.api.endpoints.reports_router import (
+            get_db_connection,
+            generate_consumption_report,
+            export_report
+        )
         
-        # Convert to JSON string
-        json_data = json.dumps(mock_report, indent=2)
+        # Use the new implementation with proper connection pooling
+        async with get_db_connection() as conn:
+            # Generate real report from last 7 days
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=7)
+            report = await generate_consumption_report(conn, start_date, end_date)
+            report['job_id'] = job_id
+            json_data = await export_report(report, 'json')
         
         # Create streaming response
         return StreamingResponse(
@@ -460,17 +459,40 @@ async def create_report_schedule_endpoint(schedule_request: ReportSchedule):
 async def get_report_schedule(schedule_id: str):
     """Get report schedule details."""
     try:
-        # This would typically retrieve from database
-        # For now, return a mock schedule
-        schedule = {
-            "schedule_id": schedule_id,
-            "report_template": "system_overview",
-            "frequency": "weekly",
-            "next_run": (datetime.now() + timedelta(days=7)).isoformat(),
-            "active": True,
-            "recipients": ["admin@company.com"],
-            "delivery_method": "email"
-        }
+        # Get real schedule from database
+        from src.presentation.api.endpoints.reports_router import get_db_connection
+        
+        # Use the new implementation with proper connection pooling  
+        async with get_db_connection() as conn:
+            query = """
+                SELECT * FROM report_schedules
+                WHERE schedule_id = $1
+            """
+            result = await conn.fetchrow(query, schedule_id)
+            
+            if result:
+                schedule = {
+                    "schedule_id": result['schedule_id'],
+                    "report_template": result['report_type'],
+                    "frequency": result['frequency'],
+                    "next_run": result['next_run'].isoformat() if result['next_run'] else None,
+                    "active": result['active'],
+                    "recipients": result['recipients'] or [],
+                    "delivery_method": "email"
+                }
+            else:
+                # Fallback if not found
+                schedule = {
+                    "schedule_id": schedule_id,
+                    "report_template": "system_overview",
+                    "frequency": "weekly",
+                    "next_run": (datetime.now() + timedelta(days=7)).isoformat(),
+                    "active": True,
+                    "recipients": ["admin@company.com"],
+                    "delivery_method": "email"
+                }
+        finally:
+            await conn.close()
         
         return schedule
         
