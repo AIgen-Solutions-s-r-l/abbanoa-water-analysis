@@ -338,6 +338,12 @@ async def get_flow_path(
                         reverse_graph[source] = []
                     reverse_graph[source].append(target)
             
+            # Get all nodes to check their types
+            all_nodes = await conn.fetch(
+                "SELECT node_id, node_type FROM water_infrastructure.nodes"
+            )
+            node_types = {n['node_id']: n['node_type'] for n in all_nodes}
+            
             # Find all paths from sources to the target node
             def find_paths(current, visited=None):
                 if visited is None:
@@ -349,11 +355,7 @@ async def get_flow_path(
                 visited.add(current)
                 
                 # Check if this is a source node
-                node_data = await conn.fetchrow(
-                    "SELECT node_type FROM water_infrastructure.nodes WHERE node_id = $1",
-                    current
-                )
-                if node_data and node_data['node_type'] == 'source':
+                if node_types.get(current) == 'source':
                     return [[current]]
                 
                 # Find paths through parents
