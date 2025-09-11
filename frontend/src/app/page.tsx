@@ -8,6 +8,32 @@ import { RecentAnomalies } from '@/components/features/dashboard/RecentAnomalies
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 function DashboardContent() {
+  const [isRunningDetection, setIsRunningDetection] = React.useState(false);
+
+  const handleRunAnomalyDetection = async () => {
+    setIsRunningDetection(true);
+    try {
+      const response = await fetch('/api/proxy/v1/anomalies/detect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Anomaly detection completed! ${result.total_anomalies_detected} anomalies found across ${result.nodes_analyzed} nodes.`);
+      } else {
+        alert('Failed to run anomaly detection. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error running anomaly detection:', error);
+      alert('Error running anomaly detection. Please check the console for details.');
+    } finally {
+      setIsRunningDetection(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -24,8 +50,12 @@ function DashboardContent() {
           <Button variant="secondary" size="sm">
             Refresh Data
           </Button>
-          <Button size="sm">
-            Run Anomaly Detection
+          <Button 
+            size="sm" 
+            onClick={handleRunAnomalyDetection}
+            disabled={isRunningDetection}
+          >
+            {isRunningDetection ? 'Running...' : 'Run Anomaly Detection'}
           </Button>
         </div>
       </div>

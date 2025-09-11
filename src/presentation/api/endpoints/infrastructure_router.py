@@ -207,6 +207,9 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
                 }
             ]
         
+        # Get pipes data before closing connection
+        pipes = await get_pipes_data(conn)
+        
         if conn:
             await conn.close()
         
@@ -216,7 +219,7 @@ async def get_infrastructure_map_data() -> Dict[str, Any]:
             "avg_pressure": avg_pressure,
             "active_alerts": active_alerts,
             "nodes": nodes,
-            "pipes": await get_pipes_data(conn),
+            "pipes": pipes,
             "zones": zones,
             "last_updated": datetime.now(timezone.utc).isoformat()
         }

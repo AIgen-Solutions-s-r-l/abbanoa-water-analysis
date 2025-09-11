@@ -78,10 +78,20 @@ async function proxyRequest(
     // Make the request to the backend
     const response = await fetch(url, options);
     
-
+    // Get the response body - handle both JSON and text responses
+    let responseData;
+    const contentType = response.headers.get('content-type');
     
-    // Get the response body
-    const responseData = await response.json();
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        responseData = JSON.parse(text);
+      } catch {
+        responseData = { data: text };
+      }
+    }
 
     // Return the response with the same status code
     return NextResponse.json(responseData, {
@@ -92,8 +102,11 @@ async function proxyRequest(
     });
   } catch (error) {
     console.error('Proxy error:', error);
+    console.error('URL attempted:', url);
+    console.error('Method:', method);
+    console.error('Options:', options);
     return NextResponse.json(
-      { success: false, error: 'Proxy error' },
+      { success: false, error: 'Proxy error', details: error.message },
       { status: 500 }
     );
   }
