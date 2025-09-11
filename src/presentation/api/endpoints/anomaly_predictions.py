@@ -1,18 +1,24 @@
 """API endpoints for anomaly prediction system"""
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from typing import List, Optional, Dict
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
 import pandas as pd
 import numpy as np
+import asyncpg
+import logging
 
 from src.application.services.anomaly_predictor import (
     AnomalyPredictor,
     AnomalyPrediction,
     AnomalyAlert
 )
+from src.infrastructure.repositories.anomaly_prediction_repository import (
+    AnomalyPredictionRepository
+)
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/predictions",
@@ -20,8 +26,9 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# Initialize predictor (in production, this would be a singleton)
-predictor = AnomalyPredictor()
+# Predictor will be initialized with database connection
+predictor: Optional[AnomalyPredictor] = None
+repository: Optional[AnomalyPredictionRepository] = None
 
 
 class SensorReading(BaseModel):
@@ -59,8 +66,16 @@ class TrainingRequest(BaseModel):
     node_filter: Optional[List[str]] = None
 
 
+@router.on_event("startup")
+async def startup_event():
+    """Initialize predictor with database connection on startup"""
+    global predictor, repository
+    # This will be set by the main app
+    pass
+
+
 @router.post("/predict", response_model=PredictionResponse)
-async def predict_anomaly(request: PredictionRequest) -> PredictionResponse:
+async def predict_anomaly(request: PredictionRequest, req: Request) -> PredictionResponse:
     """Predict anomaly for a single node
     
     Args:
@@ -70,16 +85,20 @@ async def predict_anomaly(request: PredictionRequest) -> PredictionResponse:
         Prediction with probability, timing, and risk factors
     """
     try:
-        # Convert sensor readings to DataFrame
-        data_dict = {
-            'timestamp': [r.timestamp for r in request.sensor_data],
-            'pressure': [r.pressure for r in request.sensor_data],
-            'flow_rate': [r.flow_rate for r in request.sensor_data]
-        }
-        sensor_df = pd.DataFrame(data_dict)
+        # Get database pool from app state
+        pool = req.app.state.pool if hasattr(req.app.state, 'pool') else None
+        if not pool:
+            raise HTTPException(status_code=500, detail="Database connection not available")
         
-        # Get prediction
-        prediction = predictor.predict(request.node_id, sensor_df)
+        # Initialize repository and predictor if needed
+        global predictor, repository
+        if not repository:
+            repository = AnomalyPredictionRepository(pool)
+        if not predictor:
+            predictor = AnomalyPredictor(repository=repository)
+        
+        # Use real database data for prediction
+        prediction = await predictor.predict_from_database(request.node_id)
         
         # Generate alert if high risk
         alert_dict = None
@@ -107,7 +126,7 @@ async def predict_anomaly(request: PredictionRequest) -> PredictionResponse:
 
 
 @router.post("/predict/batch", response_model=List[PredictionResponse])
-async def predict_batch(request: BatchPredictionRequest) -> List[PredictionResponse]:
+async def predict_batch(request: BatchPredictionRequest, req: Request) -> List[PredictionResponse]:
     """Predict anomalies for multiple nodes
     
     Args:
@@ -117,18 +136,23 @@ async def predict_batch(request: BatchPredictionRequest) -> List[PredictionRespo
         List of predictions for all nodes
     """
     try:
-        # Prepare data for batch prediction
-        nodes_data = {}
-        for node_req in request.nodes:
-            data_dict = {
-                'timestamp': [r.timestamp for r in node_req.sensor_data],
-                'pressure': [r.pressure for r in node_req.sensor_data],
-                'flow_rate': [r.flow_rate for r in node_req.sensor_data]
-            }
-            nodes_data[node_req.node_id] = pd.DataFrame(data_dict)
+        # Get database pool
+        pool = req.app.state.pool if hasattr(req.app.state, 'pool') else None
+        if not pool:
+            raise HTTPException(status_code=500, detail="Database connection not available")
         
-        # Get batch predictions
-        predictions = predictor.predict_batch(nodes_data)
+        # Initialize if needed
+        global predictor, repository
+        if not repository:
+            repository = AnomalyPredictionRepository(pool)
+        if not predictor:
+            predictor = AnomalyPredictor(repository=repository)
+        
+        # Get predictions for each node using real data
+        predictions = []
+        for node_req in request.nodes:
+            pred = await predictor.predict_from_database(node_req.node_id)
+            predictions.append(pred)
         
         # Convert to response format
         responses = []
@@ -159,6 +183,7 @@ async def predict_batch(request: BatchPredictionRequest) -> List[PredictionRespo
 
 @router.get("/high-risk", response_model=List[PredictionResponse])
 async def get_high_risk_nodes(
+    req: Request,
     threshold: float = Query(0.7, ge=0.5, le=1.0, description="Risk threshold"),
     hours_ahead: int = Query(6, ge=1, le=24, description="Prediction horizon")
 ) -> List[PredictionResponse]:
@@ -171,25 +196,26 @@ async def get_high_risk_nodes(
     Returns:
         List of high-risk predictions
     """
-    # In production, this would query real sensor data
-    # For demo, we'll generate synthetic data
-    demo_nodes = ['NODE_001', 'NODE_002', 'NODE_003', 'NODE_004', 'NODE_005']
+    # Get database pool
+    pool = req.app.state.pool if hasattr(req.app.state, 'pool') else None
+    if not pool:
+        raise HTTPException(status_code=500, detail="Database connection not available")
+    
+    # Initialize if needed
+    global predictor, repository
+    if not repository:
+        repository = AnomalyPredictionRepository(pool)
+    if not predictor:
+        predictor = AnomalyPredictor(repository=repository)
+    
+    # Get list of active nodes from database
+    active_nodes = await repository.get_active_nodes()
     high_risk_predictions = []
     
-    for node_id in demo_nodes:
-        # Generate synthetic sensor data
-        timestamps = pd.date_range(end=datetime.now(), periods=24, freq='H')
-        sensor_df = pd.DataFrame({
-            'timestamp': timestamps,
-            'pressure': np.random.normal(5.0, 0.5, 24),
-            'flow_rate': np.random.normal(100, 10, 24)
-        })
-        
-        # Add some anomalous patterns randomly
-        if np.random.random() > 0.7:
-            sensor_df.loc[20:, 'pressure'] *= 1.3  # Pressure spike
-        
-        prediction = predictor.predict(node_id, sensor_df)
+    logger.info(f"Checking {len(active_nodes)} active nodes for high risk anomalies")
+    
+    for node_id in active_nodes:
+        prediction = await predictor.predict_from_database(node_id)
         
         if prediction.probability >= threshold:
             alert = predictor.generate_alert(prediction)
@@ -213,7 +239,7 @@ async def get_high_risk_nodes(
 
 
 @router.post("/train")
-async def train_model(request: TrainingRequest) -> Dict:
+async def train_model(request: TrainingRequest, req: Request) -> Dict:
     """Train or update the prediction model
     
     Args:
@@ -223,26 +249,42 @@ async def train_model(request: TrainingRequest) -> Dict:
         Training status and metrics
     """
     try:
-        # In production, this would fetch real historical data
-        # For demo, generate synthetic training data
-        days = request.historical_days
-        timestamps = pd.date_range(end=datetime.now(), periods=days*24, freq='H')
+        # Get database pool
+        pool = req.app.state.pool if hasattr(req.app.state, 'pool') else None
+        if not pool:
+            raise HTTPException(status_code=500, detail="Database connection not available")
         
-        training_data = pd.DataFrame({
-            'timestamp': timestamps,
-            'node_id': 'TRAINING_NODE',
-            'pressure': np.random.normal(5.0, 0.5, len(timestamps)),
-            'flow_rate': np.random.normal(100, 10, len(timestamps)),
-            'anomaly_occurred': np.random.choice([False, True], 
-                                                size=len(timestamps), 
-                                                p=[0.95, 0.05])
-        })
+        # Initialize if needed
+        global predictor, repository
+        if not repository:
+            repository = AnomalyPredictionRepository(pool)
+        if not predictor:
+            predictor = AnomalyPredictor(repository=repository)
         
-        # Train the model
-        predictor.train(training_data)
+        # Train model with real historical data from database
+        await predictor.train_from_database(
+            days_back=request.historical_days,
+            node_id=request.node_filter[0] if request.node_filter else None
+        )
         
-        # Evaluate performance
-        metrics = predictor.evaluate(training_data)
+        # Get training statistics
+        training_stats = await repository.get_training_data(
+            days_back=request.historical_days
+        )
+        
+        metrics = {
+            'precision': 0.0,
+            'recall': 0.0,
+            'f1_score': 0.0
+        }
+        
+        if not training_stats.sensor_data.empty:
+            # Calculate basic metrics
+            total_samples = len(training_stats.sensor_data)
+            anomaly_samples = training_stats.sensor_data['has_anomaly'].sum() if 'has_anomaly' in training_stats.sensor_data else 0
+            metrics['total_samples'] = total_samples
+            metrics['anomaly_samples'] = int(anomaly_samples)
+            metrics['anomaly_rate'] = float(anomaly_samples / total_samples) if total_samples > 0 else 0
         
         return {
             'status': 'success',
