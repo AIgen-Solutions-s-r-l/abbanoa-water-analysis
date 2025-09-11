@@ -31,7 +31,7 @@ export default function PeakDemandForecast() {
     setError(null);
     try {
       const response = await fetch(
-        `/api/v1/predictions/peak-demand?zone_id=${selectedZone}&days=${forecastDays}`
+        `/api/proxy/v1/predictions/peak-demand?zone_id=${selectedZone}&days=${forecastDays}`
       );
       
       if (!response.ok) {

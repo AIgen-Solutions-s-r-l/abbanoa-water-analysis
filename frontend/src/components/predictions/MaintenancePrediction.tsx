@@ -43,7 +43,7 @@ export default function MaintenancePrediction() {
     setError(null);
     try {
       const response = await fetch(
-        `/api/v1/predictions/maintenance?equipment_id=${selectedEquipment}`
+        `/api/proxy/v1/predictions/maintenance?equipment_id=${selectedEquipment}`
       );
       
       if (!response.ok) {

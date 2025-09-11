@@ -31,7 +31,7 @@ export default function EnergyOptimization() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/v1/predictions/optimize-energy', {
+      const response = await fetch('/api/proxy/v1/predictions/optimize-energy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

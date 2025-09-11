@@ -41,7 +41,7 @@ export default function WaterLossDetection() {
     setError(null);
     try {
       const response = await fetch(
-        `/api/v1/predictions/water-loss?zone_id=${selectedZone}`
+        `/api/proxy/v1/predictions/water-loss?zone_id=${selectedZone}`
       );
       
       if (!response.ok) {
