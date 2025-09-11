@@ -151,6 +151,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Reports routes module not found: {e}")
     
+    # Include network topology routes
+    try:
+        from .endpoints.network_topology_router import router as network_topology_router
+        app.include_router(network_topology_router)
+        logger.info("Network topology routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Network topology routes module not found: {e}")
+    
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 
 
