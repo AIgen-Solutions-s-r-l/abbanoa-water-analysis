@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.9.0] - 2025-09-11
+
+### Added
+- **Prediction Tracking and Reconciliation System** (#56)
+  - Automatic reconciliation of predictions with actual anomalies
+  - Performance metrics tracking (precision, recall, F1-score, accuracy)
+  - Operator feedback integration for continuous improvement
+  - Model health monitoring with degradation alerts
+  - Historical metrics storage and trend analysis
+  - Cleanup service for old predictions (90-day retention)
+  - RESTful API endpoints at `/api/v1/anomalies/tracking`
+
+### Technical Implementation
+- `PredictionTracker` service in `src/application/services/prediction_tracker.py`
+- `TrackingRepositoryExtension` for database operations
+- New tables: `model_performance_metrics`, `operator_feedback`, `performance_alerts`
+- TDD approach with comprehensive test coverage
+- Time-window based matching (6-hour default)
+
 ## [2.8.0] - 2025-09-11
 
 ### Added
