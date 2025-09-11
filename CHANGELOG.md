@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.10.0] - 2025-09-11
+
+### Added
+- **Real ML-Based Predictive Analytics System** (#22)
+  - Replaced static calculations with Simple ML models for actual predictions
+  - Moving Average Predictor with weighted time series forecasting
+  - Seasonal Decomposer for extracting daily/weekly patterns
+  - Statistical Anomaly Detector using z-score and change point detection
+  - Four main prediction services:
+    - Peak demand forecasting (7-30 day horizon)
+    - Energy cost optimization for pump scheduling
+    - Predictive maintenance based on sensor degradation
+    - Water loss and leak detection
+  - RESTful API endpoints at `/api/v1/predictions/*`
+  - Confidence intervals and accuracy scoring
+  - TDD implementation following DEV-PROTO.yaml protocol
+
+### Technical Implementation
+- `PredictionService` in `src/application/prediction_service.py`
+- Time series models in `src/application/models/time_series_simple.py`
+- API endpoints in `src/presentation/api/endpoints/predictions.py`
+- Comprehensive unit tests with AAA pattern
+- No external ML dependencies - pure NumPy/SciPy implementation
+
 ## [2.9.1] - 2025-09-11
 
 ### Fixed
