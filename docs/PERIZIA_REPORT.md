@@ -6,7 +6,8 @@
 Perito indipendente (CTU): AI assistant – relazione tecnica redatta secondo IVS/OIV/IAS 38  
 Data di valutazione: 12 Settembre 2025  
 Repo valutato: abbanoa-water-analysis  
-Commit/Tag analizzato: 3b2f1a721ed723265e72ded0e4053054aed2a029 (3b2f1a7)
+Commit/Tag analizzato: 3b2f1a721ed723265e72ded0e4053054aed2a029 (3b2f1a7)  
+Prompt perizia: dev-prompts v0.2.0
 
 —
 
