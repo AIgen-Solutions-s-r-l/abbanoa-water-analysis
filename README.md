@@ -3,6 +3,16 @@
 
 A comprehensive water infrastructure monitoring and analysis system built with FastAPI, Next.js, and modern data processing technologies.
 
+## 📋 Copyright & License
+
+**Copyright © 2025 AIgenSolutions s.r.l. All Rights Reserved.**
+
+This software is proprietary and confidential. Unauthorized copying, modification, distribution, or use of this software, via any medium, is strictly prohibited without the express written permission of AIgenSolutions s.r.l.
+
+**Developed by:** [AIgenSolutions s.r.l.](https://aigensolutions.it)  
+**License:** Proprietary - All Rights Reserved  
+**Contact:** For licensing inquiries, please contact legal@aigensolutions.it
+
 ## 🚀 New Features
 
 ### Predictive Anomaly Alerts System
