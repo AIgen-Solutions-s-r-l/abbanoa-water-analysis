@@ -167,6 +167,14 @@ async def startup_event():
     except ImportError as e:
         logger.warning(f"Network topology routes module not found: {e}")
     
+    # Include ML predictions routes
+    try:
+        from .endpoints.predictions import router as ml_predictions_router
+        app.include_router(ml_predictions_router, prefix="/api/v1/predictions", tags=["predictions"])
+        logger.info("ML predictions routes loaded successfully")
+    except ImportError as e:
+        logger.warning(f"ML predictions routes module not found: {e}")
+    
     print(f"Connected to PostgreSQL at {POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}")
 
 

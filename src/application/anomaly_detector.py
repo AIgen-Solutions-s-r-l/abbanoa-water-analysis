@@ -1,11 +1,13 @@
 """Anomaly detection system for water infrastructure monitoring."""
 
+import logging
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
+import asyncpg
 import numpy as np
 from scipy import stats
-import asyncpg
-import logging
+
 from src.config.quality_thresholds import get_quality_config
 
 logger = logging.getLogger(__name__)
@@ -13,45 +15,47 @@ logger = logging.getLogger(__name__)
 
 class AnomalyDetector:
     """Detects anomalies in water infrastructure sensor data."""
-    
+
     def __init__(self, db_connection: asyncpg.Connection):
         """Initialize the anomaly detector.
-        
+
         Args:
             db_connection: Database connection for data access
         """
         self.db_connection = db_connection
         config = get_quality_config()
         self.thresholds = {
-            'pressure': {
-                'min': config.pressure.minimum,
-                'max': config.pressure.maximum,
-                'normal': config.pressure.optimal
+            "pressure": {
+                "min": config.pressure.minimum,
+                "max": config.pressure.maximum,
+                "normal": config.pressure.optimal,
             },
-            'flow_rate': {
-                'min': config.flow.normal_min,
-                'max': config.flow.normal_max,
-                'normal': config.flow.normal_value
+            "flow_rate": {
+                "min": config.flow.normal_min,
+                "max": config.flow.normal_max,
+                "normal": config.flow.normal_value,
             },
-            'quality_score': {
-                'min': config.quality_score.minimum,
-                'max': config.quality_score.maximum,
-                'normal': config.quality_score.normal
+            "quality_score": {
+                "min": config.quality_score.minimum,
+                "max": config.quality_score.maximum,
+                "normal": config.quality_score.normal,
             },
-            'temperature': {
-                'min': config.temperature.min_normal,
-                'max': config.temperature.max_normal,
-                'normal': config.temperature.optimal
-            }
+            "temperature": {
+                "min": config.temperature.min_normal,
+                "max": config.temperature.max_normal,
+                "normal": config.temperature.optimal,
+            },
         }
-    
-    async def detect_anomalies(self, node_id: str, hours: int = 24) -> List[Dict[str, Any]]:
+
+    async def detect_anomalies(
+        self, node_id: str, hours: int = 24
+    ) -> List[Dict[str, Any]]:
         """Detect anomalies for a specific node.
-        
+
         Args:
             node_id: Node identifier
             hours: Number of hours to analyze
-            
+
         Returns:
             List of detected anomalies
         """
@@ -59,38 +63,40 @@ class AnomalyDetector:
         sensor_data = await self._fetch_sensor_data(node_id, hours)
         if not sensor_data:
             return []
-        
+
         anomalies = []
-        
+
         # Check for pressure anomalies
         pressure_anomalies = self._detect_pressure_anomalies(sensor_data)
         anomalies.extend(pressure_anomalies)
-        
+
         # Check for flow anomalies
         flow_anomalies = self._detect_flow_anomalies(sensor_data)
         anomalies.extend(flow_anomalies)
-        
+
         # Check for quality anomalies
         quality_anomalies = self._detect_quality_anomalies(sensor_data)
         anomalies.extend(quality_anomalies)
-        
+
         # Check for pattern-based anomalies
         pattern_anomalies = self._detect_pattern_anomalies(sensor_data)
         anomalies.extend(pattern_anomalies)
-        
+
         # Save detected anomalies
         for anomaly in anomalies:
             await self.save_anomaly(anomaly)
-        
+
         return anomalies
-    
-    async def _fetch_sensor_data(self, node_id: str, hours: int) -> List[Dict[str, Any]]:
+
+    async def _fetch_sensor_data(
+        self, node_id: str, hours: int
+    ) -> List[Dict[str, Any]]:
         """Fetch sensor data from database.
-        
+
         Args:
             node_id: Node identifier
             hours: Number of hours to fetch
-            
+
         Returns:
             List of sensor readings
         """
@@ -107,245 +113,280 @@ class AnomalyDetector:
         except Exception as e:
             logger.error(f"Error fetching sensor data: {e}")
             return []
-    
+
     def _detect_pressure_anomalies(self, sensor_data: List[Dict]) -> List[Dict]:
         """Detect pressure-related anomalies."""
         anomalies = []
-        pressures = [float(d.get('pressure', 0)) for d in sensor_data if d.get('pressure')]
-        
+        pressures = [
+            float(d.get("pressure", 0)) for d in sensor_data if d.get("pressure")
+        ]
+
         if not pressures:
             return anomalies
-        
+
         # Statistical analysis
         mean_pressure = np.mean(pressures)
         std_pressure = np.std(pressures)
-        
+
         for data in sensor_data:
-            pressure = data.get('pressure')
+            pressure = data.get("pressure")
             if not pressure:
                 continue
             pressure = float(pressure)
-            
+
             # Check absolute thresholds
-            if pressure < self.thresholds['pressure']['min']:
-                deviation = abs(pressure - self.thresholds['pressure']['normal'])
-                deviation_pct = (deviation / self.thresholds['pressure']['normal']) * 100
-                
-                anomalies.append({
-                    'node_id': data['node_id'],
-                    'timestamp': data['timestamp'],
-                    'anomaly_type': 'pressure_drop',
-                    'severity': self.calculate_severity(deviation_pct),
-                    'actual_value': pressure,
-                    'expected_value': self.thresholds['pressure']['normal'],
-                    'deviation_percentage': deviation_pct,
-                    'measurement_type': 'pressure',
-                    'description': f'Pressure dropped to {pressure:.1f} bar (expected ~{self.thresholds["pressure"]["normal"]} bar)'
-                })
-            
+            if pressure < self.thresholds["pressure"]["min"]:
+                deviation = abs(pressure - self.thresholds["pressure"]["normal"])
+                deviation_pct = (
+                    deviation / self.thresholds["pressure"]["normal"]
+                ) * 100
+
+                anomalies.append(
+                    {
+                        "node_id": data["node_id"],
+                        "timestamp": data["timestamp"],
+                        "anomaly_type": "pressure_drop",
+                        "severity": self.calculate_severity(deviation_pct),
+                        "actual_value": pressure,
+                        "expected_value": self.thresholds["pressure"]["normal"],
+                        "deviation_percentage": deviation_pct,
+                        "measurement_type": "pressure",
+                        "description": f'Pressure dropped to {pressure:.1f} bar (expected ~{self.thresholds["pressure"]["normal"]} bar)',
+                    }
+                )
+
             # Z-score based detection
             if std_pressure > 0:
                 z_score = abs((pressure - mean_pressure) / std_pressure)
                 if z_score > 2.5:
-                    anomalies.append({
-                        'node_id': data['node_id'],
-                        'timestamp': data['timestamp'],
-                        'anomaly_type': 'pressure_anomaly',
-                        'severity': self.calculate_severity(z_score * 10),
-                        'actual_value': pressure,
-                        'expected_value': mean_pressure,
-                        'deviation_percentage': abs((pressure - mean_pressure) / mean_pressure) * 100,
-                        'measurement_type': 'pressure',
-                        'description': f'Unusual pressure reading: {pressure:.1f} bar (z-score: {z_score:.1f})'
-                    })
-        
+                    anomalies.append(
+                        {
+                            "node_id": data["node_id"],
+                            "timestamp": data["timestamp"],
+                            "anomaly_type": "pressure_anomaly",
+                            "severity": self.calculate_severity(z_score * 10),
+                            "actual_value": pressure,
+                            "expected_value": mean_pressure,
+                            "deviation_percentage": abs(
+                                (pressure - mean_pressure) / mean_pressure
+                            )
+                            * 100,
+                            "measurement_type": "pressure",
+                            "description": f"Unusual pressure reading: {pressure:.1f} bar (z-score: {z_score:.1f})",
+                        }
+                    )
+
         return anomalies
-    
+
     def _detect_flow_anomalies(self, sensor_data: List[Dict]) -> List[Dict]:
         """Detect flow rate anomalies."""
         anomalies = []
-        flows = [float(d.get('flow_rate', 0)) for d in sensor_data if d.get('flow_rate')]
-        
+        flows = [
+            float(d.get("flow_rate", 0)) for d in sensor_data if d.get("flow_rate")
+        ]
+
         if not flows:
             return anomalies
-        
+
         mean_flow = np.mean(flows)
         std_flow = np.std(flows)
-        
+
         for data in sensor_data:
-            flow = data.get('flow_rate')
+            flow = data.get("flow_rate")
             if not flow:
                 continue
             flow = float(flow)
-            
+
             # Check for abnormal flow rates
-            if flow > self.thresholds['flow_rate']['max']:
-                deviation_pct = ((flow - self.thresholds['flow_rate']['normal']) / 
-                               self.thresholds['flow_rate']['normal']) * 100
-                
-                anomalies.append({
-                    'node_id': data['node_id'],
-                    'timestamp': data['timestamp'],
-                    'anomaly_type': 'flow_anomaly',
-                    'severity': self.calculate_severity(abs(deviation_pct)),
-                    'actual_value': flow,
-                    'expected_value': self.thresholds['flow_rate']['normal'],
-                    'deviation_percentage': deviation_pct,
-                    'measurement_type': 'flow_rate',
-                    'description': f'High flow rate detected: {flow:.1f} L/s'
-                })
-            
+            if flow > self.thresholds["flow_rate"]["max"]:
+                deviation_pct = (
+                    (flow - self.thresholds["flow_rate"]["normal"])
+                    / self.thresholds["flow_rate"]["normal"]
+                ) * 100
+
+                anomalies.append(
+                    {
+                        "node_id": data["node_id"],
+                        "timestamp": data["timestamp"],
+                        "anomaly_type": "flow_anomaly",
+                        "severity": self.calculate_severity(abs(deviation_pct)),
+                        "actual_value": flow,
+                        "expected_value": self.thresholds["flow_rate"]["normal"],
+                        "deviation_percentage": deviation_pct,
+                        "measurement_type": "flow_rate",
+                        "description": f"High flow rate detected: {flow:.1f} L/s",
+                    }
+                )
+
             # Detect potential leaks (high flow with low pressure)
-            pressure = data.get('pressure')
+            pressure = data.get("pressure")
             if pressure:
                 pressure = float(pressure)
-                if flow > mean_flow * 1.3 and pressure < self.thresholds['pressure']['min']:
-                    anomalies.append({
-                        'node_id': data['node_id'],
-                        'timestamp': data['timestamp'],
-                        'anomaly_type': 'potential_leak',
-                        'severity': 'critical',
-                        'actual_value': flow,
-                        'expected_value': mean_flow,
-                        'deviation_percentage': ((flow - mean_flow) / mean_flow) * 100,
-                        'measurement_type': 'flow_rate',
-                        'description': f'Potential leak detected: high flow ({flow:.1f} L/s) with low pressure ({pressure:.1f} bar)'
-                    })
-        
+                if (
+                    flow > mean_flow * 1.3
+                    and pressure < self.thresholds["pressure"]["min"]
+                ):
+                    anomalies.append(
+                        {
+                            "node_id": data["node_id"],
+                            "timestamp": data["timestamp"],
+                            "anomaly_type": "potential_leak",
+                            "severity": "critical",
+                            "actual_value": flow,
+                            "expected_value": mean_flow,
+                            "deviation_percentage": ((flow - mean_flow) / mean_flow)
+                            * 100,
+                            "measurement_type": "flow_rate",
+                            "description": f"Potential leak detected: high flow ({flow:.1f} L/s) with low pressure ({pressure:.1f} bar)",
+                        }
+                    )
+
         return anomalies
-    
+
     def _detect_quality_anomalies(self, sensor_data: List[Dict]) -> List[Dict]:
         """Detect water quality anomalies."""
         anomalies = []
-        
+
         for data in sensor_data:
-            quality = data.get('quality_score')
+            quality = data.get("quality_score")
             if not quality:
                 continue
             quality = float(quality)
-            
-            if quality < self.thresholds['quality_score']['min']:
-                deviation_pct = ((self.thresholds['quality_score']['normal'] - quality) / 
-                               self.thresholds['quality_score']['normal']) * 100
-                
-                anomalies.append({
-                    'node_id': data['node_id'],
-                    'timestamp': data['timestamp'],
-                    'anomaly_type': 'quality_alert',
-                    'severity': 'high' if quality < 0.7 else 'medium',
-                    'actual_value': quality,
-                    'expected_value': self.thresholds['quality_score']['normal'],
-                    'deviation_percentage': deviation_pct,
-                    'measurement_type': 'quality_score',
-                    'description': f'Water quality below threshold: {quality:.2f}'
-                })
-        
+
+            if quality < self.thresholds["quality_score"]["min"]:
+                deviation_pct = (
+                    (self.thresholds["quality_score"]["normal"] - quality)
+                    / self.thresholds["quality_score"]["normal"]
+                ) * 100
+
+                anomalies.append(
+                    {
+                        "node_id": data["node_id"],
+                        "timestamp": data["timestamp"],
+                        "anomaly_type": "quality_alert",
+                        "severity": "high" if quality < 0.7 else "medium",
+                        "actual_value": quality,
+                        "expected_value": self.thresholds["quality_score"]["normal"],
+                        "deviation_percentage": deviation_pct,
+                        "measurement_type": "quality_score",
+                        "description": f"Water quality below threshold: {quality:.2f}",
+                    }
+                )
+
         return anomalies
-    
+
     def _detect_pattern_anomalies(self, sensor_data: List[Dict]) -> List[Dict]:
         """Detect pattern-based anomalies using time series analysis."""
         anomalies = []
-        
+
         # Sort by timestamp
-        sorted_data = sorted(sensor_data, key=lambda x: x['timestamp'])
-        
+        sorted_data = sorted(sensor_data, key=lambda x: x["timestamp"])
+
         # Detect sudden changes in pressure
-        pressures = [float(d.get('pressure', 0)) for d in sorted_data if d.get('pressure')]
+        pressures = [
+            float(d.get("pressure", 0)) for d in sorted_data if d.get("pressure")
+        ]
         if len(pressures) > 3:
             sudden_changes = self.detect_sudden_changes(pressures, window=3)
             for idx in sudden_changes:
                 if idx < len(sorted_data):
                     data = sorted_data[idx]
-                    anomalies.append({
-                        'node_id': data['node_id'],
-                        'timestamp': data['timestamp'],
-                        'anomaly_type': 'sudden_change',
-                        'severity': 'medium',
-                        'actual_value': data.get('pressure'),
-                        'expected_value': pressures[max(0, idx-1)] if idx > 0 else None,
-                        'deviation_percentage': 0,
-                        'measurement_type': 'pressure',
-                        'description': 'Sudden pressure change detected'
-                    })
-        
+                    anomalies.append(
+                        {
+                            "node_id": data["node_id"],
+                            "timestamp": data["timestamp"],
+                            "anomaly_type": "sudden_change",
+                            "severity": "medium",
+                            "actual_value": data.get("pressure"),
+                            "expected_value": pressures[max(0, idx - 1)]
+                            if idx > 0
+                            else None,
+                            "deviation_percentage": 0,
+                            "measurement_type": "pressure",
+                            "description": "Sudden pressure change detected",
+                        }
+                    )
+
         return anomalies
-    
-    def detect_outliers_zscore(self, data: List[float], threshold: float = 2.0) -> List[int]:
+
+    def detect_outliers_zscore(
+        self, data: List[float], threshold: float = 2.0
+    ) -> List[int]:
         """Detect outliers using z-score method.
-        
+
         Args:
             data: List of values
             threshold: Z-score threshold for outlier detection
-            
+
         Returns:
             List of indices where outliers are found
         """
         if len(data) < 3:
             return []
-        
+
         mean = np.mean(data)
         std = np.std(data)
-        
+
         if std == 0:
             return []
-        
+
         outliers = []
         for i, value in enumerate(data):
             z_score = abs((value - mean) / std)
             if z_score > threshold:
                 outliers.append(i)
-        
+
         return outliers
-    
+
     def detect_sudden_changes(self, data: List[float], window: int = 3) -> List[int]:
         """Detect sudden changes in time series data.
-        
+
         Args:
             data: Time series data
             window: Window size for change detection
-            
+
         Returns:
             List of indices where sudden changes occur
         """
         if len(data) < window + 1:
             return []
-        
+
         changes = []
         for i in range(window, len(data)):
-            window_mean = np.mean(data[i-window:i])
+            window_mean = np.mean(data[i - window : i])
             current = data[i]
-            
+
             if window_mean > 0:
                 change_ratio = abs((current - window_mean) / window_mean)
                 if change_ratio > 0.3:  # 30% change threshold
                     changes.append(i)
-        
+
         return changes
-    
+
     def calculate_severity(self, deviation_percentage: float) -> str:
         """Calculate anomaly severity based on deviation.
-        
+
         Args:
             deviation_percentage: Percentage deviation from normal
-            
+
         Returns:
             Severity level: 'low', 'medium', 'high', or 'critical'
         """
         if deviation_percentage < 20:
-            return 'low'
+            return "low"
         elif deviation_percentage < 35:
-            return 'medium'
+            return "medium"
         elif deviation_percentage < 50:
-            return 'high'
+            return "high"
         else:
-            return 'critical'
-    
+            return "critical"
+
     async def save_anomaly(self, anomaly: Dict[str, Any]) -> bool:
         """Save detected anomaly to database.
-        
+
         Args:
             anomaly: Anomaly data to save
-            
+
         Returns:
             True if saved successfully
         """
@@ -356,25 +397,25 @@ class AnomalyDetector:
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (node_id, timestamp, anomaly_type) DO NOTHING
         """
-        
+
         metadata = {
-            'description': anomaly.get('description', ''),
-            'detection_method': 'statistical_analysis',
-            'confidence': 0.85
+            "description": anomaly.get("description", ""),
+            "detection_method": "statistical_analysis",
+            "confidence": 0.85,
         }
-        
+
         try:
             await self.db_connection.execute(
                 query,
-                anomaly['node_id'],
-                anomaly['timestamp'],
-                anomaly['anomaly_type'],
-                anomaly['severity'],
-                anomaly['measurement_type'],
-                anomaly.get('actual_value'),
-                anomaly.get('expected_value'),
-                anomaly.get('deviation_percentage'),
-                metadata
+                anomaly["node_id"],
+                anomaly["timestamp"],
+                anomaly["anomaly_type"],
+                anomaly["severity"],
+                anomaly["measurement_type"],
+                anomaly.get("actual_value"),
+                anomaly.get("expected_value"),
+                anomaly.get("deviation_percentage"),
+                metadata,
             )
             return True
         except Exception as e:

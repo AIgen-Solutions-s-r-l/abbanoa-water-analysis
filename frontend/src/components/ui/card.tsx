@@ -26,6 +26,11 @@ interface CardTitleProps {
   className?: string;
 }
 
+interface CardDescriptionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
 const Card = ({ children, className = '', padding = 'md' }: CardProps) => {
   const paddingClasses = {
     none: '',
@@ -73,5 +78,13 @@ const CardTitle = ({ children, className = '' }: CardTitleProps) => {
   );
 };
 
-export { Card, CardHeader, CardContent, CardFooter, CardTitle };
-export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps, CardTitleProps }; 
+const CardDescription = ({ children, className = '' }: CardDescriptionProps) => {
+  return (
+    <p className={`text-sm text-gray-600 dark:text-gray-400 ${className}`}>
+      {children}
+    </p>
+  );
+};
+
+export { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription };
+export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps, CardTitleProps, CardDescriptionProps }; 
