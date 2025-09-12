@@ -22,16 +22,15 @@ interface WaterLossData {
 }
 
 const ZONES = [
-  { id: '1', name: 'Zone 1 - North District' },
-  { id: '2', name: 'Zone 2 - South District' },
-  { id: '3', name: 'Zone 3 - East District' },
-  { id: '4', name: 'Zone 4 - West District' },
-  { id: '5', name: 'Zone 5 - Central District' },
+  { id: 'zone_cagliari_centro', name: 'Cagliari Centro' },
+  { id: 'zone_cagliari_nord', name: 'Cagliari Nord' },
+  { id: 'zone_quartucciu', name: 'Quartucciu' },
+  { id: 'zone_selargius', name: 'Selargius' },
 ];
 
 export default function WaterLossDetection() {
   const [loading, setLoading] = useState(false);
-  const [selectedZone, setSelectedZone] = useState('1');
+  const [selectedZone, setSelectedZone] = useState('zone_cagliari_nord');
   const [data, setData] = useState<WaterLossData | null>(null);
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -305,6 +304,77 @@ export default function WaterLossDetection() {
           )}
         </>
       )}
+
+      {/* Mathematical Model Explanation */}
+      <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mt-6">
+        <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">💧 Water Loss Detection Model</h3>
+        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+          
+          <div>
+            <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">Water Balance Equation</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Equazione fondamentale per il calcolo delle perdite:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                Loss(%) = (Q_in - Q_out) / Q_in × 100
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>Q_in</strong>: Portata in ingresso (m³/h)</p>
+                <p><strong>Q_out</strong>: Portata in uscita (m³/h)</p>
+                <p><strong>Loss(%)</strong>: Percentuale perdite idriche</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-red-600 dark:text-red-400 mb-2">Leak Probability Model</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Modello probabilistico basato su pressione e flusso notturno:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                P_leak = σ(α + β_1×σ_p + β_2×Q_night + β_3×ΔP)
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>σ</strong>: Funzione sigmoide</p>
+                <p><strong>σ_p</strong>: Deviazione standard pressione</p>
+                <p><strong>Q_night</strong>: Flusso notturno normalizzato</p>
+                <p><strong>ΔP</strong>: Variazione pressione</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-green-600 dark:text-green-400 mb-2">Night Flow Analysis</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Analisi del flusso notturno per rilevare anomalie:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                MNF_anomaly = Q_night > Q_baseline + k × σ_night
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>MNF</strong>: Minimum Night Flow</p>
+                <p><strong>Q_baseline</strong>: Flusso notturno baseline</p>
+                <p><strong>k</strong>: Soglia di rilevazione (tipicamente 2-3)</p>
+                <p><strong>σ_night</strong>: Deviazione standard flusso notturno</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-purple-600 dark:text-purple-400 mb-2">Pressure-Loss Correlation</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Correlazione tra pressione e perdite per localizzare i leak:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                Loss_rate = k × P^α × C_pipe
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>k</strong>: Costante specifica del sistema</p>
+                <p><strong>P</strong>: Pressione media della zona</p>
+                <p><strong>α</strong>: Esponente FAVAD (0.5-1.5)</p>
+                <p><strong>C_pipe</strong>: Fattore di condizione tubazione</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }

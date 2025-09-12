@@ -25,16 +25,16 @@ interface MaintenanceData {
 }
 
 const EQUIPMENT_LIST = [
-  { id: 'PUMP001', name: 'Main Pump Station 1' },
-  { id: 'PUMP002', name: 'Main Pump Station 2' },
-  { id: 'VALVE001', name: 'Control Valve A' },
-  { id: 'VALVE002', name: 'Control Valve B' },
-  { id: 'SENSOR001', name: 'Pressure Sensor Unit 1' },
+  { id: 'cagliari_pump_01', name: 'Cagliari Centro - Pump Station' },
+  { id: 'cagliari_pump_02', name: 'Cagliari Nord - Pump Station' },
+  { id: 'quartucciu_valve_01', name: 'Quartucciu - Control Valve' },
+  { id: 'selargius_valve_01', name: 'Selargius - Control Valve' },
+  { id: 'centro_sensor_01', name: 'Centro - Pressure Sensor' },
 ];
 
 export default function MaintenancePrediction() {
   const [loading, setLoading] = useState(false);
-  const [selectedEquipment, setSelectedEquipment] = useState('PUMP001');
+  const [selectedEquipment, setSelectedEquipment] = useState('cagliari_pump_01');
   const [data, setData] = useState<MaintenanceData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -258,6 +258,78 @@ export default function MaintenancePrediction() {
           </Card>
         </>
       )}
+
+      {/* Mathematical Model Explanation */}
+      <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mt-6">
+        <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">🔧 Predictive Maintenance Model</h3>
+        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+          
+          <div>
+            <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">Hazard Function</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Funzione di rischio per predire il tempo al guasto:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                h(t) = h_0 × exp(β_1×P(t) + β_2×V(t) + β_3×T(t) + β_4×Age)
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>h(t)</strong>: Tasso di guasto istantaneo</p>
+                <p><strong>h_0</strong>: Tasso di guasto baseline</p>
+                <p><strong>P(t)</strong>: Variazione di pressione</p>
+                <p><strong>V(t)</strong>: Livello vibrazione</p>
+                <p><strong>T(t)</strong>: Temperatura operativa</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-orange-600 dark:text-orange-400 mb-2">Weibull Reliability Model</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Distribuzione di Weibull per modellare l'affidabilità:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                R(t) = exp(-(λ × t)^β)
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>R(t)</strong>: Probabilità di sopravvivenza al tempo t</p>
+                <p><strong>λ</strong>: Parametro di scala</p>
+                <p><strong>β</strong>: Parametro di forma (shape parameter)</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-red-600 dark:text-red-400 mb-2">Degradation Index</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Indice di degrado basato sui sensori per quantificare l'usura:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                DI(t) = w_1×σ_P + w_2×|ΔV| + w_3×max(T-T_nominal, 0) + w_4×(Age/Age_design)
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>σ_P</strong>: Deviazione standard pressione</p>
+                <p><strong>|ΔV|</strong>: Variazione assoluta vibrazione</p>
+                <p><strong>T_nominal</strong>: Temperatura operativa nominale</p>
+                <p><strong>w_i</strong>: Pesi ottimizzati per tipo equipaggiamento</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-green-600 dark:text-green-400 mb-2">Maintenance Scheduling</h4>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+              <p className="mb-2">Ottimizzazione della schedulazione manutenzione:</p>
+              <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                t_opt = arg min [C_maint×R(t) + C_failure×(1-R(t)) + C_downtime]
+              </code>
+              <div className="mt-2 space-y-1">
+                <p><strong>C_maint</strong>: Costo manutenzione preventiva</p>
+                <p><strong>C_failure</strong>: Costo guasto imprevisto</p>
+                <p><strong>C_downtime</strong>: Costo per fermo impianto</p>
+                <p><strong>t_opt</strong>: Tempo ottimale per manutenzione</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }

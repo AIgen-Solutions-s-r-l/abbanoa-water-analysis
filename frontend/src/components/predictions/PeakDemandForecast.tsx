@@ -22,7 +22,7 @@ export default function PeakDemandForecast() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PredictionData | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [selectedZone, setSelectedZone] = useState('1');
+  const [selectedZone, setSelectedZone] = useState('zone_cagliari_nord');
   const [forecastDays, setForecastDays] = useState('7');
   const [error, setError] = useState<string | null>(null);
 
@@ -75,10 +75,10 @@ export default function PeakDemandForecast() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Zone 1</SelectItem>
-              <SelectItem value="2">Zone 2</SelectItem>
-              <SelectItem value="3">Zone 3</SelectItem>
-              <SelectItem value="4">Zone 4</SelectItem>
+              <SelectItem value="zone_cagliari_centro">Cagliari Centro</SelectItem>
+              <SelectItem value="zone_cagliari_nord">Cagliari Nord</SelectItem>
+              <SelectItem value="zone_quartucciu">Quartucciu</SelectItem>
+              <SelectItem value="zone_selargius">Selargius</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -114,52 +114,64 @@ export default function PeakDemandForecast() {
       {data && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                <span className="text-sm text-gray-600">Accuracy Score</span>
+                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Accuracy Score</span>
               </div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {(data.accuracy_score * 100).toFixed(1)}%
               </div>
             </div>
             
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-5 w-5 text-green-600" />
-                <span className="text-sm text-gray-600">Forecast Period</span>
+                <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Forecast Period</span>
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {forecastDays} Days
               </div>
             </div>
             
-            <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-5 w-5 text-purple-600" />
-                <span className="text-sm text-gray-600">Method</span>
+                <AlertCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Method</span>
               </div>
-              <div className="text-lg font-semibold text-purple-600">
+              <div className="text-lg font-semibold text-purple-600 dark:text-purple-400">
                 {data.method.replace('_', ' ').toUpperCase()}
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border">
-            <h3 className="text-lg font-semibold mb-4">Demand Forecast with Confidence Intervals</h3>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Demand Forecast with Confidence Intervals</h3>
             <ResponsiveContainer width="100%" height={400}>
               <AreaChart data={chartData.slice(0, parseInt(forecastDays) * 24)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
                 <XAxis 
                   dataKey="time" 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={{ stroke: '#6b7280' }}
                   interval={Math.floor(chartData.length / 8)}
                 />
                 <YAxis 
-                  label={{ value: 'Demand (m³/h)', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Demand (m³/h)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6b7280' } }}
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#6b7280' }}
                 />
-                <Tooltip />
-                <Legend />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    borderRadius: '6px',
+                    color: '#f9fafb'
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{ color: '#6b7280' }}
+                />
                 <Area
                   type="monotone"
                   dataKey="upper"
@@ -188,8 +200,8 @@ export default function PeakDemandForecast() {
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border">
-            <h3 className="text-lg font-semibold mb-4">Seasonal Factors (24-hour pattern)</h3>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Seasonal Factors (24-hour pattern)</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart 
                 data={data.seasonal_factors.map((factor, hour) => ({
@@ -197,12 +209,25 @@ export default function PeakDemandForecast() {
                   factor: factor
                 }))}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis 
-                  label={{ value: 'Factor', angle: -90, position: 'insideLeft' }}
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis 
+                  dataKey="hour" 
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#6b7280' }}
                 />
-                <Tooltip />
+                <YAxis 
+                  label={{ value: 'Factor', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6b7280' } }}
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#6b7280' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    borderRadius: '6px',
+                    color: '#f9fafb'
+                  }}
+                />
                 <Line
                   type="monotone"
                   dataKey="factor"
@@ -212,6 +237,61 @@ export default function PeakDemandForecast() {
                 />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Mathematical Model Explanation */}
+          <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mt-6">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">📊 Peak Demand Forecasting Model</h3>
+            <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+              
+              <div>
+                <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">Moving Average Predictor</h4>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+                  <p className="mb-2">Il modello utilizza una media mobile esponenziale per predire la domanda futura:</p>
+                  <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    D(t+h) = α × D(t) + (1-α) × D(t-1) + S(t mod 24) + ε(t)
+                  </code>
+                  <div className="mt-2 space-y-1">
+                    <p><strong>D(t+h)</strong>: Domanda predetta al tempo t+h</p>
+                    <p><strong>α</strong>: Fattore di smoothing (0.3)</p>
+                    <p><strong>S(t)</strong>: Fattore stagionale per l'ora del giorno</p>
+                    <p><strong>ε(t)</strong>: Rumore stocastico</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-green-600 dark:text-green-400 mb-2">Seasonal Decomposition</h4>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+                  <p className="mb-2">Decompone la serie temporale in componenti:</p>
+                  <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    X(t) = T(t) + S(t) + R(t)
+                  </code>
+                  <div className="mt-2 space-y-1">
+                    <p><strong>T(t)</strong>: Trend a lungo termine</p>
+                    <p><strong>S(t)</strong>: Componente stagionale (24h cycle)</p>
+                    <p><strong>R(t)</strong>: Residui/rumore</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-purple-600 dark:text-purple-400 mb-2">Confidence Intervals</h4>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+                  <p className="mb-2">Intervalli di confidenza basati sulla variabilità storica:</p>
+                  <code className="block bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    CI(t) = D̂(t) ± z(α/2) × σ(t) × √h
+                  </code>
+                  <div className="mt-2 space-y-1">
+                    <p><strong>D̂(t)</strong>: Predizione puntuale</p>
+                    <p><strong>z(α/2)</strong>: Quantile normale (1.96 per 95%)</p>
+                    <p><strong>σ(t)</strong>: Deviazione standard dei residui</p>
+                    <p><strong>h</strong>: Orizzonte di predizione</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </>
       )}
