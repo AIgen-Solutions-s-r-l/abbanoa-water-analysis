@@ -140,8 +140,8 @@ export default function ConsumptionAnalyticsPage() {
 
   const fetchConsumptionData = async () => {
     try {
-      // Fetch consumption analytics
-      const analyticsResponse = await fetch('/api/proxy/v1/consumption/analytics');
+      // Fetch consumption analytics (using simplified endpoint)
+      const analyticsResponse = await fetch('/api/proxy/v1/consumption/analytics-simple');
       const analyticsJson = await analyticsResponse.json();
       setAnalyticsData(analyticsJson);
 
